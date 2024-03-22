@@ -1,7 +1,6 @@
 import { fetchStream } from "../service/index";
-import i18next, { t, use } from "i18next";
-import { useApps } from "../apps/context";
-import { AccountOptions, Chat, GeneralOptions, GlobalState, OpenAIOptions, Options, OptionAction, GlobalActions, Messages, GlobalAction, GlobalActionType, AnyOptions, OptionActionType } from "./types";
+import i18next, { t } from "i18next";
+import { Chat, GlobalState, Options, OptionAction, GlobalActions, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
 import React from "react";
 
 

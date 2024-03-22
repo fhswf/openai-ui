@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useGlobal } from "../context";
-import { Message } from "../context/types";
+import { Chat, Message } from "../context/types";
 
 
 export function useMessage() {
@@ -9,7 +9,7 @@ export function useMessage() {
   };
 
   const { currentChat, chat, is } = useGlobal();
-  const [message, setMessage] = useState<Messages>({ messages: [] });
+  const [message, setMessage] = useState<Partial<Chat>>({ messages: [] });
   useEffect(() => {
     if (chat.length) {
       setMessage(chat[currentChat]);

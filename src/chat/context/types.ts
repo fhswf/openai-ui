@@ -108,6 +108,7 @@ export type Chat = {
     id: number;
     ct: number;
     messages: Messages;
+    error?: any;
 };
 
 export type App = {
