@@ -17,6 +17,8 @@ export async function* streamAsyncIterable(stream) {
   }
 }
 
+export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.API_BASE_URL || "https://api.openai.com/v1";
+
 export const fetchBaseUrl = (baseUrl) =>
   baseUrl || "https://api.openai.com/v1/chat/completions";
 
