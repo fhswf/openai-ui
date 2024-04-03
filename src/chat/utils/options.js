@@ -40,6 +40,18 @@ export const sendCommandOptions = [
   },
 ];
 
+export const modeOptions = [
+  {
+    label: "Chat",
+    value: "chat",
+  },
+  {
+    label: "Assistant",
+    value: "assistant",
+  }
+]
+
+
 export const modelOptions = [
   {
     label: "gpt-4-turbo-preview",
