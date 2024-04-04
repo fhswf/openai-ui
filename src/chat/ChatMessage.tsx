@@ -25,13 +25,12 @@ export function MessageHeader() {
   return (
     <div className={classnames(styles.header)}>
       <Button type="icon" icon={columnIcon} onClick={() => setIs({ sidebar: !is.sidebar })} />
-      <div className={styles.header_title}>
+      <div className={styles.header_title} data-testid="HeaderTitle">
         {message?.title}
         <div className={styles.length}>{t('count_messages', { count: messages.length })}</div>
       </div>
       <div className={styles.header_bar}>
         <Icon className={styles.icon} type="setting" title={t("chat_settings")} onClick={showSettings} />
-
         <Icon className={styles.icon} type="reload" title={t("reload_thread")} onClick={reloadThread} />
         <Icon className={styles.icon} type="clear" title={t("clear_thread")} onClick={clearThread} />
         <Icon type="download" className={[styles.icon, styles.disabled]} />
@@ -48,12 +47,12 @@ export function EditorMessage() {
 }
 
 export function MessageItem(props) {
-  const { content, sentTime, role, id } = props
+  const { content, sentTime, role, id, dataTestId } = props
   const { removeMessage, editMessage, user } = useGlobal()
   const { t } = useTranslation();
 
   return (
-    <div className={classnames(styles.item, styles[role])}>
+    <div className={classnames(styles.item, styles[role])} data-testid={dataTestId}>
       <Avatar src={role === 'user' ? user?.avatar : avatar} />
       <div className={classnames(styles.item_content, styles[`item_${role}`])}>
         <div className={styles.item_inner}>
@@ -93,7 +92,7 @@ export function MessageBar() {
         <div className={styles.bar_type}>
           {
             options.general.codeEditor ? <CodeEditor language='Python' minHeight={16} onChange={(ev) => setMessage(ev.target.value)} /> :
-              <Textarea transparent={true} rows="3" value={typeingMessage?.content || ''}
+              <Textarea data-testid="ChatTextArea" transparent={true} rows="3" value={typeingMessage?.content || ''}
                 onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
                 placeholder={t("Enter something....")} onChange={setMessage} onEnter={onEnter} />
           }
@@ -103,7 +102,7 @@ export function MessageBar() {
             <Tooltip text="clear">
               <Icon className={styles.icon} type={t("cancel")} onClick={clearTypeing} />
             </Tooltip>}
-          <Icon className={styles.icon} type={t("send")} onClick={sendMessage} />
+          <Icon className={styles.icon} type={t("send")} onClick={sendMessage} dataTestId="SendMessageBtn" />
         </div>
       </div>
     </div>
@@ -123,10 +122,10 @@ export function MessageContainer() {
     return (
       <React.Fragment>
         {
-          messages.length ? <div className={styles.container}>
+          messages.length ? <div className={styles.container} data-testid="ChatListContainer">
             {messages
               .filter(message => message.role !== "system")
-              .map((item, index) => <MessageItem key={item.id} {...item} />)}
+              .map((item, index) => <MessageItem key={item.id} {...item} dataTestId="ChatMessage" />)}
             {message?.error && <Error />}
           </div> : <ChatHelp />
         }
@@ -142,7 +141,7 @@ export function ChatMessage() {
   return (
     <div className={styles.message}>
       <MessageHeader />
-      <ScrollView>
+      <ScrollView data-testid="ChatList">
         <MessageContainer />
         {is.thinking && <Loading />}
       </ScrollView>
