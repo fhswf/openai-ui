@@ -10,6 +10,7 @@ import { Search } from '../components/Search'
 import styles from './style/chat.module.less'
 import { ScrollView } from './component'
 import './style.less'
+import { Config } from './Config'
 
 export default function Chat() {
   const { is } = useGlobal()
@@ -23,7 +24,8 @@ export default function Chat() {
         <ChatSideBar />
         {
           is?.config ?
-            <ChatOptions /> :
+            <Config />
+            :
             <React.Fragment>
               {
                 is?.sidebar && <div className={styles.sider}>

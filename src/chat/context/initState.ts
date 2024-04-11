@@ -10,6 +10,7 @@ export const initState: GlobalState = {
       title: t("chatbot_title"),
       id: 1,
       ct: Date.now(),
+      thread: "",
       messages: [
         {
           content: t("system_welcome"),
@@ -38,6 +39,7 @@ export const initState: GlobalState = {
       baseUrl: "https://openai.ki.fh-swf.de/api/v1/chat/completions",
       organizationId: "",
       temperature: 1,
+      mode: "chat",
       model: "gpt-4-turbo-preview",
       apiKey: "unused",
       max_tokens: 2048,

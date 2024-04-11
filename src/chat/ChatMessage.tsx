@@ -12,9 +12,10 @@ import avatar from '../assets/images/avatar-gpt.png'
 import styles from './style/message.module.less'
 import { classnames } from '../components/utils'
 import { useTranslation } from "react-i18next";
+import CodeEditor from '@uiw/react-textarea-code-editor';
 
 export function MessageHeader() {
-  const { is, setIs, clearMessage, options } = useGlobal()
+  const { is, setIs, clearThread, reloadThread, showSettings, options } = useGlobal()
   const { message } = useMessage()
   const messages = message.messages;
   const columnIcon = is.sidebar ? 'column-close' : 'column-open'
@@ -29,12 +30,11 @@ export function MessageHeader() {
         <div className={styles.length}>{t('count_messages', { count: messages.length })}</div>
       </div>
       <div className={styles.header_bar}>
-        <Icon className={styles.icon} type={options.general.theme} onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })} />
-        <Icon className={styles.icon} type="clear" onClick={clearMessage} />
-        <Popover position="bottom" content={<ConfigInfo />}>
-          <Icon className={styles.icon} type="more" />
-        </Popover>
-        <Icon type="download" className={styles.icon} />
+        <Icon className={styles.icon} type="setting" title={t("chat_settings")} onClick={showSettings} />
+
+        <Icon className={styles.icon} type="reload" title={t("reload_thread")} onClick={reloadThread} />
+        <Icon className={styles.icon} type="clear" title={t("clear_thread")} onClick={clearThread} />
+        <Icon type="download" className={[styles.icon, styles.disabled]} />
       </div>
     </div>
   )
@@ -91,9 +91,12 @@ export function MessageBar() {
       </div>}
       <div className={styles.bar_inner}>
         <div className={styles.bar_type}>
-          <Textarea transparent={true} rows="3" value={typeingMessage?.content || ''}
-            onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
-            placeholder={t("Enter something....")} onChange={setMessage} onEnter={onEnter} />
+          {
+            options.general.codeEditor ? <CodeEditor language='Python' minHeight="10em" onChange={(ev) => setMessage(ev.target.value)} /> :
+              <Textarea transparent={true} rows="3" value={typeingMessage?.content || ''}
+                onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
+                placeholder={t("Enter something....")} onChange={setMessage} onEnter={onEnter} />
+          }
         </div>
         <div className={styles.bar_icon}>
           {typeingMessage?.content &&
@@ -125,7 +128,7 @@ export function MessageContainer() {
         {
           messages.length ? <div className={styles.container}>
             {messages
-              .filter(message => message.role === "user" || message.role === "assistant")
+              .filter(message => message.role !== "system")
               .map((item, index) => <MessageItem key={item.id} {...item} />)}
             {message?.error && <Error />}
           </div> : <ChatHelp />
