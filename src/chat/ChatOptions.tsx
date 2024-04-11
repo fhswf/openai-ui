@@ -1,19 +1,20 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Button, Panel, Input, Title, Avatar, Select } from '../components'
 import { useGlobal } from './context'
-import { themeOptions, languageOptions, sendCommandOptions, modelOptions, sizeOptions } from './utils'
+import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils'
 import { Tooltip } from '../components'
 import styles from './style/config.module.less'
 import { classnames } from '../components/utils'
 import { useOptions } from './hooks'
-import { t } from 'i18next'
+import { t, use } from 'i18next'
 import { initState } from './context/initState'
+import { getAssistants } from './service/assistant'
 
 export function ConfigHeader() {
   const { setState, setIs, is } = useGlobal()
   return (
     <div className={classnames(styles.header, 'flex-c-sb')}>
-      <Title type="h5">Setting</ Title>
+      <Title type="h2">Setting</ Title>
       <div className="flex-c">
         <Button type="icon" onClick={() => setState(initState)} icon="refresh" />
         <Button type="icon" onClick={() => setIs({ config: !is.config })} icon="close" />
@@ -28,6 +29,35 @@ export function ChatOptions() {
   // const { avatar, name } = account
   // const { max_tokens, apiKey, temperature, baseUrl, organizationId, top_p, model } = openai
   const { setAccount, setGeneral, setModel } = useOptions()
+  const [modelOptions, setModelOptions] = React.useState([]);
+
+  useEffect(() => {
+    if (openai.mode === 'assistant') {
+      getAssistants()
+        .then((assistants) => {
+          console.log(assistants);
+          let options = assistants.data.map((item) => {
+            return { label: item.name || "", value: item.id }
+          });
+          console.log("options: %o", options);
+          setModelOptions(options);
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+          if (error.message === "Unauthorized") {
+            return window.location.href = import.meta.env.VITE_LOGIN_URL;
+          }
+        })
+    }
+    else {
+      setModelOptions([
+        { label: "gpt4-turbo", value: "gpt4-turbo" },
+        { label: "gpt4", value: "gpt4" },
+        { label: "gpt3.5-turbo", value: "gpt3.5-turbo" },
+      ]);
+    }
+  }, [openai.mode]);
+
   return (
     <div className={classnames(styles.config, 'flex-c-sb flex-column')}>
       <ConfigHeader />
@@ -61,10 +91,23 @@ export function ChatOptions() {
           </Panel.Item>
         </Panel>
         <Panel className={styles.panel} title="Global OpenAI Config">
-
-          <Panel.Item icon="model" title="OpenAI model" desc={t("openai_model_help")}>
-            <Select options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose models" />
+          <Panel.Item icon="editor" title="API mode" desc={t("api_mode_help")}>
+            <Select options={modeOptions} value={openai.mode} onChange={val => setModel({ mode: val })} />
           </Panel.Item>
+          {
+            openai.mode === 'assistant' ?
+
+              (
+                <Panel.Item icon="model" title="OpenAI model" desc={t("openai_model_help")}>
+                  <Select options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose models" />
+                </Panel.Item>)
+
+              :
+              (<Panel.Item icon="model" title="OpenAI model" desc={t("openai_model_help")}>
+                <Select options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose models" />
+              </Panel.Item>)
+          }
+
           <Panel.Item icon="files" title="Max Tokens" desc="The maximum number of tokens to generate in the reply. 1 token is roughly 1 word.">
             <Input type="number" value={openai.max_tokens} placeholder="Max Tokens" onChange={val => setModel({ max_tokens: +val })} />
           </Panel.Item>
