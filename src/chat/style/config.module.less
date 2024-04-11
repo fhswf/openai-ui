@@ -1,21 +1,48 @@
 .config {
   background-color: var(--background-color-gray);
   flex: 1;
-  & > div {
+
+  &>div {
     width: 100%;
   }
 }
+
 .panel {
   margin-bottom: var(--spacing);
 }
+
 .z-title {
   padding: var(--spacing) 0;
 }
+
 .inner {
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing);
 }
+
 .header {
   padding: var(--spacing);
+  font-size: larger;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 50em;
+}
+
+.save {
+  //margin: var(--spacing);
+  background-color: var(--background-color-gray);
+}
+
+.drop_zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing);
+  text-align: center;
+  cursor: pointer;
 }

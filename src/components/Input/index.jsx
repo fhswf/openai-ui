@@ -25,7 +25,13 @@ export const Input = forwardRef((props, ref) => {
   const [icon, setIcon] = useState('eye-close');
 
   function handleChange(event) {
-    onChange && onChange(event.target.value)
+    console.log('input event', event)
+    if (type === 'checkbox') {
+      onChange && onChange(event.target.checked)
+    }
+    else {
+      onChange && onChange(event.target.value)
+    }
   }
 
   return (
