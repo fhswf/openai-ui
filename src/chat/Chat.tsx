@@ -28,9 +28,9 @@ export default function Chat() {
             :
             <React.Fragment>
               {
-                is?.sidebar && <div className={styles.sider}>
+                is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
                   <div className={styles.search}>
-                    <Search onSearch={onSearch} />
+                    <Search onSearch={onSearch} dataTestId="ConversationSearchBar"/>
                   </div>
                   <ScrollView>
                     {is?.apps ? <Apps /> : <ChatList />}
