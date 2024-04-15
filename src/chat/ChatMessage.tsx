@@ -24,16 +24,18 @@ export function MessageHeader() {
 
   return (
     <div className={classnames(styles.header)}>
-      <Button type="icon" icon={columnIcon} onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn" />
+      <Button type="icon" icon={columnIcon} onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn"/>
       <div className={styles.header_title} data-testid="HeaderTitle">
         {message?.title}
         <div className={styles.length}>{t('count_messages', { count: messages.length })}</div>
       </div>
       <div className={styles.header_bar}>
-        <Icon className={styles.icon} type="setting" title={t("chat_settings")} onClick={showSettings} />
-        <Icon className={styles.icon} type="reload" title={t("reload_thread")} onClick={reloadThread} />
-        <Icon className={styles.icon} type="clear" title={t("clear_thread")} onClick={clearThread} data-testid="ClearChatBtn" />
-        <Icon type="download" className={[styles.icon, styles.disabled]} />
+        <Icon className={styles.icon} type={options.general.theme} onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })} dataTestId="TopRightDarkModeBtn"/>
+        <Icon className={styles.icon} type="clear" onClick={clearMessage} dataTestId="ClearMessageBtn"/>
+        <Popover position="bottom" content={<ConfigInfo />}>
+          <Icon className={styles.icon} type="more" />
+        </Popover>
+        <Icon type="download" className={styles.icon} />
       </div>
     </div>
   )
