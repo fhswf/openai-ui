@@ -185,4 +185,21 @@ describe("Config Menu", () => {
   it("Set organisation id input", () => {
     cy.getDataTestId('APIOrganisationIDInput').clear().should("have.value", "").type("a_cypress_id_test").should("have.value", "a_cypress_id_test");
   });
+
+  it("Sending a message and clearing the chatlog", () => {
+    // Send message
+    cy.getDataTestId("SendMessageBtn").click();
+    cy.getDataTestId("ChatListContainer").find('[data-testid="ChatMessage"]').should('exist');
+  
+    // Clear chatlog
+    cy.getDataTestId("ClearMessageBtn").click();
+    cy.getDataTestId("ChatListContainer").should('not.exist');
+  
+    // Check if message can be sent again
+    const message = "Cypress wrote this!";
+    cy.getDataTestId("ChatTextArea").type(message).should("have.value", message);
+    cy.getDataTestId("SendMessageBtn").click();
+    cy.getDataTestId("ChatListContainer").should('exist');
+  });
+  
 });
