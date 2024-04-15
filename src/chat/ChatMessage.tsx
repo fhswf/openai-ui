@@ -24,7 +24,7 @@ export function MessageHeader() {
 
   return (
     <div className={classnames(styles.header)}>
-      <Button type="icon" icon={columnIcon} onClick={() => setIs({ sidebar: !is.sidebar })} />
+      <Button type="icon" icon={columnIcon} onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn"/>
       <div className={styles.header_title} data-testid="HeaderTitle">
         {message?.title}
         <div className={styles.length}>{t('count_messages', { count: messages.length })}</div>
