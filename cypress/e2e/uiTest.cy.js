@@ -2,6 +2,7 @@ const { isConstructorDeclaration } = require("typescript");
 
 describe("User Interface", () => {
   beforeEach(() => {
+<<<<<<< HEAD
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.intercept('GET', "https://openai.ki.fh-swf.de/api/login")
       .then((req) => {
@@ -9,6 +10,16 @@ describe("User Interface", () => {
       });
     cy.visit("http://localhost:5173/");
     cy.wait('@getUser', { timeout: 15000 });
+=======
+
+    cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
+    cy.visit("http://localhost:5173/");
+    cy.wait('@getUser');
+    // Check if the page has loaded successfully (Status code 200)
+    cy.request("http://localhost:5173/").should((response) => {
+      expect(response.status).to.eq(200);
+    });
+>>>>>>> 6f6edf6 (fix(test): Adjust test code for login window)
   });
 
   it("Check the headline", () => {
@@ -80,7 +91,20 @@ describe("Dark Mode", () => {
     cy.get("html").should("have.attr", "data-theme", "light");
   });
 
+<<<<<<< HEAD
   it("In Settings", () => {
+=======
+  it("Top Right Button", () => {
+    cy.get("html").should("have.attr", "data-theme", "light");
+    cy.getDataTestId("TopRightDarkModeBtn").click();
+    cy.get("html").should("have.attr", "data-theme", "dark");
+    cy.getDataTestId("TopRightDarkModeBtn").click();
+    cy.get("html").should("have.attr", "data-theme", "light");
+  });
+
+  it("In Settings", () => {
+    cy.wait(2000);
+>>>>>>> 6f6edf6 (fix(test): Adjust test code for login window)
     cy.getDataTestId("BottomLeftSideBar").find("i").eq(3).click();
     cy.get("html").should("have.attr", "data-theme", "light");
     cy.getDataTestId("OptionDarkModeSelect").select("dark");
@@ -111,7 +135,11 @@ describe("Config Menu", () => {
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.visit("http://localhost:5173/");
     cy.wait('@getUser');
+<<<<<<< HEAD
     cy.getDataTestId("OpenConfigBtn").click();
+=======
+    cy.getDataTestId("ChatTextArea").click().type("Cypress wrote this!").should("have.text", "Cypress wrote this!");
+>>>>>>> 6f6edf6 (fix(test): Adjust test code for login window)
   });
 
   it("Dark Mode", () => {
