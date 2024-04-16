@@ -77,7 +77,7 @@ describe("Config Menu", () => {
   beforeEach(() => {
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.visit("http://localhost:5173/");
-    cy.wait("@getUser");
+    cy.wait('@getUser');
     cy.getDataTestId("ChatTextArea").click().type("Cypress wrote this!").should("have.text", "Cypress wrote this!");
   });
 
