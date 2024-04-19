@@ -3,7 +3,6 @@
 coverage/
 dist/*
 node_modules/
-cypress/screenshots
 *.log
 
 # OS generated files
