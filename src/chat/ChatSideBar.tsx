@@ -108,7 +108,7 @@ export function ChatSideBar() {
             </Panel>
           </Modal>
         }
-        <Option type="help" onClick={() => { setAboutModal(!showAboutModal) }} tooltip={t("about")} />
+        <Option type="help" onClick={() => { setAboutModal(!showAboutModal) }} tooltip={t("about")}/>
         {showAboutModal &&
           <Modal>
 
