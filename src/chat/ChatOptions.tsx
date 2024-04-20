@@ -24,23 +24,31 @@ export function ConfigHeader() {
 }
 
 export function ChatOptions() {
+  const ModelOptions = [
+    { label: "gpt4-turbo", value: "gpt4-turbo" },
+    { label: "gpt4", value: "gpt4" },
+    { label: "gpt3.5-turbo", value: "gpt3.5-turbo" },
+  ];
   const { options } = useGlobal()
   const { account, openai, general } = options
   // const { avatar, name } = account
   // const { max_tokens, apiKey, temperature, baseUrl, organizationId, top_p, model } = openai
-  const { setAccount, setGeneral, setModel } = useOptions()
-  const [modelOptions, setModelOptions] = React.useState([]);
+  const { setAccount, setGeneral, setModel, setAssistant } = useOptions()
+  const [modelOptions, setModelOptions] = React.useState(ModelOptions);
+  const [assistants, setAssistants] = React.useState([]);
 
   useEffect(() => {
     if (openai.mode === 'assistant') {
       getAssistants()
         .then((assistants) => {
           console.log(assistants);
-          let options = assistants.data.map((item) => {
-            return { label: item.name || "", value: item.id }
-          });
+          let options = assistants.data
+            .filter((item) => item.metadata?.public === "True")
+            .map((item) => {
+              return { label: item.name || "", value: item.id }
+            });
           console.log("options: %o", options);
-          setModelOptions(options);
+          setAssistants(options);
         })
         .catch((error) => {
           console.error('Error:', error);
@@ -48,13 +56,6 @@ export function ChatOptions() {
             return window.location.href = import.meta.env.VITE_LOGIN_URL;
           }
         })
-    }
-    else {
-      setModelOptions([
-        { label: "gpt4-turbo", value: "gpt4-turbo" },
-        { label: "gpt4", value: "gpt4" },
-        { label: "gpt3.5-turbo", value: "gpt3.5-turbo" },
-      ]);
     }
   }, [openai.mode]);
 
@@ -98,13 +99,13 @@ export function ChatOptions() {
             openai.mode === 'assistant' ?
 
               (
-                <Panel.Item icon="model" title="OpenAI model" desc={t("openai_model_help")}>
-                  <Select options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose models" />
+                <Panel.Item icon="model" title="Assistant" desc={t("openai_model_help")}>
+                  <Select options={assistants} value={openai.assistant} onChange={val => setAssistant({ assistant: val })} placeholder="Choose assistant" />
                 </Panel.Item>)
 
               :
               (<Panel.Item icon="model" title="OpenAI model" desc={t("openai_model_help")}>
-                <Select options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose models" />
+                <Select options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose model" />
               </Panel.Item>)
           }
 

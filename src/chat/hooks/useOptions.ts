@@ -35,5 +35,12 @@ export function useOptions() {
     });
   };
 
-  return { setAccount, setModel, setGeneral };
+  const setAssistant = (data = {}) => {
+    setOptions({
+      type: OptionActionType.OPENAI,
+      data,
+    });
+  }
+
+  return { setAccount, setModel, setAssistant, setGeneral };
 }
