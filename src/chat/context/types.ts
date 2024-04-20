@@ -32,6 +32,7 @@ export type OpenAIOptions = {
     top_p: number;
     mode: string;
     model: string;
+    assistant: string;
     apiKey: string;
     max_tokens: number;
     n: number;

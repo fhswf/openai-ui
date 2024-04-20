@@ -41,7 +41,12 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         messages.push(newMessage);
         let newChat = [...chat];
         newChat.splice(currentChat, 1, { ...chat[currentChat], messages });
-        executeAssistantRequest(setState, is, newChat, messages, options, currentChat, chat, user);
+        if (options.openai.mode === "assistant") {
+          executeAssistantRequest(setState, is, newChat, messages, options, currentChat, chat, user);
+        }
+        else {
+          executeChatRequest(setState, is, newChat, messages, options, currentChat, chat);
+        }
       }
     },
 
@@ -397,7 +402,7 @@ async function executeAssistantRequest(setState, is, newChat: Chat[], messages: 
     });
   }
 
-  const stream = createRun(_chat.thread, options.openai.model);
+  const stream = createRun(_chat.thread, options.openai.assistant);
   stream
     .on('messageCreated', (message) => newMessage(message))
     .on('runStepCreated', (runStep) => {
