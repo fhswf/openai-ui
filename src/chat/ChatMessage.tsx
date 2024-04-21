@@ -32,7 +32,7 @@ export function MessageHeader() {
       <div className={styles.header_bar}>
         <Icon className={styles.icon} type="setting" title={t("chat_settings")} onClick={showSettings} />
         <Icon className={styles.icon} type="reload" title={t("reload_thread")} onClick={reloadThread} />
-        <Icon className={styles.icon} type="clear" title={t("clear_thread")} onClick={clearThread} />
+        <Icon className={styles.icon} type="clear" title={t("clear_thread")} onClick={clearThread} dataTestId="ClearMessageBtn" />
         <Icon type="download" className={[styles.icon, styles.disabled]} />
       </div>
     </div>
