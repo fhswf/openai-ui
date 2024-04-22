@@ -13,12 +13,13 @@ import { useToast } from '@chakra-ui/react'
 import { OptionActionType } from "./context/types";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { c } from "vite/dist/node/types.d-aGj9QkWt";
+import { AssistantTool } from "openai/resources/beta/assistants/assistants";
 
 export interface AssistantProps {
-    assistant_id: string;
+    assistant: string;
 }
 
-
+type ToolType = 'code_interpreter' | 'retrieval' //| 'function';
 
 function ConfigHeader() {
     const { setState, setIs, is } = useGlobal()
@@ -48,14 +49,14 @@ function ConfigHeader() {
  */
 export const AssistantOptions = (props: AssistantProps) => {
     const { setState, setIs, setOptions, doLogin, is, options } = useGlobal();
-    const { assistant_id } = props;
+    const assistant_id = props.assistant;
     const [assistant, setAssistant] = useState<OpenAI.Beta.Assistants.Assistant | null>(null);
     const [description, setDescription] = useState<string>("");
     const [name, setName] = useState<string>("");
     const [model, setModel] = useState<string>("");
     const [instructions, setInstructions] = useState<string>("");
     const [metadata, setMetadata] = useState<any>({});
-    const [tools, setTools] = useState<string[]>([]);
+    const [tools, setTools] = useState<ToolType[]>([]);
     const [file_ids, setFileIds] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -109,13 +110,22 @@ export const AssistantOptions = (props: AssistantProps) => {
         console.log("Retrieving Assistant:", assistant_id);
         retrieveAssistant(assistant_id)
             .then((assistant) => {
+                let tools: ToolType[] = [];
+                assistant.tools.forEach(element => {
+                    if (element.type === 'retrieval') {
+                        tools.push('retrieval');
+                    }
+                    if (element.type === 'code_interpreter') {
+                        tools.push('code_interpreter');
+                    }
+                });
                 setAssistant(assistant);
                 setDescription(assistant.description);
                 setName(assistant.name);
                 setModel(assistant.model);
                 setInstructions(assistant.instructions);
                 setMetadata(assistant.metadata);
-                setTools(assistant.tools.map((tool) => tool.type));
+                setTools(tools);
                 setFileIds(assistant.file_ids);
                 setLoading(false);
             })
@@ -130,12 +140,13 @@ export const AssistantOptions = (props: AssistantProps) => {
                 if (error.status === 401) {
                     doLogin();
                 }
-                setError(error.message);
+                setIs({ config: !is.config })
+                setState({ currentEditor: null })
+                setLoading(false);
             });
     }, [assistant_id]);
 
     const cancel = () => {
-
         setIs({ config: !is.config })
         setState({ currentEditor: null })
     }
@@ -153,13 +164,22 @@ export const AssistantOptions = (props: AssistantProps) => {
             }
             try {
                 const updatedAssistant = await modifyAssistant(assistant.id, newAssistant);
+                let tools: ToolType[] = [];
+                updatedAssistant.tools.forEach(element => {
+                    if (element.type === 'retrieval') {
+                        tools.push('retrieval');
+                    }
+                    if (element.type === 'code_interpreter') {
+                        tools.push('code_interpreter');
+                    }
+                });
                 setAssistant(updatedAssistant);
                 setDescription(updatedAssistant.description);
                 setName(updatedAssistant.name);
                 setModel(updatedAssistant.model);
                 setInstructions(updatedAssistant.instructions);
                 setMetadata(updatedAssistant.metadata);
-                setTools(updatedAssistant.tools.map((tool) => tool.type));
+                setTools(tools);
                 setFileIds(updatedAssistant.file_ids);
                 setIs({ config: !is.config })
                 setState({ currentEditor: null })
@@ -180,7 +200,7 @@ export const AssistantOptions = (props: AssistantProps) => {
         return (<div>Error: {error.toString()}</div>);
     }
 
-    const updateTool = (tool: string, value: boolean) => {
+    const updateTool = (tool: ToolType, value: boolean) => {
         console.log("Update tool:", tool, value);
         if (value) {
             setTools([...tools, tool]);

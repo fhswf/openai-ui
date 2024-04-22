@@ -123,6 +123,7 @@ export const createRun = (thread_id: string, assistant_id: string): AssistantStr
 }
 
 export const retrieveAssistant = async (assistant_id: string): Promise<OpenAI.Beta.Assistants.Assistant> => {
+    if (!assistant_id) return Promise.reject(Error("No assistant_id provided"));
     return client.beta.assistants.retrieve(assistant_id);
 }
 
