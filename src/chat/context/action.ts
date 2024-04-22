@@ -56,13 +56,13 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     },
 
     showSettings() {
-      const { mode, model: assistant_id } = state.options.openai;
+      const { mode, assistant } = state.options.openai;
       const chat = state.chat[state.currentChat];
       if (mode !== "assistant") {
         console.log("no settings for %s", mode);
         return
       }
-      console.log("showSettings: %s", assistant_id);
+      console.log("showSettings: %s", assistant);
 
       setState({
         is: {
@@ -70,7 +70,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
           config: true,
         },
         currentEditor: {
-          assistant_id,
+          assistant,
           type: "assistant",
         }
       });

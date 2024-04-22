@@ -34,6 +34,7 @@ export const initState: GlobalState = {
       theme: "light",
       sendCommand: "ENTER",
       size: "normal",
+      codeEditor: false
     },
     openai: {
       baseUrl: "https://openai.ki.fh-swf.de/api/v1/chat/completions",
@@ -46,6 +47,7 @@ export const initState: GlobalState = {
       n: 1,
       top_p: 1,
       stream: true,
+      assistant: ""
     },
   },
   is: {
