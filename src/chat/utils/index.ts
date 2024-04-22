@@ -32,7 +32,7 @@ export function fetchAndGetUser(dispatch) {
       console.log("getting user: ", res.status);
       if (res.status === 401) {
         window.location.href = import.meta.env.VITE_LOGIN_URL;
-        throw new Error("unauthorized");
+        return Promise.resolve(Error("unauthorized"));
       }
 
       return res.json();

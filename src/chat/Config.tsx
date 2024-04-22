@@ -11,7 +11,7 @@ export const Config = () => {
 
     switch (currentEditor?.type) {
         case "assistant":
-            return <AssistantOptions assistant_id={currentEditor.assistant_id} />;
+            return <AssistantOptions assistant={currentEditor.assistant} />;
         default:
             return <ChatOptions />;
     }

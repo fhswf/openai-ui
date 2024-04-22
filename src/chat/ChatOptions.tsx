@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { Button, Panel, Input, Title, Avatar, Select } from '../components'
 import { useGlobal } from './context'
-import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils'
+import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
 import { Tooltip } from '../components'
 import styles from './style/config.module.less'
 import { classnames } from '../components/utils'
@@ -33,7 +33,7 @@ export function ChatOptions() {
   const { account, openai, general } = options
   // const { avatar, name } = account
   // const { max_tokens, apiKey, temperature, baseUrl, organizationId, top_p, model } = openai
-  const { setAccount, setGeneral, setModel, setAssistant } = useOptions()
+  const { setAccount, setGeneral, setAPIMode, setModel, setAssistant } = useOptions()
   const [modelOptions, setModelOptions] = React.useState(ModelOptions);
   const [assistants, setAssistants] = React.useState([]);
 
@@ -43,12 +43,15 @@ export function ChatOptions() {
         .then((assistants) => {
           console.log(assistants);
           let options = assistants.data
-            .filter((item) => item.metadata?.public === "True")
+            .filter((item) => item.metadata["public"] === "True")
             .map((item) => {
               return { label: item.name || "", value: item.id }
             });
           console.log("options: %o", options);
           setAssistants(options);
+          if (openai.assistant === "") {
+            setAssistant(options[0].value);
+          }
         })
         .catch((error) => {
           console.error('Error:', error);
@@ -93,14 +96,14 @@ export function ChatOptions() {
         </Panel>
         <Panel className={styles.panel} title="Global OpenAI Config">
           <Panel.Item icon="editor" title="API mode" desc={t("api_mode_help")}>
-            <Select options={modeOptions} value={openai.mode} onChange={val => setModel({ mode: val })} />
+            <Select options={modeOptions} value={openai.mode} onChange={val => setAPIMode(val)} />
           </Panel.Item>
           {
             openai.mode === 'assistant' ?
 
               (
                 <Panel.Item icon="model" title="Assistant" desc={t("openai_model_help")}>
-                  <Select options={assistants} value={openai.assistant} onChange={val => setAssistant({ assistant: val })} placeholder="Choose assistant" />
+                  <Select options={assistants} value={openai.assistant} onChange={val => setAssistant(val)} placeholder="Choose assistant" />
                 </Panel.Item>)
 
               :
