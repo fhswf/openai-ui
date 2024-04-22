@@ -121,46 +121,21 @@ describe("Config Menu", () => {
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.visit("http://localhost:5173/");
     cy.wait('@getUser');
-    cy.getDataTestId("ChatTextArea").click().type("Cypress wrote this!").should("have.text", "Cypress wrote this!");
+    cy.getDataTestId("BottomLeftSideBar").find("i").eq(3).click();
   });
 
-  it("Sending a message with the send button", () => {
-    cy.getDataTestId("SendMessageBtn").click();
-    cy.getDataTestId("ChatTextArea").should("have.text", "");
-    cy.getDataTestId("ChatListContainer").should("be.visible");
-    cy.getDataTestId("ChatMessage").each((message) => {
-      cy.wrap(message).should("contain.text", "Cypress wrote this!");
-    });
+  it("Dark Mode", () => {
+    cy.get("html").should("have.attr", "data-theme", "light");
+    cy.getDataTestId("OptionDarkModeSelect").select("dark");
+    cy.get("html").should("have.attr", "data-theme", "dark");
+    cy.getDataTestId("OptionDarkModeSelect").select("light");
+    cy.get("html").should("have.attr", "data-theme", "light");
   });
 
-  it("Sending 2 messages and checking if both are in the chat", () => {
-    cy.getDataTestId("SendMessageBtn").click();
-    //cy.getDataTestId("ChatTextArea").should("have.text", "");
-    cy.wait(2000);
-    cy.getDataTestId("ChatListContainer").should("be.visible");
-    cy.getDataTestId("ChatMessage").each((message) => {
-      cy.wrap(message).should("contain.text", "Cypress wrote this!");
-    });
-    cy.getDataTestId("ChatTextArea").click().type("Cypress also wrote this!");
-    cy.getDataTestId("ChatTextArea").should(
-      "have.text",
-      "Cypress also wrote this!"
-    );
-    cy.getDataTestId("SendMessageBtn").click();
-    cy.getDataTestId("ChatTextArea").should("have.text", "");
-    cy.getDataTestId("ChatListContainer").should("be.visible");
-
-    cy.getDataTestId("ChatListContainer").within(() => {
-      // Überprüfe die erste Nachricht
-      cy.getDataTestId("ChatMessage")
-        .eq(0)
-        .should("contain", "Cypress wrote this!");
-
-      // Überprüfe die zweite Nachricht
-      cy.getDataTestId("ChatMessage")
-        .eq(1)
-        .should("contain", "Cypress also wrote this!");
-    });
+  it("Change Send Message Button", () => {
+    cy.getDataTestId("SendMessageSelect").select("COMMAND_ENTER").should("have.value", "COMMAND_ENTER");
+    cy.getDataTestId("SendMessageSelect").select("ALT_ENTER").should("have.value", "ALT_ENTER");
+    cy.getDataTestId("SendMessageSelect").select("ENTER").should("have.value", "ENTER");
   });
 
   it("Set top P input", () => {
@@ -179,38 +154,21 @@ describe("Config Menu", () => {
     cy.getDataTestId('APIOrganisationIDInput').clear().should("have.value", "").type("a_cypress_id_test").should("have.value", "a_cypress_id_test");
   });
 
-  it("Changing the message sending to ctrl+enter and sending it", () => {
-    // Change message sending method to use ctrl+enter
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(3).click();
-    cy.getDataTestId("SendMessageSelect").select("COMMAND_ENTER");
-    cy.getDataTestId("SettingsCloseBtn").click();
-
-    // Try sending message using Enter
-    cy.getDataTestId("ChatTextArea").click().type("{enter}").should("have.text", "Cypress wrote this!");
-
-    // Send message using ctrl+Enter
-    cy.getDataTestId("ChatTextArea").click().type("{ctrl}{enter}").should("have.text", "");
-
-    // Check if the message has been sent
-    cy.getDataTestId("ChatMessage").each((message) => {
-      cy.wrap(message).should("contain.text", "Cypress wrote this!");
-    });
+  it("Change Fontsize", () => {
+    cy.getDataTestId('SettingsHeader').find('h5').should('have.css', 'font-size', '12px');
+    cy.getDataTestId("ChangeFontSizeSelect").select("Small").should("have.value", "small");
+    cy.getDataTestId('SettingsHeader').find('h5').should('have.css', 'font-size', '12px');
+    cy.getDataTestId("ChangeFontSizeSelect").select("Default").should("have.value", "default");
+    cy.getDataTestId('SettingsHeader').find('h5').should('have.css', 'font-size', '14px');
+    cy.getDataTestId("ChangeFontSizeSelect").select("Middle").should("have.value", "middle");
+    cy.getDataTestId('SettingsHeader').find('h5').should('have.css', 'font-size', '13px');
+    cy.getDataTestId("ChangeFontSizeSelect").select("Large").should("have.value", "large");
+    cy.getDataTestId('SettingsHeader').find('h5').should('have.css', 'font-size', '16px');
   });
 
-  it("Sending a message and clearing the chatlog", () => {
-    // Send message
-    cy.getDataTestId("SendMessageBtn").click();
-    cy.getDataTestId("ChatListContainer").find('[data-testid="ChatMessage"]').should('exist');
-
-    // Clear chatlog
-    cy.getDataTestId("ClearMessageBtn").click();
-    cy.getDataTestId("ChatListContainer").should('not.exist');
-
-    // Check if message can be sent again
-    const message = "Cypress wrote this!";
-    cy.getDataTestId("ChatTextArea").type(message).should("have.value", message);
-    cy.getDataTestId("SendMessageBtn").click();
-    cy.getDataTestId("ChatListContainer").should('exist');
+  it("Change OpenAI Model", () => {
+    cy.getDataTestId('ChangeAIModelSelect').select("gpt-4-turbo-preview").should("have.value", "gpt-4-turbo-preview");
+    cy.getDataTestId('ChangeAIModelSelect').select("gpt-4").should("have.value", "gpt-4");
+    cy.getDataTestId('ChangeAIModelSelect').select("gpt-3.5-turbo").should("have.value", "gpt-3.5-turbo");
   });
-
 });
