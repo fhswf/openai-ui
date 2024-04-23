@@ -112,6 +112,8 @@ i18n
                     tool_retrieval: "Informationssuche",
                     tool_code_interpreter: "Code-Interpreter",
                     help_delete_file: "Löschen Sie die Datei aus dem Chatbot.",
+                    send: "Senden",
+                    clear: "Löschen",
                 },
             },
         },
