@@ -294,9 +294,9 @@ export const AssistantOptions = (props: AssistantProps) => {
                                 <FormLabel htmlFor='code_editor' mb='0'>
                                     {t("code_editor")}
                                 </FormLabel>
-                                <Switch id="code_editor" isChecked={metadata.code_editor} onChange={(value) => {
+                                <Switch id="code_editor" isChecked={metadata.code_editor === "true"} onChange={(value) => {
                                     console.log("onChange: ", value.target.checked);
-                                    setMetadata({ ...metadata, code_editor: value.target.checked });
+                                    setMetadata({ ...metadata, code_editor: value.target.checked.toString() });
                                     setOptions({ type: OptionActionType.GENERAL, data: { ...options.general, codeEditor: value.target.checked } })
                                 }} />
                             </Flex>
