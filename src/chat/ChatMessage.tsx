@@ -92,7 +92,7 @@ export function MessageBar() {
       <div className={styles.bar_inner}>
         <div className={styles.bar_type}>
           {
-            options.general.codeEditor ? <CodeEditor language='Python' minHeight="10em" onChange={(ev) => setMessage(ev.target.value)} /> :
+            options.general.codeEditor ? <CodeEditor language='Python' minHeight={16} onChange={(ev) => setMessage(ev.target.value)} /> :
               <Textarea transparent={true} rows="3" value={typeingMessage?.content || ''}
                 onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
                 placeholder={t("Enter something....")} onChange={setMessage} onEnter={onEnter} />
@@ -101,12 +101,9 @@ export function MessageBar() {
         <div className={styles.bar_icon}>
           {typeingMessage?.content &&
             <Tooltip text="clear">
-              <Icon className={styles.icon} type="cancel" onClick={clearTypeing} />
+              <Icon className={styles.icon} type={t("cancel")} onClick={clearTypeing} />
             </Tooltip>}
-          <Tooltip text="history">
-            <Icon className={styles.icon} type="history" />
-          </Tooltip>
-          <Icon className={styles.icon} type="send" onClick={sendMessage} />
+          <Icon className={styles.icon} type={t("send")} onClick={sendMessage} />
         </div>
       </div>
     </div>
