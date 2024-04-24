@@ -5,6 +5,11 @@ on: push
 jobs:
   cypress-run:
     runs-on: ubuntu-22.04
+    env:
+      VITE_LOGIN_URL: https://openai.ki.fh-swf.de/api/login
+      VITE_API_BASE_URL: https://openai.ki.fh-swf.de/api/v1
+      VITE_USER_URL: https://openai.ki.fh-swf.de/api/v1/user
+      LANGUAGE: de
     container:
       image: cypress/browsers:node-20.9.0-chrome-118.0.5993.88-1-ff-118.0.2-edge-118.0.2088.46-1
       options: --user 1001
@@ -22,10 +27,6 @@ jobs:
           browser: chrome
           spec: cypress/e2e/uiTest.cy.js
           record: false
-        env:
-          VITE_LOGIN_URL: https://openai.ki.fh-swf.de/api/login
-          VITE_API_BASE_URL: https://openai.ki.fh-swf.de/api/v1
-          VITE_USER_URL: https://openai.ki.fh-swf.de/api/v1/user
       - uses: actions/upload-artifact@v4
         # add the line below to store screenshots only on failures
         if: failure()
