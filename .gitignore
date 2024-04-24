@@ -3,7 +3,6 @@
 coverage/
 dist/*
 node_modules/
-cypress/screenshots
 *.log
 
 # OS generated files
@@ -17,3 +16,5 @@ Thumbs.db
 .env.me
 
 .env
+cypress/videos/
+cypress/screenshots/
