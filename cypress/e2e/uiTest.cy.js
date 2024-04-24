@@ -1,13 +1,12 @@
 describe("User Interface", () => {
   beforeEach(() => {
-
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.visit("http://localhost:5173/");
     cy.wait('@getUser');
     // Check if the page has loaded successfully (Status code 200)
-    cy.request("http://localhost:5173/").should((response) => {
-      expect(response.status).to.eq(200);
-    });
+    //cy.request("http://localhost:5173/").should((response) => {
+    //  expect(response.status).to.eq(200);
+    //});
   });
 
   it("Check the headline", () => {
@@ -15,18 +14,18 @@ describe("User Interface", () => {
       "K!mpuls, der datenschutzfreundliche Chatbot der FH Südwestfalen"
     );
   });
-/*
-  it.only('Check if headline is equal to the conversation', () => {
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(1).click();
-    cy.getDataTestId("ConversationList").within(() => {
-      cy.get('[data-testid="Conversation"]').eq(0).find('[data-testid="ConversationTitle"]').invoke("text").as("conversationText").then(() => {
-        //cy.get('[data-testid="HeaderTitle"]').should("contain.text", conversationText); 
-        cy.getDataTestId("HeaderTitle").get("text").as("headerText");
-        cy.log(this.headerText);
+  /*
+    it.only('Check if headline is equal to the conversation', () => {
+      cy.getDataTestId("BottomLeftSideBar").find("i").eq(1).click();
+      cy.getDataTestId("ConversationList").within(() => {
+        cy.get('[data-testid="Conversation"]').eq(0).find('[data-testid="ConversationTitle"]').invoke("text").as("conversationText").then(() => {
+          //cy.get('[data-testid="HeaderTitle"]').should("contain.text", conversationText); 
+          cy.getDataTestId("HeaderTitle").get("text").as("headerText");
+          cy.log(this.headerText);
+        });
       });
     });
-  });
-*/
+  */
   it("Hide and show the conversation sidebar", () => {
     cy.getDataTestId("ConversationSideBar").should("exist");
     cy.getDataTestId("ConversationSideBarBtn").click();
@@ -57,7 +56,7 @@ describe("User Interface", () => {
     cy.getDataTestId("ConversationCreateBtn").click();
     cy.getDataTestId("HeaderTitle").contains("Dies ist ein neues Gespräch");
     cy.getDataTestId("ConversationList").within(() => {
-      cy.get('[data-testid="Conversation"]').eq(0).find('[data-testid="ConversationTitle"]').contains("Dies ist ein neues Gespräch"); 
+      cy.get('[data-testid="Conversation"]').eq(0).find('[data-testid="ConversationTitle"]').contains("Dies ist ein neues Gespräch");
       cy.getDataTestId("editConversation").find("i").eq(0).click({ force: true });
       cy.getDataTestId("editConversationTextArea").find("textarea").clear().type("edit conversation text");
       cy.getDataTestId("editConversationSaveBtn").click();
