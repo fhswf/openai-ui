@@ -16,18 +16,8 @@ describe("User Interface", () => {
       "K!mpuls"
     );
   });
-  /*
-    it.only('Check if headline is equal to the conversation', () => {
-      cy.getDataTestId("BottomLeftSideBar").find("i").eq(1).click();
-      cy.getDataTestId("ConversationList").within(() => {
-        cy.get('[data-testid="Conversation"]').eq(0).find('[data-testid="ConversationTitle"]').invoke("text").as("conversationText").then(() => {
-          //cy.get('[data-testid="HeaderTitle"]').should("contain.text", conversationText); 
-          cy.getDataTestId("HeaderTitle").get("text").as("headerText");
-          cy.log(this.headerText);
-        });
-      });
-    });
-  */
+
+
   it("Hide and show the conversation sidebar", () => {
     cy.getDataTestId("ConversationSideBar").should("exist");
     cy.getDataTestId("ConversationSideBarBtn").click();
