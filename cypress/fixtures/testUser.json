@@ -1,6 +1,20 @@
 {
-    "name": "None None",
-    "email": "christian.gawron%gpt@gmail.com",
-    "sub": "b49b699d-d279-4860-8387-70d8785ad885",
-    "preferred_username": "test_gpt"
+    "name": "Christian Gawron",
+    "email": "gawron.christian@fh-swf.de",
+    "sub": "8414053a-25d6-482b-901f-b676d810ebca",
+    "preferred_username": "chgaw002",
+    "affiliations": {
+        "fh-swf.de": [
+            "affiliate",
+            "faculty",
+            "employee",
+            "member"
+        ],
+        "fb-in.fh-swf.de": [
+            "affiliate",
+            "faculty",
+            "employee",
+            "member"
+        ]
+    }
 }
