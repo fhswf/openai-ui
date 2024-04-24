@@ -88,10 +88,10 @@ export function ChatOptions() {
             <Select value={general.sendCommand} onChange={(val) => setGeneral({ sendCommand: val })} options={sendCommandOptions} placeholder="Select interface style" dataTestId="SendMessageSelect" />
           </Panel.Item>
           <Panel.Item icon="lang" title="Language" desc={t("language_help")}>
-            <Select value={general.language} onChange={val => setGeneral({ language: val })} options={languageOptions} placeholder="language" dataTestId="SetLanguageSelect"/>
+            <Select value={general.language} onChange={val => setGeneral({ language: val })} options={languageOptions} placeholder="language" dataTestId="SetLanguageSelect" />
           </Panel.Item>
           <Panel.Item icon="config" title="FontSize" desc={t("fontsize_help")}>
-            <Select value={general.size} onChange={val => setGeneral({ size: val })} options={sizeOptions} placeholder="OpenAI ApiKey" dataTestId="ChangeFontSizeSelect"/>
+            <Select value={general.size} onChange={val => setGeneral({ size: val })} options={sizeOptions} placeholder="OpenAI ApiKey" dataTestId="ChangeFontSizeSelect" />
           </Panel.Item>
         </Panel>
         <Panel className={styles.panel} title="Global OpenAI Config">
