@@ -180,16 +180,16 @@ describe("Config Menu", () => {
     // Send message
     cy.getDataTestId("SendMessageBtn").click();
     cy.getDataTestId("ChatListContainer").find('[data-testid="ChatMessage"]').should('exist');
-  
+
     // Clear chatlog
     cy.getDataTestId("ClearMessageBtn").click();
     cy.getDataTestId("ChatListContainer").should('not.exist');
-  
+
     // Check if message can be sent again
     const message = "Cypress wrote this!";
     cy.getDataTestId("ChatTextArea").type(message).should("have.value", message);
     cy.getDataTestId("SendMessageBtn").click();
     cy.getDataTestId("ChatListContainer").should('exist');
   });
-  
+
 });
