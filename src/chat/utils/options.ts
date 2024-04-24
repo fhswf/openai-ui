@@ -54,8 +54,8 @@ export const modeOptions = [
 
 export const modelOptions = [
   {
-    label: "gpt-4-turbo-preview",
-    value: "gpt-4-turbo-preview",
+    label: "gpt-4-turbo",
+    value: "gpt-4-turbo",
   },
   {
     label: "gpt-4",

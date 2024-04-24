@@ -25,9 +25,9 @@ export function ConfigHeader() {
 
 export function ChatOptions() {
   const ModelOptions = [
-    { label: "gpt4-turbo", value: "gpt4-turbo" },
-    { label: "gpt4", value: "gpt4" },
-    { label: "gpt3.5-turbo", value: "gpt3.5-turbo" },
+    { label: "gpt-4-turbo", value: "gpt-4-turbo" },
+    { label: "gpt-4", value: "gpt-4" },
+    { label: "gpt-3.5-turbo", value: "gpt-3.5-turbo" },
   ];
   const { options } = useGlobal()
   const { account, openai, general } = options

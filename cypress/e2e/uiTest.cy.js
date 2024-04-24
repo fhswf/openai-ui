@@ -1,12 +1,24 @@
+const { isConstructorDeclaration } = require("typescript");
+
 describe("User Interface", () => {
+  let log = [];
+
+  before(() => {
+    Cypress.on("window:before:load", (win) => {
+      cy.stub(win.console, "log", (...args) => {
+        log.push([...args]);
+      });
+    });
+  })
+  afterEach(() => {
+    cy.log("test")
+    cy.log(log)
+  });
   beforeEach(() => {
+
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
 
-    cy.visit("http://localhost:5173/", {
-      onBeforeLoad(win) {
-        cy.stub(win.console, 'log', cy.log)
-      }
-    });
+    cy.visit("http://localhost:5173/");
     cy.wait('@getUser', { timeout: 15000 });
   });
 
@@ -147,9 +159,9 @@ describe("Config Menu", () => {
   });
 
   it("Change OpenAI Model", () => {
-    cy.getDataTestId('ChangeAIModelSelect').select("gpt4-turbo").should("have.value", "gpt4-turbo");
-    cy.getDataTestId('ChangeAIModelSelect').select("gpt4").should("have.value", "gpt4");
-    cy.getDataTestId('ChangeAIModelSelect').select("gpt3.5-turbo").should("have.value", "gpt3.5-turbo");
+    cy.getDataTestId('ChangeAIModelSelect').select("gpt-4-turbo").should("have.value", "gpt-4-turbo");
+    cy.getDataTestId('ChangeAIModelSelect').select("gpt-4").should("have.value", "gpt-4");
+    cy.getDataTestId('ChangeAIModelSelect').select("gpt-3.5-turbo").should("have.value", "gpt-3.5-turbo");
   });
 
   it("Set max tokens input", () => {
