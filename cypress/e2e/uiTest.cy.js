@@ -1,7 +1,12 @@
 describe("User Interface", () => {
   beforeEach(() => {
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
-    cy.visit("http://localhost:5173/");
+
+    cy.visit("http://localhost:5173/", {
+      onBeforeLoad(win) {
+        cy.stub(win.console, 'log', cy.log)
+      }
+    });
     cy.wait('@getUser', { timeout: 15000 });
   });
 
