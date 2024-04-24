@@ -77,6 +77,7 @@ describe("Config Menu", () => {
   beforeEach(() => {
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.visit("http://localhost:5173/");
+    cy.wait("@getUser");
     cy.getDataTestId("ChatTextArea").click().type("Cypress wrote this!").should("have.text", "Cypress wrote this!");
   });
 
@@ -157,16 +158,16 @@ describe("Config Menu", () => {
     // Send message
     cy.getDataTestId("SendMessageBtn").click();
     cy.getDataTestId("ChatListContainer").find('[data-testid="ChatMessage"]').should('exist');
-  
+
     // Clear chatlog
     cy.getDataTestId("ClearMessageBtn").click();
     cy.getDataTestId("ChatListContainer").should('not.exist');
-  
+
     // Check if message can be sent again
     const message = "Cypress wrote this!";
     cy.getDataTestId("ChatTextArea").type(message).should("have.value", message);
     cy.getDataTestId("SendMessageBtn").click();
     cy.getDataTestId("ChatListContainer").should('exist');
   });
-  
+
 });
