@@ -1,21 +1,7 @@
 const { isConstructorDeclaration } = require("typescript");
 
 describe("User Interface", () => {
-  let log = [];
-
-  before(() => {
-    Cypress.on("window:before:load", (win) => {
-      cy.stub(win.console, "log", (...args) => {
-        log.push([...args]);
-      });
-    });
-  })
-  afterEach(() => {
-    cy.log("test")
-    cy.log(log)
-  });
   beforeEach(() => {
-
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.intercept('GET', "https://openai.ki.fh-swf.de/api/login")
       .then((req) => {
