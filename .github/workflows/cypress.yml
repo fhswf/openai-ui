@@ -11,6 +11,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       # Install npm dependencies, cache them correctly
       # and run all Cypress tests
       - name: Cypress run
@@ -19,7 +20,7 @@ jobs:
           build: npm ci
           start: npm start
           browser: chrome
-          spec: cypress/e2e/uiTests.cy.js
+          spec: cypress/e2e/uiTest.cy.js
           record: false
       - uses: actions/upload-artifact@v4
         # add the line below to store screenshots only on failures
