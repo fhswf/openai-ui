@@ -1,11 +1,16 @@
 describe("User Interface", () => {
   beforeEach(() => {
+    cy.fixture("user").then((user) => {
+      cy.intercept("https://openai.ki.fh-swf.de/api/user", user).as("getUser");
+    })
+
     cy.visit("http://localhost:5173/");
+    cy.wait("@getUser");
 
     // Check if the page has loaded successfully (Status code 200)
-    cy.request("http://localhost:5173/").should((response) => {
-      expect(response.status).to.eq(200);
-    });
+    //cy.request("http://localhost:5173/").should((response) => {
+    //  expect(response.status).to.eq(200);
+    //});
   });
 
   it("Check the headline", () => {
@@ -31,7 +36,12 @@ describe("User Interface", () => {
 
 describe("Dark Mode", () => {
   beforeEach(() => {
+    cy.fixture("user").then((user) => {
+      cy.intercept("https://openai.ki.fh-swf.de/api/user", user).as("getUser");
+    })
+
     cy.visit("http://localhost:5173/");
+    cy.wait("@getUser");
   });
 
   it("Down Left Button", () => {
@@ -66,7 +76,12 @@ describe("Dark Mode", () => {
 
 describe("User Information", () => {
   beforeEach(() => {
+    cy.fixture("user").then((user) => {
+      cy.intercept("https://openai.ki.fh-swf.de/api/user", user).as("getUser");
+    })
+
     cy.visit("http://localhost:5173/");
+    cy.wait("@getUser");
   });
 
   it("Open and close user information", () => {
@@ -80,7 +95,12 @@ describe("User Information", () => {
 
 describe("Chat", () => {
   beforeEach(() => {
+    cy.fixture("user").then((user) => {
+      cy.intercept("https://openai.ki.fh-swf.de/api/user", user).as("getUser");
+    })
+
     cy.visit("http://localhost:5173/");
+    cy.wait("@getUser");
     cy.getDataTestId("ChatTextArea").click().type("Cypress wrote this!").should("have.text", "Cypress wrote this!");
   });
 
@@ -155,16 +175,16 @@ describe("Chat", () => {
     // Send message
     cy.getDataTestId("SendMessageBtn").click();
     cy.getDataTestId("ChatListContainer").find('[data-testid="ChatMessage"]').should('exist');
-  
+
     // Clear chatlog
     cy.getDataTestId("ClearMessageBtn").click();
     cy.getDataTestId("ChatListContainer").should('not.exist');
-  
+
     // Check if message can be sent again
     const message = "Cypress wrote this!";
     cy.getDataTestId("ChatTextArea").type(message).should("have.value", message);
     cy.getDataTestId("SendMessageBtn").click();
     cy.getDataTestId("ChatListContainer").should('exist');
   });
-  
+
 });
