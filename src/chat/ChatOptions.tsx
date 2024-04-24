@@ -13,8 +13,8 @@ import { getAssistants } from './service/assistant'
 export function ConfigHeader() {
   const { setState, setIs, is } = useGlobal()
   return (
-    <div className={classnames(styles.header, 'flex-c-sb')}>
-      <Title type="h2">Setting</ Title>
+    <div className={classnames(styles.header, 'flex-c-sb')} data-testid="SettingsHeader">
+      <Title type="h5">Setting</ Title>
       <div className="flex-c">
         <Button type="icon" onClick={() => setState(initState)} icon="refresh" dataTestId="SettingsRefreshBtn" />
         <Button type="icon" onClick={() => setIs({ config: !is.config })} icon="close" dataTestId="SettingsCloseBtn" />
@@ -88,15 +88,15 @@ export function ChatOptions() {
             <Select value={general.sendCommand} onChange={(val) => setGeneral({ sendCommand: val })} options={sendCommandOptions} placeholder="Select interface style" dataTestId="SendMessageSelect" />
           </Panel.Item>
           <Panel.Item icon="lang" title="Language" desc={t("language_help")}>
-            <Select value={general.language} onChange={val => setGeneral({ language: val })} options={languageOptions} placeholder="language" />
+            <Select value={general.language} onChange={val => setGeneral({ language: val })} options={languageOptions} placeholder="language" dataTestId="SetLanguageSelect" />
           </Panel.Item>
           <Panel.Item icon="config" title="FontSize" desc={t("fontsize_help")}>
-            <Select value={general.size} onChange={val => setGeneral({ size: val })} options={sizeOptions} placeholder="OpenAI ApiKey" />
+            <Select value={general.size} onChange={val => setGeneral({ size: val })} options={sizeOptions} placeholder="OpenAI ApiKey" dataTestId="ChangeFontSizeSelect" />
           </Panel.Item>
         </Panel>
         <Panel className={styles.panel} title="Global OpenAI Config">
           <Panel.Item icon="editor" title="API mode" desc={t("api_mode_help")}>
-            <Select options={modeOptions} value={openai.mode} onChange={val => setAPIMode(val)} />
+            <Select dataTestId="ChangeAIModelSelect" options={modeOptions} value={openai.mode} onChange={val => setAPIMode(val)} />
           </Panel.Item>
           {
             openai.mode === 'assistant' ?
@@ -113,26 +113,26 @@ export function ChatOptions() {
           }
 
           <Panel.Item icon="files" title="Max Tokens" desc="The maximum number of tokens to generate in the reply. 1 token is roughly 1 word.">
-            <Input type="number" value={openai.max_tokens} placeholder="Max Tokens" onChange={val => setModel({ max_tokens: +val })} />
+            <Input type="number" value={openai.max_tokens} placeholder="Max Tokens" onChange={val => setModel({ max_tokens: +val })} data-testid="MaxTokensInput" />
           </Panel.Item>
           <Panel.Item icon="paste" title="Temperature" desc={t("temperature_help")}>
-            <Input type="number" value={openai.temperature} placeholder="OpenAI Temperature" onChange={val => setModel({ temperature: +val })} />
+            <Input type="number" value={openai.temperature} placeholder="OpenAI Temperature" onChange={val => setModel({ temperature: +val })} data-testid="SetTemperatureInput" />
           </Panel.Item>
           <Panel.Item icon="link" title="Top P" desc={t("top_p_help")}>
-            <Input type="number" value={openai.top_p} placeholder="Custom top_p." onChange={val => setModel({ top_p: +val })} />
+            <Input type="number" value={openai.top_p} placeholder="Custom top_p." onChange={val => setModel({ top_p: +val })} data-testid="SetTopPInput" />
           </Panel.Item>
         </Panel>
 
         <Panel className={styles.panel} title="Custom API endpoint"
           desc={t("custom_endpoint_desc")}>
           <Panel.Item icon="link" title="Api Base Url" desc="Custom base url for OpenAI API.">
-            <Input value={openai.baseUrl} placeholder="Api Base Url" onChange={val => setModel({ baseUrl: val })} />
+            <Input value={openai.baseUrl} placeholder="Api Base Url" onChange={val => setModel({ baseUrl: val })} data-testid="ApiBaseURLInput" />
           </Panel.Item>
           <Panel.Item title="API Key" desc="Custom openai.com API Key" icon="key">
-            <Input value={openai.apiKey} autoComplete="new-password" onChange={val => setModel({ apiKey: val })} placeholder="ApiKey" type="password" />
+            <Input value={openai.apiKey} autoComplete="new-password" onChange={val => setModel({ apiKey: val })} placeholder="ApiKey" type="password" data-testid="APIKeyInput" />
           </Panel.Item>
           <Panel.Item icon="organization" title="Organization" desc="OpenAI Organization ID. Documentation.">
-            <Input value={openai.organizationId} placeholder="OpenAI Organization ID" onChange={val => setModel({ organizationId: val })} />
+            <Input value={openai.organizationId} placeholder="OpenAI Organization ID" onChange={val => setModel({ organizationId: val })} data-testid="APIOrganisationIDInput" />
           </Panel.Item>
 
         </Panel>
