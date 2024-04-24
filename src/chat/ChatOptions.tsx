@@ -96,7 +96,7 @@ export function ChatOptions() {
         </Panel>
         <Panel className={styles.panel} title="Global OpenAI Config">
           <Panel.Item icon="editor" title="API mode" desc={t("api_mode_help")}>
-            <Select dataTestId="ChangeAIModelSelect" options={modeOptions} value={openai.mode} onChange={val => setAPIMode(val)} />
+            <Select options={modeOptions} value={openai.mode} onChange={val => setAPIMode(val)} />
           </Panel.Item>
           {
             openai.mode === 'assistant' ?
@@ -108,7 +108,7 @@ export function ChatOptions() {
 
               :
               (<Panel.Item icon="model" title="OpenAI model" desc={t("openai_model_help")}>
-                <Select options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose model" />
+                <Select dataTestId="ChangeAIModelSelect" options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose model" />
               </Panel.Item>)
           }
 
