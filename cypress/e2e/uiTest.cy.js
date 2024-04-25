@@ -190,7 +190,7 @@ describe("Config Menu", () => {
     cy.getDataTestId('APIKeyInput').clear().should("have.value", "").type("a_cypress_input_test").should("have.value", "a_cypress_input_test");
   });
 
-  it.only("Set organisation id input", () => {
+  it("Set organisation id input", () => {
     cy.getDataTestId('APIOrganisationIDInput').clear().should("have.value", "").type("a_cypress_id_test").should("have.value", "a_cypress_id_test");
   });
 });
