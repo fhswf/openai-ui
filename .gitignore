@@ -17,3 +17,5 @@ Thumbs.db
 .env.me
 
 .env
+cypress/videos/
+cypress/screenshots/

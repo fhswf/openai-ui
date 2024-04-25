@@ -6,11 +6,12 @@ export function formatNumber(n) {
   return n < 10 ? `0${n}` : n;
 }
 
-export function dateFormat(ms) {
+export function dateFormat(secs) {
 
   const activeLocale = i18next.resolvedLanguage;
 
-  const date = new Date(parseInt(ms));
+  const date = new Date(1000 * secs);
+  //console.log("dateFormat: ", date, "activeLocale: ", activeLocale, "ms: ", ms, "date: ", date);
   return new Intl.DateTimeFormat(activeLocale, { dateStyle: "short", timeStyle: "medium" }).format(date);
 }
 
@@ -27,16 +28,16 @@ export async function sha256Digest(message) {
 
 export function fetchAndGetUser(dispatch) {
   fetch(import.meta.env.VITE_USER_URL, { credentials: "include" })
-    .catch(err => {
-      console.log("error getting user: ", err);
-    })
-    .then(res => {
+    .then((res) => {
       console.log("getting user: ", res.status);
       if (res.status === 401) {
         window.location.href = import.meta.env.VITE_LOGIN_URL;
+        return Promise.resolve(Error("unauthorized"));
       }
+
       return res.json();
     })
+
     .then(user => {
       sha256Digest(user.email).then(hash => {
         user.hash = hash;
@@ -52,5 +53,8 @@ export function fetchAndGetUser(dispatch) {
           dispatch({ type: "SET_STATE", payload: { user } });
         });
       });
+    })
+    .catch(err => {
+      console.log("error getting user: ", err);
     });
 }

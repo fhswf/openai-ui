@@ -1,5 +1,4 @@
 
-
 export enum GlobalActionType {
     SET_STATE = "SET_STATE",
     CHANGE_MESSAGE = "CHANGE_MESSAGE",
@@ -18,6 +17,7 @@ export type GeneralOptions = {
     theme: string;
     sendCommand: string;
     size: string;
+    codeEditor: boolean;
 };
 
 export type AccountOptions = {
@@ -30,7 +30,9 @@ export type OpenAIOptions = {
     organizationId: string;
     temperature: number;
     top_p: number;
+    mode: string;
     model: string;
+    assistant: string;
     apiKey: string;
     max_tokens: number;
     n: number;
@@ -78,15 +80,18 @@ export type OptionAction = { type: OptionActionType.GENERAL; data: Partial<Gener
 
 export type GlobalActions = {
     setState: (payload: Partial<GlobalState>) => void;
+    doLogin: () => void;
     clearTypeing: () => void;
     sendMessage: () => void;
     setApp: (app: any) => void;
+    showSettings: () => void;
     newChat: (app: any) => void;
     modifyChat: (arg: any, index: number) => void;
     editChat: (index: number, title: string) => void;
     removeChat: (index: number) => void;
     setMessage: (content: string) => void;
-    clearMessage: () => void;
+    clearThread: () => void;
+    reloadThread: () => void;
     editMessage: (id: number) => void;
     removeMessage: (id: number) => void;
     setOptions: (arg: OptionAction) => void;
@@ -97,9 +102,10 @@ export type GlobalActions = {
 
 export type Message = {
     content: string;
-    sentTime: number;
+    sentTime?: number;
     role: string;
-    id: number;
+    id: number | string;
+    thread_id?: string;
 };
 
 export type Messages = Message[];
@@ -107,6 +113,7 @@ export type Messages = Message[];
 export type Chat = {
     title: string;
     id: number;
+    thread?: string;
     ct: number;
     messages: Messages;
     error?: any;

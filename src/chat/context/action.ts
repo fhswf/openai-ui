@@ -1,7 +1,13 @@
 import { fetchStream } from "../service/index";
-import i18next, { t } from "i18next";
-import { Chat, GlobalState, Options, OptionAction, GlobalActions, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
+import i18next, { t, use } from "i18next";
+import * as MessagesAPI from "openai/resources/beta/threads/messages/messages";
+import * as StepsAPI from "openai/resources/beta/threads/runs/steps";
+import { Chat, GlobalState, Options, OptionAction, GlobalActions, Message, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
 import React from "react";
+import { createMessage, createRun, getMessages, getRunSteps, initChat, retrieveRun, getImageURL, retrieveAssistant, modifyAssistant } from "../service/assistant";
+import { processLaTeX } from "../utils/latex";
+
+import OpenAI from "openai";
 
 
 export default function action(state: Partial<GlobalState>, dispatch: React.Dispatch<GlobalAction>): GlobalActions {
@@ -12,27 +18,62 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     });
   return {
     setState,
+    doLogin(): void {
+      console.log("doLogin");
+      window.location.href = import.meta.env.VITE_LOGIN_URL;
+    },
     clearTypeing() {
       console.log("clear");
       setState({ typeingMessage: {} });
     },
-    async sendMessage(): Promise<void> {
-      const { typeingMessage, options, chat, is, currentChat } = state;
+    sendMessage(): void {
+      const { typeingMessage, options, chat, is, currentChat, user } = state;
       if (typeingMessage?.content) {
         const newMessage = {
           ...typeingMessage,
           sentTime: Date.now(),
         };
-        const messages = [...chat[currentChat].messages, newMessage];
+        let messages: Messages = [];
+        console.log("sendMessage", chat);
+        if (chat[currentChat]?.messages) {
+          messages = [...chat[currentChat].messages];
+        }
+        messages.push(newMessage);
         let newChat = [...chat];
         newChat.splice(currentChat, 1, { ...chat[currentChat], messages });
-        await executeChatRequest(setState, is, newChat, messages, options, currentChat, chat);
+        if (options.openai.mode === "assistant") {
+          executeAssistantRequest(setState, is, newChat, messages, options, currentChat, chat, user);
+        }
+        else {
+          executeChatRequest(setState, is, newChat, messages, options, currentChat, chat);
+        }
       }
     },
 
     setApp(app) {
       console.log("setApp", app);
       setState({ currentApp: app });
+    },
+
+    showSettings() {
+      const { mode, assistant } = state.options.openai;
+      const chat = state.chat[state.currentChat];
+      if (mode !== "assistant") {
+        console.log("no settings for %s", mode);
+        return
+      }
+      console.log("showSettings: %s", assistant);
+
+      setState({
+        is: {
+          ...state.is,
+          config: true,
+        },
+        currentEditor: {
+          assistant,
+          type: "assistant",
+        }
+      });
     },
 
     async newChat(app) {
@@ -97,12 +138,138 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       setState({ is: { ...state.is, typeing: true }, typeingMessage });
     },
 
-    clearMessage() {
+    clearThread() {
       const chat = [...state.chat];
-      chat[state.currentChat].messages = [];
-      setState({
-        chat,
-      });
+      const user = state.user;
+      initChat(chat[state.currentChat], user.sub)
+        .then((_chat) => {
+          chat[state.currentChat] = _chat;
+          chat[state.currentChat].messages = [];
+          setState({
+            chat,
+          });
+        })
+    },
+
+    reloadThread() {
+      const thread = state.chat[state.currentChat].thread;
+      console.log("reloadThread: %s", thread);
+      if (thread) {
+        let updatedMsgs = [];
+        getMessages(thread)
+          .then((_messages) => {
+            return Promise.all(
+              _messages
+                .toSorted((a, b) => a.created_at - b.created_at)
+                .map((m) => {
+                  console.log("reloadThread: %o", m);
+                  if (m.run_id) {
+                    return getRunSteps(thread, m.run_id)
+                      .then((steps) => {
+                        return steps
+                          .map((step) => {
+                            console.log("reloadThread: %o %o", step, m);
+                            if (step.type === "message_creation") {
+                              const details = <StepsAPI.MessageCreationStepDetails>(step.step_details)
+                              console.log("message_creation: %o", details.message_creation.message_id);
+                              if (details.message_creation.message_id != m.id)
+                                return {
+                                  content: "",
+                                  sentTime: step.created_at,
+                                  id: m.id,
+                                  role: m.role
+                                };
+                              return m.content.map((c) => {
+                                if (c.type === "text") {
+                                  return {
+                                    content: c.text.value,
+                                    role: m.role,
+                                    sentTime: step.created_at,
+                                    id: m.id
+                                  }
+                                }
+                                else if (c.type === "image_file") {
+                                  console.log("image_file: %o", c);
+                                  return {
+                                    content: `![Image](${getImageURL(thread, m.id, c.image_file.file_id)})`,
+                                    sentTime: step.created_at,
+                                    id: m.id,
+                                    role: m.role
+                                  };
+                                }
+                              })
+                            }
+                            else if (step.type === "tool_calls") {
+                              const details = <StepsAPI.ToolCallsStepDetails>(step.step_details)
+                              return details.tool_calls.map((tc) => {
+                                if (tc.type === "code_interpreter")
+                                  return {
+                                    content: "\n\n```Python\n" + tc.code_interpreter.input + "\n```\n\n",
+                                    sentTime: step.created_at,
+                                    id: m.id,
+                                    role: m.role
+                                  }
+                                else if (tc.type === "retrieval") {
+                                  return {
+                                    content: "",
+                                    sentTime: step.created_at,
+                                    id: m.id,
+                                    role: m.role
+                                  }
+                                }
+                              })
+                            }
+                          })
+                          .flat(1)
+                          .sort((a, b) => a.sentTime - b.sentTime)
+                          .reduce((acc, val) => {
+                            return { ...acc, ...val, content: acc.content + val.content }
+                          })
+                      })
+                  }
+                  else {
+                    return m.content
+                      .map((c) => {
+                        let value = "";
+                        if (c.type === 'text') {
+                          value = c.text.value
+                        }
+                        const message: Message = {
+                          content: value,
+                          role: m.role,
+                          sentTime: m.created_at,
+                          id: m.id
+                        }
+                        return message;
+                      })
+                      .reduce((acc, val) => {
+                        return { ...acc, ...val, content: acc.content + val.content }
+                      })
+                  };
+                }))
+          })
+          .then((_msgs) => {
+            console.log("updated messages: %o", _msgs);
+            _msgs = _msgs.map((m) => {
+              return {
+                ...m,
+                content: processLaTeX(m.content)
+              }
+            })
+            const chat = [...state.chat];
+            chat[state.currentChat].messages = _msgs;
+            setState({
+              chat,
+            });
+          })
+
+          .catch((error) => {
+            console.log(error);
+            if (error.status === 401) {
+              window.location.href = import.meta.env.VITE_LOGIN_URL;
+            }
+          })
+      }
     },
 
     removeMessage(id) {
@@ -161,6 +328,127 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     },
   };
 }
+
+async function executeAssistantRequest(setState, is, newChat: Chat[], messages: Messages, options: Options, currentChat: number, chat: Chat[], user) {
+
+  let currentMessage: Message = null;
+  let currentSnippet = "";
+  let snippets = [];
+
+  setState({
+    is: { ...is, thinking: true },
+    typeingMessage: {},
+    chat: newChat,
+  });
+  console.log("executeAssistantRequest, chat: %o, currentChat: %d ", newChat, currentChat);
+  let _chat = newChat[currentChat];
+  const controller = new AbortController();
+  console.log("executeAssistantRequest, chat: ", _chat, messages);
+
+  if (!_chat.thread) {
+    console.log("initChat: ", user);
+    try {
+      _chat = await initChat(_chat, user?.sub);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  console.log("executeAssistantRequest, chat: ", _chat);
+
+  _chat.messages?.map(async (message) => {
+    console.log("message: ", message);
+    if (!message.thread_id) {
+      let _message = await createMessage(_chat, message);
+      console.log("message: ", _message);
+      message.thread_id = _message.thread_id;
+    }
+    return message;
+  });
+
+  const newSnippet = () => {
+    snippets.push(currentSnippet);
+    currentSnippet = "";
+  }
+
+  const newMessage = (message: MessagesAPI.Message | StepsAPI.RunStep) => {
+    console.log("new message: %o", message);
+    let role = "assistant";
+    if (role in message) {
+      role = (<MessagesAPI.Message>(message)).role;
+    }
+    currentMessage = {
+      content: "",
+      role,
+      sentTime: message.created_at,
+      id: message.id,
+    };
+    postMessage("")
+  }
+
+  const postMessage = (content: string) => {
+    console.log("post message: %o %s", currentMessage, content);
+    currentSnippet = processLaTeX(content);
+    currentMessage.content = snippets.join("\n") + currentSnippet;
+    newChat.splice(currentChat, 1, {
+      ...chat[currentChat],
+      messages: [
+        ...messages,
+        currentMessage,
+      ],
+    });
+    setState({
+      is: { ...is, thinking: content.length },
+      chat: newChat,
+    });
+  }
+
+  const stream = createRun(_chat.thread, options.openai.assistant);
+  stream
+    .on('messageCreated', (message) => newMessage(message))
+    .on('runStepCreated', (runStep) => {
+      if (!currentMessage) {
+        newMessage(runStep)
+      }
+    })
+    .on('textCreated', (text) => {
+      newSnippet();
+      postMessage(text.value);
+    })
+    .on('textDelta', (textDelta, snapshot) => postMessage(snapshot.value))
+    .on('toolCallCreated', (toolCall) => {
+      console.log(`\nassistant > ${toolCall.type}\n\n`);
+      newSnippet();
+    })
+    .on('toolCallDelta', (toolCallDelta, snapshot) => {
+      if (toolCallDelta.type === 'code_interpreter') {
+        if (toolCallDelta.code_interpreter.input) {
+          console.log(toolCallDelta.code_interpreter.input);
+          postMessage("```Python\n" + toolCallDelta.code_interpreter.input + "\n```");
+        }
+        if (toolCallDelta.code_interpreter.outputs) {
+          console.log("\noutput >\n");
+          toolCallDelta.code_interpreter.outputs.forEach(output => {
+            if (output.type === "logs") {
+              console.log(`\n${output.logs}\n`);
+              postMessage("```Python\n" + output.logs + "\n```");
+            }
+          });
+        }
+      }
+    })
+    .on('imageFileDone', (imageFile) => {
+      console.log(`\nassistant > image file: ${imageFile.file_id}\n\n`);
+      newSnippet();
+      postMessage(`![Image](${getImageURL(_chat.thread, "", imageFile.file_id)})`);
+    })
+    .on('end', () => {
+      console.log('done');
+      setState({
+        is: { ...is, thinking: false },
+      });
+    });
+}
+
 
 async function executeChatRequest(setState, is, newChat, messages: Messages, options: Options, currentChat, chat) {
   setState({

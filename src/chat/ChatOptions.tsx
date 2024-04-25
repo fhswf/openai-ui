@@ -1,19 +1,20 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Button, Panel, Input, Title, Avatar, Select } from '../components'
 import { useGlobal } from './context'
-import { themeOptions, languageOptions, sendCommandOptions, modelOptions, sizeOptions } from './utils'
+import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
 import { Tooltip } from '../components'
 import styles from './style/config.module.less'
 import { classnames } from '../components/utils'
 import { useOptions } from './hooks'
-import { t } from 'i18next'
+import { t, use } from 'i18next'
 import { initState } from './context/initState'
+import { getAssistants } from './service/assistant'
 
 export function ConfigHeader() {
   const { setState, setIs, is } = useGlobal()
   return (
     <div className={classnames(styles.header, 'flex-c-sb')} data-testid="SettingsHeader">
-      <Title type="h5">Setting</ Title>
+      <Title type="h2">Setting</ Title>
       <div className="flex-c">
         <Button type="icon" onClick={() => setState(initState)} icon="refresh" dataTestId="SettingsRefreshBtn" />
         <Button type="icon" onClick={() => setIs({ config: !is.config })} icon="close" dataTestId="SettingsCloseBtn" />
@@ -23,11 +24,44 @@ export function ConfigHeader() {
 }
 
 export function ChatOptions() {
+  const ModelOptions = [
+    { label: "gpt-4-turbo", value: "gpt-4-turbo" },
+    { label: "gpt-4", value: "gpt-4" },
+    { label: "gpt-3.5-turbo", value: "gpt-3.5-turbo" },
+  ];
   const { options } = useGlobal()
   const { account, openai, general } = options
   // const { avatar, name } = account
   // const { max_tokens, apiKey, temperature, baseUrl, organizationId, top_p, model } = openai
-  const { setAccount, setGeneral, setModel } = useOptions()
+  const { setAccount, setGeneral, setAPIMode, setModel, setAssistant } = useOptions()
+  const [modelOptions, setModelOptions] = React.useState(ModelOptions);
+  const [assistants, setAssistants] = React.useState([]);
+
+  useEffect(() => {
+    if (openai.mode === 'assistant') {
+      getAssistants()
+        .then((assistants) => {
+          console.log(assistants);
+          let options = assistants.data
+            .filter((item) => item.metadata["public"] === "True")
+            .map((item) => {
+              return { label: item.name || "", value: item.id }
+            });
+          console.log("options: %o", options);
+          setAssistants(options);
+          if (openai.assistant === "") {
+            setAssistant(options[0].value);
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+          if (error.message === "Unauthorized") {
+            return window.location.href = import.meta.env.VITE_LOGIN_URL;
+          }
+        })
+    }
+  }, [openai.mode]);
+
   return (
     <div className={classnames(styles.config, 'flex-c-sb flex-column')}>
       <ConfigHeader />
@@ -61,10 +95,23 @@ export function ChatOptions() {
           </Panel.Item>
         </Panel>
         <Panel className={styles.panel} title="Global OpenAI Config">
-
-          <Panel.Item icon="model" title="OpenAI model" desc={t("openai_model_help")}>
-            <Select options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose models" dataTestId="ChangeAIModelSelect"/>
+          <Panel.Item icon="editor" title="API mode" desc={t("api_mode_help")}>
+            <Select options={modeOptions} value={openai.mode} onChange={val => setAPIMode(val)} />
           </Panel.Item>
+          {
+            openai.mode === 'assistant' ?
+
+              (
+                <Panel.Item icon="model" title="Assistant" desc={t("openai_model_help")}>
+                  <Select options={assistants} value={openai.assistant} onChange={val => setAssistant(val)} placeholder="Choose assistant" />
+                </Panel.Item>)
+
+              :
+              (<Panel.Item icon="model" title="OpenAI model" desc={t("openai_model_help")}>
+                <Select dataTestId="ChangeAIModelSelect" options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose model" />
+              </Panel.Item>)
+          }
+
           <Panel.Item icon="files" title="Max Tokens" desc="The maximum number of tokens to generate in the reply. 1 token is roughly 1 word.">
             <Input type="number" value={openai.max_tokens} placeholder="Max Tokens" onChange={val => setModel({ max_tokens: +val })} data-testid="MaxTokensInput"/>
           </Panel.Item>

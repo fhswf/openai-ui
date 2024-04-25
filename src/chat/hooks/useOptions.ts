@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useGlobal } from "../context";
-import { GlobalActionType, OptionActionType } from "../context/types";
+import { GlobalActionType, OpenAIOptions, OptionActionType } from "../context/types";
 
 export function useOptions() {
   const { options, setOptions } = useGlobal();
@@ -28,6 +28,15 @@ export function useOptions() {
     });
   };
 
+  const setAPIMode = (val => {
+    console.log("setAPIMode: %o", val);
+    const openai: OpenAIOptions = { ...options.openai, mode: val };
+    setOptions({
+      type: OptionActionType.OPENAI,
+      data: openai,
+    });
+  })
+
   const setModel = (data = {}) => {
     setOptions({
       type: OptionActionType.OPENAI,
@@ -35,5 +44,14 @@ export function useOptions() {
     });
   };
 
-  return { setAccount, setModel, setGeneral };
+  const setAssistant = (data: string) => {
+    console.log("setAssistant: %o", data);
+    const openai: OpenAIOptions = { ...options.openai, assistant: data };
+    setOptions({
+      type: OptionActionType.OPENAI,
+      data: openai,
+    });
+  }
+
+  return { setAccount, setAPIMode, setModel, setAssistant, setGeneral };
 }
