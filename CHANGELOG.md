@@ -1,3 +1,10 @@
+## [0.8.1](https://github.com/fhswf/openai-ui/compare/v0.8.0...v0.8.1) (2024-04-25)
+
+
+### Bug Fixes
+
+* use api proxy for assistant ([#22](https://github.com/fhswf/openai-ui/issues/22)) ([1fff9d2](https://github.com/fhswf/openai-ui/commit/1fff9d2caf2099f50d9c65b365106120649a50ae))
+
 # [0.8.0](https://github.com/fhswf/openai-ui/compare/v0.7.0...v0.8.0) (2024-04-25)
 
 
