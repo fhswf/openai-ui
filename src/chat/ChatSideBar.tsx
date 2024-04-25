@@ -15,9 +15,10 @@ import 'katex/dist/katex.min.css'
 
 
 const Option = (props) => {
-  const { type, onClick, tooltip } = props
+  const { type, onClick, tooltip, dataTestId } = props
+  let testId = dataTestId ? { 'data-testid': dataTestId } : {}
   return (
-    <Tooltip text={tooltip}><Icon className={styles.icon} type={type} onClick={onClick} /></Tooltip>
+    <Tooltip text={tooltip}><Icon className={styles.icon} type={type} onClick={onClick} {...testId} /></Tooltip>
   )
 }
 
@@ -90,12 +91,12 @@ export function ChatSideBar() {
   return (
     <div className={classnames(styles.sider, 'flex-c-sb flex-column')} data-testid="LeftSideBar">
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')}>
-        <Avatar src={user?.avatar || ""} onClick={userClick} dataTestId="UserInformationBtn"/>
+        <Avatar src={user?.avatar || ""} onClick={userClick} dataTestId="UserInformationBtn" />
         {showUserModal &&
           <Modal>
 
             <Panel title="User information" className={styles.user} onClose={() => setUserModal(false)} dataTestId="UserInformation">
-              <Button type="icon" icon="close" onClick={() => setUserModal(false)} class={styles.close} data-testid="UserInformationCloseBtn"/>*
+              <Button type="icon" icon="close" onClick={() => setUserModal(false)} class={styles.close} data-testid="UserInformationCloseBtn" />*
               <div className={styles.user}>
                 <Avatar src={user?.avatar || ""} />
                 <div className={styles.name}>{user?.name}</div>
@@ -107,7 +108,7 @@ export function ChatSideBar() {
             </Panel>
           </Modal>
         }
-        <Option type="help" onClick={() => { setAboutModal(!showAboutModal) }} tooltip={t("about")}/>
+        <Option type="help" onClick={() => { setAboutModal(!showAboutModal) }} tooltip={t("about")} />
         {showAboutModal &&
           <Modal>
 
@@ -130,7 +131,7 @@ export function ChatSideBar() {
         <Option type="apps" onClick={() => setState({ is: { ...is, apps: true } })} tooltip="Apps" />
         <Option type="history" onClick={() => setState({ is: { ...is, apps: false } })} tooltip="History" />
         <Option type={options.general.theme} onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })} tooltip="Theme" />
-        <Option type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip="Config" />
+        <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip="Config" />
         <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
           tooltip={`${is.fullScreen ? 'Minimize' : 'Maximize'}`} />
       </div>
