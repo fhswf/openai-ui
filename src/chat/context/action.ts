@@ -209,7 +209,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
                                     id: m.id,
                                     role: m.role
                                   }
-                                else if (tc.type === "retrieval") {
+                                else if (tc.type === "retrieval" || tc.type === "file_search") {
                                   return {
                                     content: "",
                                     sentTime: step.created_at,

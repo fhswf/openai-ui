@@ -24,7 +24,7 @@ export function MessageHeader() {
 
   return (
     <div className={classnames(styles.header)}>
-      <Button type="icon" icon={columnIcon} onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn"/>
+      <Button type="icon" icon={columnIcon} onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn" />
       <div className={styles.header_title} data-testid="HeaderTitle">
         {message?.title}
         <div className={styles.length}>{t('count_messages', { count: messages.length })}</div>
@@ -32,7 +32,7 @@ export function MessageHeader() {
       <div className={styles.header_bar}>
         <Icon className={styles.icon} type="setting" title={t("chat_settings")} onClick={showSettings} />
         <Icon className={styles.icon} type="reload" title={t("reload_thread")} onClick={reloadThread} />
-        <Icon className={styles.icon} type="clear" title={t("clear_thread")} onClick={clearThread} dataTestId="ClearMessageBtn" />
+        <Icon className={styles.icon} type="clear" title={t("clear_thread")} onClick={clearThread} data-testid="ClearChatBtn" />
         <Icon type="download" className={[styles.icon, styles.disabled]} />
       </div>
     </div>
@@ -99,10 +99,9 @@ export function MessageBar() {
         </div>
         <div className={styles.bar_icon}>
           {typeingMessage?.content &&
-            <Tooltip text="clear">
-              <Icon className={styles.icon} type={t("cancel")} onClick={clearTypeing} />
-            </Tooltip>}
-          <Icon className={styles.icon} type={t("send")} onClick={sendMessage} dataTestId="SendMessageBtn" />
+            <Icon className={styles.icon} title={t("cancel")} type="cancel" onClick={clearTypeing} />
+          }
+          <Icon className={styles.icon} title={t("send")} type="send" onClick={sendMessage} data-testid="SendMessageBtn" />
         </div>
       </div>
     </div>
