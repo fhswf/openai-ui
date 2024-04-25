@@ -1,3 +1,10 @@
+## [0.8.2](https://github.com/fhswf/openai-ui/compare/v0.8.1...v0.8.2) (2024-04-25)
+
+
+### Bug Fixes
+
+* incorrect api url for assistant ([#24](https://github.com/fhswf/openai-ui/issues/24)) ([ebe6be7](https://github.com/fhswf/openai-ui/commit/ebe6be743c69afabddfa2ec1d0ef236dee0ab2cd))
+
 ## [0.8.1](https://github.com/fhswf/openai-ui/compare/v0.8.0...v0.8.1) (2024-04-25)
 
 
