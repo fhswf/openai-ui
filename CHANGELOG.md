@@ -1,3 +1,10 @@
+# [0.8.0](https://github.com/fhswf/openai-ui/compare/v0.7.0...v0.8.0) (2024-04-25)
+
+
+### Features
+
+* assistant mode ([#20](https://github.com/fhswf/openai-ui/issues/20)) ([1eb01a4](https://github.com/fhswf/openai-ui/commit/1eb01a4b9359bb6a5119bbfe038dad447ac91d34)), closes [#15](https://github.com/fhswf/openai-ui/issues/15)
+
 # [0.7.0](https://github.com/fhswf/openai-ui/compare/v0.6.0...v0.7.0) (2024-03-23)
 
 
