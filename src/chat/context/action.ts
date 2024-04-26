@@ -1,10 +1,10 @@
 import { fetchStream } from "../service/index";
 import i18next, { t, use } from "i18next";
-import * as MessagesAPI from "openai/resources/beta/threads/messages/messages";
+import * as MessagesAPI from "openai/resources/beta/threads/messages";
 import * as StepsAPI from "openai/resources/beta/threads/runs/steps";
 import { Chat, GlobalState, Options, OptionAction, GlobalActions, Message, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
 import React from "react";
-import { createMessage, createRun, getMessages, getRunSteps, initChat, retrieveRun, getImageURL, retrieveAssistant, modifyAssistant } from "../service/assistant";
+import { createMessage, createRun, getMessages, getRunSteps, initChat, retrieveRun, getImageURL, retrieveAssistant, modifyAssistant, getFileURL, retrieveFile } from "../service/assistant";
 import { processLaTeX } from "../utils/latex";
 
 import OpenAI from "openai";
@@ -174,15 +174,23 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
                               console.log("message_creation: %o", details.message_creation.message_id);
                               if (details.message_creation.message_id != m.id)
                                 return {
-                                  content: "",
+                                  content: "\n",
                                   sentTime: step.created_at,
                                   id: m.id,
                                   role: m.role
                                 };
                               return m.content.map((c) => {
                                 if (c.type === "text") {
+                                  let references = "";
+                                  c.text.annotations.forEach((a, index) => {
+                                    console.log("annotation: %o", a);
+                                    if (a.type === "file_citation") {
+                                      c.text.value = c.text.value.replace(a.text, ` [${index + 1}]`);
+                                      references += `- [\[${index + 1}\]](${getFileURL(a.file_citation.file_id)})\n`;
+                                    }
+                                  })
                                   return {
-                                    content: c.text.value,
+                                    content: c.text.value + (references ? `\n\n${references}` : ""),
                                     role: m.role,
                                     sentTime: step.created_at,
                                     id: m.id
@@ -233,6 +241,9 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
                         let value = "";
                         if (c.type === 'text') {
                           value = c.text.value
+                          c.text.annotations.forEach((a) => {
+                            console.log("annotation: %o", a);
+                          })
                         }
                         const message: Message = {
                           content: value,

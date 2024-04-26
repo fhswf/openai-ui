@@ -8,6 +8,7 @@ import { FileCreateParams, Models } from "openai/resources";
 import { Stream } from "openai/streaming";
 import { Assistant, AssistantStreamEvent } from "openai/resources/beta/assistants";
 import { APIResource } from "openai/resource";
+import { AssistantStream } from "openai/lib/AssistantStream";
 
 export type Model = { object: "model"; id: string };
 
@@ -120,8 +121,8 @@ export const createMessage = async (chat: Chat, message: Message): Promise<Messa
     return message;
 }
 
-export const createRun = (thread_id: string, assistant_id: string): Promise<Stream<AssistantStreamEvent>> => {
-    return client.beta.threads.runs.create(thread_id, { assistant_id, stream: true })
+export const createRun = (thread_id: string, assistant_id: string): AssistantStream => {
+    return client.beta.threads.runs.stream(thread_id, { assistant_id })
 }
 
 export const retrieveAssistant = async (assistant_id: string): Promise<Assistant> => {
@@ -131,6 +132,10 @@ export const retrieveAssistant = async (assistant_id: string): Promise<Assistant
 
 export const retrieveFile = async (file_id: string): Promise<OpenAI.Files.FileObject> => {
     return client.files.retrieve(file_id);
+}
+
+export const getFileURL = (file_id: string): string => {
+    return `${apiBaseUrl}/files/${file_id}`
 }
 
 export const createFile = async (file: Uploadable): Promise<OpenAI.Files.FileObject> => {
