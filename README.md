@@ -1,26 +1,17 @@
-# ChatGPT simple React Demo
+# OpenAI-UI – A simple UI for OpenAI's Chat API
 
-ChatGPT-React Ui is a simple,with chat streaming, code highlighting, code execution, development presets, and more. We encourage you to contribute and help improve this project!
+This is a simple UI for OpenAI's chat (and assistant) API. It is designed to be used either directly with the API or through a [proxy server](htts://github.com/fhswf/openai-proxy) that can be used to manage the API key ans provide a privacy-friendly way to use the API. 
 
-- Demo:[https://chat-gpt-ui-lake.vercel.app/](https://chat-gpt-ui-lake.vercel.app/)
-- Design source:[https://www.figma.com/community/file/1236510244313601424](https://www.figma.com/community/file/1236510244313601424)
+![Screenshot](screenshot.png)
 
-## Developing
+This project is based on 
+[ninasaul/chat-gpt-ui](https://github.com/ninasaul/chat-gpt-ui.git).
 
-Simply clone the repository, install the dependencies, and run the development server:
+## Features
 
-```
-  git clone https://github.com/ninasaul/chat-gpt-ui.git
-  cd chat-gpt-ui
-  npm install
-  npm run dev
-```
-
-## Contributing
-
-The source code is Very Simple™ 😀. We'd love to have you contribute to this project! Feel free to fork the repository, make changes, and submit a pull request. If you have any questions or need help, feel free to reach out to us.
-This project is licensed under the MIT License.
-
-## License
-
-The UI framework is open source under the MIT license. See the LICENSE file for more information.
+- Chat with OpenAI's [chat completions API](https://platform.openai.com/docs/guides/text-generation/chat-completions-api)
+- Chat with OpenAI's [assistants API](https://platform.openai.com/docs/assistants/overview)
+- Access via a proxy server for privacy.
+- Single Sign-On (SSO) via OpenID Connect (OIDC) for authentication.
+- Markdown support for chat messages.
+- Code editor for chat messages.
