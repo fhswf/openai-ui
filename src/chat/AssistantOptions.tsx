@@ -12,8 +12,8 @@ import { FormControl, FormHelperText, FormLabel, Switch } from "@chakra-ui/react
 import { useToast } from '@chakra-ui/react'
 import { OptionActionType } from "./context/types";
 import { DeleteIcon } from "@chakra-ui/icons";
-import { c } from "vite/dist/node/types.d-aGj9QkWt";
-import { use } from "chai";
+//import { c } from "vite/dist/node/types.d-aGj9QkWt";
+//import { use } from "chai";
 //import { Model } from "openai/resources";
 
 
@@ -275,12 +275,12 @@ export const AssistantOptions = (props: AssistantProps) => {
 
                         <FormControl mt="4">
                             <FormLabel>{t("model")}</FormLabel>
-                            <Select onChange={(ev) => setModel(ev.target.value)}>
+                            <Select onChange={(ev) => setModel(ev.target.value)} value={model}>
                                 {
                                     models
                                         .toSorted((a, b) => -a.id.localeCompare(b.id))
                                         .map((_model) => {
-                                            return <option key={_model.id} value={_model.id} selected={_model.id === model}>{_model.id}</option>
+                                            return <option key={_model.id} value={_model.id}>{_model.id}</option>
                                         })
                                 }
                             </Select>
