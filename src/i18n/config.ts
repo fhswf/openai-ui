@@ -114,6 +114,8 @@ i18n
                     help_delete_file: "Löschen Sie die Datei aus dem Chatbot.",
                     send: "Senden",
                     clear: "Löschen",
+                    description: "Beschreibung",
+                    help_description: "Geben Sie eine Beschreibung des Chatbots ein.",
                 },
             },
         },

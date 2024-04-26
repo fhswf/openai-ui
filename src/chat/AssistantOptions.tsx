@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { modifyAssistant, retrieveAssistant, retrieveAssistantFile, retrieveFile, createAssistantFile, createFile, deleteAssistantFile, deleteFile, assistantsModels } from "./service/assistant";
+import { modifyAssistant, retrieveAssistant, retrieveFile, createFile, deleteFile, assistantsModels, Model } from "./service/assistant";
 import { Box, Button, ButtonGroup, Card, CardBody, CardFooter, CardHeader, Flex, Heading, IconButton, Input, Select, SimpleGrid, Spacer, Stack, StackDivider } from '@chakra-ui/react'
 import { Panel, Icon, Textarea, Title } from "../components";
 import OpenAI from "openai";
@@ -12,7 +12,6 @@ import { FormControl, FormHelperText, FormLabel, Switch } from "@chakra-ui/react
 import { useToast } from '@chakra-ui/react'
 import { OptionActionType } from "./context/types";
 import { DeleteIcon } from "@chakra-ui/icons";
-import { c } from "vite/dist/node/types.d-aGj9QkWt";
 
 
 export interface AssistantProps {
@@ -60,6 +59,7 @@ export const AssistantOptions = (props: AssistantProps) => {
     const [file_ids, setFileIds] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [models, setModels] = useState<Model[]>([]);
 
     console.log("Assistant ID:", assistant_id);
     const toast = useToast();
@@ -68,43 +68,36 @@ export const AssistantOptions = (props: AssistantProps) => {
         const { assistant_id, file_id } = props;
         const [file, setFile] = useState<OpenAI.Files.FileObject | null>(null);
         const [loading, setLoading] = useState<boolean>(true);
-
-        useEffect(() => {
-            console.log("Retrieving File:", file_id);
-            retrieveAssistantFile(assistant_id, file_id)
-                .then((file) => {
-                    return retrieveFile(file.id);
-                })
-                .then((file) => {
-                    console.log("File:", file);
-                    setFile(file);
-                    setLoading(false);
-                })
-        }, [assistant_id, file_id]);
-
         const name = loading ? "Loading... " + file_id : file.filename;
-
-        const delFile = (ev: React.MouseEvent) => {
-            console.log("Delete File:", file_id);
-            deleteAssistantFile(assistant_id, file_id)
-                .then(() => {
-                    deleteFile(file_id);
-                })
-                .then(() => {
-                    setFileIds(file_ids.filter((id) => id !== file_id));
-                })
-        }
-
         return (
             <Flex alignItems="center">
                 <div>{name}</div>
                 <Spacer />
                 <IconButton my={2} aria-label={t("help_delete_file")} colorScheme="red" icon={<DeleteIcon />}
-                    onClick={delFile} />
+                />
             </Flex>
         )
 
     }
+
+    useEffect(() => {
+        assistantsModels()
+            .then((_models) => {
+                setModels(_models);
+            })
+            .catch((error) => {
+                toast({
+                    title: 'Could not load assistant models.',
+                    description: error.message,
+                    status: 'error',
+                    duration: 9000,
+                    isClosable: true,
+                })
+                if (error.status === 401) {
+                    doLogin();
+                }
+            });
+    });
 
     useEffect(() => {
         console.log("Retrieving Assistant:", assistant_id);
@@ -229,7 +222,7 @@ export const AssistantOptions = (props: AssistantProps) => {
             createFile(file)
                 .then((assistantFile) => {
                     console.log("Assistant File:", assistantFile);
-                    return createAssistantFile(assistant_id, assistantFile.id);
+                    return null;//createAssistantFile(assistant_id, assistantFile.id);
                 })
                 .then((assistantFile) => {
                     console.log("Assistant File:", assistantFile);
@@ -265,10 +258,11 @@ export const AssistantOptions = (props: AssistantProps) => {
                         </FormControl>
 
                         <FormControl mt="4">
-                            <FormLabel>{t("title")}</FormLabel>
-                            <Input type="string" value={metadata.title} width="100%" onChange={(ev) => setMetadata({ ...metadata, title: ev.target.value })} />
-                            <FormHelperText>{t("help_title")}</FormHelperText>
+                            <FormLabel>{t("description")}</FormLabel>
+                            <Input type="string" value={description} width="100%" onChange={(ev) => setDescription(ev.target.value)} />
+                            <FormHelperText>{t("help_description")}</FormHelperText>
                         </FormControl>
+
 
                         <FormControl mt="4">
                             <FormLabel>{t("description")}</FormLabel>
@@ -287,8 +281,8 @@ export const AssistantOptions = (props: AssistantProps) => {
                             <FormLabel>{t("model")}</FormLabel>
                             <Select onChange={(ev) => setModel(ev.target.value)}>
                                 {
-                                    assistantsModels()
-                                        .sort((a, b) => -a.id.localeCompare(b.id))
+                                    models
+                                        .toSorted((a, b) => -a.id.localeCompare(b.id))
                                         .map((_model) => {
                                             return <option key={_model.id} value={_model.id} selected={_model.id === model}>{_model.id}</option>
                                         })
