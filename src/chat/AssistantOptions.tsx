@@ -323,17 +323,18 @@ export const AssistantOptions = (props: AssistantProps) => {
                             <Switch isChecked={tools.includes('code_interpreter')} onChange={(ev) => updateTool('code_interpreter', ev.target.checked)} />
                         </SimpleGrid>
                     </Box>
-                    <Box>
-                        <Heading size="md">{t("files")}</Heading>
-                        <FormControl mt="4" onDrop={dropFile} onDragEnter={dragEnter} onDragOver={dragEnter} className={styles.drop_zone}>
-                            {
-                                file_ids.map((file_id) => {
-                                    return (<File assistant_id={assistant_id} file_id={file_id} key={file_id} />)
-                                })
-                            }
-                        </FormControl>
-                    </Box>
-
+                    {false ? //TODO: files are per tool in v2
+                        (<Box>
+                            <Heading size="md">{t("files")}</Heading>
+                            <FormControl mt="4" onDrop={dropFile} onDragEnter={dragEnter} onDragOver={dragEnter} className={styles.drop_zone}>
+                                {
+                                    file_ids.map((file_id) => {
+                                        return (<File assistant_id={assistant_id} file_id={file_id} key={file_id} />)
+                                    })
+                                }
+                            </FormControl>
+                        </Box>) : null
+                    }
                 </Stack>
             </CardBody >
             <CardFooter mt="4" display="flex">
