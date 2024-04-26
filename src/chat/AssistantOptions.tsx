@@ -12,9 +12,6 @@ import { FormControl, FormHelperText, FormLabel, Switch } from "@chakra-ui/react
 import { useToast } from '@chakra-ui/react'
 import { OptionActionType } from "./context/types";
 import { DeleteIcon } from "@chakra-ui/icons";
-import { c } from "vite/dist/node/types.d-aGj9QkWt";
-import { use } from "chai";
-//import { Model } from "openai/resources";
 
 
 export interface AssistantProps {
@@ -259,6 +256,13 @@ export const AssistantOptions = (props: AssistantProps) => {
                             <Input id="name" type="string" value={name} onChange={(ev) => setName(ev.target.value)} w="100%" />
                             <FormHelperText>{t("help_name")}</FormHelperText>
                         </FormControl>
+
+                        <FormControl mt="4">
+                            <FormLabel>{t("description")}</FormLabel>
+                            <Input type="string" value={description} width="100%" onChange={(ev) => setDescription(ev.target.value)} />
+                            <FormHelperText>{t("help_description")}</FormHelperText>
+                        </FormControl>
+
 
                         <FormControl mt="4">
                             <FormLabel>{t("description")}</FormLabel>
