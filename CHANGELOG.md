@@ -1,3 +1,10 @@
+# [0.9.0](https://github.com/fhswf/openai-ui/compare/v0.8.2...v0.9.0) (2024-04-26)
+
+
+### Features
+
+* update assistant api to v2 ([#27](https://github.com/fhswf/openai-ui/issues/27)) ([97ace9b](https://github.com/fhswf/openai-ui/commit/97ace9bdf5988ea6622ca0a10891d2b8489b2717))
+
 ## [0.8.2](https://github.com/fhswf/openai-ui/compare/v0.8.1...v0.8.2) (2024-04-25)
 
 
