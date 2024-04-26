@@ -1,3 +1,10 @@
+## [0.9.1](https://github.com/fhswf/openai-ui/compare/v0.9.0...v0.9.1) (2024-04-26)
+
+
+### Bug Fixes
+
+* broken message streaming for assistants ([#29](https://github.com/fhswf/openai-ui/issues/29)) ([042715c](https://github.com/fhswf/openai-ui/commit/042715c16238739bd047f2e00c2ff3b15c54c431))
+
 # [0.9.0](https://github.com/fhswf/openai-ui/compare/v0.8.2...v0.9.0) (2024-04-26)
 
 
