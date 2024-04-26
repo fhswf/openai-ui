@@ -13,13 +13,13 @@ import { useToast } from '@chakra-ui/react'
 import { OptionActionType } from "./context/types";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { c } from "vite/dist/node/types.d-aGj9QkWt";
-import { AssistantTool } from "openai/resources/beta/assistants/assistants";
+
 
 export interface AssistantProps {
     assistant: string;
 }
 
-type ToolType = 'code_interpreter' | 'retrieval' //| 'function';
+type ToolType = 'code_interpreter' | 'file_search' //| 'function';
 
 function ConfigHeader() {
     const { setState, setIs, is } = useGlobal()
@@ -112,8 +112,8 @@ export const AssistantOptions = (props: AssistantProps) => {
             .then((assistant) => {
                 let tools: ToolType[] = [];
                 assistant.tools.forEach(element => {
-                    if (element.type === 'retrieval') {
-                        tools.push('retrieval');
+                    if (element.type === 'file_search') {
+                        tools.push('file_search');
                     }
                     if (element.type === 'code_interpreter') {
                         tools.push('code_interpreter');
@@ -126,7 +126,7 @@ export const AssistantOptions = (props: AssistantProps) => {
                 setInstructions(assistant.instructions);
                 setMetadata(assistant.metadata);
                 setTools(tools);
-                setFileIds(assistant.file_ids);
+                //setFileIds(assistant.file_ids);
                 setLoading(false);
             })
             .catch((error) => {
@@ -166,8 +166,8 @@ export const AssistantOptions = (props: AssistantProps) => {
                 const updatedAssistant = await modifyAssistant(assistant.id, newAssistant);
                 let tools: ToolType[] = [];
                 updatedAssistant.tools.forEach(element => {
-                    if (element.type === 'retrieval') {
-                        tools.push('retrieval');
+                    if (element.type === 'file_search') {
+                        tools.push('file_search');
                     }
                     if (element.type === 'code_interpreter') {
                         tools.push('code_interpreter');
@@ -180,7 +180,7 @@ export const AssistantOptions = (props: AssistantProps) => {
                 setInstructions(updatedAssistant.instructions);
                 setMetadata(updatedAssistant.metadata);
                 setTools(tools);
-                setFileIds(updatedAssistant.file_ids);
+                //setFileIds(updatedAssistant.file_ids);
                 setIs({ config: !is.config })
                 setState({ currentEditor: null })
             } catch (error) {
@@ -271,6 +271,13 @@ export const AssistantOptions = (props: AssistantProps) => {
                         </FormControl>
 
                         <FormControl mt="4">
+                            <FormLabel>{t("description")}</FormLabel>
+                            <Input type="string" value={description} width="100%" onChange={(ev) => setDescription(ev.target.value)} />
+                            <FormHelperText>{t("help_description")}</FormHelperText>
+                        </FormControl>
+
+
+                        <FormControl mt="4">
                             <FormLabel>{t("instructions")}</FormLabel>
                             <Textarea type="string" rows="5" cols="70" value={instructions} onChange={setInstructions} />
                             <FormHelperText>{t("help_instructions")}</FormHelperText>
@@ -309,24 +316,25 @@ export const AssistantOptions = (props: AssistantProps) => {
                             <FormLabel mb='0'>
                                 {t("tool_retrieval")}
                             </FormLabel>
-                            <Switch isChecked={tools.includes('retrieval')} />
+                            <Switch isChecked={tools.includes('file_search')} onChange={(ev) => updateTool('file_search', ev.target.checked)} />
                             <FormLabel mb='0'>
                                 {t("tool_code_interpreter")}
                             </FormLabel>
                             <Switch isChecked={tools.includes('code_interpreter')} onChange={(ev) => updateTool('code_interpreter', ev.target.checked)} />
                         </SimpleGrid>
                     </Box>
-                    <Box>
-                        <Heading size="md">{t("files")}</Heading>
-                        <FormControl mt="4" onDrop={dropFile} onDragEnter={dragEnter} onDragOver={dragEnter} className={styles.drop_zone}>
-                            {
-                                file_ids.map((file_id) => {
-                                    return (<File assistant_id={assistant_id} file_id={file_id} key={file_id} />)
-                                })
-                            }
-                        </FormControl>
-                    </Box>
-
+                    {false ? //TODO: files are per tool in v2
+                        (<Box>
+                            <Heading size="md">{t("files")}</Heading>
+                            <FormControl mt="4" onDrop={dropFile} onDragEnter={dragEnter} onDragOver={dragEnter} className={styles.drop_zone}>
+                                {
+                                    file_ids.map((file_id) => {
+                                        return (<File assistant_id={assistant_id} file_id={file_id} key={file_id} />)
+                                    })
+                                }
+                            </FormControl>
+                        </Box>) : null
+                    }
                 </Stack>
             </CardBody >
             <CardFooter mt="4" display="flex">

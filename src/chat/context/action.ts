@@ -31,7 +31,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       if (typeingMessage?.content) {
         const newMessage = {
           ...typeingMessage,
-          sentTime: Date.now(),
+          sentTime: Math.floor(Date.now() / 1000),
         };
         let messages: Messages = [];
         console.log("sendMessage", chat);
@@ -79,7 +79,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     async newChat(app) {
       const { currentApp, is, options, currentChat, chat } = state;
       const newApp = app || currentApp;
-      let messages: Messages = [{ content: newApp?.content || t("system_welcome"), sentTime: Date.now(), role: "system", id: 1, }]
+      let messages: Messages = [{ content: newApp?.content || t("system_welcome"), sentTime: Math.floor(Date.now() / 1000), role: "system", id: 1, }]
       console.log("newChat: ", newApp, chat)
       const chatList = [
         {
@@ -209,7 +209,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
                                     id: m.id,
                                     role: m.role
                                   }
-                                else if (tc.type === "retrieval" || tc.type === "file_search") {
+                                else if (tc.type === "file_search") {
                                   return {
                                     content: "",
                                     sentTime: step.created_at,
@@ -472,7 +472,7 @@ async function executeChatRequest(setState, is, newChat, messages: Messages, opt
             {
               content,
               role: "assistant",
-              sentTime: Date.now(),
+              sentTime: Math.floor(Date.now() / 1000),
               id: Date.now(),
             },
           ],
