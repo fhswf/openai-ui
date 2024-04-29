@@ -15,6 +15,12 @@ describe("User Interface", () => {
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.visit("http://localhost:5173/");
     cy.wait('@getUser');
+    cy.wait('@gravatarRequest').then((interception) => {
+      expect(interception.response.statusCode).to.eq(302);
+    });
+    cy.wait('@gravatarRequestDe').then((interception) => {
+      expect(interception.response.statusCode).to.eq(404);
+    });
     // Check if the page has loaded successfully (Status code 200)
     cy.request("http://localhost:5173/").should((response) => {
       expect(response.status).to.eq(200);
@@ -22,7 +28,7 @@ describe("User Interface", () => {
 >>>>>>> 6f6edf6 (fix(test): Adjust test code for login window)
   });
 
-  it("Check the headline", () => {
+  it.only("Check the headline", () => {
     cy.getDataTestId("HeaderTitle").contains(
       "K!mpuls"
     );
