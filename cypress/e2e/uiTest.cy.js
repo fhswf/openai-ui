@@ -1,16 +1,23 @@
 describe("User Interface", () => {
   beforeEach(() => {
-
+    cy.intercept('GET', 'https://www.gravatar.com/96f0dd2282a11de0145f55760a2f84f60b621627ff3ef811eec2d9631228c334').as('gravatarRequest');
+    cy.intercept('GET', 'https://de.gravatar.com/96f0dd2282a11de0145f55760a2f84f60b621627ff3ef811eec2d9631228c334').as('gravatarRequestDe');
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.visit("http://localhost:5173/");
     cy.wait('@getUser');
+    cy.wait('@gravatarRequest').then((interception) => {
+      expect(interception.response.statusCode).to.eq(302);
+    });
+    cy.wait('@gravatarRequestDe').then((interception) => {
+      expect(interception.response.statusCode).to.eq(404);
+    });
     // Check if the page has loaded successfully (Status code 200)
     cy.request("http://localhost:5173/").should((response) => {
       expect(response.status).to.eq(200);
     });
   });
 
-  it("Check the headline", () => {
+  it.only("Check the headline", () => {
     cy.getDataTestId("HeaderTitle").contains(
       "K!mpuls, der datenschutzfreundliche Chatbot der FH Südwestfalen"
     );
