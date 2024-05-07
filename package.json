@@ -11,7 +11,8 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "test:e2e": "LANGUAGE=de cypress run --headless --browser chrome --spec cypress/e2e/uiTest.cy.js"
+    "test:e2e.ci": "cypress run --headless --browser chrome --env TESTENV=CI --spec cypress/e2e/uiTest.cy.js",
+    "test:e2e.prod": "cypress run --headless --browser chrome --env TESTENV=PROD --spec cypress/e2e/uiTest.cy.js"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.1.1",
