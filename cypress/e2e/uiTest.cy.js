@@ -18,8 +18,8 @@ function setupTest(){
     });
   }
   else{
-    cy.intercept('GET', "https://www.gravatar.com/96f0dd2282a11de0145f55760a2f84f60b621627ff3ef811eec2d9631228c334");
-    cy.intercept('GET', "https://de.gravatar.com/96f0dd2282a11de0145f55760a2f84f60b621627ff3ef811eec2d9631228c334");
+    cy.intercept('GET', "https://www.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");
+    cy.intercept('GET', "https://de.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
     cy.intercept('GET', "https://openai.ki.fh-swf.de/api/login")
       .then((req) => {

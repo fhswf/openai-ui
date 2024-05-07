@@ -1,10 +1,29 @@
-describe("Chat", () => {
-  beforeEach(() => {
+function setupTest(){
+  if(Cypress.env('TESTENV') === "PROD"){
+    describe("Login Test", () => {
+      beforeEach(() => {
+        cy.visit("https://openai.ki.fh-swf.de");
+      });
+    
+      it("Login", () => {
+          cy.get("button").contains("Cluster Login").click()
+          cy.get('input').eq(0).type("hier_username_eintragen");
+          cy.get('input').eq(1).type("hier_passwort_eintragen");    
+          cy.get("input").contains("Login Cluster").click();
+          // Der Code kann noch nicht einloggen, da hier keine Daten reingeschrieben werden
+          // Diese werden noch von einem Secret in Github kommen.
+      });
+    });
+  }
+  else{
+    cy.intercept('GET', "https://www.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");
+    cy.intercept('GET', "https://de.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
+    cy.intercept('GET', "https://openai.ki.fh-swf.de/api/login")
+      .then((req) => {
+        console.log(req);
+      });
     cy.visit("http://localhost:5173/");
-    cy.wait('@getUser');
-    cy.wait(2000)
-
     cy.intercept('POST', 'https://openai.ki.fh-swf.de/api/v1/chat/completions', (req) => {
       const fakeResponseData = [
         {
@@ -46,7 +65,13 @@ describe("Chat", () => {
         body: fakeResponseData
       });
     }).as("messageResponse");
+    cy.wait('@getUser', { timeout: 15000 });
+  }
+}
 
+describe("Chat", () => {
+  beforeEach(() => {
+    setupTest();
     cy.getDataTestId("ChatTextArea").click().type("Cypress wrote this!").should("have.text", "Cypress wrote this!");
   });
 
@@ -63,7 +88,6 @@ describe("Chat", () => {
   it("Sending 2 messages and checking if both are in the chat", () => {
     cy.getDataTestId("SendMessageBtn").click();
     //cy.getDataTestId("ChatTextArea").should("have.text", "");
-    cy.wait(2000);
     cy.getDataTestId("ChatListContainer").should("be.visible");
     cy.getDataTestId("ChatMessage").each((message) => {
       cy.wrap(message).should("contain.text", "Cypress wrote this!");
@@ -118,22 +142,22 @@ describe("Chat", () => {
     });
   });
   
-  it("Sending a message and clearing the chatlog", () => {
+  it.only("Sending a message and clearing the chatlog", () => {
     cy.intercept('POST', "https://openai.ki.fh-swf.de/api/v1/chat/completions", { fixture: 'testCompletion.json' }).as('getCompletion');
     // Send message
     const message = "Cypress wrote this!";
-    cy.getDataTestId("ChatTextArea").type(message).should("have.value", message);
+    cy.getDataTestId("ChatTextArea").clear().type(message).should("have.value", message);
     cy.getDataTestId("SendMessageBtn").click();
     cy.wait('@getCompletion');
     cy.getDataTestId("ChatListContainer").find('[data-testid="ChatMessage"]').should('exist');
 
     // TODO: This triggers an exception in the client code
     // Clear chatlog
-    // cy.getDataTestId("ClearChatBtn").click();
-    // cy.getDataTestId("ChatListContainer").should('not.exist');
+    //cy.getDataTestId("ClearChatBtn").click();
+    //cy.getDataTestId("ChatListContainer").should('not.exist');
 
     // Check if message can be sent again
-    cy.getDataTestId("ChatTextArea").type(message).should("have.value", message);
+    cy.getDataTestId("ChatTextArea").clear().type(message).should("have.value", message);
     cy.getDataTestId("SendMessageBtn").click();
     cy.getDataTestId("ChatListContainer").should('exist');
   });
