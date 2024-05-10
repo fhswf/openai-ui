@@ -2,22 +2,6 @@ const { isConstructorDeclaration } = require("typescript");
 
 function setupTest(){
   if(Cypress.env('TESTENV') === "PROD"){
-    describe("Login Test", () => {
-      beforeEach(() => {
-        cy.visit("https://openai.ki.fh-swf.de");
-      });
-    
-      it("Login", () => {
-          cy.get("button").contains("Cluster Login").click()
-          cy.get('input').eq(0).type("hier_username_eintragen");
-          cy.get('input').eq(1).type("hier_passwort_eintragen");    
-          cy.get("input").contains("Login Cluster").click();
-          // Der Code kann noch nicht einloggen, da hier keine Daten reingeschrieben werden
-          // Diese werden noch von einem Secret in Github kommen.
-      });
-    });
-  }
-  else{
     cy.intercept('GET', "https://www.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");
     cy.intercept('GET', "https://de.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
@@ -27,6 +11,15 @@ function setupTest(){
       });
     cy.visit("http://localhost:5173/");
     cy.wait('@getUser', { timeout: 15000 });
+  }
+  else{
+    cy.visit("https://openai.ki.fh-swf.de");
+    //cy.get("button").contains("Cluster Login").click()
+    //cy.get('input').eq(0).type("username_hier");
+    //cy.get('input').eq(1).type("passwort_hier");    
+    //cy.get("input").contains("Login Cluster").click();
+    // Der Code kann noch nicht einloggen, da hier keine Daten reingeschrieben werden
+    // Diese werden noch von einem Secret in Github kommen.
   }
 }
 
