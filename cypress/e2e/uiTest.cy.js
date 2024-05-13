@@ -106,9 +106,7 @@ describe("Dark Mode", () => {
 
 describe("User Information", () => {
   beforeEach(() => {
-    cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
-    cy.visit("http://localhost:5173/");
-    cy.wait('@getUser');
+    setupTest();
   });
 
   it("Open and close user information", () => {
