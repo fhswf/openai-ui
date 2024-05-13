@@ -14,10 +14,10 @@ function setupTest(){
   }
   else{
     cy.visit("https://openai.ki.fh-swf.de");
-    //cy.get("button").contains("Cluster Login").click()
-    //cy.get('input').eq(0).type("username_hier");
-    //cy.get('input').eq(1).type("passwort_hier");    
-    //cy.get("input").contains("Login Cluster").click();
+    cy.get("button").contains("Cluster Login").click()
+    cy.get('input#username').type(Cypress.env("CYPRESS_USER_NAME"));
+    cy.get('input#password').type(Cypress.env("CYPRESS_USER_PASSWORD"));
+    cy.get("input").contains("Login Cluster").click();
     // Der Code kann noch nicht einloggen, da hier keine Daten reingeschrieben werden
     // Diese werden noch von einem Secret in Github kommen.
   }
