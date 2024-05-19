@@ -8,10 +8,10 @@ function setupTest(){
     cy.visit("http://localhost:5173/");
     //cy.visit("https://openai.ki.fh-swf.de");
   }
-  cy.get("button").contains("Cluster Login").click()
-  cy.get('input#username').type(Cypress.env("CYPRESS_USER_NAME"));
-  cy.get('input#password').type(Cypress.env("CYPRESS_USER_PASSWORD"));
-  cy.get("input").contains("Login Cluster").click();
+  //cy.get("button").contains("Cluster Login").click()
+  //cy.get('input#username').type(Cypress.env("CYPRESS_USER_NAME"));
+  //cy.get('input#password').type(Cypress.env("CYPRESS_USER_PASSWORD"));
+  //cy.get("input").contains("Login Cluster").click();
 }
 
 describe("User Interface", () => {
