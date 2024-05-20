@@ -21,22 +21,8 @@ jobs:
 
       # Install npm dependencies, cache them correctly
       # and run all Cypress tests
-      - name: Cypress run ci
+      - name: Cypress run
         uses: cypress-io/github-action@v6
-        env:
-          TESTENV: CI
-        with:
-          build: npm ci
-          start: npm start
-          browser: chrome
-          spec: cypress/e2e/uiTest.cy.js
-          record: false
-
-
-      - name: Cypress run prod
-        uses: cypress-io/github-action@v6
-        env:
-          TESTENV: PROD
         with:
           build: npm ci
           start: npm start

@@ -8,7 +8,7 @@ function setupTest(){
     cy.get('input#password').type(Cypress.env("CYPRESS_USER_PASSWORD"));
     cy.get("input").contains("Login Cluster").click();
   }
-  else{ // if its not prod, then it selects PROD
+  else{ // if its not prod, then it selects ci
     cy.intercept('GET', "https://www.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");
     cy.intercept('GET', "https://de.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1"); 
     cy.intercept('GET', 'https://openai.ki.fh-swf.de/api/user', { fixture: 'testUser.json' }).as('getUser');
