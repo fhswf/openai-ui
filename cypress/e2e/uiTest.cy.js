@@ -8,6 +8,7 @@ function setupTest(){
     cy.intercept('GET', "https://www.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");
     cy.intercept('GET', "https://de.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");  
     cy.visit("http://localhost:5173/");
+    cy.wait(2000);
   }
   cy.get("button").contains("Cluster Login").click()
   cy.get('input#username').type(Cypress.env("CYPRESS_USER_NAME"));
