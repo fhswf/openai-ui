@@ -1,13 +1,13 @@
 const { isConstructorDeclaration } = require("typescript");
 
 function setupTest(){
-  if(Cypress.env('TESTENV') === "CI"){ 
+  if(Cypress.env('TESTENV') === "PROD"){ 
+    cy.visit("https://openai.ki.fh-swf.de");
+  }
+  else{ // if its not prod, then it selects PROD
     cy.intercept('GET', "https://www.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");
     cy.intercept('GET', "https://de.gravatar.com/8e596ec8846c54f583994b3773e0c4afc16414733b9640b29b546a41b169dcd1");  
     cy.visit("http://localhost:5173/");
-  }
-  else{ // if its not prod, then it selects PROD
-    cy.visit("https://openai.ki.fh-swf.de");
   }
   cy.get("button").contains("Cluster Login").click()
   cy.get('input#username').type(Cypress.env("CYPRESS_USER_NAME"));
