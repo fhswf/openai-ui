@@ -1,4 +1,7 @@
 import { defineConfig } from "cypress";
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 export default defineConfig({
   video: true,
@@ -7,4 +10,8 @@ export default defineConfig({
       // implement node event listeners here
     },
   },
+  env: {
+    "CYPRESS_USER_NAME": process.env.CYPRESS_USER_NAME,
+    "CYPRESS_USER_PASSWORD": process.env.CYPRESS_USER_PASSWORD
+  }
 });

@@ -11,7 +11,8 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "test:e2e": "LANGUAGE=de cypress run --headless --browser chrome --spec cypress/e2e/uiTest.cy.js"
+    "test:e2e:ci": "cypress run --headless --env TESTENV=CI --spec cypress/e2e/uiTest.cy.js",
+    "test:e2e:prod": "cypress run --headless --env TESTENV=PROD --spec cypress/e2e/uiTest.cy.js"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.1.1",
@@ -19,6 +20,7 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@uiw/react-textarea-code-editor": "^3.0.2",
+    "dotenv": "^16.4.5",
     "eventsource-parser": "^1.0.0",
     "framer-motion": "^11.0.25",
     "i18next": "^22.5.1",
@@ -61,6 +63,7 @@
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^10.0.2",
     "@semantic-release/npm": "^12.0.0",
+    "@types/dotenv": "^8.2.0",
     "@types/react": "^18.2.67",
     "@vitejs/plugin-react": "^4.2.1",
     "css-loader": "^6.7.3",
