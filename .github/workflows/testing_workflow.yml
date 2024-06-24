@@ -33,7 +33,7 @@ jobs:
 
       - name: Start application
         if: ${{ inputs.TESTENV == 'ci' }}
-        run: npm start
+        run: npm start &
 
       # Install npm dependencies, cache them correctly
       # and run all Cypress tests
