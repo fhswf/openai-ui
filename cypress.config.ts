@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 export default defineConfig({
+  defaultCommandTimeout: 10000, // Timeout in Millisekunden (hier 10 Sekunden)
   video: true,
   e2e: {
     setupNodeEvents(on, config) {
