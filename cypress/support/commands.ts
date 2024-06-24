@@ -43,7 +43,7 @@ Cypress.Commands.add("getDataTestId", (dataTestSelector) => {
   });
 
 export function setupTest(){
-  if(Cypress.env('TESTENV') === "PROD"){ 
+  if(Cypress.env('TESTENV') == "PROD"){ 
     cy.visit("https://openai.ki.fh-swf.de");
     cy.get("button").contains("Cluster Login").click()
     cy.get('input#username').type(Cypress.env("CYPRESS_USER_NAME"));

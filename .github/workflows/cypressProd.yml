@@ -1,0 +1,44 @@
+name: Cypress Tests Prod
+
+on: push
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-22.04
+    env:
+      VITE_LOGIN_URL: https://openai.ki.fh-swf.de/api/login
+      VITE_API_BASE_URL: https://openai.ki.fh-swf.de/api/v1
+      VITE_USER_URL: https://openai.ki.fh-swf.de/api/user
+      CYPRESS_USER_NAME: "${{ secrets.CYPRESS_USER_NAME }}"
+      CYPRESS_USER_PASSWORD: "${{ secrets.CYPRESS_USER_PASSWORD }}"
+      LANGUAGE: de
+      TESTENV: "PROD"
+    container:
+      image: cypress/browsers:node-20.9.0-chrome-118.0.5993.88-1-ff-118.0.2-edge-118.0.2088.46-1
+      options: --user 1001
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install npm dependencies, cache them correctly
+      # and run all Cypress tests
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          spec: cypress/e2e/uiTest.cy.js
+          record: false
+          
+      - uses: actions/upload-artifact@v4
+        # add the line below to store screenshots only on failures
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          if-no-files-found: warn # 'warn' or 'error' are also available, defaults to `warn`
