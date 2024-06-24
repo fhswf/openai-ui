@@ -42,12 +42,12 @@ jobs:
         # add the line below to store screenshots only on failures
         if: failure()
         with:
-          name: cypress-screenshots-${{ github.run_id }}-${{ github.job }}
+          name: cypress-screenshots-${{ inputs.TESTENV }}
           path: cypress/screenshots
           if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cypress-videos-${{ github.run_id }}-${{ github.job }}
+          name: cypress-videos-${{ inputs.TESTENV }}
           path: cypress/videos
           if-no-files-found: warn # 'warn' or 'error' are also available, defaults to `warn`
