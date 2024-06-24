@@ -6,8 +6,8 @@ jobs:
   cypress-run-ci:
     uses: ./.github/workflows/testing_workflow.yml
     with:
-      TESTENV: ci
+      TESTENV: "CI"
   cypress-run-prod:
     uses: ./.github/workflows/testing_workflow.yml
     with:
-      TESTENV: prod
+      TESTENV: "PROD"
