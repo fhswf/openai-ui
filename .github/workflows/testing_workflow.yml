@@ -27,13 +27,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install dependencies
+        if: ${{ inputs.TESTENV == 'ci' }} 
+        run: npm ci
+
+      - name: Start application
+        if: ${{ inputs.TESTENV == 'ci' }}
+        run: npm start
+
       # Install npm dependencies, cache them correctly
       # and run all Cypress tests
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          build: npm ci
-          start: npm start
           browser: chrome
           spec: cypress/e2e/uiTest.cy.js
           record: false
