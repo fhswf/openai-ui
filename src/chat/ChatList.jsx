@@ -117,7 +117,7 @@ export function ChatItem(props) {
 export function ChatList() {
   const { chat } = useGlobal()
   return (
-    <div className={styles.list} data-testid="ConversationList">
+    <div className={styles.list} data-testid="HistoryList">
       {chat.length ? chat.map((item, index) => <ChatItem key={index} index={index} {...item} />) : <ListEmpty />}
       <CreateNew />
     </div>

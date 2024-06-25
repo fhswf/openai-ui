@@ -128,9 +128,9 @@ export function ChatSideBar() {
         }
       </div>
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
-        <Option type="apps" onClick={() => setState({ is: { ...is, apps: true } })} tooltip="Apps" />
-        <Option type="history" onClick={() => setState({ is: { ...is, apps: false } })} tooltip="History" />
-        <Option dataTestId="DarkModeBottonLeftBtn" type={options.general.theme} onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })} tooltip="Theme" />
+        <Option dataTestId="AppsBtn" type="apps" onClick={() => setState({ is: { ...is, apps: true } })} tooltip="Apps" />
+        <Option dataTestId="HistoryBtn" type="history" onClick={() => setState({ is: { ...is, apps: false } })} tooltip="History" />
+        <Option dataTestId="DarkModeBottomLeftBtn" type={options.general.theme} onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })} tooltip="Theme" />
         <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip="Config" />
         <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
           tooltip={`${is.fullScreen ? 'Minimize' : 'Maximize'}`} />

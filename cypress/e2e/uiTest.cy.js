@@ -22,25 +22,25 @@ describe("User Interface", () => {
 
   it("Switching between Apps and History", () => {
     cy.getDataTestId("AppsList").should("exist", "be.visible");
-    cy.getDataTestId("ConversationList").should("not.exist");
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(1).click();
+    cy.getDataTestId("HistoryList").should("not.exist");
+    cy.getDataTestId("HistoryBtn").click();
     cy.getDataTestId("AppsList").should("not.exist");
-    cy.getDataTestId("ConversationList").should("exist", "be.visible");
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(0).click();
-    cy.getDataTestId("ConversationList").should("not.exist");
+    cy.getDataTestId("HistoryList").should("exist", "be.visible");
+    cy.getDataTestId("AppsBtn").click();
+    cy.getDataTestId("HistoryList").should("not.exist");
     cy.getDataTestId("AppsList").should("exist", "be.visible");
   });
 
   it("Create and edit new conversation", () => {
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(1).click();
+    cy.getDataTestId("HistoryBtn").click();
     cy.getDataTestId("ConversationCreateBtn").click();
     cy.getDataTestId("HeaderTitle").contains("Dies ist ein neues Gespräch");
-    cy.getDataTestId("ConversationList").within(() => {
-      cy.get('[data-testid="Conversation"]').eq(0).find('[data-testid="ConversationTitle"]').contains("Dies ist ein neues Gespräch");
+    cy.getDataTestId("HistoryList").within(() => {
+      cy.getDataTestId("Conversation").eq(0).find('[data-testid="ConversationTitle"]').contains("Dies ist ein neues Gespräch");
       cy.getDataTestId("editConversation").find("i").eq(0).click({ force: true });
       cy.getDataTestId("editConversationTextArea").find("textarea").clear().type("edit conversation text");
       cy.getDataTestId("editConversationSaveBtn").click();
-      cy.get('[data-testid="Conversation"]').eq(0).find('[data-testid="ConversationTitle"]').contains("edit conversation text");
+      cy.getDataTestId("Conversation").eq(0).find('[data-testid="ConversationTitle"]').contains("edit conversation text");
     });
     cy.getDataTestId("HeaderTitle").contains("edit conversation text");
   });
@@ -63,9 +63,9 @@ describe("User Interface", () => {
 
   it("Dark Mode Homepage", () => {
     cy.get("html").should("have.attr", "data-theme", "light");
-    cy.getDataTestId("DarkModeBottonLeftBtn").click();
+    cy.getDataTestId("DarkModeBottomLeftBtn").click();
     cy.get("html").should("have.attr", "data-theme", "dark");
-    cy.getDataTestId("DarkModeBottonLeftBtn").click();
+    cy.getDataTestId("DarkModeBottomLeftBtn").click();
     cy.get("html").should("have.attr", "data-theme", "light");
   });
 });
