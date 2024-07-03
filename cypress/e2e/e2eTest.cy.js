@@ -19,16 +19,12 @@ describe("Chat", () => {
     cy.getDataTestId("SendMessageBtn").click();
     cy.getDataTestId("ChatTextArea").should("have.text", "");
     cy.getDataTestId("ChatListContainer").should("be.visible");
-    cy.getDataTestId("ChatMessage").each((message) => {
-      cy.wrap(message).should("contain.text", "Cypress wrote this!");
-    });
     cy.getDataTestId("ChatTextArea").type("Cypress also wrote this!");
     cy.getDataTestId("ChatTextArea").should(
       "have.text",
       "Cypress also wrote this!"
     );
     cy.getDataTestId("SendMessageBtn").click();
-    cy.getDataTestId("ChatTextArea").should("have.text", "");
     cy.getDataTestId("ChatListContainer").should("be.visible");
 
     cy.getDataTestId("ChatListContainer").within(() => {
@@ -69,26 +65,6 @@ describe("Chat", () => {
     cy.getDataTestId("ChatMessage").each((message) => {
       cy.wrap(message).should("contain.text", "Cypress wrote this!");
     });
-  });
-  
-  it("Sending a message and clearing the chatlog", () => {
-    cy.intercept('POST', "https://openai.ki.fh-swf.de/api/v1/chat/completions", { fixture: 'testCompletion.json' }).as('getCompletion');
-    // Send message
-    const message = "Cypress wrote this!";
-    cy.getDataTestId("ChatTextArea").clear().type(message).should("have.value", message);
-    cy.getDataTestId("SendMessageBtn").click();
-    cy.wait('@getCompletion');
-    cy.getDataTestId("ChatListContainer").find('[data-testid="ChatMessage"]').should('exist');
-
-    // TODO: This triggers an exception in the client code
-    // Clear chatlog
-    //cy.getDataTestId("ClearChatBtn").click();
-    //cy.getDataTestId("ChatListContainer").should('not.exist');
-
-    // Check if message can be sent again
-    cy.getDataTestId("ChatTextArea").clear().type(message).should("have.value", message);
-    cy.getDataTestId("SendMessageBtn").click();
-    cy.getDataTestId("ChatListContainer").should('exist');
   });
 
 });

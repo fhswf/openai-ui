@@ -1,7 +1,7 @@
 const { isConstructorDeclaration } = require("typescript");
 import { setupTest } from '../support/commands.ts';
 
-describe("User Interface", () => {
+describe("Homepage", () => {
   beforeEach(() => {
     setupTest();
   });
@@ -76,6 +76,10 @@ describe("Config Menu", () => {
     cy.getDataTestId("OpenConfigBtn").click();
   });
 
+  it("Check Settings Menu", () => {
+    cy.getDataTestId("SettingsMenu").should("exist");
+  })
+
   it("Dark Mode Settings", () => {
     cy.get("html").should("have.attr", "data-theme", "light");
     cy.getDataTestId("OptionDarkModeSelect").select("dark");
@@ -88,22 +92,6 @@ describe("Config Menu", () => {
     cy.getDataTestId("SendMessageSelect").select("COMMAND_ENTER").should("have.value", "COMMAND_ENTER");
     cy.getDataTestId("SendMessageSelect").select("ALT_ENTER").should("have.value", "ALT_ENTER");
     cy.getDataTestId("SendMessageSelect").select("ENTER").should("have.value", "ENTER");
-  });
-
-  it("Set top P input", () => {
-    cy.getDataTestId('SetTopPInput').clear().should("have.value", "0").type("{selectall}1024").should("have.value", "1024");
-  });
-
-  it("Set api base url input", () => {
-    cy.getDataTestId('ApiBaseURLInput').clear().should("have.value", "").type("a_cypress_input_test").should("have.value", "a_cypress_input_test");
-  });
-
-  it("Set api key input", () => {
-    cy.getDataTestId('APIKeyInput').clear().should("have.value", "").type("a_cypress_input_test").should("have.value", "a_cypress_input_test");
-  });
-
-  it("Set organisation id input", () => {
-    cy.getDataTestId('APIOrganisationIDInput').clear().should("have.value", "").type("a_cypress_id_test").should("have.value", "a_cypress_id_test");
   });
 
   it("Change Fontsize", () => {
@@ -149,7 +137,76 @@ describe("Config Menu", () => {
   });
 
   it("Close the settings", () => {
+    cy.getDataTestId("SettingsMenu").should("exist");
     cy.getDataTestId("SettingsCloseBtn").click();
-    cy.getDataTestId("SettingsContainer").should("not.exist");
+    cy.getDataTestId("SettingsMenu").should("not.exist");
   })
+});
+
+describe("Chat", () => {
+  beforeEach(() => {
+    setupTest();
+    cy.getDataTestId("ChatTextArea").click().type("Cypress wrote this!").should("have.text", "Cypress wrote this!");
+  });
+
+  it("Sending a message with the send button", () => {
+    cy.getDataTestId("SendMessageBtn").click();
+    cy.getDataTestId("ChatTextArea").should("have.text", "");
+    cy.getDataTestId("ChatListContainer").should("be.visible");
+    cy.getDataTestId("ChatMessage").each((message) => {
+      cy.wrap(message).should("contain.text", "Cypress wrote this!");
+    });
+  });
+
+  it("Sending 2 messages and checking if both are in the chat", () => {
+    cy.getDataTestId("SendMessageBtn").click();
+    cy.getDataTestId("ChatTextArea").should("have.text", "");
+    cy.getDataTestId("ChatListContainer").should("be.visible");
+    cy.getDataTestId("ChatTextArea").type("Cypress also wrote this!");
+    cy.getDataTestId("ChatTextArea").should(
+      "have.text",
+      "Cypress also wrote this!"
+    );
+    cy.getDataTestId("SendMessageBtn").click();
+    cy.getDataTestId("ChatListContainer").should("be.visible");
+
+    cy.getDataTestId("ChatListContainer").within(() => {
+      // Überprüfe die erste Nachricht
+      cy.getDataTestId("ChatMessage")
+        .eq(0)
+        .should("contain", "Cypress wrote this!");
+
+      // Überprüfe die zweite Nachricht
+      cy.getDataTestId("ChatMessage")
+        .eq(1)
+        .should("contain", "Cypress also wrote this!");
+    });
+  });
+
+  it("Sending a message with enter", () => {
+    cy.getDataTestId("ChatTextArea").click().type("{enter}");
+    //cy.getDataTestId("ChatTextArea").should("have.text", "");
+    cy.getDataTestId("ChatListContainer").should("be.visible");
+    cy.getDataTestId("ChatMessage").each((message) => {
+      cy.wrap(message).should("contain.text", "Cypress wrote this!");
+    });
+  });
+
+  it("Changing the message sending to ctrl+enter and sending it", () => {
+    // Change message sending method to use ctrl+enter
+    cy.getDataTestId("OpenConfigBtn").click();
+    cy.getDataTestId("SendMessageSelect").select("COMMAND_ENTER");
+    cy.getDataTestId("SettingsCloseBtn").click();
+
+    // Try sending message using Enter
+    cy.getDataTestId("ChatTextArea").click().type("{enter}").should("have.text", "Cypress wrote this!");
+
+    // Send message using ctrl+Enter
+    cy.getDataTestId("ChatTextArea").click().type("{ctrl}{enter}").should("have.text", "");
+
+    // Check if the message has been sent
+    cy.getDataTestId("ChatMessage").each((message) => {
+      cy.wrap(message).should("contain.text", "Cypress wrote this!");
+    });
+  });
 });

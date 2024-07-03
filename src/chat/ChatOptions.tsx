@@ -63,7 +63,7 @@ export function ChatOptions() {
   }, [openai.mode]);
 
   return (
-    <div className={classnames(styles.config, 'flex-c-sb flex-column')}>
+    <div data-testid="SettingsMenu" className={classnames(styles.config, 'flex-c-sb flex-column')}>
       <ConfigHeader />
       <div className={classnames(styles.inner, 'flex-1')}>
 
