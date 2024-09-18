@@ -23,6 +23,7 @@ export type GeneralOptions = {
 export type AccountOptions = {
     name: string;
     avatar: string;
+    terms: number;
 };
 
 export type OpenAIOptions = {

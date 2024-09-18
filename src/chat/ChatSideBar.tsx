@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Avatar, Button, Icon, Panel, Tooltip } from '../components'
 import { useGlobal } from './context'
 import { classnames } from '../components/utils'
@@ -12,6 +12,7 @@ import rehypeKatex from 'rehype-katex'
 
 import styles from './style/sider.module.less'
 import 'katex/dist/katex.min.css'
+import { set } from 'cypress/types/lodash'
 
 
 const Option = (props) => {
@@ -58,6 +59,22 @@ Anwendung zu gewährleisten (Anmeldung an der Anwendung).
 Der Quellcode der Anwendung ist auf GitHub in folgenden Repositories verfügbar:
 - Chat-Client: [github.com/fhswf/openai-ui](https://github.com/fhswf/openai-ui)
 - Proxy-Server: [github.com/fhswf/openai-proxy](https://github.com/fhswf/openai-proxy)
+
+## Nutzungsbedingungen
+Nutzungsberechtigt sind die an der FH SWF eingeschriebenen Studierende sowie die an der FH SWF
+in Lehre und Forschung tätigen Personen, also insbesondere Professorinnen und Professoren,
+Lehrkräfte für besondere Aufgaben, wissenschaftlichen Mitarbeiterinnen und Mitarbeiter,
+Lehrbeauftragte und Dienstvertragsnehmerinnen und Dienstvertragsnehmer im Verbundstudium.
+
+Die Nutzung ist freiwillig. Eine Weigerung der Nutzung hat keinerlei studienbezogene bzw.
+arbeitsrechtliche Nachteile.
+
+Die Nutzung ist ausschließlich für Zwecke des Studiums bzw. der Lehre und der Forschung erlaubt.
+Jede anderweitige Nutzung, insbesondere zu geschäftlichen, gewerblichen oder privaten Zwecken, ist
+nicht zulässig.
+Es gilt zu beachten, ob in dem jeweiligen Kontext die Nutzung von KI-Tools im Allgemeinen und
+dieses OpenAI-Proxys im Speziellen erlaubt ist. Dies gilt insbesondere für Studierende im
+Zusammenhang mit der Erbringung von Prüfungsleistungen.
 `
 
 function Modal(props) {
@@ -74,9 +91,13 @@ function Modal(props) {
 
 export function ChatSideBar() {
   const [showUserModal, setUserModal] = useState(false)
-  const [showAboutModal, setAboutModal] = useState(false)
+  const [showAboutModal, setAboutModal] = useState(true)
   const { is, setState, options, user } = useGlobal()
-  const { setGeneral } = useOptions()
+  const { setAccount, setGeneral } = useOptions()
+
+  useEffect(() => {
+    setAboutModal(!options.account.terms)
+  }, [options])
 
   const userClick = () => {
     console.log('User clicked')
@@ -113,7 +134,7 @@ export function ChatSideBar() {
           <Modal>
 
             <Panel title="Hinweise" className={styles.user} onClose={() => setAboutModal(false)} dataTestId="InformationWindow">
-              <Button type="icon" icon="close" onClick={() => setAboutModal(false)} className={styles.close} />
+              <Button type="icon" icon="close" disabled={!options.account.terms} onClick={() => setAboutModal(false)} className={styles.close} />
               <div className={styles.panel}>
                 <Markdown
                   className="z-ui-markdown"
@@ -123,6 +144,17 @@ export function ChatSideBar() {
                   {(text)}
                 </Markdown>
               </div>
+              {options.account.terms ?
+                <>
+                  <span>Sie haben die Nutzungsbedingungen am {(new Date(options.account.terms)).toLocaleDateString()} akzeptiert.</span>
+                  <Button type="primary" onClick={() => setAboutModal(false)}>Schließen</Button>
+                </>
+                :
+                <Button type="primary" onClick={() => {
+                  setAccount({ terms: Date.now() })
+                  setAboutModal(false)
+                }}>Ich akzeptiere die Nutzungsbedingungen</Button>}
+
             </Panel>
           </Modal>
         }
