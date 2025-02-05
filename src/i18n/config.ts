@@ -116,6 +116,8 @@ i18n
                     clear: "Löschen",
                     description: "Beschreibung",
                     help_description: "Geben Sie eine Beschreibung des Chatbots ein.",
+                    help_gravatar: "Falls Sie bei Gravatar registriert sind, aktivieren Sie diese Option, um Ihr Profilbild anzuzeigen. Gravatar ist ein Dienst, der Ihr Profilbild anhand Ihrer E-Mail-Adresse erkennt. <strong>Achtung</strong>: Ihre IP-Adresse wird an Gravatar übertragen.",
+                    gravatar: "Gravatar",
                 },
             },
         },

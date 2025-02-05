@@ -96,7 +96,7 @@ export function ChatSideBar() {
           <Modal>
 
             <Panel title="User information" className={styles.user} onClose={() => setUserModal(false)} dataTestId="UserInformation">
-              <Button type="icon" icon="close" onClick={() => setUserModal(false)} class={styles.close} data-testid="UserInformationCloseBtn" />*
+              <Button type="icon" icon="close" onClick={() => setUserModal(false)} className={styles.close} data-testid="UserInformationCloseBtn" />
               <div className={styles.user}>
                 <Avatar src={user?.avatar || ""} />
                 <div className={styles.name}>{user?.name}</div>

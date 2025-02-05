@@ -13,6 +13,7 @@ export enum OptionActionType {
 }
 
 export type GeneralOptions = {
+    gravatar: boolean;
     language: string;
     theme: string;
     sendCommand: string;

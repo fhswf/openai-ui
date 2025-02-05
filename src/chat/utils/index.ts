@@ -1,5 +1,7 @@
 import i18next from "i18next";
 
+import avatar from '../../assets/images/avatar.png'
+
 export * from "./options";
 
 export function formatNumber(n) {
@@ -26,7 +28,7 @@ export async function sha256Digest(message) {
 }
 
 
-export function fetchAndGetUser(dispatch) {
+export function fetchAndGetUser(dispatch, options) {
   fetch(import.meta.env.VITE_USER_URL, { credentials: "include" })
     .then((res) => {
       console.log("getting user: ", res.status);
@@ -39,20 +41,25 @@ export function fetchAndGetUser(dispatch) {
     })
 
     .then(user => {
-      sha256Digest(user.email).then(hash => {
-        user.hash = hash;
-        fetch(`https://www.gravatar.com/${hash}`, { mode: "no-cors" }).then(res => {
-          if (res.status === 200) {
-            console.log("user has gravatar");
-            user.avatar = `https://www.gravatar.com/avatar/${hash}`;
-          }
-          else {
-            console.log("user has no gravatar");
-            user.avatar = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
-          }
-          dispatch({ type: "SET_STATE", payload: { user } });
+      user.avatar = avatar;
+      dispatch({ type: "SET_STATE", payload: { user } });
+      if (options.general.gravatar) {
+        console.log("user uses gravatar");
+        sha256Digest(user.email).then(hash => {
+          user.hash = hash;
+          fetch(`https://www.gravatar.com/${hash}`, { mode: "no-cors" }).then(res => {
+            if (res.status === 200) {
+              console.log("user has gravatar");
+              user.avatar = `https://www.gravatar.com/avatar/${hash}`;
+            }
+            else {
+              console.log("user has no gravatar");
+              user.avatar = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
+            }
+            dispatch({ type: "SET_STATE", payload: { user } });
+          });
         });
-      });
+      }
     })
     .catch(err => {
       console.log("error getting user: ", err);
