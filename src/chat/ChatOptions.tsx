@@ -17,7 +17,7 @@ export function ConfigHeader() {
   const { setState, setIs, is } = useGlobal()
   return (
     <div className={classnames(styles.header, 'flex-c-sb')} data-testid="SettingsHeader">
-      <Title type="h2">Setting</ Title>
+      <Heading size="lg">{t("chat_settings")}</Heading>
       <div className="flex-c">
         <Button type="icon" onClick={() => setState(initState)} icon="refresh" dataTestId="SettingsRefreshBtn" />
         <Button type="icon" onClick={() => setIs({ config: !is.config })} icon="close" dataTestId="SettingsCloseBtn" />
@@ -28,6 +28,7 @@ export function ConfigHeader() {
 
 export function ChatOptions() {
   const ModelOptions = [
+    { label: "gpt-4o-mini", value: "gpt-4o-mini" },
     { label: "gpt-4-turbo", value: "gpt-4-turbo" },
     { label: "gpt-4", value: "gpt-4" },
     { label: "gpt-3.5-turbo", value: "gpt-3.5-turbo" },
@@ -71,20 +72,7 @@ export function ChatOptions() {
       <CardBody overflowY={"auto"}>
         <Stack divider={<StackDivider />} spacing='4'>
           <Heading size="md">{t("general")}</Heading>
-          {/*
-        <Panel className={styles.panel} title="Account">
-          <Panel.Item title="avatar" desc="If selected,  will switch between different appearances following your system settings" icon="user">
-            <Avatar src={account.avatar} />
-          </Panel.Item>
-          <Panel.Item icon="setting" title="Personalized Name" desc="Personalize your AI pair programmer. You can rename your assistant to anything you responsibly prefer.">
-            <Input value={account.name} onChange={(val) => setAccount({ name: val })} placeholder="Personalize your AI pair programmer" />
-          </Panel.Item>
-        </Panel>
-        */}
 
-          {/* <Panel.Item title="Appearance" desc="If selected,  will switch between different appearances following your system settings" icon="config">
-            <Switch label={theme} />
-          </Panel.Item> */}
           <FormControl mt="4">
             <FormLabel>{t("theme_style")}</FormLabel>
             <RadioGroup value={general.theme} onChange={(val) => setGeneral({ theme: val })}>
@@ -109,73 +97,101 @@ export function ChatOptions() {
             <FormHelperText>{t("send_help")}</FormHelperText>
           </FormControl>
 
-          <Panel.Item icon="files" title="Send messages" desc={t("send_help")}>
-            <Select value={general.sendCommand} onChange={(val) => setGeneral({ sendCommand: val })} options={sendCommandOptions} placeholder="Select interface style" dataTestId="SendMessageSelect" />
-          </Panel.Item>
-          <Panel.Item icon="lang" title="Language" desc={t("language_help")}>
+          <FormControl mt="4">
+            <FormLabel>{t("language")}</FormLabel>
             <Select value={general.language} onChange={val => setGeneral({ language: val })} options={languageOptions} placeholder="language" dataTestId="SetLanguageSelect" />
-          </Panel.Item>
-          <Panel.Item icon="config" title="FontSize" desc={t("fontsize_help")}>
+            <FormHelperText>{t("language_help")}</FormHelperText>
+          </FormControl>
+
+          <FormControl mt="4">
+            <FormLabel>{t("fontsize")}</FormLabel>
             <Select value={general.size} onChange={val => setGeneral({ size: val })} options={sizeOptions} placeholder="OpenAI ApiKey" dataTestId="ChangeFontSizeSelect" />
-          </Panel.Item>
-          <Panel.Item>
-            <FormControl mt="4">
-              <Flex>
-                <FormLabel htmlFor='gravatar' mb='0'>
-                  {t("gravatar")}
-                </FormLabel>
-                <Switch id="gravatar" isChecked={general.gravatar} onChange={(value) => {
-                  console.log("onChange: ", value.target.checked);
-                  setGeneral({ ...options.general, gravatar: value.target.checked });
-                }} />
-              </Flex>
-              <FormHelperText><Trans t={t}>help_gravatar</Trans></FormHelperText>
-            </FormControl>
-          </Panel.Item>
-        </Stack>
-        <Panel className={styles.panel} title="Global OpenAI Config">
-          <Panel.Item icon="editor" title="API mode" desc={t("api_mode_help")}>
+            <FormHelperText>{t("fontsize_help")}</FormHelperText>
+          </FormControl>
+
+          <FormControl mt="4">
+            <Flex>
+              <FormLabel htmlFor='gravatar' mb='0'>
+                {t("gravatar")}
+              </FormLabel>
+              <Switch id="gravatar" isChecked={general.gravatar} onChange={(value) => {
+                console.log("onChange: ", value.target.checked);
+                setGeneral({ ...options.general, gravatar: value.target.checked });
+              }} />
+            </Flex>
+            <FormHelperText><Trans t={t}>help_gravatar</Trans></FormHelperText>
+          </FormControl>
+
+
+          <Heading size="md">{t("Global OpenAI Config")}</Heading>
+
+
+          <FormControl mt="4">
+            <FormLabel>{t("api_mode")}</FormLabel>
             <Select options={modeOptions} value={openai.mode} onChange={val => setAPIMode(val)} />
-          </Panel.Item>
+            <FormHelperText>{t("api_mode_help")}</FormHelperText>
+          </FormControl>
           {
             openai.mode === 'assistant' ?
 
               (
-                <Panel.Item icon="model" title="Assistant" desc={t("openai_model_help")}>
+                <FormControl mt="4">
+                  <FormLabel>{t("assistant")}</FormLabel>
                   <Select options={assistants} value={openai.assistant} onChange={val => setAssistant(val)} placeholder="Choose assistant" />
-                </Panel.Item>)
+                  <FormHelperText>{t("assistent_help")}</FormHelperText>
+                </FormControl>
+              )
 
               :
-              (<Panel.Item icon="model" title="OpenAI model" desc={t("openai_model_help")}>
-                <Select dataTestId="ChangeAIModelSelect" options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose model" />
-              </Panel.Item>)
+              (
+                <FormControl mt="4">
+                  <FormLabel>{t("openai_model_help")}</FormLabel>
+                  <Select dataTestId="ChangeAIModelSelect" options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose model" />
+                  <FormHelperText>{t("openai_model_help")}</FormHelperText>
+                </FormControl>
+              )
           }
 
-          <Panel.Item icon="files" title="Max Tokens" desc="The maximum number of tokens to generate in the reply. 1 token is roughly 1 word.">
+          <FormControl mt="4">
+            <FormLabel>{t("max_tokens")}</FormLabel>
             <Input type="number" value={openai.max_tokens} placeholder="Max Tokens" onChange={val => setModel({ max_tokens: +val })} data-testid="MaxTokensInput" />
-          </Panel.Item>
-          <Panel.Item icon="paste" title="Temperature" desc={t("temperature_help")}>
+            <FormHelperText>{t("max_tokens_help")}</FormHelperText>
+          </FormControl>
+
+          <FormControl mt="4">
+            <FormLabel>{t("temperature")}</FormLabel>
             <Input type="number" value={openai.temperature} placeholder="OpenAI Temperature" onChange={val => setModel({ temperature: +val })} data-testid="SetTemperatureInput" />
-          </Panel.Item>
-          <Panel.Item icon="link" title="Top P" desc={t("top_p_help")}>
+            <FormHelperText>{t("temperature_help")}</FormHelperText>
+          </FormControl>
+
+          <FormControl mt="4">
+            <FormLabel>{t("top_p")}</FormLabel>
             <Input type="number" value={openai.top_p} placeholder="Custom top_p." onChange={val => setModel({ top_p: +val })} data-testid="SetTopPInput" />
-          </Panel.Item>
-        </Panel>
+            <FormHelperText>{t("top_p_help")}</FormHelperText>
+          </FormControl>
 
-        <Panel className={styles.panel} title="Custom API endpoint"
-          desc={t("custom_endpoint_desc")}>
-          <Panel.Item icon="link" title="Api Base Url" desc="Custom base url for OpenAI API.">
+          <Heading size="md" desc={t("custom_endpoint_desc")}>{t("Custom API Endpoint")}</Heading>
+
+          <FormControl mt="4">
+            <FormLabel>{t("api_base_url")}</FormLabel>
             <Input value={openai.baseUrl} placeholder="Api Base Url" onChange={val => setModel({ baseUrl: val })} data-testid="ApiBaseURLInput" />
-          </Panel.Item>
-          <Panel.Item title="API Key" desc="Custom openai.com API Key" icon="key">
-            <Input value={openai.apiKey} autoComplete="new-password" onChange={val => setModel({ apiKey: val })} placeholder="ApiKey" type="password" data-testid="APIKeyInput" />
-          </Panel.Item>
-          <Panel.Item icon="organization" title="Organization" desc="OpenAI Organization ID. Documentation.">
-            <Input value={openai.organizationId} placeholder="OpenAI Organization ID" onChange={val => setModel({ organizationId: val })} data-testid="APIOrganisationIDInput" />
-          </Panel.Item>
+            <FormHelperText>{t("api_base_url_help")}</FormHelperText>
+          </FormControl>
 
-        </Panel>
+          <FormControl mt="4">
+            <FormLabel>{t("api_key")}</FormLabel>
+            <Input value={openai.apiKey} autoComplete="new-password" onChange={val => setModel({ apiKey: val })} placeholder="ApiKey" type="password" data-testid="APIKeyInput" />
+            <FormHelperText>{t("api_key_help")}</FormHelperText>
+          </FormControl>
+
+          <FormControl mt="4">
+            <FormLabel>{t("organization_id")}</FormLabel>
+            <Input value={openai.organizationId} placeholder="OpenAI Organization ID" onChange={val => setModel({ organizationId: val })} data-testid="APIOrganisationIDInput" />
+            <FormHelperText>{t("organization_id_help")}</FormHelperText>
+          </FormControl>
+
+        </Stack>
       </CardBody>
-    </Card>
+    </Card >
   )
 }

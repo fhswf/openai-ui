@@ -1,5 +1,11 @@
 import React from 'react'
 import { Avatar, Icon, Textarea, Loading, Tooltip, Button, Popover } from '../components'
+import { Icon as ChakraIcon, IconButton } from "@chakra-ui/react";
+import { AiOutlineClear } from "react-icons/ai";
+import { IoReloadOutline } from "react-icons/io5";
+import { IoSettingsOutline } from "react-icons/io5";
+import { IoLogoGithub } from "react-icons/io5";
+
 import { CopyIcon, ScrollView, Error, EmptyChat, ChatHelp } from './component'
 import { MessageRender } from './MessageRender'
 import { ConfigInfo } from './ConfigInfo'
@@ -21,6 +27,7 @@ export function MessageHeader() {
   const columnIcon = is.sidebar ? 'column-close' : 'column-open'
   const { setGeneral } = useOptions()
   const { t } = useTranslation();
+  const issueUrl = import.meta.env.VITE_ISSUE_URL || 'https://github.com/fhswf/openai-ui/issues/new?template=Blank+issue'
 
   return (
     <div className={classnames(styles.header)}>
@@ -30,12 +37,12 @@ export function MessageHeader() {
         <div className={styles.length}>{t('count_messages', { count: messages.length })}</div>
       </div>
       <div className={styles.header_bar}>
-        <Icon className={styles.icon} type="setting" title={t("chat_settings")} onClick={showSettings} />
-        <Icon className={styles.icon} type="reload" title={t("reload_thread")} onClick={reloadThread} />
-        <Icon className={styles.icon} type="clear" title={t("clear_thread")} onClick={clearThread} data-testid="ClearChatBtn" />
-        <Icon type="download" className={[styles.icon, styles.disabled]} />
+        <IconButton variant="ghost" aria-label={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton>
+        <IconButton variant="ghost" aria-label={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>
+        <IconButton variant="ghost" aria-label={t("clear_thread")} onClick={clearThread} data-testid="ClearChatBtn"><AiOutlineClear /></IconButton>
+        <a href={issueUrl} target="_blank" title={t("open_issue")}><IconButton variant="ghost" aria-label={t("open_issue")}><IoLogoGithub /></IconButton></a>
       </div>
-    </div>
+    </div >
   )
 }
 

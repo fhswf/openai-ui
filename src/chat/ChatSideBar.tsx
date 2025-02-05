@@ -25,7 +25,7 @@ const Option = (props) => {
 let text = `## Über die Anwendung
     
 Diese Anwendung ermöglicht den Zugriff auf die Chat-Funktion von
-[OpenAI](https://openai.com) (inklusive *GPT4-Turbo*) **ohne Übertragung von personenbezogenen Daten des Benutzers
+[OpenAI](https://openai.com) (inklusive *gpt-4o-mini*) **ohne Übertragung von personenbezogenen Daten des Benutzers
 an OpenAI**. 
 
 Technisch wird dies durch die Verwendung eines API-Schlüssels erreicht, der in der Anwendung hinterlegt ist.

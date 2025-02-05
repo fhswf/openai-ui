@@ -3,6 +3,7 @@ import i18n from "i18next";
 // re-render when language changes.
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import { max } from "cypress/types/lodash";
 
 i18n
     .use(LanguageDetector)
@@ -83,11 +84,10 @@ i18n
                     new_conversation: "Dies ist ein neues Gespräch",
                     "New Conversation": "Neues Gespräch",
                     "Start a new conversation to begin storing them locally.": "Beginnen Sie ein neues Gespräch. Die Nachrichten werden lokal gespeichert.",
-                    top_p_help: "Top_p ist ein Parameter, der die Zufälligkeit in der Ausgabe des Modells steuert, indem der Token-Pool begrenzt wird und festgelegt wird, dass nur diejenigen Token mit einer kumulativen Wahrscheinlichkeit, die sich auf den top_p-Wert addiert, für die Auswahl in Betracht gezogen werden können.",
-                    temperature_help: "Die Temperatur ist ein Parameter, der die Zufälligkeit in der Ausgabe des Modells steuert, indem die Logits skaliert werden, bevor die Softmax-Funktion angewendet wird. Eine höhere Temperatur führt zu zufälligeren Ausgaben.",
                     theme_help: "Wählen Sie ein Farbschema für die Benutzeroberfläche aus.",
                     language_help: "Wählen Sie eine Sprache für die Benutzeroberfläche aus.",
                     send_help: "Wählen Sie eine Taste für das Senden von Nachrichten aus.",
+                    fontsize: "Schriftgröße",
                     fontsize_help: "Wählen Sie die Schriftgröße der Benutzeroberfläche aus.",
                     openai_model_help: "Wählen Sie ein Modell für die KI-Unterstützung aus.",
                     custom_endpoint_desc: "Wenn Sie unseren Proxy-Server nicht verwenden möchten, können Sie einen anderen Endpunkt konfigurieren, z.B. api.openai.com",
@@ -118,6 +118,26 @@ i18n
                     help_description: "Geben Sie eine Beschreibung des Chatbots ein.",
                     help_gravatar: "Falls Sie bei Gravatar registriert sind, aktivieren Sie diese Option, um Ihr Profilbild anzuzeigen. Gravatar ist ein Dienst, der Ihr Profilbild anhand Ihrer E-Mail-Adresse erkennt. <strong>Achtung</strong>: Ihre IP-Adresse wird an Gravatar übertragen.",
                     gravatar: "Gravatar",
+                    open_issue: "Melde einen Verbesserungswunsch",
+                    theme_style: "Farbschema",
+                    language: "Sprache",
+
+                    api_mode: "API-Modus",
+                    api_mode_help: "Wählen Sie den API-Modus aus.",
+                    assistant: "Assistent",
+                    assistent_help: "Wählen Sie den Assistenten aus.",
+                    max_tokens: "Maximale Tokens",
+                    max_tokens_help: "Wählen Sie die maximale Anzahl von Tokens aus.",
+                    top_p: "Top_p",
+                    top_p_help: "Top_p ist ein Parameter, der die Zufälligkeit in der Ausgabe des Modells steuert, indem der Token-Pool begrenzt wird und festgelegt wird, dass nur diejenigen Token mit einer kumulativen Wahrscheinlichkeit, die sich auf den top_p-Wert addiert, für die Auswahl in Betracht gezogen werden können.",
+                    temperature: "Temperatur",
+                    temperature_help: "Die Temperatur ist ein Parameter, der die Zufälligkeit in der Ausgabe des Modells steuert, indem die Logits skaliert werden, bevor die Softmax-Funktion angewendet wird. Eine höhere Temperatur führt zu zufälligeren Ausgaben.",
+                    api_base_url: "API-Basis-URL",
+                    api_base_url_help: "Hier können Sie eine eigene API-Basis-URL eingeben.",
+                    api_key: "API-Schlüssel",
+                    api_key_help: "Hier können Sie einen eigenen API-Schlüssel eingeben.",
+                    organization_id: "Organisations-ID",
+                    organization_id_help: "Hier können Sie eine eigene Organisations-ID eingeben.",
                 },
             },
         },
