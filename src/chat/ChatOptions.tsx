@@ -75,7 +75,8 @@ export function ChatOptions() {
 
           <FormControl mt="4">
             <FormLabel>{t("theme_style")}</FormLabel>
-            <RadioGroup value={general.theme} onChange={(val) => setGeneral({ theme: val })}>
+            <RadioGroup data-testid="OptionDarkModeSelect" value={general.theme}
+              onChange={(val) => setGeneral({ theme: val })}>
               <Stack direction="row">
                 {themeOptions.map((item) => (
                   <Radio key={item.value} value={item.value}>{item.label}</Radio>

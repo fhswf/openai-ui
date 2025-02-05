@@ -130,7 +130,10 @@ export function ChatSideBar() {
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
         <Option type="apps" onClick={() => setState({ is: { ...is, apps: true } })} tooltip="Apps" />
         <Option type="history" onClick={() => setState({ is: { ...is, apps: false } })} tooltip="History" />
-        <Option type={options.general.theme} onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })} tooltip="Theme" />
+        <Option type={options.general.theme}
+          onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
+          tooltip="Theme"
+          data-testid="OptionDarkModeSelect" />
         <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip="Config" />
         <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
           tooltip={`${is.fullScreen ? 'Minimize' : 'Maximize'}`} />

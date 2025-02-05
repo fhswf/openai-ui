@@ -124,9 +124,9 @@ describe("Config Menu", () => {
 
   it("Dark Mode", () => {
     cy.get("html").should("have.attr", "data-theme", "light");
-    cy.getDataTestId("OptionDarkModeSelect").select("dark");
+    cy.getDataTestId("OptionDarkModeSelect").get('[type="radio"]').check("dark");
     cy.get("html").should("have.attr", "data-theme", "dark");
-    cy.getDataTestId("OptionDarkModeSelect").select("light");
+    cy.getDataTestId("OptionDarkModeSelect").get('[type="radio"]').check("light");
     cy.get("html").should("have.attr", "data-theme", "light");
   });
 
