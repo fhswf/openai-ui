@@ -25,7 +25,7 @@ const Option = (props) => {
 let text = `## Über die Anwendung
     
 Diese Anwendung ermöglicht den Zugriff auf die Chat-Funktion von
-[OpenAI](https://openai.com) (inklusive *GPT4-Turbo*) **ohne Übertragung von personenbezogenen Daten des Benutzers
+[OpenAI](https://openai.com) (inklusive *gpt-4o-mini*) **ohne Übertragung von personenbezogenen Daten des Benutzers
 an OpenAI**. 
 
 Technisch wird dies durch die Verwendung eines API-Schlüssels erreicht, der in der Anwendung hinterlegt ist.
@@ -96,7 +96,7 @@ export function ChatSideBar() {
           <Modal>
 
             <Panel title="User information" className={styles.user} onClose={() => setUserModal(false)} dataTestId="UserInformation">
-              <Button type="icon" icon="close" onClick={() => setUserModal(false)} class={styles.close} data-testid="UserInformationCloseBtn" />*
+              <Button type="icon" icon="close" onClick={() => setUserModal(false)} className={styles.close} data-testid="UserInformationCloseBtn" />
               <div className={styles.user}>
                 <Avatar src={user?.avatar || ""} />
                 <div className={styles.name}>{user?.name}</div>
@@ -130,7 +130,10 @@ export function ChatSideBar() {
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
         <Option type="apps" onClick={() => setState({ is: { ...is, apps: true } })} tooltip="Apps" />
         <Option type="history" onClick={() => setState({ is: { ...is, apps: false } })} tooltip="History" />
-        <Option type={options.general.theme} onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })} tooltip="Theme" />
+        <Option type={options.general.theme}
+          onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
+          tooltip="Theme"
+          data-testid="OptionDarkModeSelect" />
         <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip="Config" />
         <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
           tooltip={`${is.fullScreen ? 'Minimize' : 'Maximize'}`} />

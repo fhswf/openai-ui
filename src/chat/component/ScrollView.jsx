@@ -9,7 +9,7 @@ export const ScrollView = (props) => {
   const { is, chat } = useGlobal()
   const [height, setHeight] = useState(0);
   const handleScroll = () => {
-    scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    scrollRef?.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const scrollToBottom = () => {

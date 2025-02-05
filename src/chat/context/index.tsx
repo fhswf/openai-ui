@@ -36,7 +36,7 @@ export const ChatProvider = ({ children }) => {
   // get user
   useEffect(() => {
     console.log("fetch user");
-    fetchAndGetUser(dispatch);
+    fetchAndGetUser(dispatch, state.options);
   }, [])
 
 
