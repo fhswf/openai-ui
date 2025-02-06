@@ -1,17 +1,26 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { modifyAssistant, retrieveAssistant, retrieveFile, createFile, deleteFile, assistantsModels, Model } from "./service/assistant";
-import { Box, Button, ButtonGroup, Card, CardBody, CardFooter, CardHeader, Flex, Heading, IconButton, Input, Select, SimpleGrid, Spacer, Stack, StackDivider } from '@chakra-ui/react'
+import { Box, Button, ButtonGroup, Card, CardBody, CardFooter, CardHeader, Field, Flex, Heading, IconButton, Input, SimpleGrid, Spacer, Stack, StackSeparator } from '@chakra-ui/react'
 import { Panel, Icon, Textarea, Title } from "../components";
+import {
+    SelectContent,
+    SelectItem,
+    SelectLabel,
+    SelectRoot,
+    SelectTrigger,
+    SelectValueText,
+} from "../components/ui/select"
+import { Switch } from '../components/ui/switch'
 import OpenAI from "openai";
 import { useGlobal } from "./context";
 import styles from './style/config.module.less'
 import { classnames } from '../components/utils'
 import { t } from "i18next";
-import { FormControl, FormHelperText, FormLabel, Switch } from "@chakra-ui/react";
-import { useToast } from '@chakra-ui/react'
+
+import { Toaster, toaster } from "../components/ui/toaster"
 import { OptionActionType } from "./context/types";
-import { DeleteIcon } from "@chakra-ui/icons";
+import { AiOutlineDelete } from "react-icons/ai";
 
 
 export interface AssistantProps {
@@ -29,14 +38,14 @@ function ConfigHeader() {
     }
 
     return (
-        <CardHeader>
+        <Card.Header>
             <Flex direction={'row'}>
                 <Heading size="lg">Assistant Settings</Heading>
                 <Spacer />
                 <IconButton variant="ghost" aria-label="Close" size="sm"
                     onClick={cancel} icon={<i className="ico ico-close" />} />
             </Flex>
-        </CardHeader>
+        </Card.Header>
     )
 }
 
@@ -62,7 +71,6 @@ export const AssistantOptions = (props: AssistantProps) => {
     const [models, setModels] = useState<Model[]>([]);
 
     console.log("Assistant ID:", assistant_id);
-    const toast = useToast();
 
     function File(props: { assistant_id: string, file_id: string }) {
         const { assistant_id, file_id } = props;
@@ -73,8 +81,7 @@ export const AssistantOptions = (props: AssistantProps) => {
             <Flex alignItems="center">
                 <div>{name}</div>
                 <Spacer />
-                <IconButton my={2} aria-label={t("help_delete_file")} colorScheme="red" icon={<DeleteIcon />}
-                />
+                <IconButton my={2} aria-label={t("help_delete_file")} colorScheme="red" icon={<AiOutlineDelete />} />
             </Flex>
         )
 
@@ -86,7 +93,7 @@ export const AssistantOptions = (props: AssistantProps) => {
                 setModels(_models);
             })
             .catch((error) => {
-                toast({
+                toaster.create({
                     title: 'Could not load assistant models.',
                     description: error.message,
                     status: 'error',
@@ -123,7 +130,7 @@ export const AssistantOptions = (props: AssistantProps) => {
                 setLoading(false);
             })
             .catch((error) => {
-                toast({
+                toaster.create({
                     title: 'An error occured.',
                     description: error.message,
                     status: 'error',
@@ -230,7 +237,7 @@ export const AssistantOptions = (props: AssistantProps) => {
                 })
                 .catch((error) => {
                     console.error("Error:", error);
-                    toast({
+                    toaster.create({
                         title: 'An error occured.',
                         description: error.message,
                         status: 'error',
@@ -245,41 +252,41 @@ export const AssistantOptions = (props: AssistantProps) => {
     }
 
     return (
-        <Card w="100%" maxW="70em">
+        <Card.Root w="100%" maxW="70em">
             <ConfigHeader />
-            <CardBody overflowY={"auto"}>
-                <Stack divider={<StackDivider />} spacing='4'>
+            <Card.Body overflowY={"auto"}>
+                <Stack separator={<StackSeparator />} spacing='4'>
                     <Box>
                         <Heading size="md">{t("general")}</Heading>
-                        <FormControl mt="4">
-                            <FormLabel>{t("name")}</FormLabel>
+                        <Field.Root mt="4">
+                            <Field.Label>{t("name")}</Field.Label>
                             <Input id="name" type="string" value={name} onChange={(ev) => setName(ev.target.value)} w="100%" />
-                            <FormHelperText>{t("help_name")}</FormHelperText>
-                        </FormControl>
+                            <Field.HelperText>{t("help_name")}</Field.HelperText>
+                        </Field.Root>
 
-                        <FormControl mt="4">
-                            <FormLabel>{t("description")}</FormLabel>
+                        <Field.Root mt="4">
+                            <Field.Label>{t("description")}</Field.Label>
                             <Input type="string" value={description} width="100%" onChange={(ev) => setDescription(ev.target.value)} />
-                            <FormHelperText>{t("help_description")}</FormHelperText>
-                        </FormControl>
+                            <Field.HelperText>{t("help_description")}</Field.HelperText>
+                        </Field.Root>
 
 
-                        <FormControl mt="4">
-                            <FormLabel>{t("description")}</FormLabel>
+                        <Field.Root mt="4">
+                            <Field.Label>{t("description")}</Field.Label>
                             <Input type="string" value={description} width="100%" onChange={(ev) => setDescription(ev.target.value)} />
-                            <FormHelperText>{t("help_description")}</FormHelperText>
-                        </FormControl>
+                            <Field.HelperText>{t("help_description")}</Field.HelperText>
+                        </Field.Root>
 
 
-                        <FormControl mt="4">
-                            <FormLabel>{t("instructions")}</FormLabel>
+                        <Field.Root mt="4">
+                            <Field.Label>{t("instructions")}</Field.Label>
                             <Textarea type="string" rows="5" cols="70" value={instructions} onChange={setInstructions} />
-                            <FormHelperText>{t("help_instructions")}</FormHelperText>
-                        </FormControl>
+                            <Field.HelperText>{t("help_instructions")}</Field.HelperText>
+                        </Field.Root>
 
-                        <FormControl mt="4">
-                            <FormLabel>{t("model")}</FormLabel>
-                            <Select onChange={(ev) => setModel(ev.target.value)} value={model}>
+                        <Field.Root mt="4">
+                            <Field.Label>{t("model")}</Field.Label>
+                            <SelectRoot onValueChange={(ev) => setModel(ev.target.value)} value={model}>
                                 {
                                     models
                                         .toSorted((a, b) => -a.id.localeCompare(b.id))
@@ -287,57 +294,57 @@ export const AssistantOptions = (props: AssistantProps) => {
                                             return <option key={_model.id} value={_model.id}>{_model.id}</option>
                                         })
                                 }
-                            </Select>
-                        </FormControl>
+                            </SelectRoot>
+                        </Field.Root>
 
-                        <FormControl mt="4">
-                            <Flex>
-                                <FormLabel htmlFor='code_editor' mb='0'>
-                                    {t("code_editor")}
-                                </FormLabel>
-                                <Switch id="code_editor" isChecked={metadata.code_editor === "true"} onChange={(value) => {
-                                    console.log("onChange: ", value.target.checked);
-                                    setMetadata({ ...metadata, code_editor: value.target.checked.toString() });
-                                    setOptions({ type: OptionActionType.GENERAL, data: { ...options.general, codeEditor: value.target.checked } })
-                                }} />
-                            </Flex>
-                            <FormHelperText>{t("help_code_editor")}</FormHelperText>
-                        </FormControl>
+                        <Field.Root mt="4">
+
+                            <Switch id="code_editor" checked={metadata.code_editor === "true"} onChange={(value) => {
+                                console.log("onChange: ", value.target.checked);
+                                setMetadata({ ...metadata, code_editor: value.target.checked.toString() });
+                                setOptions({ type: OptionActionType.GENERAL, data: { ...options.general, codeEditor: value.target.checked } })
+                            }}>{t("code_editor")}</Switch>
+
+                            <Field.HelperText>{t("help_code_editor")}</Field.HelperText>
+                        </Field.Root>
                     </Box>
                     <Box>
                         <Heading size="md">{t("tools")}</Heading>
                         <SimpleGrid columns={2} spacing="2" mt="4">
-                            <FormLabel mb='0'>
-                                {t("tool_retrieval")}
-                            </FormLabel>
-                            <Switch isChecked={tools.includes('file_search')} onChange={(ev) => updateTool('file_search', ev.target.checked)} />
-                            <FormLabel mb='0'>
-                                {t("tool_code_interpreter")}
-                            </FormLabel>
-                            <Switch isChecked={tools.includes('code_interpreter')} onChange={(ev) => updateTool('code_interpreter', ev.target.checked)} />
+                            <Field.Root mt="4">
+                                <Switch checked={tools.includes('file_search')} onChange={(ev) => updateTool('file_search', ev.target.checked)} >
+                                    {t("tool_retrieval")}
+                                </Switch>
+                            </Field.Root>
+
+                            <Field.Root mt="4">
+                                <Switch checked={tools.includes('code_interpreter')} onChange={(ev) => updateTool('code_interpreter', ev.target.checked)}>
+                                    {t("tool_code_interpreter")}
+                                </Switch>
+                            </Field.Root>
                         </SimpleGrid>
                     </Box>
                     {false ? //TODO: files are per tool in v2
                         (<Box>
                             <Heading size="md">{t("files")}</Heading>
-                            <FormControl mt="4" onDrop={dropFile} onDragEnter={dragEnter} onDragOver={dragEnter} className={styles.drop_zone}>
+                            <Field.Root mt="4" onDrop={dropFile} onDragEnter={dragEnter} onDragOver={dragEnter} className={styles.drop_zone}>
                                 {
                                     file_ids.map((file_id) => {
                                         return (<File assistant_id={assistant_id} file_id={file_id} key={file_id} />)
                                     })
                                 }
-                            </FormControl>
+                            </Field.Root>
                         </Box>) : null
                     }
                 </Stack>
-            </CardBody >
-            <CardFooter mt="4" display="flex">
+            </Card.Body >
+            <Card.Footer mt="4" display="flex">
                 <ButtonGroup variant='outline' spacing='6'>
                     <Button variant="solid" onClick={cancel}>{t("cancel")}</Button>
                     <Button colorScheme='blue' variant="solid" onClick={save}>{t("save")}</Button>
                 </ButtonGroup>
-            </CardFooter>
+            </Card.Footer>
 
-        </Card >
+        </Card.Root >
     )
 }

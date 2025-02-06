@@ -10,6 +10,7 @@ export function useOptions() {
     //body.classList = [];
     body.setAttribute("data-theme", theme);
     body.setAttribute("data-size", size);
+    console.log("theme: %o, size: %o", theme, size);
     body.classList.add(theme);
     body.classList.add(size);
   }, [theme, size]);
@@ -22,6 +23,7 @@ export function useOptions() {
   };
 
   const setGeneral = (data = {}) => {
+    console.log("setGeneral: %o", data);
     setOptions({
       type: OptionActionType.GENERAL,
       data,
