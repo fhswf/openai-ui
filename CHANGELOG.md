@@ -1,3 +1,10 @@
+## [0.9.2](https://github.com/fhswf/openai-ui/compare/v0.9.1...v0.9.2) (2025-02-06)
+
+
+### Bug Fixes
+
+* **ci:** update gthub actions ([842c1f9](https://github.com/fhswf/openai-ui/commit/842c1f98f5c2b7282e02e3cab75d69d36b14e42f))
+
 ## [0.9.1](https://github.com/fhswf/openai-ui/compare/v0.9.0...v0.9.1) (2024-04-26)
 
 
