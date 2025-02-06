@@ -7,10 +7,9 @@ export function useOptions() {
   const { size, theme } = options.general;
   useEffect(() => {
     const body = document.querySelector("html");
-    //body.classList = [];
+    body.classList = [];
     body.setAttribute("data-theme", theme);
     body.setAttribute("data-size", size);
-    console.log("theme: %o, size: %o", theme, size);
     body.classList.add(theme);
     body.classList.add(size);
   }, [theme, size]);

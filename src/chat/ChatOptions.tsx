@@ -1,11 +1,19 @@
 import React, { useEffect } from 'react'
-import { Button, Panel, Input, Title, Avatar, Select } from '../components'
+import { Input, Title, Avatar, Select } from '../components'
 import { Radio, RadioGroup } from '../components/ui/radio'
 import { Switch } from '../components/ui/switch'
 import { useGlobal } from './context'
 import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
-import { Tooltip } from '../components'
-import { Card, CardBody, Flex, Field, Heading, Icon, Stack, StackSeparator } from "@chakra-ui/react";
+import { Button, Card, CardBody, Flex, Field, Heading, IconButton, Stack, StackSeparator } from "@chakra-ui/react";
+import {
+  SelectContent,
+  SelectItem,
+  SelectLabel,
+  SelectRoot,
+  SelectTrigger,
+  SelectValueText,
+} from "../components/ui/select"
+
 import styles from './style/config.module.less'
 import { classnames } from '../components/utils'
 import { useOptions } from './hooks'
@@ -15,18 +23,7 @@ import { getAssistants } from './service/assistant'
 import { OptionActionType } from './context/types'
 import { Trans } from 'react-i18next'
 
-export function ConfigHeader() {
-  const { setState, setIs, is } = useGlobal()
-  return (
-    <Card.Header className={classnames(styles.header, 'flex-c-sb')} data-testid="SettingsHeader">
-      <Heading size="lg">{t("chat_settings")}</Heading>
-      <div className="flex-c">
-        <Button type="icon" onClick={() => setState(initState)} icon="refresh" dataTestId="SettingsRefreshBtn" />
-        <Button type="icon" onClick={() => setIs({ config: !is.config })} icon="close" dataTestId="SettingsCloseBtn" />
-      </div>
-    </Card.Header >
-  )
-}
+
 
 export function ChatOptions() {
   const ModelOptions = [
@@ -42,6 +39,8 @@ export function ChatOptions() {
   const { setAccount, setGeneral, setAPIMode, setModel, setAssistant } = useOptions()
   const [modelOptions, setModelOptions] = React.useState(ModelOptions);
   const [assistants, setAssistants] = React.useState([]);
+  const { setState, setIs, is } = useGlobal()
+
 
   useEffect(() => {
     if (openai.mode === 'assistant') {
@@ -70,9 +69,11 @@ export function ChatOptions() {
 
   return (
     <Card.Root w="100%">
-      <ConfigHeader />
+      <Card.Header data-testid="SettingsHeader">
+        <Card.Title>{t("chat_settings")}</Card.Title>
+      </Card.Header >
       <Card.Body overflowY={"auto"}>
-        <Stack separator={<StackSeparator />} spacing='4'>
+        <Stack spacing='4'>
           <Heading size="md">{t("general")}</Heading>
 
           <Field.Root mt="4">
@@ -192,6 +193,11 @@ export function ChatOptions() {
 
         </Stack>
       </Card.Body>
+
+      <Card.Footer>
+        <Button variant="outline" onClick={() => setState(initState)} dataTestId="SettingsRefreshBtn">Reset</Button>
+        <Button type="primary" onClick={() => setIs({ config: !is.config })} dataTestId="SettingsCloseBtn">Close</Button>
+      </Card.Footer>
     </Card.Root >
   )
 }

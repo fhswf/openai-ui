@@ -19,3 +19,5 @@ Thumbs.db
 .env
 cypress/videos/
 cypress/screenshots/
+
+*storybook.log
