@@ -198,8 +198,8 @@ export function ChatSideBar() {
 
       </div>
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
-        <Option type="apps" onClick={() => setState({ is: { ...is, apps: true } })} tooltip="Apps" />
-        <Option type="history" onClick={() => setState({ is: { ...is, apps: false } })} tooltip="History" />
+        <Option type="apps" onClick={() => setState({ is: { ...is, apps: true } })} dataTestId="btn_apps" tooltip="Apps" />
+        <Option type="history" onClick={() => setState({ is: { ...is, apps: false } })} dataTestId="btn_history" tooltip="History" />
         <Option type={options.general.theme}
           onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
           tooltip="Theme"

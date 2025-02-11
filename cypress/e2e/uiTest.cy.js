@@ -43,10 +43,10 @@ describe("User Interface", () => {
   it("Switching between Apps and History", () => {
     cy.getDataTestId("AppsList").should("exist", "be.visible");
     cy.getDataTestId("ConversationList").should("not.exist");
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(1).click();
+    cy.getDataTestId("btn_history").click();
     cy.getDataTestId("AppsList").should("not.exist");
     cy.getDataTestId("ConversationList").should("exist", "be.visible");
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(0).click();
+    cy.getDataTestId("btn_apps").click();
     cy.getDataTestId("ConversationList").should("not.exist");
     cy.getDataTestId("AppsList").should("exist", "be.visible");
   });
@@ -58,7 +58,7 @@ describe("User Interface", () => {
   });
 
   it("Create and edit new conversation", () => {
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(1).click();
+    cy.getDataTestId("btn_history").click();
     cy.getDataTestId("ConversationCreateBtn").click();
     cy.getDataTestId("ConversationList").within(() => {
       cy.getDataTestId("editConversation").find("i").eq(0).click({ force: true });
