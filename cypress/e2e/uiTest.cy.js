@@ -61,17 +61,17 @@ describe("User Interface", () => {
     cy.getDataTestId("btn_history").click();
     cy.getDataTestId("ConversationCreateBtn").click();
     cy.getDataTestId("ConversationList").within(() => {
-      cy.getDataTestId("editConversation").find("i").eq(0).click({ force: true });
-      cy.getDataTestId("editConversationTextArea").find("textarea").clear().type("edit conversation text");
+      cy.getDataTestId("editConversation").eq(0).click({ force: true });
+      cy.getDataTestId("editConversationTextArea").clear().type("test title");
       cy.getDataTestId("editConversationSaveBtn").click();
-      cy.get('[data-testid="Conversation"]').eq(0).find('[data-testid="ConversationTitle"]').contains("edit conversation text");
+      cy.getDataTestId("ConversationTitle").contains("test title");
     });
-    cy.getDataTestId("HeaderTitle").contains("edit conversation text");
+    cy.getDataTestId("HeaderTitle").contains("test title");
   });
 
   it("Show infos", () => {
     cy.getDataTestId("InformationWindow").should("not.exist");
-    cy.getDataTestId("LeftSideBar").find("i").eq(0).click(); //Clicks the Info with the ?
+    cy.getDataTestId("aboutBtn").click(); //Clicks the Info with the ?
     cy.getDataTestId("InformationWindow").should("be.visible");
     cy.getDataTestId("InformationWindow").should("exist");
   });
@@ -84,14 +84,14 @@ describe("Dark Mode", () => {
 
   it("Down Left Button", () => {
     cy.get("html").should("have.attr", "data-theme", "light");
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(2).click();
+    cy.getDataTestId("OptionDarkModeSelect").click();
     cy.get("html").should("have.attr", "data-theme", "dark");
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(2).click();
+    cy.getDataTestId("OptionDarkModeSelect").click();
     cy.get("html").should("have.attr", "data-theme", "light");
   });
 
   it("In Settings", () => {
-    cy.getDataTestId("BottomLeftSideBar").find("i").eq(3).click();
+    cy.getDataTestId("OpenConfigBtn").click();
     cy.get("html").should("have.attr", "data-theme", "light");
     cy.getDataTestId("OptionDarkModeSelect").get('[type="radio"]').check("dark", { force: true })
     cy.get("html").should("have.attr", "data-theme", "dark");
@@ -106,11 +106,11 @@ describe("User Information", () => {
   });
 
   it("Open and close user information", () => {
-    cy.getDataTestId("UserInformation").should("not.exist");
+    cy.getDataTestId("UserInformation").should("not.be.visible");
     cy.getDataTestId("UserInformationBtn").click();
     cy.getDataTestId("UserInformation").should("be.visible", "exist");
-    cy.getDataTestId("UserInformationCloseBtn").click();
-    cy.getDataTestId("UserInformation").should("not.exist");
+    cy.getDataTestId("UserInformationBtn").click();
+    cy.getDataTestId("UserInformation").should("not.be.visible");
   });
 });
 

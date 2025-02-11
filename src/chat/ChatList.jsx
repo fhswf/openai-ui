@@ -71,21 +71,27 @@ export const TagIco = React.forwardRef(({ ico, color, ...rest }, ref) => <div re
 
 export function EditItem(props) {
   const { modifyChat, setState } = useGlobal()
-  const [title, setVal] = useState(props.title);
+  const [title, setTitle] = useState(props.title);
   const [icon, setIcon] = useState(props.icon);
   return (
     <Card.Root variant="subtle" colorPalette="teal">
       <Card.Body>
-        <Card.Title><ColorIcon onChange={setIcon} />{t("Edit Conversation")}</Card.Title>
+        <Card.Title>{t("Edit Conversation")}</Card.Title>
+        <Field.Root>
+          <Field.Label>{t("Icon")}</Field.Label>
+          <HStack>
+            <ColorIcon onChange={setIcon} />
+          </HStack>
+        </Field.Root>
         <Field.Root>
           <Field.Label>{t("Title")}</Field.Label>
-          <Textarea rows={3} variant="filled" className={styles.editor_text} value={title} onChange={value => setVal(value)} dataTestId="editConversationTextArea" />
+          <Textarea rows={3} variant="filled" value={title} onChange={evt => setTitle(evt.target.value)} data-testid="editConversationTextArea" />
           <Field.HelperText>{t("Edit the title of the conversation.")}</Field.HelperText>
         </Field.Root>
       </Card.Body>
       <Card.Footer justifyContent="center">
-        <Button onClick={() => setState({ currentEditor: null })} dataTestId="editConversationCancelBtn">{t("Cancel")}</Button>
-        <Button onClick={() => modifyChat({ title, icon }, props.index)} type="primary" dataTestId="editConversationSaveBtn">{t("Save")}</Button>
+        <Button onClick={() => setState({ currentEditor: null })} data-testid="editConversationCancelBtn">{t("Cancel")}</Button>
+        <Button onClick={() => modifyChat({ title, icon }, props.index)} type="primary" data-testid="editConversationSaveBtn">{t("Save")}</Button>
       </Card.Footer>
     </Card.Root>
   )
@@ -105,7 +111,7 @@ export function ChatItem(props) {
           <Flex>
             <TagIco ico={ico} color={color} />
             <Spacer />
-            <IconButton aria-label="edit" size="xs" variant="ghost" onClick={() => setState({ currentEditor: props.index })} >
+            <IconButton aria-label="edit" size="xs" variant="ghost" data-testid="editConversation" onClick={() => setState({ currentEditor: props.index })} >
               <FiEdit />
             </IconButton>
             <IconButton aria-label="delete" size="xs" variant="ghost" onClick={() => removeChat(props.index)} >

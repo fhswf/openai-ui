@@ -150,13 +150,13 @@ export function ChatSideBar() {
     <div className={classnames(styles.sider, 'flex-c-sb flex-column')} data-testid="LeftSideBar">
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')}>
         <PopoverRoot>
-          <PopoverTrigger>
+          <PopoverTrigger data-testid="UserInformationBtn">
             <Avatar.Root>
               <Avatar.Fallback name={user?.name} />
               <Avatar.Image src={user?.avatar} />
             </Avatar.Root>
           </PopoverTrigger>
-          <PopoverContent>
+          <PopoverContent data-testid="UserInformation">
             <PopoverArrow />
             <PopoverBody>
               <PopoverTitle fontWeight="bold" fontSizeAdjust={"+1"} paddingBlockEnd={"15px"}>{t('User information')}</PopoverTitle>
@@ -172,14 +172,14 @@ export function ChatSideBar() {
         <DialogRoot>
           <DialogTrigger asChild>
 
-            <IconButton aria-label={t("about")} variant="ghost" >
+            <IconButton aria-label={t("about")} variant="ghost" data-testid="aboutBtn">
               <Tooltip content={t("about")}>
                 {ICONS["help"]()}
               </Tooltip>
             </IconButton>
 
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent data-testid="InformationWindow">
             <DialogHeader>
               <DialogTitle>{t('About')}</DialogTitle>
               <DialogCloseTrigger />
@@ -203,7 +203,7 @@ export function ChatSideBar() {
         <Option type={options.general.theme}
           onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
           tooltip="Theme"
-          data-testid="OptionDarkModeSelect" />
+          dataTestId="OptionDarkModeSelect" />
         <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip="Config" />
         <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
           tooltip={`${is.fullScreen ? 'Minimize' : 'Maximize'}`} />
