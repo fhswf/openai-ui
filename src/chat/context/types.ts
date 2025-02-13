@@ -24,6 +24,7 @@ export type GeneralOptions = {
 export type AccountOptions = {
     name: string;
     avatar: string;
+    terms: boolean;
 };
 
 export type OpenAIOptions = {

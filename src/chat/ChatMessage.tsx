@@ -1,6 +1,7 @@
 import React from 'react'
-import { Avatar, Icon, Textarea, Loading, Tooltip, Button, Popover } from '../components'
+import { Avatar, Icon, Textarea, Loading, Button, Popover } from '../components'
 import { Icon as ChakraIcon, IconButton } from "@chakra-ui/react";
+import { Tooltip } from "../components/ui/tooltip"
 import { AiOutlineClear } from "react-icons/ai";
 import { IoReloadOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
@@ -66,7 +67,7 @@ export function MessageItem(props) {
           <div className={styles.item_tool}>
             <div className={styles.item_date}>{dateFormat(sentTime)}</div>
             <div className={styles.item_bar}>
-              <Tooltip text={t("Remove Message")}>
+              <Tooltip content={t("Remove Message")}>
                 <Icon className={styles.icon} type="trash" onClick={() => removeMessage(id)} />
               </Tooltip>
               {role === 'user' ? <React.Fragment>

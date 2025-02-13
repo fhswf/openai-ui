@@ -41,7 +41,7 @@ export function fetchAndGetUser(dispatch, options) {
     })
 
     .then(user => {
-      user.avatar = avatar;
+      user.avatar = null;
       dispatch({ type: "SET_STATE", payload: { user } });
       if (options.general.gravatar) {
         console.log("user uses gravatar");

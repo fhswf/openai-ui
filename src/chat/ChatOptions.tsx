@@ -1,9 +1,19 @@
 import React, { useEffect } from 'react'
-import { Button, Panel, Input, Title, Avatar, Select } from '../components'
+import { Input, Title, Avatar, Select } from '../components'
+import { Radio, RadioGroup } from '../components/ui/radio'
+import { Switch } from '../components/ui/switch'
 import { useGlobal } from './context'
 import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
-import { Tooltip } from '../components'
-import { Card, CardBody, Flex, FormControl, FormHelperText, FormLabel, Heading, Icon, Radio, RadioGroup, Stack, StackDivider, Switch } from "@chakra-ui/react";
+import { Button, Card, CardBody, Flex, Field, Heading, IconButton, Stack, StackSeparator } from "@chakra-ui/react";
+import {
+  SelectContent,
+  SelectItem,
+  SelectLabel,
+  SelectRoot,
+  SelectTrigger,
+  SelectValueText,
+} from "../components/ui/select"
+
 import styles from './style/config.module.less'
 import { classnames } from '../components/utils'
 import { useOptions } from './hooks'
@@ -13,18 +23,7 @@ import { getAssistants } from './service/assistant'
 import { OptionActionType } from './context/types'
 import { Trans } from 'react-i18next'
 
-export function ConfigHeader() {
-  const { setState, setIs, is } = useGlobal()
-  return (
-    <div className={classnames(styles.header, 'flex-c-sb')} data-testid="SettingsHeader">
-      <Heading size="lg">{t("chat_settings")}</Heading>
-      <div className="flex-c">
-        <Button type="icon" onClick={() => setState(initState)} icon="refresh" dataTestId="SettingsRefreshBtn" />
-        <Button type="icon" onClick={() => setIs({ config: !is.config })} icon="close" dataTestId="SettingsCloseBtn" />
-      </div>
-    </div >
-  )
-}
+
 
 export function ChatOptions() {
   const ModelOptions = [
@@ -40,6 +39,8 @@ export function ChatOptions() {
   const { setAccount, setGeneral, setAPIMode, setModel, setAssistant } = useOptions()
   const [modelOptions, setModelOptions] = React.useState(ModelOptions);
   const [assistants, setAssistants] = React.useState([]);
+  const { setState, setIs, is } = useGlobal()
+
 
   useEffect(() => {
     if (openai.mode === 'assistant') {
@@ -67,27 +68,29 @@ export function ChatOptions() {
   }, [openai.mode]);
 
   return (
-    <Card w="100%">
-      <ConfigHeader />
-      <CardBody overflowY={"auto"}>
-        <Stack divider={<StackDivider />} spacing='4'>
+    <Card.Root w="100%">
+      <Card.Header data-testid="SettingsHeader">
+        <Card.Title>{t("chat_settings")}</Card.Title>
+      </Card.Header >
+      <Card.Body overflowY={"auto"}>
+        <Stack spacing='4'>
           <Heading size="md">{t("general")}</Heading>
 
-          <FormControl mt="4">
-            <FormLabel>{t("theme_style")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("theme_style")}</Field.Label>
             <RadioGroup data-testid="OptionDarkModeSelect" value={general.theme}
-              onChange={(val) => setGeneral({ theme: val })}>
+              onValueChange={(val) => setGeneral({ theme: val.value })}>
               <Stack direction="row">
                 {themeOptions.map((item) => (
                   <Radio key={item.value} value={item.value}>{item.label}</Radio>
                 ))}
               </Stack>
             </RadioGroup>
-            <FormHelperText>{t("theme_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("theme_help")}</Field.HelperText>
+          </Field.Root>
 
-          <FormControl mt="4">
-            <FormLabel>{t("send")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("send")}</Field.Label>
             <RadioGroup value={general.theme} onChange={(val) => setGeneral({ sendCommand: val })}>
               <Stack direction="row">
                 {sendCommandOptions.map((item) => (
@@ -95,104 +98,106 @@ export function ChatOptions() {
                 ))}
               </Stack>
             </RadioGroup>
-            <FormHelperText>{t("send_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("send_help")}</Field.HelperText>
+          </Field.Root>
 
-          <FormControl mt="4">
-            <FormLabel>{t("language")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("language")}</Field.Label>
             <Select value={general.language} onChange={val => setGeneral({ language: val })} options={languageOptions} placeholder="language" dataTestId="SetLanguageSelect" />
-            <FormHelperText>{t("language_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("language_help")}</Field.HelperText>
+          </Field.Root>
 
-          <FormControl mt="4">
-            <FormLabel>{t("fontsize")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("fontsize")}</Field.Label>
             <Select value={general.size} onChange={val => setGeneral({ size: val })} options={sizeOptions} placeholder="OpenAI ApiKey" dataTestId="ChangeFontSizeSelect" />
-            <FormHelperText>{t("fontsize_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("fontsize_help")}</Field.HelperText>
+          </Field.Root>
 
-          <FormControl mt="4">
-            <Flex>
-              <FormLabel htmlFor='gravatar' mb='0'>
-                {t("gravatar")}
-              </FormLabel>
-              <Switch id="gravatar" isChecked={general.gravatar} onChange={(value) => {
-                console.log("onChange: ", value.target.checked);
-                setGeneral({ ...options.general, gravatar: value.target.checked });
-              }} />
-            </Flex>
-            <FormHelperText><Trans t={t}>help_gravatar</Trans></FormHelperText>
-          </FormControl>
+          <Field.Root mt="4">
+
+            <Switch id="gravatar" checked={general.gravatar} onChange={(value) => {
+              console.log("onChange: ", value.target.checked);
+              setGeneral({ ...options.general, gravatar: value.target.checked });
+            }}>{t("gravatar")}</Switch>
+
+            <Field.HelperText><Trans t={t}>help_gravatar</Trans></Field.HelperText>
+          </Field.Root>
 
 
           <Heading size="md">{t("Global OpenAI Config")}</Heading>
 
 
-          <FormControl mt="4">
-            <FormLabel>{t("api_mode")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("api_mode")}</Field.Label>
             <Select options={modeOptions} value={openai.mode} onChange={val => setAPIMode(val)} />
-            <FormHelperText>{t("api_mode_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("api_mode_help")}</Field.HelperText>
+          </Field.Root>
           {
             openai.mode === 'assistant' ?
 
               (
-                <FormControl mt="4">
-                  <FormLabel>{t("assistant")}</FormLabel>
+                <Field.Root mt="4">
+                  <Field.Label>{t("assistant")}</Field.Label>
                   <Select options={assistants} value={openai.assistant} onChange={val => setAssistant(val)} placeholder="Choose assistant" />
-                  <FormHelperText>{t("assistent_help")}</FormHelperText>
-                </FormControl>
+                  <Field.HelperText>{t("assistent_help")}</Field.HelperText>
+                </Field.Root>
               )
 
               :
               (
-                <FormControl mt="4">
-                  <FormLabel>{t("openai_model_help")}</FormLabel>
+                <Field.Root mt="4">
+                  <Field.Label>{t("openai_model_help")}</Field.Label>
                   <Select dataTestId="ChangeAIModelSelect" options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose model" />
-                  <FormHelperText>{t("openai_model_help")}</FormHelperText>
-                </FormControl>
+                  <Field.HelperText>{t("openai_model_help")}</Field.HelperText>
+                </Field.Root>
               )
           }
 
-          <FormControl mt="4">
-            <FormLabel>{t("max_tokens")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("max_tokens")}</Field.Label>
             <Input type="number" value={openai.max_tokens} placeholder="Max Tokens" onChange={val => setModel({ max_tokens: +val })} data-testid="MaxTokensInput" />
-            <FormHelperText>{t("max_tokens_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("max_tokens_help")}</Field.HelperText>
+          </Field.Root>
 
-          <FormControl mt="4">
-            <FormLabel>{t("temperature")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("temperature")}</Field.Label>
             <Input type="number" value={openai.temperature} placeholder="OpenAI Temperature" onChange={val => setModel({ temperature: +val })} data-testid="SetTemperatureInput" />
-            <FormHelperText>{t("temperature_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("temperature_help")}</Field.HelperText>
+          </Field.Root>
 
-          <FormControl mt="4">
-            <FormLabel>{t("top_p")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("top_p")}</Field.Label>
             <Input type="number" value={openai.top_p} placeholder="Custom top_p." onChange={val => setModel({ top_p: +val })} data-testid="SetTopPInput" />
-            <FormHelperText>{t("top_p_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("top_p_help")}</Field.HelperText>
+          </Field.Root>
 
           <Heading size="md" desc={t("custom_endpoint_desc")}>{t("Custom API Endpoint")}</Heading>
 
-          <FormControl mt="4">
-            <FormLabel>{t("api_base_url")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("api_base_url")}</Field.Label>
             <Input value={openai.baseUrl} placeholder="Api Base Url" onChange={val => setModel({ baseUrl: val })} data-testid="ApiBaseURLInput" />
-            <FormHelperText>{t("api_base_url_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("api_base_url_help")}</Field.HelperText>
+          </Field.Root>
 
-          <FormControl mt="4">
-            <FormLabel>{t("api_key")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("api_key")}</Field.Label>
             <Input value={openai.apiKey} autoComplete="new-password" onChange={val => setModel({ apiKey: val })} placeholder="ApiKey" type="password" data-testid="APIKeyInput" />
-            <FormHelperText>{t("api_key_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("api_key_help")}</Field.HelperText>
+          </Field.Root>
 
-          <FormControl mt="4">
-            <FormLabel>{t("organization_id")}</FormLabel>
+          <Field.Root mt="4">
+            <Field.Label>{t("organization_id")}</Field.Label>
             <Input value={openai.organizationId} placeholder="OpenAI Organization ID" onChange={val => setModel({ organizationId: val })} data-testid="APIOrganisationIDInput" />
-            <FormHelperText>{t("organization_id_help")}</FormHelperText>
-          </FormControl>
+            <Field.HelperText>{t("organization_id_help")}</Field.HelperText>
+          </Field.Root>
 
         </Stack>
-      </CardBody>
-    </Card >
+      </Card.Body>
+
+      <Card.Footer>
+        <Button variant="outline" onClick={() => setState(initState)} data-testid="SettingsRefreshBtn">Reset</Button>
+        <Button type="primary" onClick={() => setIs({ config: !is.config })} data-testid="SettingsCloseBtn">Close</Button>
+      </Card.Footer>
+    </Card.Root >
   )
 }

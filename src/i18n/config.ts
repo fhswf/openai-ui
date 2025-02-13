@@ -138,6 +138,15 @@ i18n
                     api_key_help: "Hier können Sie einen eigenen API-Schlüssel eingeben.",
                     organization_id: "Organisations-ID",
                     organization_id_help: "Hier können Sie eine eigene Organisations-ID eingeben.",
+
+                    About: "Über die Anwendung",
+
+                    Title: "Titel",
+                    Cancel: "Abbrechen",
+                    Save: "Speichern",
+                    "Edit Conversation": "Unterhaltung bearbeiten",
+                    "Edit the title of the conversation.": "Bearbeiten Sie den Titel der Unterhaltung.",
+                    "Accept Terms": "Ich habe diese Hinweise gelesen und verstanden.",
                 },
             },
         },

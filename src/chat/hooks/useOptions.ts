@@ -7,7 +7,7 @@ export function useOptions() {
   const { size, theme } = options.general;
   useEffect(() => {
     const body = document.querySelector("html");
-    //body.classList = [];
+    body.classList = [];
     body.setAttribute("data-theme", theme);
     body.setAttribute("data-size", size);
     body.classList.add(theme);
@@ -22,6 +22,7 @@ export function useOptions() {
   };
 
   const setGeneral = (data = {}) => {
+    console.log("setGeneral: %o", data);
     setOptions({
       type: OptionActionType.GENERAL,
       data,
