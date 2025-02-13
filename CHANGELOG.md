@@ -1,3 +1,10 @@
+## [0.11.1](https://github.com/fhswf/openai-ui/compare/v0.11.0...v0.11.1) (2025-02-13)
+
+
+### Bug Fixes
+
+* **test:** accept terms in test setup ([e084d1c](https://github.com/fhswf/openai-ui/commit/e084d1ccdb522b5e0e266ce0eb9b81a69c7eba11))
+
 # [0.11.0](https://github.com/fhswf/openai-ui/compare/v0.10.0...v0.11.0) (2025-02-13)
 
 
