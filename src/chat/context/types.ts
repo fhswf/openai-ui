@@ -94,6 +94,7 @@ export type GlobalActions = {
     setMessage: (content: string) => void;
     clearThread: () => void;
     reloadThread: () => void;
+    downloadThread: () => void;
     editMessage: (id: number) => void;
     removeMessage: (id: number) => void;
     setOptions: (arg: OptionAction) => void;

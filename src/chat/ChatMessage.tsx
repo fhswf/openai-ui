@@ -6,6 +6,8 @@ import { AiOutlineClear } from "react-icons/ai";
 import { IoReloadOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoLogoGithub } from "react-icons/io5";
+import { GrDocumentDownload } from "react-icons/gr";
+import { MdOutlineSimCardDownload } from "react-icons/md";
 
 import { CopyIcon, ScrollView, Error, EmptyChat, ChatHelp } from './component'
 import { MessageRender } from './MessageRender'
@@ -22,7 +24,7 @@ import { useTranslation } from "react-i18next";
 import CodeEditor from '@uiw/react-textarea-code-editor';
 
 export function MessageHeader() {
-  const { is, setIs, clearThread, reloadThread, showSettings, options } = useGlobal()
+  const { is, setIs, clearThread, reloadThread, downloadThread, showSettings, options } = useGlobal()
   const { message } = useMessage()
   const messages = message.messages;
   const columnIcon = is.sidebar ? 'column-close' : 'column-open'
@@ -38,9 +40,10 @@ export function MessageHeader() {
         <div className={styles.length}>{t('count_messages', { count: messages.length })}</div>
       </div>
       <div className={styles.header_bar}>
-        <IconButton variant="ghost" aria-label={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton>
-        <IconButton variant="ghost" aria-label={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>
-        <IconButton variant="ghost" aria-label={t("clear_thread")} onClick={clearThread} data-testid="ClearChatBtn"><AiOutlineClear /></IconButton>
+        <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton>
+        <IconButton variant="ghost" title={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>
+        <IconButton variant="ghost" title={t("clear_thread")} onClick={clearThread} data-testid="ClearChatBtn"><AiOutlineClear /></IconButton>
+        <IconButton variant="ghost" title={t("download_thread")} onClick={downloadThread}><MdOutlineSimCardDownload /></IconButton>
         <a href={issueUrl} target="_blank" title={t("open_issue")}><IconButton variant="ghost" aria-label={t("open_issue")}><IoLogoGithub /></IconButton></a>
       </div>
     </div >
