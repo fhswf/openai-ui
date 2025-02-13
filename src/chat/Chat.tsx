@@ -37,7 +37,9 @@ export default function Chat() {
     'hillebrand.melanie@fh-swf.de',
     'kern.sebastian@fh-swf.de',
     'lueck.veith@fh-swf.de',
-    'menk.eva@fh-swf.de'
+    'menk.eva@fh-swf.de',
+    'reinecke.sandra@fh-swf.de',
+    'kurowski.bernd@fh-swf.de'
   ];
 
   /**
@@ -65,7 +67,7 @@ export default function Chat() {
 Diese Anwendung befindet sich im Pilotbetrieb.
 Der Zugriff ist aktuell nur für folgende Personen möglich:
 
-- Studierende des Fachbereichs Informatik & Naturwissenschaften,
+- Mitglieder des Fachbereichs Informatik & Naturwissenschaften,
 - Professor*innen der Fachhochschule Südwestfalen,
 - Beschäftigte des Dezernats 8
 `
