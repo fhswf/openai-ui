@@ -1,3 +1,10 @@
+# [0.11.0](https://github.com/fhswf/openai-ui/compare/v0.10.0...v0.11.0) (2025-02-13)
+
+
+### Features
+
+* chat download ([c12d456](https://github.com/fhswf/openai-ui/commit/c12d456c715399b211a1fa29c7a56c7f99af4397))
+
 # [0.10.0](https://github.com/fhswf/openai-ui/compare/v0.9.2...v0.10.0) (2025-02-13)
 
 
