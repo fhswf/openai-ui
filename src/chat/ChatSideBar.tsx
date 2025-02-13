@@ -196,7 +196,7 @@ export function ChatSideBar() {
               </Markdown>
             </DialogBody>
             <DialogFooter>
-              <Button type="primary" onClick={acceptTerms}>{t("Accept Terms")}</Button>
+              <Button type="primary" onClick={acceptTerms} data-testid="accept-terms-btn">{t("Accept Terms")}</Button>
             </DialogFooter>
           </DialogContent>
         </DialogRoot>

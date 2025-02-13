@@ -19,6 +19,11 @@ function setupTest() {
     cy.visit("http://localhost:5173/");
     cy.wait('@getUser', { timeout: 15000 });
   }
+  cy.get('[data-testid="accept-terms-btn"]').then(($btn) => {
+    if ($btn) {
+      cy.get($btn).click();
+    }
+  });
 }
 
 describe("User Interface", () => {
