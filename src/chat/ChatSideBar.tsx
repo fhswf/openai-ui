@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Icon, Panel } from '../components'
 import { Tooltip } from "../components/ui/tooltip"
 import {
@@ -79,15 +79,16 @@ Aus Sicht von OpenAI lassen sich die Anfragen an die API lediglich auf den API-S
 Fachhochschule Südwestfalen zurückführen, sodass die Anfragen nicht auf 
 eine einzelne Benutzer*in zurückgeführt werden können.
 
-Bitte beachten Sie, dass OpenAI jedoch die Inhalte der Nachrichten "sieht" und für eine gewisse Zeir speichert (s.u.).
-*Sie **dürfen** daher gemäß [Nutzungsordnung](https://publikationen.fhb.fh-swf.de/receive/fhswf_mods_00002695) **keine sensible Informationen** in den Chat eingeben*.
+Die Nutzung der Anwendung unterliegt der
+**[Nutzungsordnung](https://publikationen.fhb.fh-swf.de/servlets/MCRFileNodeServlet/fhswf_derivate_00002553/Nr.%201328%20vom%2013.02.2025%20-%20Nutzungsordnung%20der%20FH%20SWF%20f%C3%BCr%20den%20OpenAI-Proxy%20KImpuls-Chatb.pdf)**.
+Diese regelt unter anderem, dass **keine sensiblen Daten in den Chat eingegeben werden dürfen**, da OpenAI die Inhalte der Nachrichten "sieht" und für eine gewisse Zeir speichert (s.u.).
 
-## Verarbeitung personenbezogener Daten
+### Verarbeitung personenbezogener Daten
 
 Die Anwendung leitet keine personenbezogenen Daten (etwa den Benutzername oder die IP-Adresse) an OpenAI 
 oder andere Dritte weiter. 
 
-Bei der Nutzung des OpenAI-Proxy werden gemäß [Nutzungsordnung](https://publikationen.fhb.fh-swf.de/receive/fhswf_mods_00002695) 
+Bei der Nutzung des OpenAI-Proxy werden gemäß [Nutzungsordnung](https://publikationen.fhb.fh-swf.de/servlets/MCRFileNodeServlet/fhswf_derivate_00002553/Nr.%201328%20vom%2013.02.2025%20-%20Nutzungsordnung%20der%20FH%20SWF%20f%C3%BCr%20den%20OpenAI-Proxy%20KImpuls-Chatb.pdf) 
 folgende personenbezogene Daten verarbeitet:
   
 1. Vor- und Nachname,
@@ -107,7 +108,7 @@ OpenAI nicht für Trainingszwecke verwendet.
 Seitens OpenAI wird der Zugriff auf die API protokolliert, um die Nutzung zu überwachen und die Einhaltung der
 Nutzungsbedingungen sicherzustellen.
 
-## Cookies
+### Cookies
 Die Anwendung verwendet lediglich technisch notwendige Session-Cookies, um die Funktionalität der 
 Anwendung zu gewährleisten (Anmeldung an der Anwendung).
 
@@ -131,14 +132,15 @@ function Modal(props) {
 
 
 export function ChatSideBar() {
-  const [showUserModal, setUserModal] = useState(false)
-  const [showAboutModal, setAboutModal] = useState(false)
-  const { is, setState, options, user } = useGlobal()
-  const { setGeneral } = useOptions()
 
-  const userClick = () => {
-    console.log('User clicked')
-    setUserModal(!showUserModal)
+  const [open, setOpen] = useState(false)
+  const { is, setState, options, user } = useGlobal()
+  const { setGeneral, setAccount } = useOptions()
+
+
+  const acceptTerms = () => {
+    setAccount({ terms: true })
+    setOpen(false)
   }
 
   const logout = () => {
@@ -169,7 +171,7 @@ export function ChatSideBar() {
           </PopoverContent>
         </PopoverRoot>
 
-        <DialogRoot>
+        <DialogRoot open={!options.account.terms || open} onOpenChange={(e) => setOpen(e.open)} size="lg">
           <DialogTrigger asChild>
 
             <IconButton aria-label={t("about")} variant="ghost" data-testid="aboutBtn">
@@ -182,7 +184,7 @@ export function ChatSideBar() {
           <DialogContent data-testid="InformationWindow">
             <DialogHeader>
               <DialogTitle>{t('About')}</DialogTitle>
-              <DialogCloseTrigger />
+              {options.account.terms ? <DialogCloseTrigger /> : null}
             </DialogHeader>
             <DialogBody>
               <Markdown
@@ -193,6 +195,9 @@ export function ChatSideBar() {
                 {(text)}
               </Markdown>
             </DialogBody>
+            <DialogFooter>
+              <Button type="primary" onClick={acceptTerms}>{t("Accept Terms")}</Button>
+            </DialogFooter>
           </DialogContent>
         </DialogRoot>
 
