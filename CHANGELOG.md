@@ -1,3 +1,10 @@
+# [0.10.0](https://github.com/fhswf/openai-ui/compare/v0.9.2...v0.10.0) (2025-02-13)
+
+
+### Features
+
+* update user list ([94031db](https://github.com/fhswf/openai-ui/commit/94031db5dc0cc779b06e1aac2c4889153025b838))
+
 ## [0.9.2](https://github.com/fhswf/openai-ui/compare/v0.9.1...v0.9.2) (2025-02-06)
 
 
