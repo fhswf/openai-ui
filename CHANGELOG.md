@@ -1,3 +1,10 @@
+## [0.11.2](https://github.com/fhswf/openai-ui/compare/v0.11.1...v0.11.2) (2025-02-14)
+
+
+### Bug Fixes
+
+* **deployment:** add http endpoint ([002929e](https://github.com/fhswf/openai-ui/commit/002929ef6a6997acfe3d1ba8b64be55f1042d5b2))
+
 ## [0.11.1](https://github.com/fhswf/openai-ui/compare/v0.11.0...v0.11.1) (2025-02-13)
 
 
