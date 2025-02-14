@@ -49,7 +49,6 @@ metadata:
 spec:
   entryPoints:
     - web-secure
-    - web
   routes:
     - kind: Rule
       match: Host(`openai.ki.fh-swf.de`)
@@ -61,3 +60,21 @@ spec:
           port: 80
   tls:
     certResolver: default
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: openai.ki.fh-swf.de-http
+  namespace: openai-proxy
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`openai.ki.fh-swf.de`)
+      priority: 10
+      services:
+        - kind: Service
+          name: openai-ui
+          namespace: openai-proxy
+          port: 80
