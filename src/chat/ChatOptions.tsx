@@ -2,9 +2,20 @@ import React, { useEffect } from 'react'
 import { Input, Title, Avatar, Select } from '../components'
 import { Radio, RadioGroup } from '../components/ui/radio'
 import { Switch } from '../components/ui/switch'
+
 import { useGlobal } from './context'
 import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
-import { Button, Card, CardBody, Flex, Field, Heading, IconButton, Stack, StackSeparator } from "@chakra-ui/react";
+import { Button, Card, CardBody, Flex, Field, Heading, IconButton, HStack, Stack, StackSeparator, createListCollection } from "@chakra-ui/react";
+import {
+  NumberInputField,
+  NumberInputLabel,
+  NumberInputRoot,
+} from "../components/ui/number-input"
+import {
+  RadioCardItem,
+  RadioCardLabel,
+  RadioCardRoot,
+} from "../components/ui/radio-card"
 import {
   SelectContent,
   SelectItem,
@@ -13,6 +24,7 @@ import {
   SelectTrigger,
   SelectValueText,
 } from "../components/ui/select"
+import { Slider } from "../components/ui/slider"
 
 import styles from './style/config.module.less'
 import { classnames } from '../components/utils'
@@ -26,18 +38,11 @@ import { Trans } from 'react-i18next'
 
 
 export function ChatOptions() {
-  const ModelOptions = [
-    { label: "gpt-4o-mini", value: "gpt-4o-mini" },
-    { label: "gpt-4-turbo", value: "gpt-4-turbo" },
-    { label: "gpt-4", value: "gpt-4" },
-    { label: "gpt-3.5-turbo", value: "gpt-3.5-turbo" },
-  ];
   const { options } = useGlobal()
   const { account, openai, general } = options
   // const { avatar, name } = account
   // const { max_tokens, apiKey, temperature, baseUrl, organizationId, top_p, model } = openai
   const { setAccount, setGeneral, setAPIMode, setModel, setAssistant } = useOptions()
-  const [modelOptions, setModelOptions] = React.useState(ModelOptions);
   const [assistants, setAssistants] = React.useState([]);
   const { setState, setIs, is } = useGlobal()
 
@@ -67,6 +72,11 @@ export function ChatOptions() {
     }
   }, [openai.mode]);
 
+
+  const tempMarks = [...Array(11).keys()].map((i) => ({ value: 0.2 * i, label: (0.2 * i).toFixed(1) }));
+  const topPMarks = [...Array(11).keys()].map((i) => ({ value: 0.1 * i, label: (0.1 * i).toFixed(1) }));
+  const tokenMarks = [...Array(4).keys()].map((i) => ({ value: 1024 * 2 ** i, label: (1024 * 2 ** i).toString() }));
+
   return (
     <Card.Root w="100%">
       <Card.Header data-testid="SettingsHeader">
@@ -79,7 +89,7 @@ export function ChatOptions() {
           <Field.Root mt="4">
             <Field.Label>{t("theme_style")}</Field.Label>
             <RadioGroup data-testid="OptionDarkModeSelect" value={general.theme}
-              onValueChange={(val) => setGeneral({ theme: val.value })}>
+              onValueChange={(ev) => setGeneral({ theme: ev.value })}>
               <Stack direction="row">
                 {themeOptions.map((item) => (
                   <Radio key={item.value} value={item.value}>{item.label}</Radio>
@@ -91,7 +101,7 @@ export function ChatOptions() {
 
           <Field.Root mt="4">
             <Field.Label>{t("send")}</Field.Label>
-            <RadioGroup value={general.theme} onChange={(val) => setGeneral({ sendCommand: val })}>
+            <RadioGroup value={general.sendCommand} onValueChange={(ev) => setGeneral({ sendCommand: ev.value })}>
               <Stack direction="row">
                 {sendCommandOptions.map((item) => (
                   <Radio key={item.value} value={item.value}>{item.label}</Radio>
@@ -102,16 +112,40 @@ export function ChatOptions() {
           </Field.Root>
 
           <Field.Root mt="4">
-            <Field.Label>{t("language")}</Field.Label>
-            <Select value={general.language} onChange={val => setGeneral({ language: val })} options={languageOptions} placeholder="language" dataTestId="SetLanguageSelect" />
+
+            <SelectRoot collection={createListCollection({ items: languageOptions })} maxWidth="30em" onValueChange={val => setGeneral({ language: val.value })} data-testid="SetLanguageSelect">
+              <SelectLabel>{t("language")}</SelectLabel>
+              <SelectTrigger>
+                <SelectValueText placeholder={general.language} />
+              </SelectTrigger>
+              <SelectContent>
+                {languageOptions.map((movie) => (
+                  <SelectItem item={movie} key={movie.value}>
+                    {movie.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </SelectRoot>
             <Field.HelperText>{t("language_help")}</Field.HelperText>
           </Field.Root>
 
-          <Field.Root mt="4">
-            <Field.Label>{t("fontsize")}</Field.Label>
-            <Select value={general.size} onChange={val => setGeneral({ size: val })} options={sizeOptions} placeholder="OpenAI ApiKey" dataTestId="ChangeFontSizeSelect" />
+          {/*<Field.Root mt="4">
+            <SelectRoot collection={createListCollection({ items: sizeOptions })} maxWidth="30em" onValueChange={val => setGeneral({ size: val.value })} data-testid="ChangeFontSizeSelect">
+              <SelectLabel>{t("fontsize")}</SelectLabel>
+              <SelectTrigger>
+                <SelectValueText placeholder={general.size} />
+              </SelectTrigger>
+              <SelectContent>
+                {sizeOptions.map((movie) => (
+                  <SelectItem item={movie} key={movie.value}>
+                    {movie.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </SelectRoot>
+
             <Field.HelperText>{t("fontsize_help")}</Field.HelperText>
-          </Field.Root>
+          </Field.Root> */ }
 
           <Field.Root mt="4">
 
@@ -124,14 +158,28 @@ export function ChatOptions() {
           </Field.Root>
 
 
-          <Heading size="md">{t("Global OpenAI Config")}</Heading>
+          <Heading size="md" paddingBlockStart="2ex">{t("Global OpenAI Config")}</Heading>
 
 
           <Field.Root mt="4">
-            <Field.Label>{t("api_mode")}</Field.Label>
-            <Select options={modeOptions} value={openai.mode} onChange={val => setAPIMode(val)} />
+
+            <RadioCardRoot defaultValue={openai.mode} onValueChange={(ev) => setAPIMode(ev.value)} data-testid="ChangeAIModeSelect">
+              <RadioCardLabel>{t("api_mode")}</RadioCardLabel>
+              <HStack align="stretch">
+                {modeOptions.map((item) => (
+                  <RadioCardItem
+                    label={item.label}
+                    description={item.description}
+                    key={item.value}
+                    value={item.value}
+                    maxWidth="48em"
+                  />
+                ))}
+              </HStack>
+            </RadioCardRoot>
             <Field.HelperText>{t("api_mode_help")}</Field.HelperText>
           </Field.Root>
+
           {
             openai.mode === 'assistant' ?
 
@@ -146,28 +194,37 @@ export function ChatOptions() {
               :
               (
                 <Field.Root mt="4">
-                  <Field.Label>{t("openai_model_help")}</Field.Label>
-                  <Select dataTestId="ChangeAIModelSelect" options={modelOptions} value={openai.model} onChange={val => setModel({ model: val })} placeholder="Choose model" />
+                  <SelectRoot collection={createListCollection({ items: modelOptions })} maxWidth="30em" onValueChange={val => setModel({ model: val.value[0] })}
+                    data-testid="ChangeAIModelSelect">
+                    <SelectLabel>{t("openai_model_help")}</SelectLabel>
+                    <SelectTrigger>
+                      <SelectValueText placeholder={openai.model} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {modelOptions.map((model) => (
+                        <SelectItem item={model} key={model.value}>
+                          {model.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </SelectRoot>
                   <Field.HelperText>{t("openai_model_help")}</Field.HelperText>
                 </Field.Root>
               )
           }
 
           <Field.Root mt="4">
-            <Field.Label>{t("max_tokens")}</Field.Label>
-            <Input type="number" value={openai.max_tokens} placeholder="Max Tokens" onChange={val => setModel({ max_tokens: +val })} data-testid="MaxTokensInput" />
+            <Slider colorPalette="blue" size="md" width="60ex" marks={tokenMarks} label={t("max_tokens")} min={0} max={8192} step={256} value={[openai.max_tokens]} onValueChange={ev => setModel({ max_tokens: ev.value[0] })} data-testid="MaxTokensInput" />
             <Field.HelperText>{t("max_tokens_help")}</Field.HelperText>
           </Field.Root>
 
           <Field.Root mt="4">
-            <Field.Label>{t("temperature")}</Field.Label>
-            <Input type="number" value={openai.temperature} placeholder="OpenAI Temperature" onChange={val => setModel({ temperature: +val })} data-testid="SetTemperatureInput" />
+            <Slider colorPalette="blue" size="md" width="60ex" marks={tempMarks} label={t("temperature")} min={0} max={2} step={0.01} value={[openai.temperature]} onValueChange={ev => setModel({ temperature: ev.value[0] })} data-testid="SetTemperatureInput" />
             <Field.HelperText>{t("temperature_help")}</Field.HelperText>
           </Field.Root>
 
           <Field.Root mt="4">
-            <Field.Label>{t("top_p")}</Field.Label>
-            <Input type="number" value={openai.top_p} placeholder="Custom top_p." onChange={val => setModel({ top_p: +val })} data-testid="SetTopPInput" />
+            <Slider colorPalette="blue" size="md" width="60ex" marks={topPMarks} label={t("top_p")} min={0} max={1} step={0.01} value={[openai.top_p]} onValueChange={ev => setModel({ top_p: ev.value[0] })} data-testid="SetTopPInput" />
             <Field.HelperText>{t("top_p_help")}</Field.HelperText>
           </Field.Root>
 

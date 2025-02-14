@@ -1,6 +1,6 @@
 import React from 'react'
-import { Avatar, Icon, Textarea, Loading, Button, Popover } from '../components'
-import { Icon as ChakraIcon, IconButton } from "@chakra-ui/react";
+import { Avatar, Icon, Loading, Button, Popover } from '../components'
+import { Icon as ChakraIcon, IconButton, Textarea } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip"
 import { AiOutlineClear } from "react-icons/ai";
 import { IoReloadOutline } from "react-icons/io5";
@@ -102,10 +102,13 @@ export function MessageBar() {
       <div className={styles.bar_inner}>
         <div className={styles.bar_type}>
           {
-            options.general.codeEditor ? <CodeEditor language='Python' minHeight={16} onChange={(ev) => setMessage(ev.target.value)} /> :
-              <Textarea data-testid="ChatTextArea" transparent={true} rows="3" value={typeingMessage?.content || ''}
+            options.general.codeEditor ?
+              <CodeEditor language='Python' minHeight={256} onChange={(ev) => setMessage(ev.target.value)} /> :
+              <Textarea data-testid="ChatTextArea" rows={3} value={typeingMessage?.content || ''}
                 onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
-                placeholder={t("Enter something....")} onChange={setMessage} onEnter={onEnter} />
+                variant="subtle" minHeight="3lh" maxHeight="16lh"
+                style={{ borderColor: 'lightgray', outlineColor: 'lightgray' }}
+                placeholder={t("Enter something....")} onChange={(ev) => setMessage(ev.target.value)} onEnter={onEnter} />
           }
         </div>
         <div className={styles.bar_icon}>

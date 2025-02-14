@@ -140,6 +140,7 @@ i18n
                     organization_id_help: "Hier können Sie eine eigene Organisations-ID eingeben.",
 
                     About: "Über die Anwendung",
+                    "User information": "Benutzerinformationen",
 
                     Title: "Titel",
                     Cancel: "Abbrechen",
@@ -147,6 +148,10 @@ i18n
                     "Edit Conversation": "Unterhaltung bearbeiten",
                     "Edit the title of the conversation.": "Bearbeiten Sie den Titel der Unterhaltung.",
                     "Accept Terms": "Ich habe diese Hinweise gelesen und verstanden.",
+                    "download_thread": "Unterhaltung herunterladen",
+
+                    "chat_mode_desc": "Im Chat-Modus können Sie mit dem Chatbbot unterhalten. In diesem Modus können Sie das verwendete Sprachmodell auswählen. Der Chatbot kann Ihnen bei der Beantwortung von Fragen und der Lösung von Problemen helfen, allerdings kann er nicht auf Tools oder externe APIs zugreifen.",
+                    "assistant_mode_desc": "Im Assistenten-Modus können Sie den Chatbot als Assistenten verwenden. Aktuell steht nur eine eingeschränkte Anzahl von vorkonfigurierten Assistenten zur Verfügung.",
                 },
             },
         },

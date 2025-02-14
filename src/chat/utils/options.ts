@@ -1,3 +1,5 @@
+import { t } from "i18next";
+
 export const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
 export const shortcutKey = isMac ? "Command+Enter" : "Ctrl+Enter";
 export const keyboard = {
@@ -44,29 +46,27 @@ export const modeOptions = [
   {
     label: "Chat",
     value: "chat",
+    description: t('chat_mode_desc'),
   },
   {
     label: "Assistant",
     value: "assistant",
+    description: t('assistant_mode_desc'),
   }
 ]
 
 
 export const modelOptions = [
+  { label: "gpt-4o-mini", value: "gpt-4o-mini" },
   {
-    label: "gpt-4-turbo",
-    value: "gpt-4-turbo",
+    label: "gpt-4-turbo", value: "gpt-4-turbo",
   },
   {
-    label: "gpt-4",
-    value: "gpt-4",
+    label: "gpt-4", value: "gpt-4",
   },
   {
-    label: "gpt-3.5-turbo",
-    value: "gpt-3.5-turbo",
+    label: "gpt-3.5-turbo", value: "gpt-3.5-turbo",
   },
-
-
 ];
 
 export const languageOptions = [
@@ -77,14 +77,6 @@ export const languageOptions = [
   {
     label: "Deutsch",
     value: "de",
-  },
-  {
-    label: "简体中文",
-    value: "zh",
-  },
-  {
-    label: "日本",
-    value: "jp",
   },
 ];
 

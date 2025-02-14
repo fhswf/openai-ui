@@ -38,10 +38,10 @@ export function useOptions() {
     });
   })
 
-  const setModel = (data = {}) => {
+  const setModel = (data) => {
     setOptions({
       type: OptionActionType.OPENAI,
-      data,
+      data
     });
   };
 

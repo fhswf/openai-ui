@@ -41,7 +41,7 @@ export const initState: GlobalState = {
       organizationId: "",
       temperature: 1,
       mode: "chat",
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o-mini",
       apiKey: "unused",
       max_tokens: 2048,
       n: 1,

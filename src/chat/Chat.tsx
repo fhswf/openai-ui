@@ -24,7 +24,6 @@ export default function Chat() {
   const onSearch = (e) => {
     console.log(e)
   }
-  console.log("user", user?.affiliations, user?.affiliations['fh-swf.de'].indexOf('faculty'))
 
   const allowedEmails = [
     'neus.burkhard@fh - swf.de',
