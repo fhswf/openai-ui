@@ -49,6 +49,7 @@ metadata:
 spec:
   entryPoints:
     - web-secure
+    - web
   routes:
     - kind: Rule
       match: Host(`openai.ki.fh-swf.de`)
