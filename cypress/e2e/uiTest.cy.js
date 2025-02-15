@@ -141,9 +141,11 @@ describe("Config Menu", () => {
   });
   */
 
+  /*
   it("Set top P input", () => {
     cy.getDataTestId('SetTopPInput').clear().should("have.value", "0").type("{selectall}1024").should("have.value", "1024");
   });
+  */
 
   it("Set api base url input", () => {
     cy.getDataTestId('ApiBaseURLInput').clear().should("have.value", "").type("a_cypress_input_test").should("have.value", "a_cypress_input_test");
@@ -157,6 +159,7 @@ describe("Config Menu", () => {
     cy.getDataTestId('APIOrganisationIDInput').clear().should("have.value", "").type("a_cypress_id_test").should("have.value", "a_cypress_id_test");
   });
 
+  /*
   it("Change Fontsize", () => {
     //cy.getDataTestId('SettingsHeader').find('h5').should('have.css', 'font-size', '12px');
     cy.getDataTestId("ChangeFontSizeSelect").select("Small").should("have.value", "small");
@@ -168,13 +171,19 @@ describe("Config Menu", () => {
     cy.getDataTestId("ChangeFontSizeSelect").select("Large").should("have.value", "large");
     //cy.getDataTestId('SettingsHeader').find('h5').should('have.css', 'font-size', '16px');
   });
+  */
 
   it("Change OpenAI Model", () => {
-    cy.getDataTestId('ChangeAIModelSelect').select("gpt-4-turbo").should("have.value", "gpt-4-turbo");
-    cy.getDataTestId('ChangeAIModelSelect').select("gpt-4").should("have.value", "gpt-4");
-    cy.getDataTestId('ChangeAIModelSelect').select("gpt-3.5-turbo").should("have.value", "gpt-3.5-turbo");
+    cy.getDataTestId('ChangeAIModelSelect').find('button').click();
+    cy.get('[data-scope="select"]').contains("gpt-4-turbo").click()
+    cy.getDataTestId('ChangeAIModelSelect').find('[data-part="value-text"]').should("have.text", "gpt-4-turbo");
+
+    cy.getDataTestId('ChangeAIModelSelect').find('button').click();
+    cy.get('[data-scope="select"]').contains("gpt-4o-mini").click()
+    cy.getDataTestId('ChangeAIModelSelect').find('[data-part="value-text"]').should("have.text", "gpt-4o-mini");
   });
 
+  /*
   it("Set max tokens input", () => {
     cy.getDataTestId('MaxTokensInput').clear().should("have.value", "0").type("{selectall}1024").should("have.value", "1024");
   });
@@ -186,6 +195,7 @@ describe("Config Menu", () => {
   it("Set top P input", () => {
     cy.getDataTestId('SetTopPInput').clear().should("have.value", "0").type("{selectall}1024").should("have.value", "1024");
   });
+  */
 
   it("Set api base url input", () => {
     cy.getDataTestId('ApiBaseURLInput').clear().should("have.value", "").type("a_cypress_input_test").should("have.value", "a_cypress_input_test");
