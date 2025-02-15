@@ -11,6 +11,7 @@ ENV NODE_ENV=production
 ENV VITE_API_URL=/api/v1/chat/completions
 ENV VITE_API_BASE_URL=https://openai.ki.fh-swf.de/api/v1
 ENV VITE_LOGIN_URL=/api/login
+ENV VITE_LOGOUT_URL=/api/logout
 ENV VITE_USER_URL=/api/user
 
 RUN NODE_ENV=production npm run build

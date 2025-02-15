@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog"
-import { Avatar, Button, IconButton, Stack, Text } from "@chakra-ui/react"
+import { Avatar, Button, Heading, IconButton, Stack, Text } from "@chakra-ui/react"
 import { IoHelpCircleOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoApps } from "react-icons/io5";
@@ -67,7 +67,6 @@ const Option = (props) => {
 }
 
 let text = `
-
 ## Datenschutzhinweise
 
 Diese Anwendung ermöglicht den Zugriff auf die Chat-Funktion von
@@ -119,21 +118,11 @@ Der Quellcode der Anwendung ist auf GitHub in folgenden Repositories verfügbar:
 - Proxy-Server: [github.com/fhswf/openai-proxy](https://github.com/fhswf/openai-proxy)
 `
 
-function Modal(props) {
-  return (
-    <>
-      <div className={styles.backdrop} />
-      <div className={styles.modal}>
-        {props.children}
-      </div>
-    </>
-  )
-}
-
 
 export function ChatSideBar() {
 
   const [open, setOpen] = useState(false)
+  const [metadata, setMetadata] = useState({})
   const { is, setState, options, user } = useGlobal()
   const { setGeneral, setAccount } = useOptions()
 
@@ -145,8 +134,17 @@ export function ChatSideBar() {
 
   const logout = () => {
     console.log('Logout')
-    window.location.href = import.meta.env.VITE_LOGOUT_URL
+    window.location.href = import.meta.env.VITE_LOGOUT_URL || '/'
   }
+
+  useEffect(() => {
+    fetch("/metadata.json")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data)
+        setMetadata(data)
+      }, [])
+  });
 
   return (
     <div className={classnames(styles.sider, 'flex-c-sb flex-column')} data-testid="LeftSideBar">
@@ -187,6 +185,7 @@ export function ChatSideBar() {
               {options.account.terms ? <DialogCloseTrigger /> : null}
             </DialogHeader>
             <DialogBody>
+              {metadata.release ? (<Text>Version: {metadata?.release} ({metadata?.build_sha})</Text>) : null}
               <Markdown
                 className="z-ui-markdown"
                 remarkPlugins={[remarkGfm, remarkMath, smartypants]}
