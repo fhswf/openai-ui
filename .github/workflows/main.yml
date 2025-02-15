@@ -95,6 +95,22 @@ jobs:
             type=semver,pattern={{major}},value=${{ needs.release.outputs.new_release_version }}
             type=raw,value=${{ needs.release.outputs.new_release_version }}
 
+      - name: Update yaml
+        uses: fjogeleit/yaml-update-action@main
+        with:
+          token: ${{ steps.cicd.outputs.token }}
+          changes: |
+            {
+              "public/manifest.json": {
+                "version": "${{ needs.release.outputs.new_release_version }}"
+              },
+              "public/metadata.json": {
+                "release": "${{ needs.release.outputs.new_release_version }}",
+                "build_sha": "${{ github.sha }}"
+              }
+            }
+          commitChange: false
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
