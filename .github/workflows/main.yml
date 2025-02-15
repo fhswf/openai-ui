@@ -118,7 +118,7 @@ jobs:
               "public/manifest.json": {
                 "version": "${{ needs.release.outputs.new_release_version }}"
               },
-              "public/meta.json": {
+              "public/metadata.json": {
                 "release": "${{ needs.release.outputs.new_release_version }}",
                 "build_sha": "${{ github.sha }}"
               }
