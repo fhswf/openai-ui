@@ -1,3 +1,10 @@
+## [0.12.2](https://github.com/fhswf/openai-ui/compare/v0.12.1...v0.12.2) (2025-02-15)
+
+
+### Bug Fixes
+
+* **build:** pass release version between jobs ([088325f](https://github.com/fhswf/openai-ui/commit/088325f426367c258549e491a5584bb90e76a9db))
+
 ## [0.12.1](https://github.com/fhswf/openai-ui/compare/v0.12.0...v0.12.1) (2025-02-15)
 
 
