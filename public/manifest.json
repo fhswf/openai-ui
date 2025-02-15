@@ -5,5 +5,13 @@
   "manifest_version": 3,
   "author": "Christian Gawron",
   "homepage_url": "https://openai.ki.fh-swf.de",
-  "display": "standalone"
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "logo200.png",
+      "sizes": "200x200",
+      "type": "image/png"
+    }
+  ]
 }
