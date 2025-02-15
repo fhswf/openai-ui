@@ -1,3 +1,10 @@
+## [0.12.1](https://github.com/fhswf/openai-ui/compare/v0.12.0...v0.12.1) (2025-02-15)
+
+
+### Bug Fixes
+
+* **test:** update test cases for chakra 3 ([b6aa9bf](https://github.com/fhswf/openai-ui/commit/b6aa9bf45906defbdf831dd44d223f0b4189ad3e))
+
 # [0.12.0](https://github.com/fhswf/openai-ui/compare/v0.11.4...v0.12.0) (2025-02-15)
 
 
