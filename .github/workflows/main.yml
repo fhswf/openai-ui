@@ -38,16 +38,15 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Set default (old) release version
-        run: echo "RELEASE_VERSION=${{ steps.semantic_release.outputs.last_release_version }}" >> $GITHUB_ENV  
+        run: echo "release_version=${{ steps.semantic_release.outputs.last_release_version }}" >> $GITHUB_OUTPUT  
       - name: Set new release version
-        run: echo "RELEASE_VERSION=${{ steps.semantic_release.outputs.new_release_version }}" >> $GITHUB_ENV 
+        run: echo "release_version=${{ steps.semantic_release.outputs.new_release_version }}" >> $GITHUB_OUTPUT 
         if: steps.semantic_release.outputs.new_release_published == 'true'
 
     outputs:
       new_release_published: ${{ steps.semantic_release.outputs.new_release_published }}
       new_release_version: ${{ steps.semantic_release.outputs.new_release_version }}
       last_release_version: ${{ steps.semantic_release.outputs.last_release_version }}
-      release_version: ${{ env.RELEASE_VERSION }}
       
   build:
     needs: release
@@ -94,7 +93,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=raw,value=${{ env.RELEASE_VERSION }}
+            type=raw,value=${{ needs.release.outputs.new_release_version }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -111,6 +110,6 @@ jobs:
           token: ${{ steps.cicd.outputs.token }}
           valueFile: 'k8s/deployment-dev.yaml'
           propertyPath: 'spec.template.spec.containers[0].image'
-          value: ghcr.io/fhswf/openai-ui:${{ env.DOCKER_METADATA_OUTPUT_VERSION }}
+          value: ghcr.io/fhswf/openai-ui:${{ needs.release.outputs.new_release_version }}
           branch: main
-          message: 'Update image to ${{ env.DOCKER_METADATA_OUTPUT_VERSION }} [skip ci]'
+          message: 'Update image to ${{ needs.release.outputs.new_release_version }} [skip ci]'
