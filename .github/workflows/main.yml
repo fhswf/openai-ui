@@ -111,8 +111,9 @@ jobs:
           valueFile: 'k8s/deployment-dev.yaml'
           changes: |
             {
-              'spec.template.spec.containers[0].image': 'ghcr.io/fhswf/openai-ui:${{ needs.release.outputs.new_release_version }}'
-              'spec.template.spec.containers[0].env[0].value': '${{ needs.release.outputs.new_release_version }}'
+              "spec.template.spec.containers[0].image": "ghcr.io/fhswf/openai-ui:${{ needs.release.outputs.new_release_version }}",
+              "spec.template.spec.containers[0].env[0].value": "${{ needs.release.outputs.new_release_version }}",
+              "spec.template.spec.containers[0].env[1].value": "$GITHUB_SHA"
             }
           branch: main
           message: 'Update image to ${{ needs.release.outputs.new_release_version }} [skip ci]'

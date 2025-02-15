@@ -24,8 +24,10 @@ spec:
           ports:
             - containerPort: 80
           env:
-            - name: VITE_RLEASE
+            - name: VITE_RELEASE
               value: "dev"
+            - name: VITE_BUILD_SHA
+              value: "2021-09-30T12:00:00Z"
           resources:
             limits:
               memory: 128Mi
