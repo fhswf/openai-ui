@@ -46,6 +46,7 @@ export default function Chat() {
    * @returns {boolean} true if the user is allowed to access the chat 
    */
   function checkUser() {
+
     if (
       // User is a faculty member of fh-swf.de
       user?.affiliations['fh-swf.de'].indexOf('faculty') > -1 ||
@@ -76,13 +77,22 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
       <div className={classnames(styles.chat, chatStyle)}>
         <div className={styles.chat_inner}>
           <ChatSideBar />
-          <Markdown
-            className="z-ui-markdown"
-            remarkPlugins={[remarkGfm, remarkMath, smartypants]}
-            rehypePlugins={[rehypeKatex]}
-          >
-            {userText}
-          </Markdown>
+          <div>
+            <Markdown
+              className="z-ui-markdown"
+              remarkPlugins={[remarkGfm, remarkMath, smartypants]}
+              rehypePlugins={[rehypeKatex]}
+            >
+              {userText}
+            </Markdown>
+            <div>
+              <p>Ihre Benutzerdaten lauten:</p>
+
+              <pre>
+                {JSON.stringify(user, null, 2)}
+              </pre>
+            </div>
+          </div>
         </div>
       </div>)
   }
