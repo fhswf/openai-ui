@@ -1,3 +1,10 @@
+# [0.12.0](https://github.com/fhswf/openai-ui/compare/v0.11.4...v0.12.0) (2025-02-15)
+
+
+### Features
+
+* show user information on "block" page ([e88a938](https://github.com/fhswf/openai-ui/commit/e88a938ab45e92c66f5b020bdaa45014b7bf20a8))
+
 ## [0.11.4](https://github.com/fhswf/openai-ui/compare/v0.11.3...v0.11.4) (2025-02-14)
 
 
