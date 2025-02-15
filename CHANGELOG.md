@@ -1,3 +1,10 @@
+## [0.12.11](https://github.com/fhswf/openai-ui/compare/v0.12.10...v0.12.11) (2025-02-15)
+
+
+### Bug Fixes
+
+* add icon for pwa ([e97909b](https://github.com/fhswf/openai-ui/commit/e97909b32fb5345ca17ea5c145750f3be8c3745c))
+
 ## [0.12.10](https://github.com/fhswf/openai-ui/compare/v0.12.9...v0.12.10) (2025-02-15)
 
 
