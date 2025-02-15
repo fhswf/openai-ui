@@ -90,9 +90,9 @@ jobs:
             type=schedule
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{version}},value=${{ needs.release.outputs.new_release_version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.new_release_version }}
+            type=semver,pattern={{major}},value=${{ needs.release.outputs.new_release_version }}
             type=raw,value=${{ needs.release.outputs.new_release_version }}
 
       - name: Build and push Docker image
@@ -109,7 +109,10 @@ jobs:
         with:
           token: ${{ steps.cicd.outputs.token }}
           valueFile: 'k8s/deployment-dev.yaml'
-          propertyPath: 'spec.template.spec.containers[0].image'
-          value: ghcr.io/fhswf/openai-ui:${{ needs.release.outputs.new_release_version }}
+          changes: |
+            {
+              'spec.template.spec.containers[0].image': 'ghcr.io/fhswf/openai-ui:${{ needs.release.outputs.new_release_version }}'
+              'spec.template.spec.containers[0].env[0].value': ${{ needs.release.outputs.new_release_version }}'
+            }
           branch: main
           message: 'Update image to ${{ needs.release.outputs.new_release_version }} [skip ci]'

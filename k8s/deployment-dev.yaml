@@ -23,6 +23,9 @@ spec:
           name: ui
           ports:
             - containerPort: 80
+          env:
+            - name: VITE_RLEASE
+              value: "dev"
           resources:
             limits:
               memory: 128Mi
