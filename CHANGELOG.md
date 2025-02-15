@@ -1,3 +1,10 @@
+## [0.12.4](https://github.com/fhswf/openai-ui/compare/v0.12.3...v0.12.4) (2025-02-15)
+
+
+### Bug Fixes
+
+* **build:** add release version to pod env ([10489d7](https://github.com/fhswf/openai-ui/commit/10489d74e0db431d62ffbc4a22fb6623cfa188bf))
+
 ## [0.12.3](https://github.com/fhswf/openai-ui/compare/v0.12.2...v0.12.3) (2025-02-15)
 
 
