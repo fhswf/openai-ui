@@ -108,7 +108,6 @@ jobs:
         uses: fjogeleit/yaml-update-action@main
         with:
           token: ${{ steps.cicd.outputs.token }}
-          valueFile: 'k8s/deployment-dev.yaml'
           changes: |
             {
               "k8s/deployment-dev.yaml": {
