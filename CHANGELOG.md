@@ -1,3 +1,10 @@
+## [0.12.8](https://github.com/fhswf/openai-ui/compare/v0.12.7...v0.12.8) (2025-02-15)
+
+
+### Bug Fixes
+
+* show version information in the app ([83f15ce](https://github.com/fhswf/openai-ui/commit/83f15ced9a7b4421ef6d1ef569f8729cac99fe3d))
+
 ## [0.12.7](https://github.com/fhswf/openai-ui/compare/v0.12.6...v0.12.7) (2025-02-15)
 
 
