@@ -1,3 +1,10 @@
+## [0.12.6](https://github.com/fhswf/openai-ui/compare/v0.12.5...v0.12.6) (2025-02-15)
+
+
+### Bug Fixes
+
+* **build:** add build sha to pod env ([cf007b6](https://github.com/fhswf/openai-ui/commit/cf007b6facc13e572fbaa47ccffe58b5f0872d90))
+
 ## [0.12.5](https://github.com/fhswf/openai-ui/compare/v0.12.4...v0.12.5) (2025-02-15)
 
 
