@@ -108,7 +108,7 @@ export function MessageBar() {
                 onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
                 variant="subtle" minHeight="3lh" maxHeight="16lh"
                 style={{ borderColor: 'lightgray', outlineColor: 'lightgray' }}
-                placeholder={t("Enter something....")} onChange={(ev) => setMessage(ev.target.value)} onEnter={onEnter} />
+                placeholder={t("Enter something....")} onChange={(ev) => setMessage(ev.target.value)} />
           }
         </div>
         <div className={styles.bar_icon}>
@@ -122,10 +122,6 @@ export function MessageBar() {
   )
 }
 
-const onEnter = (content, event) => {
-
-  //sendMessage(content)
-}
 
 export function MessageContainer() {
   const { options } = useGlobal()

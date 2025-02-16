@@ -154,14 +154,12 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     downloadThread() {
       const chat = state.chat[state.currentChat];
       const messages = chat.messages;
-      const content = messages.map((m) => {
-        return `${m.role} ${m.sentTime} ${m.content}\n`;
-      });
-      const blob = new Blob(content, { type: "text/plain" });
+      const content = JSON.stringify(messages, null, 2);
+      const blob = new Blob([content], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "chat.txt";
+      a.download = `chat_${chat.id}.json`;
       a.click();
     },
 

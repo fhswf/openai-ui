@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog"
-import { Avatar, Button, Heading, IconButton, Stack, Text } from "@chakra-ui/react"
+import { Avatar, Button, Heading, IconButton, Link, Stack, Text } from "@chakra-ui/react"
 import { IoHelpCircleOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoApps } from "react-icons/io5";
@@ -185,7 +185,8 @@ export function ChatSideBar() {
               {options.account.terms ? <DialogCloseTrigger /> : null}
             </DialogHeader>
             <DialogBody>
-              {metadata.release ? (<Text>Version: {metadata?.release} ({metadata?.build_sha})</Text>) : null}
+              {metadata.release ? (<Text>Version: <Link href={"https://github.com/fhswf/openai-ui/releases/tag/v" + metadata?.release}>{metadata?.release}</Link> (
+                <Link href={"https://github.com/fhswf/openai-ui/commit/" + metadata?.build_sha}>commit {String(metadata?.build_sha).substring(0, 7)}</Link>)</Text>) : null}
               <Markdown
                 className="z-ui-markdown"
                 remarkPlugins={[remarkGfm, remarkMath, smartypants]}

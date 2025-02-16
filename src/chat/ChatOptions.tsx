@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react'
-import { Input, Title, Avatar, Select } from '../components'
 import { Radio, RadioGroup } from '../components/ui/radio'
 import { Switch } from '../components/ui/switch'
 
 import { useGlobal } from './context'
 import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
-import { Button, Card, CardBody, Flex, Field, Heading, IconButton, HStack, Stack, StackSeparator, createListCollection } from "@chakra-ui/react";
+import { Button, Card, CardBody, Flex, Field, Heading, IconButton, Input, HStack, Stack, StackSeparator, createListCollection } from "@chakra-ui/react";
 import {
   NumberInputField,
   NumberInputLabel,
@@ -76,6 +75,11 @@ export function ChatOptions() {
   const tempMarks = [...Array(11).keys()].map((i) => ({ value: 0.2 * i, label: (0.2 * i).toFixed(1) }));
   const topPMarks = [...Array(11).keys()].map((i) => ({ value: 0.1 * i, label: (0.1 * i).toFixed(1) }));
   const tokenMarks = [...Array(4).keys()].map((i) => ({ value: 1024 * 2 ** i, label: (1024 * 2 ** i).toString() }));
+
+  function getAssistantLabel(id) {
+    let assistant = assistants.find((item) => item.value === id);
+    return assistant ? assistant.label : "";
+  }
 
   return (
     <Card.Root w="100%">
@@ -158,14 +162,14 @@ export function ChatOptions() {
           </Field.Root>
 
 
-          <Heading size="md" paddingBlockStart="2ex">{t("Global OpenAI Config")}</Heading>
+          <Heading size="md" paddingBlockStart="2em">{t("Global OpenAI Config")}</Heading>
 
 
           <Field.Root mt="4">
 
             <RadioCardRoot defaultValue={openai.mode} onValueChange={(ev) => setAPIMode(ev.value)} data-testid="ChangeAIModeSelect">
               <RadioCardLabel>{t("api_mode")}</RadioCardLabel>
-              <HStack align="stretch">
+              <Stack direction={{ base: "column", md: "row" }} gap="10" align="stretch">
                 {modeOptions.map((item) => (
                   <RadioCardItem
                     label={item.label}
@@ -175,7 +179,7 @@ export function ChatOptions() {
                     maxWidth="48em"
                   />
                 ))}
-              </HStack>
+              </Stack>
             </RadioCardRoot>
             <Field.HelperText>{t("api_mode_help")}</Field.HelperText>
           </Field.Root>
@@ -185,8 +189,20 @@ export function ChatOptions() {
 
               (
                 <Field.Root mt="4">
-                  <Field.Label>{t("assistant")}</Field.Label>
-                  <Select options={assistants} value={openai.assistant} onChange={val => setAssistant(val)} placeholder="Choose assistant" />
+                  <SelectRoot collection={createListCollection({ items: assistants })} maxWidth="30em" onValueChange={val => setAssistant(val.value[0])}
+                    data-testid="ChangeAIModelSelect">
+                    <SelectLabel>{t("assistant")}</SelectLabel>
+                    <SelectTrigger>
+                      <SelectValueText placeholder={getAssistantLabel(openai.assistant)} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {assistants.map((assistant) => (
+                        <SelectItem item={assistant} key={assistant.value}>
+                          {assistant.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </SelectRoot>
                   <Field.HelperText>{t("assistent_help")}</Field.HelperText>
                 </Field.Root>
               )
@@ -228,23 +244,23 @@ export function ChatOptions() {
             <Field.HelperText>{t("top_p_help")}</Field.HelperText>
           </Field.Root>
 
-          <Heading size="md" desc={t("custom_endpoint_desc")}>{t("Custom API Endpoint")}</Heading>
+          <Heading size="md" desc={t("custom_endpoint_desc")} paddingBlockStart="2em">{t("Custom API Endpoint")}</Heading>
 
           <Field.Root mt="4">
             <Field.Label>{t("api_base_url")}</Field.Label>
-            <Input value={openai.baseUrl} placeholder="Api Base Url" onChange={val => setModel({ baseUrl: val })} data-testid="ApiBaseURLInput" />
+            <Input width="60ex" value={openai.baseUrl} placeholder="Api Base Url" onChange={ev => setModel({ baseUrl: ev.target.value })} data-testid="ApiBaseURLInput" />
             <Field.HelperText>{t("api_base_url_help")}</Field.HelperText>
           </Field.Root>
 
           <Field.Root mt="4">
             <Field.Label>{t("api_key")}</Field.Label>
-            <Input value={openai.apiKey} autoComplete="new-password" onChange={val => setModel({ apiKey: val })} placeholder="ApiKey" type="password" data-testid="APIKeyInput" />
+            <Input width="60ex" value={openai.apiKey} onChange={ev => setModel({ apiKey: ev.target.value })} type="password" data-testid="APIKeyInput" />
             <Field.HelperText>{t("api_key_help")}</Field.HelperText>
           </Field.Root>
 
           <Field.Root mt="4">
             <Field.Label>{t("organization_id")}</Field.Label>
-            <Input value={openai.organizationId} placeholder="OpenAI Organization ID" onChange={val => setModel({ organizationId: val })} data-testid="APIOrganisationIDInput" />
+            <Input width="60ex" value={openai.organizationId} placeholder="OpenAI Organization ID" onChange={ev => setModel({ organizationId: ev.target.value })} data-testid="APIOrganisationIDInput" />
             <Field.HelperText>{t("organization_id_help")}</Field.HelperText>
           </Field.Root>
 
