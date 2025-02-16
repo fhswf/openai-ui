@@ -6,7 +6,7 @@ export function ChatHistory() {
   return (
     <div>
       {
-        message.messages.map(item =>
+        message?.messages?.map(item =>
           <div key={item.id}>
             {item.content}
           </div>

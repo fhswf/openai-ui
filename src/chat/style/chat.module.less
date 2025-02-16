@@ -4,26 +4,30 @@
   border-radius: var(--border-radius);
   background-color: var(--background-color);
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
+
   &_inner {
     border-radius: var(--border-radius);
-    //overflow: hidden;
-    width: 100%;
-    height: 100%;
+    height: 100lvh;
     flex-wrap: nowrap;
     display: flex;
+    flex-direction: row;
+    flex-grow: 1;
   }
 }
+
 .full {
   height: 100vh;
   width: 100%;
 }
+
 .normal {
   position: fixed;
   left: 50%;
   top: 50%;
-  transform: translate(-50%;-50%);
+  transform: translate(-50%; -50%);
   height: 90%;
   width: 80%;
+
   .chat_inner {
     border: 1px solid var(--border-color);
   }
@@ -32,48 +36,41 @@
 .sider {
   background: var(--background-color);
   width: 270px;
+  height: 100%;
   flex: 0 0 auto;
   display: flex;
   justify-content: space-between;
   flex-direction: column;
   align-items: center;
   border-right: 1px solid var(--border-color);
-  & > div {
+
+  &>div {
     width: 100%;
   }
 }
+
+
+.main {
+  background-color: var(--background-color-gray);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  flex: 1 1 auto;
+  font-size: var(--font-size-base);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.chat_content {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+}
+
 .search {
   padding: var(--spacing) 0;
 }
+
 .container {
   background: var(--background-color-gray);
-}
-.info {
-  
-}
-@media screen and (max-width: 600px) {
-  .z-chat {
-    &-sider {
-      display: none;
-    }
-    &-list {
-      display: none;
-    }
-    &.full {
-      height: 100vh;
-      width: 100%;
-    }
-    &.normal {
-      position: inherit;
-      transform: translate(0, 0);
-      height: 100vh;
-      width: 100%;
-    }
-    &-message {
-      width: 100%;
-      &_item {
-        display: block;
-      }
-    }
-  }
 }

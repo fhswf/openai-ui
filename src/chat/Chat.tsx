@@ -1,5 +1,5 @@
 import React from 'react'
-import { ChatMessage } from './ChatMessage'
+import { ChatMessage, MessageHeader } from './ChatMessage'
 import { ChatSideBar } from './ChatSideBar'
 import { ChatOptions } from './ChatOptions'
 import { Apps } from './apps/index'
@@ -16,7 +16,6 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import smartypants from 'remark-smartypants'
 import rehypeKatex from 'rehype-katex'
-import { all } from 'cypress/types/bluebird'
 
 export default function Chat() {
   const { is, user } = useGlobal()
@@ -104,19 +103,22 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
           is?.config ?
             <Config />
             :
-            <React.Fragment>
-              {
-                is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
-                  <div className={styles.search}>
-                    <Search onSearch={onSearch} dataTestId="ConversationSearchBar" />
+            <div className={styles.main}>
+              <MessageHeader />
+              <div className={styles.chat_content}>
+                {
+                  is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
+                    <div className={styles.search}>
+                      <Search onSearch={onSearch} dataTestId="ConversationSearchBar" />
+                    </div>
+                    <ScrollView>
+                      {is?.apps ? <Apps /> : <ChatList />}
+                    </ScrollView>
                   </div>
-                  <ScrollView>
-                    {is?.apps ? <Apps /> : <ChatList />}
-                  </ScrollView>
-                </div>
-              }
-              <ChatMessage />
-            </React.Fragment>
+                }
+                <ChatMessage />
+              </div>
+            </div>
         }
       </div>
     </div>

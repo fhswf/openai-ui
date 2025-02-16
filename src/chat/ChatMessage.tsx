@@ -1,6 +1,7 @@
 import React from 'react'
-import { Avatar, Icon, Loading, Button, Popover } from '../components'
-import { Icon as ChakraIcon, IconButton, Textarea } from "@chakra-ui/react";
+import { Loading, Button } from '../components'
+import { Icon, IconButton, Textarea } from "@chakra-ui/react";
+import { Avatar } from "../components/ui/avatar"
 import { Tooltip } from "../components/ui/tooltip"
 import { AiOutlineClear } from "react-icons/ai";
 import { IoReloadOutline } from "react-icons/io5";
@@ -8,6 +9,12 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { IoLogoGithub } from "react-icons/io5";
 import { GrDocumentDownload } from "react-icons/gr";
 import { MdOutlineSimCardDownload } from "react-icons/md";
+import { AiOutlineOpenAI } from "react-icons/ai";
+import { MdOutlineCancel } from "react-icons/md";
+import { MdOutlineSend } from "react-icons/md";
+import { RiSendPlane2Line } from "react-icons/ri";
+import { LuPanelLeftClose, LuPanelLeftOpen } from "react-icons/lu";
+import { MdEdit } from "react-icons/md";
 
 import { CopyIcon, ScrollView, Error, EmptyChat, ChatHelp } from './component'
 import { MessageRender } from './MessageRender'
@@ -17,7 +24,7 @@ import { useSendKey } from './hooks/useSendKey'
 import { useOptions } from './hooks/useOptions'
 import { useMessage } from './hooks/useMessage'
 import { dateFormat } from './utils'
-import avatar from '../assets/images/avatar-gpt.png'
+import avatar from '../assets/images/OpenAI-black-monoblossom.svg'
 import styles from './style/message.module.less'
 import { classnames } from '../components/utils'
 import { useTranslation } from "react-i18next";
@@ -26,18 +33,20 @@ import CodeEditor from '@uiw/react-textarea-code-editor';
 export function MessageHeader() {
   const { is, setIs, clearThread, reloadThread, downloadThread, showSettings, options } = useGlobal()
   const { message } = useMessage()
-  const messages = message.messages;
-  const columnIcon = is.sidebar ? 'column-close' : 'column-open'
+  const messages = message?.messages;
+  const columnIcon = is.sidebar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />
   const { setGeneral } = useOptions()
   const { t } = useTranslation();
   const issueUrl = import.meta.env.VITE_ISSUE_URL || 'https://github.com/fhswf/openai-ui/issues/new?template=Blank+issue'
 
   return (
     <div className={classnames(styles.header)}>
-      <Button type="icon" icon={columnIcon} onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn" />
+      <IconButton variant="ghost" onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn">
+        {columnIcon}
+      </IconButton>
       <div className={styles.header_title} data-testid="HeaderTitle">
         {message?.title}
-        <div className={styles.length}>{t('count_messages', { count: messages.length })}</div>
+        <div className={styles.length}>{t('count_messages', { count: messages?.length })}</div>
       </div>
       <div className={styles.header_bar}>
         {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
@@ -64,18 +73,22 @@ export function MessageItem(props) {
 
   return (
     <div className={classnames(styles.item, styles[role])} data-testid={dataTestId}>
-      <Avatar src={role === 'user' ? user?.avatar : avatar} />
+      <Avatar size="xs" src={role === 'user' ? user?.avatar : avatar} />
       <div className={classnames(styles.item_content, styles[`item_${role}`])}>
         <div className={styles.item_inner}>
           <div className={styles.item_tool}>
             <div className={styles.item_date}>{dateFormat(sentTime)}</div>
             <div className={styles.item_bar}>
               <Tooltip content={t("Remove Message")}>
-                <Icon className={styles.icon} type="trash" onClick={() => removeMessage(id)} />
+                <IconButton minWidth="24px" size="sm" variant="plain" onClick={() => removeMessage(id)} >
+                  <MdOutlineCancel />
+                </IconButton>
               </Tooltip>
               {role === 'user' ? <React.Fragment>
                 {false && <Icon className={styles.icon} type="reload" />}
-                <Icon className={styles.icon} type="editor" onClick={() => editMessage(id)} />
+                <IconButton minWidth="24px" size="sm" variant="plain" onClick={() => editMessage(id)}>
+                  <MdEdit />
+                </IconButton>
               </React.Fragment> : <CopyIcon value={content} />}
             </div>
           </div>
@@ -113,9 +126,13 @@ export function MessageBar() {
         </div>
         <div className={styles.bar_icon}>
           {typeingMessage?.content &&
-            <Icon className={styles.icon} title={t("cancel")} type="cancel" onClick={clearTypeing} />
+            <IconButton minWidth="24px" title={t("cancel")} variant="plain" onClick={clearTypeing}>
+              <MdOutlineCancel />
+            </IconButton>
           }
-          <Icon className={styles.icon} title={t("send")} type="send" onClick={sendMessage} data-testid="SendMessageBtn" />
+          <IconButton minWidth="24px" padding={0} title={t("send")} variant="plain" onClick={sendMessage} data-testid="SendMessageBtn">
+            <RiSendPlane2Line width="16px" />
+          </IconButton>
         </div>
       </div>
     </div>
@@ -131,7 +148,7 @@ export function MessageContainer() {
     return (
       <React.Fragment>
         {
-          messages.length ? <div className={styles.container} data-testid="ChatListContainer">
+          messages?.length ? <div className={styles.container} data-testid="ChatListContainer">
             {messages
               .filter(message => message.role !== "system")
               .map((item, index) => <MessageItem key={item.id} {...item} dataTestId="ChatMessage" />)}
@@ -149,7 +166,7 @@ export function ChatMessage() {
   const { is } = useGlobal()
   return (
     <div className={styles.message}>
-      <MessageHeader />
+
       <ScrollView data-testid="ChatList">
         <MessageContainer />
         {is.thinking && <Loading />}
