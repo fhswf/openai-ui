@@ -79,7 +79,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     async newChat(app) {
       const { currentApp, is, options, currentChat, chat } = state;
       const newApp = app || currentApp;
-      let messages: Messages = [{ content: newApp?.content || t("system_welcome"), sentTime: Math.floor(Date.now() / 1000), role: "system", id: 1, }]
+      let messages: Messages = [{ content: newApp?.content || t("system_welcome"), sentTime: Math.floor(Date.now() / 1000), role: "assistant", id: Date.now(), }]
       console.log("newChat: ", newApp, chat)
       const chatList = [
         {

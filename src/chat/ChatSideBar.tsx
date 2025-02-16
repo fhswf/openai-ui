@@ -159,7 +159,7 @@ export function ChatSideBar() {
           <PopoverContent data-testid="UserInformation">
             <PopoverArrow />
             <PopoverBody>
-              <PopoverTitle fontWeight="bold" fontSizeAdjust={"+1"} paddingBlockEnd={"15px"}>{t('User information')}</PopoverTitle>
+              <PopoverTitle fontWeight="bold" paddingBlockEnd={"15px"}>{t('User information')}</PopoverTitle>
               <Stack spacing={2}>
                 <Text>{user?.name}</Text>
                 <Text>{user?.email}</Text>
@@ -185,8 +185,8 @@ export function ChatSideBar() {
               {options.account.terms ? <DialogCloseTrigger /> : null}
             </DialogHeader>
             <DialogBody>
-              {metadata.release ? (<Text>Version: <Link href={"https://github.com/fhswf/openai-ui/releases/tag/v" + metadata?.release}>{metadata?.release}</Link> (
-                <Link href={"https://github.com/fhswf/openai-ui/commit/" + metadata?.build_sha}>commit {String(metadata?.build_sha).substring(0, 7)}</Link>)</Text>) : null}
+              {metadata.release ? (<Text>Version: <Link target="blank" href={"https://github.com/fhswf/openai-ui/releases/tag/v" + metadata?.release}>{metadata?.release}</Link> (
+                <Link target="blank" href={"https://github.com/fhswf/openai-ui/commit/" + metadata?.build_sha}>commit {String(metadata?.build_sha).substring(0, 7)}</Link>)</Text>) : null}
               <Markdown
                 className="z-ui-markdown"
                 remarkPlugins={[remarkGfm, remarkMath, smartypants]}

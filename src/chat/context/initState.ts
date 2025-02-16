@@ -15,8 +15,8 @@ export const initState: GlobalState = {
         {
           content: t("system_welcome"),
           sentTime: Date.now(),
-          role: "system",
-          id: 1,
+          role: "assistant",
+          id: Date.now(),
         },
       ],
     },
