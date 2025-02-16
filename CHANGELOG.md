@@ -1,3 +1,10 @@
+## [0.12.13](https://github.com/fhswf/openai-ui/compare/v0.12.12...v0.12.13) (2025-02-16)
+
+
+### Bug Fixes
+
+* **build:** update & commit manifest/metadata on release ([81149c8](https://github.com/fhswf/openai-ui/commit/81149c87d34e8dbf9d34c28582a5f18b1f3487b0))
+
 ## [0.12.12](https://github.com/fhswf/openai-ui/compare/v0.12.11...v0.12.12) (2025-02-16)
 
 
