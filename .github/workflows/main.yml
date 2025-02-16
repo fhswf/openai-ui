@@ -43,6 +43,24 @@ jobs:
         run: echo "release_version=${{ steps.semantic_release.outputs.new_release_version }}" >> $GITHUB_OUTPUT 
         if: steps.semantic_release.outputs.new_release_published == 'true'
 
+      - name: Update yaml
+        if: steps.semantic_release.outputs.new_release_published == 'true'
+        uses: fjogeleit/yaml-update-action@main
+        with:
+          token: ${{ steps.cicd.outputs.token }}
+          changes: |
+            {
+              "public/manifest.json": {
+                "version": "${{ steps.semantic_release.outputs.new_release_version }}"
+              },
+              "public/metadata.json": {
+                "release": "${{ steps.semantic_release.outputs.new_release_version }}",
+                "build_sha": "${{ github.sha }}"
+              }
+            }
+          branch: main
+          message: 'Update version to ${{ steps.semantic_release.outputs.new_release_version }} [skip ci]'         
+
     outputs:
       new_release_published: ${{ steps.semantic_release.outputs.new_release_published }}
       new_release_version: ${{ steps.semantic_release.outputs.new_release_version }}
@@ -93,24 +111,7 @@ jobs:
             type=semver,pattern={{version}},value=${{ needs.release.outputs.new_release_version }}
             type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.new_release_version }}
             type=semver,pattern={{major}},value=${{ needs.release.outputs.new_release_version }}
-            type=raw,value=${{ needs.release.outputs.new_release_version }}
-
-      - name: Update yaml
-        uses: fjogeleit/yaml-update-action@main
-        with:
-          token: ${{ steps.cicd.outputs.token }}
-          changes: |
-            {
-              "public/manifest.json": {
-                "version": "${{ needs.release.outputs.new_release_version }}"
-              },
-              "public/metadata.json": {
-                "release": "${{ needs.release.outputs.new_release_version }}",
-                "build_sha": "${{ github.sha }}"
-              }
-            }
-          branch: main
-          message: 'Update version to ${{ needs.release.outputs.new_release_version }} [skip ci]'          
+            type=raw,value=${{ needs.release.outputs.new_release_version }}         
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
