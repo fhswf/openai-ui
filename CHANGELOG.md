@@ -1,3 +1,10 @@
+## [0.12.15](https://github.com/fhswf/openai-ui/compare/v0.12.14...v0.12.15) (2025-02-16)
+
+
+### Bug Fixes
+
+* catch errors in config parsing ([0e6c831](https://github.com/fhswf/openai-ui/commit/0e6c8318c14415e2ed11d94f91178ea963437405))
+
 ## [0.12.14](https://github.com/fhswf/openai-ui/compare/v0.12.13...v0.12.14) (2025-02-16)
 
 
