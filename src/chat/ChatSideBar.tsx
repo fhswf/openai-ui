@@ -143,8 +143,8 @@ export function ChatSideBar() {
       .then((data) => {
         console.log(data)
         setMetadata(data)
-      }, [])
-  });
+      });
+  }, []);
 
   return (
     <div className={classnames(styles.sider, 'flex-c-sb flex-column')} data-testid="LeftSideBar">
