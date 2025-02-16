@@ -45,7 +45,7 @@ jobs:
           if-no-files-found: warn # 'warn' or 'error' are also available, defaults to `warn`
 
       - name: SonarQube
-        uses: sonarsource/sonarqube-scan-action@master
+        uses: sonarsource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
