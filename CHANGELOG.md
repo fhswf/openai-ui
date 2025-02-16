@@ -1,3 +1,10 @@
+## [0.12.19](https://github.com/fhswf/openai-ui/compare/v0.12.18...v0.12.19) (2025-02-16)
+
+
+### Bug Fixes
+
+* use version 4 of sonarqube-scan-action ([1e4d71f](https://github.com/fhswf/openai-ui/commit/1e4d71fadd2a4280356b6425c223c6fc4b9ee53c))
+
 ## [0.12.18](https://github.com/fhswf/openai-ui/compare/v0.12.17...v0.12.18) (2025-02-16)
 
 
