@@ -145,6 +145,8 @@ i18n
                     Title: "Titel",
                     Cancel: "Abbrechen",
                     Save: "Speichern",
+                    Close: "Schließen",
+                    Reset: "Zurücksetzen",
                     "Edit Conversation": "Unterhaltung bearbeiten",
                     "Edit the title of the conversation.": "Bearbeiten Sie den Titel der Unterhaltung.",
                     "Accept Terms": "Ich habe diese Hinweise gelesen und verstanden.",

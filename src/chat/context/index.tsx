@@ -11,13 +11,26 @@ import reducer from "./reducer";
 import { initState } from "./initState";
 import { fetchAndGetUser } from "../utils";
 import { GlobalAction, GlobalActions, GlobalState, GlobalActionType } from "./types";
+import { init } from "i18next";
 
 
 export const ChatContext = createContext(null);
 export const MessagesContext = createContext<Dispatch<GlobalAction>>(null);
 
+function getState() {
+  let state = initState;
+
+  try {
+    state = JSON.parse(localStorage.getItem("SESSIONS"));
+  } catch (e) {
+    console.error("error parsing state: %s", e);
+  }
+
+  return state;
+}
+
 export const ChatProvider = ({ children }) => {
-  const init: GlobalState = JSON.parse(localStorage.getItem("SESSIONS")) || initState;
+  const init: GlobalState = getState();
   const [state, dispatch] = useReducer(reducer, init);
   const actionList = action(state, dispatch);
   const latestState = useRef(state);
@@ -27,7 +40,7 @@ export const ChatProvider = ({ children }) => {
   }, [state]);
 
   useEffect(() => {
-    const savedState = JSON.parse(localStorage.getItem("SESSIONS"));
+    const savedState = getState();
     if (savedState) {
       dispatch({ type: GlobalActionType.SET_STATE, payload: savedState });
     }

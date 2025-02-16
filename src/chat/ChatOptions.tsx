@@ -252,8 +252,8 @@ export function ChatOptions() {
       </Card.Body>
 
       <Card.Footer>
-        <Button variant="outline" onClick={() => setState(initState)} data-testid="SettingsRefreshBtn">Reset</Button>
-        <Button type="primary" onClick={() => setIs({ config: !is.config })} data-testid="SettingsCloseBtn">Close</Button>
+        <Button variant="outline" colorPalette="red" onClick={() => setState(initState)} data-testid="SettingsRefreshBtn">{t("Reset")}</Button>
+        <Button type="primary" onClick={() => setIs({ config: !is.config })} data-testid="SettingsCloseBtn">{t("Close")}</Button>
       </Card.Footer>
     </Card.Root >
   )
