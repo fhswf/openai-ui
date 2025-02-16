@@ -30,7 +30,15 @@ function getState() {
 }
 
 export const ChatProvider = ({ children }) => {
-  const init: GlobalState = getState();
+  let init: GlobalState = initState;
+
+  try {
+    let stored = JSON.parse(localStorage.getItem("SESSIONS"));
+    init = { ...init, ...stored };
+  } catch (e) {
+    console.error("error parsing state: %s", e);
+  }
+
   const [state, dispatch] = useReducer(reducer, init);
   const actionList = action(state, dispatch);
   const latestState = useRef(state);
