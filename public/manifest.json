@@ -11,7 +11,8 @@
     {
       "src": "/logo200.png",
       "sizes": "200x200",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
