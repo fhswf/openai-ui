@@ -1,3 +1,10 @@
+## [0.12.17](https://github.com/fhswf/openai-ui/compare/v0.12.16...v0.12.17) (2025-02-16)
+
+
+### Bug Fixes
+
+* **ui:** hide settings icon in chat mode ([4e18a5a](https://github.com/fhswf/openai-ui/commit/4e18a5a8004bd4edd1726a9179a1772eaa143399))
+
 ## [0.12.16](https://github.com/fhswf/openai-ui/compare/v0.12.15...v0.12.16) (2025-02-16)
 
 
