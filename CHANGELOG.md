@@ -1,3 +1,10 @@
+## [0.12.22](https://github.com/fhswf/openai-ui/compare/v0.12.21...v0.12.22) (2025-02-16)
+
+
+### Bug Fixes
+
+* show initial welcome message ([0d86f5e](https://github.com/fhswf/openai-ui/commit/0d86f5ecd524162ae53e9688a85d3e114d52e7bc))
+
 ## [0.12.21](https://github.com/fhswf/openai-ui/compare/v0.12.20...v0.12.21) (2025-02-16)
 
 
