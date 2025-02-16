@@ -1,3 +1,12 @@
+## [0.12.12](https://github.com/fhswf/openai-ui/compare/v0.12.11...v0.12.12) (2025-02-16)
+
+
+### Bug Fixes
+
+* **pwa:** icon path ([d526f6c](https://github.com/fhswf/openai-ui/commit/d526f6cf216c9ba7a6ab9bd3b05e028467b3ea80))
+* **pwa:** icon path ([fda1c78](https://github.com/fhswf/openai-ui/commit/fda1c78b523df4837666b32192b80da5746ba3c0))
+* useEffect() dependency ([7919005](https://github.com/fhswf/openai-ui/commit/7919005b09d524b88f9a60da7c516f8afe3e32df))
+
 ## [0.12.11](https://github.com/fhswf/openai-ui/compare/v0.12.10...v0.12.11) (2025-02-15)
 
 
