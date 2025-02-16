@@ -1,3 +1,10 @@
+## [0.12.16](https://github.com/fhswf/openai-ui/compare/v0.12.15...v0.12.16) (2025-02-16)
+
+
+### Bug Fixes
+
+* **build:** fix build scripts ([c9d4da1](https://github.com/fhswf/openai-ui/commit/c9d4da17d69fb13e59c5a9b37dce4a9da6dbfeb3))
+
 ## [0.12.15](https://github.com/fhswf/openai-ui/compare/v0.12.14...v0.12.15) (2025-02-16)
 
 
