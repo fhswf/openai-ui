@@ -1,3 +1,10 @@
+## [0.12.18](https://github.com/fhswf/openai-ui/compare/v0.12.17...v0.12.18) (2025-02-16)
+
+
+### Bug Fixes
+
+* **test:** refactor tests to new defaults ([0c241b9](https://github.com/fhswf/openai-ui/commit/0c241b995e79406f947bbef0c8621d1463de1ca6))
+
 ## [0.12.17](https://github.com/fhswf/openai-ui/compare/v0.12.16...v0.12.17) (2025-02-16)
 
 
