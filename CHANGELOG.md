@@ -1,3 +1,10 @@
+# [0.13.0](https://github.com/fhswf/openai-ui/compare/v0.12.24...v0.13.0) (2025-02-17)
+
+
+### Features
+
+* improve message input ([397bd44](https://github.com/fhswf/openai-ui/commit/397bd445bd8df07a888adc1f986559099081e5d0))
+
 ## [0.12.24](https://github.com/fhswf/openai-ui/compare/v0.12.23...v0.12.24) (2025-02-17)
 
 
