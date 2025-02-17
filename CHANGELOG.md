@@ -1,3 +1,10 @@
+## [0.13.1](https://github.com/fhswf/openai-ui/compare/v0.13.0...v0.13.1) (2025-02-17)
+
+
+### Bug Fixes
+
+* **ui:** submit key does not work in code editor ([5d891ee](https://github.com/fhswf/openai-ui/commit/5d891ee3a6ea4eb5717b9f464a39a441a7401985))
+
 # [0.13.0](https://github.com/fhswf/openai-ui/compare/v0.12.24...v0.13.0) (2025-02-17)
 
 
