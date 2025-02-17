@@ -43,6 +43,7 @@ export function MessageBar() {
                 {
                     options.general.codeEditor ?
                         <CodeEditor language='Python' minHeight="6lh"
+                            onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
                             value={typeingMessage?.content || ''}
                             placeholder={t("Please enter Python code.")}
                             onChange={(ev) => setMessage(ev.target.value)}
@@ -68,7 +69,10 @@ export function MessageBar() {
                         disabled={is.thinking || !typeingMessage?.content}
                         onClick={sendMessage}
                         data-testid="SendMessageBtn">{t("send")}
-                        <Kbd size="sm">{t(options.general.sendCommand)}</Kbd>
+                        {
+                            options.general.codeEditor ||
+                            <Kbd size="sm">{t(options.general.sendCommand)}</Kbd>
+                        }
                     </Button>
                 </HStack>
             </Stack>
