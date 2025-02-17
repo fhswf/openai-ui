@@ -1,3 +1,10 @@
+## [0.12.23](https://github.com/fhswf/openai-ui/compare/v0.12.22...v0.12.23) (2025-02-16)
+
+
+### Bug Fixes
+
+* handling invalid message data; layout changes ([133cd15](https://github.com/fhswf/openai-ui/commit/133cd15fe897f39708a79e6398bbc16a281628cb))
+
 ## [0.12.22](https://github.com/fhswf/openai-ui/compare/v0.12.21...v0.12.22) (2025-02-16)
 
 
