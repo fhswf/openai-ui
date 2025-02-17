@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { t } from 'i18next';
 
 export function CopyIcon(props) {
-  const { text, value, className } = props
+  const { text = "copy", value, className } = props
   const [icon, setIcon] = useState(LuClipboardCopy);
   const { t } = useTranslation();
 
@@ -30,8 +30,4 @@ export function CopyIcon(props) {
       </IconButton>
     </Tooltip>
   )
-}
-
-CopyIcon.defaultProps = {
-  text: t('copy')
 }

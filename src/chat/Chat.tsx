@@ -1,4 +1,7 @@
 import React from 'react'
+import { ErrorBoundary } from "react-error-boundary";
+import { Alert, Button, Center, Heading, HStack, Text } from "@chakra-ui/react"
+import { Toaster, toaster } from "../components/ui/toaster"
 import { ChatMessage, MessageHeader } from './ChatMessage'
 import { ChatSideBar } from './ChatSideBar'
 import { ChatOptions } from './ChatOptions'
@@ -16,6 +19,37 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import smartypants from 'remark-smartypants'
 import rehypeKatex from 'rehype-katex'
+import { func } from 'prop-types';
+import { t } from 'i18next';
+
+function ErrorFallback({ error, resetErrorBoundary }) {
+  console.log("error: %o %s", error.stack, typeof error.stack)
+
+  const resetSettings = () => {
+    console.log("resetSettings")
+    localStorage.setItem("SESSIONS", "");
+  }
+  return (
+    <Center height="100%" margin="10ex">
+      <Alert.Root variant="surface" status="error" >
+        <Alert.Indicator />
+        <Alert.Content>
+          <Alert.Title as="h2" fontSize="lg">{t("An error occurred") + ": " + error.name}</Alert.Title>
+          <Alert.Description>
+            {error.message}
+
+            <Heading paddingBlockStart="1ex" as="h3" fontSize="md">Stacktrace:</Heading>
+            {error.stack.split("\n").map((line, index) => <Text key={index}>{line}</Text>)}
+          </Alert.Description>
+          <HStack justify="end" spacing="2">
+            <Button variant="subtle" onClick={resetSettings}>{t("Reset settings")}</Button>
+            <Button variant="solid" onClick={resetErrorBoundary}>{t("Try again")}</Button>
+          </HStack>
+        </Alert.Content>
+      </Alert.Root>
+    </Center >
+  )
+}
 
 export default function Chat() {
   const { is, user } = useGlobal()
@@ -23,6 +57,8 @@ export default function Chat() {
   const onSearch = (e) => {
     console.log(e)
   }
+
+
 
   const allowedEmails = [
     'neus.burkhard@fh - swf.de',
@@ -105,19 +141,21 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
             :
             <div className={styles.main}>
               <MessageHeader />
-              <div className={styles.chat_content}>
-                {
-                  is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
-                    <div className={styles.search}>
-                      <Search onSearch={onSearch} dataTestId="ConversationSearchBar" />
+              <ErrorBoundary fallbackRender={ErrorFallback}>
+                <div className={styles.chat_content}>
+                  {
+                    is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
+                      <div className={styles.search}>
+                        <Search onSearch={onSearch} dataTestId="ConversationSearchBar" />
+                      </div>
+                      <ScrollView>
+                        {is?.apps ? <Apps /> : <ChatList />}
+                      </ScrollView>
                     </div>
-                    <ScrollView>
-                      {is?.apps ? <Apps /> : <ChatList />}
-                    </ScrollView>
-                  </div>
-                }
-                <ChatMessage />
-              </div>
+                  }
+                  <ChatMessage />
+                </div>
+              </ErrorBoundary>
             </div>
         }
       </div>

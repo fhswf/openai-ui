@@ -1,6 +1,6 @@
 import React from 'react'
 import { Loading, Button } from '../components'
-import { Icon, IconButton, Textarea } from "@chakra-ui/react";
+import { Icon, IconButton, Stack, Text, Textarea } from "@chakra-ui/react";
 import { Avatar } from "../components/ui/avatar"
 import { Tooltip } from "../components/ui/tooltip"
 import { AiOutlineClear } from "react-icons/ai";
@@ -16,7 +16,7 @@ import { RiSendPlane2Line } from "react-icons/ri";
 import { LuPanelLeftClose, LuPanelLeftOpen } from "react-icons/lu";
 import { MdEdit } from "react-icons/md";
 
-import { CopyIcon, ScrollView, Error, EmptyChat, ChatHelp } from './component'
+import { CopyIcon, ScrollView, EmptyChat, ChatHelp } from './component'
 import { MessageRender } from './MessageRender'
 import { ConfigInfo } from './ConfigInfo'
 import { useGlobal } from './context'
@@ -44,10 +44,11 @@ export function MessageHeader() {
       <IconButton variant="ghost" onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn">
         {columnIcon}
       </IconButton>
-      <div className={styles.header_title} data-testid="HeaderTitle">
-        {message?.title}
-        <div className={styles.length}>{t('count_messages', { count: messages?.length })}</div>
-      </div>
+      <Stack flexGrow={1} gap="1px">
+        <Text data-testid="HeaderTitle" textStyle="lg">{message?.title}</Text>
+        <Text textStyle="xs">{t('count_messages', { count: messages?.length })}</Text>
+      </Stack>
+
       <div className={styles.header_bar}>
         {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
         <IconButton variant="ghost" title={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>
@@ -119,7 +120,7 @@ export function MessageBar() {
               <CodeEditor language='Python' minHeight={256} onChange={(ev) => setMessage(ev.target.value)} /> :
               <Textarea data-testid="ChatTextArea" rows={3} value={typeingMessage?.content || ''}
                 onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
-                variant="subtle" minHeight="3lh" maxHeight="16lh"
+                variant="outline" minHeight="3lh" maxHeight="16lh"
                 style={{ borderColor: 'lightgray', outlineColor: 'lightgray' }}
                 placeholder={t("Enter something....")} onChange={(ev) => setMessage(ev.target.value)} />
           }
@@ -164,9 +165,9 @@ export function MessageContainer() {
 
 export function ChatMessage() {
   const { is } = useGlobal()
+
   return (
     <div className={styles.message}>
-
       <ScrollView data-testid="ChatList">
         <MessageContainer />
         {is.thinking && <Loading />}

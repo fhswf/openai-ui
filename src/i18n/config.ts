@@ -155,6 +155,10 @@ i18n
                     "chat_mode_desc": "Im Chat-Modus können Sie mit dem Chatbbot unterhalten. In diesem Modus können Sie das verwendete Sprachmodell auswählen. Der Chatbot kann Ihnen bei der Beantwortung von Fragen und der Lösung von Problemen helfen, allerdings kann er nicht auf Tools oder externe APIs zugreifen.",
                     "assistant_mode_desc": "Im Assistenten-Modus können Sie den Chatbot als Assistenten verwenden. Aktuell steht nur eine eingeschränkte Anzahl von vorkonfigurierten Assistenten zur Verfügung.",
                     "Global OpenAI Config": "Globale OpenAI-Einstellungen",
+
+                    "An error occurred": "Ein Fehler ist aufgetreten",
+                    "Try again": "Erneut versuchen",
+                    "Reset settings": "Einstellungen zurücksetzen",
                 },
             },
         },

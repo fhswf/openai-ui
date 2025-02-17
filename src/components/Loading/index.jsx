@@ -3,7 +3,7 @@ import { classnames } from '../utils'
 import styles from "./loading.module.less"
 
 export function Loading(props) {
-  const { text, type, color } = props
+  const { text = null, type = "circle", color } = props
 
   return (
     <div className={classnames(styles.loading)}>
@@ -15,9 +15,4 @@ export function Loading(props) {
       </div>
     </div>
   )
-}
-
-Loading.defaultProps = {
-  type: 'circle', // normal|circle
-  text: null
 }

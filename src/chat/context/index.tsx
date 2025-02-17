@@ -11,7 +11,6 @@ import reducer from "./reducer";
 import { initState } from "./initState";
 import { fetchAndGetUser } from "../utils";
 import { GlobalAction, GlobalActions, GlobalState, GlobalActionType } from "./types";
-import { init } from "i18next";
 
 
 export const ChatContext = createContext(null);
