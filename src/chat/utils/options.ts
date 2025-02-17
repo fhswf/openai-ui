@@ -1,7 +1,6 @@
 import { t } from "i18next";
 
-export const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-export const shortcutKey = isMac ? "Command+Enter" : "Ctrl+Enter";
+export const shortcutKey = "Ctrl+Enter";
 export const keyboard = {
   Command: "Window",
   Option: "Alt",
@@ -9,9 +8,7 @@ export const keyboard = {
   Shift: "Shift",
 };
 
-export const keyboardArray = isMac
-  ? Object.keys(keyboard)
-  : Object.values(keyboard);
+export const keyboardArray = Object.values(keyboard);
 export const themeOptions = [
   {
     label: "Auto",
@@ -37,7 +34,7 @@ export const sendCommandOptions = [
     value: "COMMAND_ENTER",
   },
   {
-    label: shortcutKey,
+    label: "Alt+Enter",
     value: "ALT_ENTER",
   },
 ];

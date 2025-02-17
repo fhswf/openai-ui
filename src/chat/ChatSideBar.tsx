@@ -21,6 +21,7 @@ import {
 } from "../components/ui/dialog"
 import { Avatar, Button, Heading, IconButton, Link, Stack, Text } from "@chakra-ui/react"
 import { IoHelpCircleOutline } from "react-icons/io5";
+import { IoInformationCircleOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoApps } from "react-icons/io5";
 import { RiChatHistoryLine } from "react-icons/ri";
@@ -43,7 +44,7 @@ import 'katex/dist/katex.min.css'
 
 
 const ICONS = {
-  "help": IoHelpCircleOutline,
+  "help": IoInformationCircleOutline,
   "apps": IoApps,
   "history": RiChatHistoryLine,
   "config": IoSettingsOutline,

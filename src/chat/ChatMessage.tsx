@@ -28,14 +28,15 @@ import avatar from '../assets/images/OpenAI-black-monoblossom.svg'
 import styles from './style/message.module.less'
 import { classnames } from '../components/utils'
 import { useTranslation } from "react-i18next";
-import CodeEditor from '@uiw/react-textarea-code-editor';
+import { MessageBar } from './MessageBar';
+
 
 export function MessageHeader() {
   const { is, setIs, clearThread, reloadThread, downloadThread, showSettings, options } = useGlobal()
   const { message } = useMessage()
   const messages = message?.messages;
   const columnIcon = is.sidebar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />
-  const { setGeneral } = useOptions()
+
   const { t } = useTranslation();
   const issueUrl = import.meta.env.VITE_ISSUE_URL || 'https://github.com/fhswf/openai-ui/issues/new?template=Blank+issue'
 
@@ -60,12 +61,6 @@ export function MessageHeader() {
   )
 }
 
-export function EditorMessage() {
-  return (
-    <div>
-      <Textarea rows="3" />
-    </div>)
-}
 
 export function MessageItem(props) {
   const { content, sentTime, role, id, dataTestId } = props
@@ -102,43 +97,6 @@ export function MessageItem(props) {
   )
 }
 
-export function MessageBar() {
-  const { sendMessage, setMessage, is, options, setIs, typeingMessage, clearTypeing, stopResonse } = useGlobal()
-  const { t } = useTranslation();
-  useSendKey(sendMessage, options.general.sendCommand)
-  return (
-    <div className={styles.bar}>
-      {is.thinking && <div className={styles.bar_tool}>
-        <div className={styles.bar_loading}>
-          <div className="flex-c"><span>Thinking</span> <Loading /></div><Button size="min" className={styles.stop} onClick={stopResonse} icon="stop">Stop Resonse</Button>
-        </div>
-      </div>}
-      <div className={styles.bar_inner}>
-        <div className={styles.bar_type}>
-          {
-            options.general.codeEditor ?
-              <CodeEditor language='Python' minHeight={256} onChange={(ev) => setMessage(ev.target.value)} /> :
-              <Textarea data-testid="ChatTextArea" rows={3} value={typeingMessage?.content || ''}
-                onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
-                variant="outline" minHeight="3lh" maxHeight="16lh"
-                style={{ borderColor: 'lightgray', outlineColor: 'lightgray' }}
-                placeholder={t("Enter something....")} onChange={(ev) => setMessage(ev.target.value)} />
-          }
-        </div>
-        <div className={styles.bar_icon}>
-          {typeingMessage?.content &&
-            <IconButton minWidth="24px" title={t("cancel")} variant="plain" onClick={clearTypeing}>
-              <MdOutlineCancel />
-            </IconButton>
-          }
-          <IconButton minWidth="24px" padding={0} title={t("send")} variant="plain" onClick={sendMessage} data-testid="SendMessageBtn">
-            <RiSendPlane2Line width="16px" />
-          </IconButton>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 
 export function MessageContainer() {
@@ -153,7 +111,7 @@ export function MessageContainer() {
             {messages
               .filter(message => message.role !== "system")
               .map((item, index) => <MessageItem key={item.id} {...item} dataTestId="ChatMessage" />)}
-            {message?.error && <Error />}
+            {/* message?.error && <Error /> */}
           </div> : <ChatHelp />
         }
       </React.Fragment>
@@ -170,7 +128,6 @@ export function ChatMessage() {
     <div className={styles.message}>
       <ScrollView data-testid="ChatList">
         <MessageContainer />
-        {is.thinking && <Loading />}
       </ScrollView>
       <MessageBar />
     </div>

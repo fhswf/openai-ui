@@ -81,14 +81,14 @@ export default function Chat() {
    * @returns {boolean} true if the user is allowed to access the chat 
    */
   function checkUser() {
-
+    if (!user) return false
     if (
       // User is a faculty member of fh-swf.de
-      user?.affiliations['fh-swf.de'].indexOf('faculty') > -1 ||
+      user?.affiliations['fh-swf.de']?.indexOf('faculty') > -1 ||
       // User is a student at fb-in.fh-swf.de
-      user?.affiliations['fb-in.fh-swf.de'].indexOf('student') > -1 ||
+      user?.affiliations['fb-in.fh-swf.de']?.indexOf('student') > -1 ||
       // User is a staff member of fb-in.fh-swf.de
-      user?.affiliations['fb-in.fh-swf.de'].indexOf('staff') > -1 ||
+      user?.affiliations['fb-in.fh-swf.de']?.indexOf('staff') > -1 ||
       // User is an employee of the department 8
       allowedEmails.includes(user?.email)
     )

@@ -159,6 +159,12 @@ i18n
                     "An error occurred": "Ein Fehler ist aufgetreten",
                     "Try again": "Erneut versuchen",
                     "Reset settings": "Einstellungen zurücksetzen",
+
+                    "COMMAND_ENTER": "Strg + Enter",
+                    "ALT_ENTER": "Alt + Enter",
+                    "ENTER": "Enter",
+                    "Code Editor": "Code-Editor",
+                    "Please enter Python code.": "Bitte geben Sie Python-Code ein.",
                 },
             },
         },
