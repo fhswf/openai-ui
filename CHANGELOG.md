@@ -1,3 +1,10 @@
+## [0.13.3](https://github.com/fhswf/openai-ui/compare/v0.13.2...v0.13.3) (2025-02-18)
+
+
+### Bug Fixes
+
+* chat initialization & ui improvents ([7b173a0](https://github.com/fhswf/openai-ui/commit/7b173a080ac448471120744444dd41e43bddbb3f))
+
 ## [0.13.2](https://github.com/fhswf/openai-ui/compare/v0.13.1...v0.13.2) (2025-02-18)
 
 
