@@ -61,7 +61,7 @@ export function MessageHeader() {
       </IconButton>
       <Stack flexGrow={1} gap="1px">
         <Text data-testid="HeaderTitle" textStyle="lg">{message?.title}</Text>
-        <Text textStyle="xs">{t('count_messages', { count: messages?.length })}</Text>
+        <Text textStyle="xs">{t('count_messages', { count: messages?.filter(item => item.role !== "system").length })}</Text>
       </Stack>
 
       <div className={styles.header_bar}>
