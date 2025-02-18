@@ -11,6 +11,7 @@ export const initState: GlobalState = {
       id: 1,
       ct: Date.now(),
       thread: "",
+      botStarts: false,
       messages: [
         {
           content: t("system_welcome"),
@@ -28,13 +29,15 @@ export const initState: GlobalState = {
     account: {
       name: "Anonymus",
       avatar: "",
+      terms: false,
     },
     general: {
       language: "de",
       theme: "light",
       sendCommand: "ENTER",
       size: "normal",
-      codeEditor: false
+      codeEditor: false,
+      gravatar: false,
     },
     openai: {
       baseUrl: "https://openai.ki.fh-swf.de/api/v1/chat/completions",

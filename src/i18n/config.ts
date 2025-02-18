@@ -165,6 +165,12 @@ i18n
                     "ENTER": "Enter",
                     "Code Editor": "Code-Editor",
                     "Please enter Python code.": "Bitte geben Sie Python-Code ein.",
+
+                    "Apps": "Apps",
+                    "History": "Chat-Verlauf",
+                    "Config": "Einstellungen",
+                    "Minimize": "Minimieren",
+                    "Maximize": "Maximieren",
                 },
             },
         },

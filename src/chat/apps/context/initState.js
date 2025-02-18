@@ -1,3 +1,6 @@
+import i18n from "../../../i18n/config";
+const { t } = i18n;
+
 export const initApps = {
   category: [
     {
@@ -15,11 +18,10 @@ export const initApps = {
   apps: [
     {
       category: 1,
-      title: "K!mpuls, der FH Chatbot",
+      title: t("chatbot_title"),
       desc: "",
-      content:
-        "Du bist ein freundlicher und hilfsbereiter Mensch, der gerne mit anderen Menschen zusammenarbeitet und ihnen hilft",
-      role: "system",
+      content: t("system_welcome"),
+      role: "assistant",
       id: 1,
     },
     {

@@ -2,9 +2,9 @@
 export enum GlobalActionType {
     SET_STATE = "SET_STATE",
     CHANGE_MESSAGE = "CHANGE_MESSAGE",
-    IS_CONFIG = "IS_CONFIG"
+    IS_CONFIG = "IS_CONFIG",
+    START_CHAT = "START_CHAT",
 }
-;
 
 export enum OptionActionType {
     GENERAL = "general",
@@ -73,7 +73,8 @@ export type GlobalState = {
 
 export type GlobalAction = { type: GlobalActionType.SET_STATE; payload: Partial<GlobalState>; } |
 { type: GlobalActionType.CHANGE_MESSAGE; payload: Partial<GlobalState>; } |
-{ type: GlobalActionType.IS_CONFIG; payload: Partial<GlobalState>; };
+{ type: GlobalActionType.IS_CONFIG; payload: Partial<GlobalState>; } |
+{ type: GlobalActionType.START_CHAT; payload: Partial<GlobalState>; };
 
 export type OptionAction = { type: OptionActionType.GENERAL; data: Partial<GeneralOptions>; } |
 { type: OptionActionType.ACCOUNT; data: Partial<AccountOptions>; } |
@@ -120,6 +121,7 @@ export type Chat = {
     ct: number;
     messages: Messages;
     error?: any;
+    botStarts?: boolean;
 };
 
 export type App = {

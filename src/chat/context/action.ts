@@ -16,6 +16,13 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       type: GlobalActionType.SET_STATE,
       payload: { ...payload },
     });
+
+  const startChat = (chat: Chat[], currentChat: number) =>
+    dispatch({
+      type: GlobalActionType.START_CHAT,
+      payload: { chat, currentChat },
+    });
+
   return {
     setState,
     doLogin(): void {
@@ -76,27 +83,29 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       });
     },
 
-    async newChat(app) {
+    newChat(app) {
       const { currentApp, is, options, currentChat, chat } = state;
       const newApp = app || currentApp;
-      let messages: Messages = [{ content: newApp?.content || t("system_welcome"), sentTime: Math.floor(Date.now() / 1000), role: "assistant", id: Date.now(), }]
-      console.log("newChat: ", newApp, chat)
+      let messages: Messages = [{ content: newApp?.content || t("system_welcome"), sentTime: Math.floor(Date.now() / 1000), role: newApp.role, id: Date.now(), }]
+      console.log("newChat: ", newApp, chat, newApp.title)
       const chatList = [
         {
           title: newApp?.title || t("new_conversation"),
           id: Date.now(),
           messages,
           ct: Date.now(),
-          //icon: [2, "files"],
+          botStart: newApp.botStarts,
         },
         ...chat,
       ];
       let _chat: Chat[] = chatList;
-      setState({ chat: _chat, currentChat: 0 });
-      console.log("newChat: ", _chat)
       if (newApp.botStarts) {
         console.log("botStarts");
-        await executeChatRequest(setState, is, _chat, messages, options, 0, chat);
+        executeChatRequest(setState, is, _chat, messages, options, 0, _chat);
+      }
+      else {
+        console.log("no botStarts");
+        startChat(_chat, 0)
       }
     },
 
@@ -473,7 +482,7 @@ async function executeAssistantRequest(setState, is, newChat: Chat[], messages: 
 }
 
 
-async function executeChatRequest(setState, is, newChat, messages: Messages, options: Options, currentChat, chat) {
+export async function executeChatRequest(setState, is, newChat, messages: Messages, options: Options, currentChat, chat) {
   setState({
     is: { ...is, thinking: true },
     typeingMessage: {},

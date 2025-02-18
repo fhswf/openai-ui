@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Icon, Panel } from '../components'
 import { Tooltip } from "../components/ui/tooltip"
-import {
-  PopoverArrow,
-  PopoverBody,
-  PopoverContent,
-  PopoverRoot,
-  PopoverTitle,
-  PopoverTrigger,
-} from "../components/ui/popover"
+
 import {
   DialogBody,
   DialogCloseTrigger,
@@ -124,7 +117,7 @@ export function ChatSideBar() {
 
   const [open, setOpen] = useState(false)
   const [metadata, setMetadata] = useState({})
-  const { is, setState, options, user } = useGlobal()
+  const { is, setIs, setState, options, user } = useGlobal()
   const { setGeneral, setAccount } = useOptions()
 
 
@@ -133,9 +126,26 @@ export function ChatSideBar() {
     setOpen(false)
   }
 
-  const logout = () => {
-    console.log('Logout')
-    window.location.href = import.meta.env.VITE_LOGOUT_URL || '/'
+
+
+  const toggleHistory = () => {
+    if (!is.apps) {
+      setIs({ sidebar: !is.sidebar })
+
+    }
+    else {
+      setIs({ apps: false, sidebar: true })
+    }
+  }
+
+  const toggleApps = () => {
+    if (is.apps) {
+      setIs({ sidebar: !is.sidebar })
+
+    }
+    else {
+      setIs({ apps: true, sidebar: true })
+    }
   }
 
   useEffect(() => {
@@ -150,26 +160,6 @@ export function ChatSideBar() {
   return (
     <aside role="toolbar" className={classnames(styles.sider, 'flex-c-sb flex-column')} data-testid="LeftSideBar">
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')}>
-        <PopoverRoot>
-          <PopoverTrigger data-testid="UserInformationBtn">
-            <Avatar.Root>
-              <Avatar.Fallback name={user?.name} />
-              <Avatar.Image src={user?.avatar} />
-            </Avatar.Root>
-          </PopoverTrigger>
-          <PopoverContent data-testid="UserInformation">
-            <PopoverArrow />
-            <PopoverBody>
-              <PopoverTitle fontWeight="bold" paddingBlockEnd={"15px"}>{t('User information')}</PopoverTitle>
-              <Stack spacing={2}>
-                <Text>{user?.name}</Text>
-                <Text>{user?.email}</Text>
-                <Button type="primary" onClick={logout}>Logout</Button>
-              </Stack>
-            </PopoverBody>
-          </PopoverContent>
-        </PopoverRoot>
-
         <DialogRoot open={!options.account.terms || open} onOpenChange={(e) => setOpen(e.open)} size="lg">
           <DialogTrigger asChild>
 
@@ -204,16 +194,18 @@ export function ChatSideBar() {
 
       </div>
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
-        <Option type="apps" onClick={() => setState({ is: { ...is, apps: true } })} dataTestId="btn_apps" tooltip="Apps" />
-        <Option type="history" onClick={() => setState({ is: { ...is, apps: false } })} dataTestId="btn_history" tooltip="History" />
+        <Option type="apps" onClick={toggleApps} dataTestId="btn_apps" tooltip={t("Apps")} />
+        <Option type="history" onClick={toggleHistory} dataTestId="btn_history" tooltip={t("History")} />
         <Option type={options.general.theme}
           onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
-          tooltip="Theme"
+          tooltip={t("Theme")}
           dataTestId="OptionDarkModeSelect" />
-        <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip="Config" />
+        <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip={t("Config")} />
         <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
-          tooltip={`${is.fullScreen ? 'Minimize' : 'Maximize'}`} />
+          tooltip={`${is.fullScreen ? t('Minimize') : t('Maximize')}`} />
       </div>
     </aside>
   )
+
+
 }
