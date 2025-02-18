@@ -139,7 +139,7 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
           is?.config ?
             <Config />
             :
-            <div className={styles.main}>
+            <main className={styles.main}>
               <MessageHeader />
               <ErrorBoundary fallbackRender={ErrorFallback}>
                 <div className={styles.chat_content}>
@@ -156,7 +156,7 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
                   <ChatMessage />
                 </div>
               </ErrorBoundary>
-            </div>
+            </main>
         }
       </div>
     </div>

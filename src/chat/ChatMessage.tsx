@@ -41,7 +41,7 @@ export function MessageHeader() {
   const issueUrl = import.meta.env.VITE_ISSUE_URL || 'https://github.com/fhswf/openai-ui/issues/new?template=Blank+issue'
 
   return (
-    <div className={classnames(styles.header)}>
+    <header className={classnames(styles.header)}>
       <IconButton variant="ghost" onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn">
         {columnIcon}
       </IconButton>
@@ -57,7 +57,7 @@ export function MessageHeader() {
         <IconButton variant="ghost" title={t("download_thread")} onClick={downloadThread}><MdOutlineSimCardDownload /></IconButton>
         <a href={issueUrl} target="_blank" title={t("open_issue")}><IconButton variant="ghost" aria-label={t("open_issue")}><IoLogoGithub /></IconButton></a>
       </div>
-    </div >
+    </header>
   )
 }
 

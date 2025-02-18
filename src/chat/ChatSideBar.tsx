@@ -148,7 +148,7 @@ export function ChatSideBar() {
   }, []);
 
   return (
-    <div className={classnames(styles.sider, 'flex-c-sb flex-column')} data-testid="LeftSideBar">
+    <aside role="toolbar" className={classnames(styles.sider, 'flex-c-sb flex-column')} data-testid="LeftSideBar">
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')}>
         <PopoverRoot>
           <PopoverTrigger data-testid="UserInformationBtn">
@@ -214,6 +214,6 @@ export function ChatSideBar() {
         <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
           tooltip={`${is.fullScreen ? 'Minimize' : 'Maximize'}`} />
       </div>
-    </div >
+    </aside>
   )
 }
