@@ -1,3 +1,10 @@
+## [0.13.2](https://github.com/fhswf/openai-ui/compare/v0.13.1...v0.13.2) (2025-02-18)
+
+
+### Bug Fixes
+
+* **ui:** a11y issues ([beca43e](https://github.com/fhswf/openai-ui/commit/beca43e40b65aa7f2cc67710bc06b3198185e72d))
+
 ## [0.13.1](https://github.com/fhswf/openai-ui/compare/v0.13.0...v0.13.1) (2025-02-17)
 
 
