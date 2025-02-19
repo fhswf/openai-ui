@@ -56,10 +56,8 @@ export function MessageHeader() {
 
   return (
     <HStack as="header" spacing={2} padding={2} borderBottomWidth="1px" justifyContent="space-between" data-testid="ChatHeader">
-      <IconButton variant="ghost" onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn">
-        {columnIcon}
-      </IconButton>
-      <Stack flexGrow={1} gap="1px">
+
+      <Stack flexGrow={1} gap="1px" paddingInlineStart={2}>
         <Text data-testid="HeaderTitle" textStyle="lg">{message?.title}</Text>
         <Text textStyle="xs">{t('count_messages', { count: messages?.filter(item => item.role !== "system").length })}</Text>
       </Stack>

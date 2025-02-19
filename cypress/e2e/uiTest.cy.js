@@ -36,14 +36,14 @@ describe("User Interface", () => {
   it("Hide and show the conversation sidebar", () => {
 
     cy.getDataTestId("ConversationSideBar").should("not.exist");
-    cy.getDataTestId("ConversationSideBarBtn").click();
+    cy.getDataTestId("btn_apps").click();
     cy.getDataTestId("ConversationSideBar").should("exist");
-    cy.getDataTestId("ConversationSideBarBtn").click();
+    cy.getDataTestId("btn_apps").click();
     cy.getDataTestId("ConversationSideBar").should("not.exist");
   });
 
   it("Switching between Apps and History", () => {
-    cy.getDataTestId("ConversationSideBarBtn").click();
+    cy.getDataTestId("btn_apps").click();
     cy.getDataTestId("ConversationSideBar").should("exist");
     cy.getDataTestId("AppsList").should("exist", "be.visible");
     cy.getDataTestId("ConversationList").should("not.exist");
@@ -55,6 +55,7 @@ describe("User Interface", () => {
     cy.getDataTestId("AppsList").should("exist", "be.visible");
   });
 
+  /*
   it("Conversation search bar input works", () => {
     cy.getDataTestId("ConversationSideBarBtn").click();
     cy.getDataTestId("ConversationSideBar").should("exist");
@@ -62,10 +63,9 @@ describe("User Interface", () => {
       cy.wrap($input).type("search input works").should("have.value", "search input works");
     });
   });
+  */
 
   it("Create and edit new conversation", () => {
-    cy.getDataTestId("ConversationSideBarBtn").click();
-    cy.getDataTestId("ConversationSideBar").should("exist");
     cy.getDataTestId("btn_history").click();
     cy.getDataTestId("ConversationCreateBtn").click();
     cy.getDataTestId("ConversationList").within(() => {

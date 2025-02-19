@@ -20,12 +20,6 @@ export function ListEmpty() {
 }
 
 
-
-export function CreateNew() {
-  const { newChat } = useGlobal()
-  return <div className={styles.new} onClick={newChat} data-testid="ConversationCreateBtn"><Icon type="add" />{t("New Conversation")}</div>
-}
-
 export function ColorIcon({ onChange }) {
   const [color, setColor] = useState(1);
   const [ico, setIco] = useState("files");
@@ -141,7 +135,11 @@ export function ChatList() {
   return (
     <Flex gap="4" direction="column" data-testid="ConversationList">
       {chat.length ? chat.map((item, index) => <ChatItem key={index} index={index} {...item} />) : <ListEmpty />}
-      <Button alignSelf="center" onClick={newChat} variant="surface" data-testid="ConversationCreateBtn"><IoAdd />{t("New Conversation")}</Button>
+      <Button alignSelf="center"
+        type="primary"
+        onClick={newChat}
+        variant="surface"
+        data-testid="ConversationCreateBtn"><IoAdd />{t("New Conversation")}</Button>
     </Flex>
   )
 }

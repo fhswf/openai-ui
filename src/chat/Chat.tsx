@@ -20,11 +20,11 @@ import remarkMath from 'remark-math'
 import smartypants from 'remark-smartypants'
 import rehypeKatex from 'rehype-katex'
 import { func } from 'prop-types';
-import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 function ErrorFallback({ error, resetErrorBoundary }) {
   console.log("error: %o %s", error.stack, typeof error.stack)
-
+  const { t } = useTranslation();
   const resetSettings = () => {
     console.log("resetSettings")
     localStorage.setItem("SESSIONS", "");
@@ -53,6 +53,7 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 
 export default function Chat() {
   const { is, user } = useGlobal()
+  const { t } = useTranslation();
   const chatStyle = is?.fullScreen ? styles.full : styles.normal
   const onSearch = (e) => {
     console.log(e)
@@ -148,9 +149,6 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
                 <div className={styles.chat_content}>
                   {
                     is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
-                      <div className={styles.search}>
-                        <Search onSearch={onSearch} dataTestId="ConversationSearchBar" />
-                      </div>
                       <ScrollView>
                         {is?.apps ? <Apps /> : <ChatList />}
                       </ScrollView>

@@ -83,7 +83,7 @@ export function ChatOptions() {
 
   return (
     <Card.Root w="100%">
-      <Card.Header data-testid="SettingsHeader">
+      <Card.Header paddingBlockEnd={2} data-testid="SettingsHeader">
         <Card.Title>{t("chat_settings")}</Card.Title>
       </Card.Header >
       <Card.Body overflowY={"auto"}>
@@ -267,7 +267,7 @@ export function ChatOptions() {
         </Stack>
       </Card.Body>
 
-      <Card.Footer>
+      <Card.Footer paddingBlockStart={2}>
         <Button variant="outline" colorPalette="red" onClick={() => setState(initState)} data-testid="SettingsRefreshBtn">{t("Reset")}</Button>
         <Button type="primary" onClick={() => setIs({ config: !is.config })} data-testid="SettingsCloseBtn">{t("Close")}</Button>
       </Card.Footer>

@@ -159,16 +159,28 @@ export function ChatSideBar() {
 
   return (
     <aside role="toolbar" className={classnames(styles.sider, 'flex-c-sb flex-column')} data-testid="LeftSideBar">
-      <div className={classnames(styles.tool, 'flex-c-sb flex-column')}>
-        <DialogRoot open={!options.account.terms || open} onOpenChange={(e) => setOpen(e.open)} size="lg">
-          <DialogTrigger asChild>
 
+      <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
+        <Option type="apps" onClick={toggleApps} dataTestId="btn_apps" tooltip={t("Apps")} />
+        <Option type="history" onClick={toggleHistory} dataTestId="btn_history" tooltip={t("History")} />
+        <Option type={options.general.theme}
+          onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
+          tooltip={t("Theme")}
+          dataTestId="OptionDarkModeSelect" />
+        <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip={t("Config")} />
+        <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
+          tooltip={`${is.fullScreen ? t('Minimize') : t('Maximize')}`} />
+      </div>
+
+      <div className={classnames(styles.tool, 'flex-c-sb flex-column')}>
+        <DialogRoot open={!options.account.terms || open}
+          onOpenChange={(e) => setOpen(e.open)} size="lg">
+          <DialogTrigger asChild>
             <IconButton aria-label={t("about")} variant="ghost" data-testid="aboutBtn">
               <Tooltip content={t("about")}>
                 {ICONS["help"]()}
               </Tooltip>
             </IconButton>
-
           </DialogTrigger>
           <DialogContent data-testid="InformationWindow">
             <DialogHeader>
@@ -192,17 +204,6 @@ export function ChatSideBar() {
           </DialogContent>
         </DialogRoot>
 
-      </div>
-      <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
-        <Option type="apps" onClick={toggleApps} dataTestId="btn_apps" tooltip={t("Apps")} />
-        <Option type="history" onClick={toggleHistory} dataTestId="btn_history" tooltip={t("History")} />
-        <Option type={options.general.theme}
-          onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
-          tooltip={t("Theme")}
-          dataTestId="OptionDarkModeSelect" />
-        <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip={t("Config")} />
-        <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
-          tooltip={`${is.fullScreen ? t('Minimize') : t('Maximize')}`} />
       </div>
     </aside>
   )

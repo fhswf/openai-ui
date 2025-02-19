@@ -72,7 +72,8 @@ i18n
             de: {
                 translation: {
                     hello_world: "Hallo, Welt!",
-                    chatbot_title: "K!mpuls, der datenschutzfreundliche Chatbot der FH Südwestfalen",
+                    chatbot_title: "K!mpuls",
+                    chatbot_description: "K!mpuls ist der datenschutzfreundliche Zugang der Fachhochschule Südwestfalen zu den Sprachmodellen von OpenAI.",
                     system_welcome: "Hallo, ich bin K!mpuls, Dein FH-Chatbot. Wie kann ich Dir helfen?",
                     "copy": "Kopieren",
                     "Enter something....": "Geben Sie etwas ein …",

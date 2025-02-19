@@ -19,7 +19,7 @@ export const initApps = {
     {
       category: 1,
       title: t("chatbot_title"),
-      desc: "",
+      desc: t("chatbot_description"),
       content: t("system_welcome"),
       role: "assistant",
       id: 1,

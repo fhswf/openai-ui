@@ -1,23 +1,34 @@
 import React from 'react'
+import { Button, Card, Heading } from '@chakra-ui/react'
 import { AppsProvider, useApps } from './context'
 import { useGlobal } from '../context'
 import { classnames } from '../../components/utils'
 import styles from './apps.module.less'
+import { useTranslation } from 'react-i18next'
+
 
 export function AppItem(props) {
+  const { t } = useTranslation();
   const { setCurrent, apps, dispatch } = useApps()
-  const { setApp, newChat } = useGlobal()
+  const { setApp, newChat, currentApp } = useGlobal()
 
   const { category } = props;
   const app = apps.filter(item => item.category === category)[0]
+  console.log("AppItem: %o %o", currentApp, props)
   return (
-    <div className={styles.app} onClick={() => { setApp(app); newChat(app) }}>
-      {/* <div className={classnames(styles.app_icon, `ico-prompts`)}></div> */}
-      <div className={styles.app_content}>
-        <div className={styles.app_title}>{props.title}</div>
-        <div className={styles.app_desc}>{props.desc}</div>
-      </div>
-    </div>
+    <Card.Root variant={currentApp?.id === props?.id ? "elevated" : "subtle"}>
+      <Card.Header>
+        <Card.Title>{props.title}</Card.Title>
+      </Card.Header>
+      <Card.Body>
+        <Card.Description hyphens="auto">{props.desc}</Card.Description>
+      </Card.Body>
+      <Card.Footer flexDirection={"column"} alignItems={"flex-end"}>
+        <Button
+          type="primary"
+          onClick={() => { setApp(app); newChat(app) }}>{t("Start Chat")}</Button>
+      </Card.Footer>
+    </Card.Root>
   )
 }
 
@@ -32,17 +43,17 @@ export function Empty() {
 
 export function Category(props) {
   const { setState, apps, current, category } = useApps()
-  const list = apps.filter(item => item.category === category[current].id)
+  const list = apps.filter(item => item.category === category[props.index].id)
   return (
     <div>
-      <div className={classnames(styles.category, current === props.index && styles.current)} onClick={() => setState({ current: props.index })}>
-        <div className={classnames(styles.icon, `ico-${props.icon}`)}></div>
-        <div className={styles.category_title}>{props?.title}</div>
-      </div>
+      <Heading paddingInlineStart={2} paddingBlockStart={4} paddingBlockEnd={2} as="h2" >
+        <span className={classnames(styles.icon, `ico-${props.icon}`)}></span>
+        {props?.title}
+      </Heading>
       <div>
-        {props.index === current && (list.length === 0 ? <Empty /> : list.map((item, index) => <AppItem {...item} key={index} />))}
+        {list.map((item, index) => <AppItem {...item} key={index} />)}
       </div>
-    </div>
+    </div >
   )
 }
 
@@ -50,7 +61,9 @@ export function AppContainer() {
   const { category, dispatch } = useApps()
   return (
     <div className={styles.apps} data-testid="AppsList">
-      {category.map((item, index) => <Category index={index} {...item} key={item.id} />)}
+      {
+        category.map((item, index) => <Category index={index} {...item} key={item.id} />)
+      }
     </div>
   )
 }
