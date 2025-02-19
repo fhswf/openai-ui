@@ -73,7 +73,8 @@ export default function Chat() {
     'lueck.veith@fh-swf.de',
     'menk.eva@fh-swf.de',
     'reinecke.sandra@fh-swf.de',
-    'kurowski.bernd@fh-swf.de'
+    'kurowski.bernd@fh-swf.de',
+    'schoebel.denis@fh-swf.de'
   ];
 
   /**
@@ -133,14 +134,16 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
   }
   return (
     <div className={classnames(styles.chat, chatStyle)}>
+      <MessageHeader />
       <div className={styles.chat_inner}>
+
         <ChatSideBar />
         {
           is?.config ?
             <Config />
             :
             <main className={styles.main}>
-              <MessageHeader />
+
               <ErrorBoundary fallbackRender={ErrorFallback}>
                 <div className={styles.chat_content}>
                   {

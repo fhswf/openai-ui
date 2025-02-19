@@ -21,7 +21,8 @@ export function MessageBar() {
     return (
         <div className={styles.bar}>
 
-            <Stack width="100%"
+            <Stack className={styles.bar_inner}
+                width="100%"
                 borderColor={is.inputing ? 'blue.500' : 'gray.200'}
                 borderWidth={1}
                 borderStyle='solid'

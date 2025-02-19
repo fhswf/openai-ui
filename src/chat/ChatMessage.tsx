@@ -1,5 +1,5 @@
 import React from 'react'
-import { Avatar, Button, Icon, IconButton, Stack, Text } from "@chakra-ui/react";
+import { Avatar, Button, Icon, IconButton, Stack, HStack, Text } from "@chakra-ui/react";
 import {
   PopoverArrow,
   PopoverBody,
@@ -55,7 +55,7 @@ export function MessageHeader() {
 
 
   return (
-    <header className={classnames(styles.header)}>
+    <HStack as="header" spacing={2} padding={2} borderBottomWidth="1px" justifyContent="space-between" data-testid="ChatHeader">
       <IconButton variant="ghost" onClick={() => setIs({ sidebar: !is.sidebar })} data-testid="ConversationSideBarBtn">
         {columnIcon}
       </IconButton>
@@ -64,33 +64,33 @@ export function MessageHeader() {
         <Text textStyle="xs">{t('count_messages', { count: messages?.filter(item => item.role !== "system").length })}</Text>
       </Stack>
 
-      <div className={styles.header_bar}>
-        {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
-        {false && <IconButton variant="ghost" title={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>}
-        <IconButton variant="ghost" title={t("clear_thread")} onClick={clearThread} data-testid="ClearChatBtn"><AiOutlineClear /></IconButton>
-        <IconButton variant="ghost" title={t("download_thread")} onClick={downloadThread}><MdOutlineSimCardDownload /></IconButton>
-        <a href={issueUrl} target="_blank" title={t("open_issue")}><IconButton variant="ghost" aria-label={t("open_issue")}><IoLogoGithub /></IconButton></a>
-        <PopoverRoot>
-          <PopoverTrigger data-testid="UserInformationBtn">
-            <Avatar.Root size="sm">
-              <Avatar.Fallback name={user?.name} />
-              <Avatar.Image src={user?.avatar} />
-            </Avatar.Root>
-          </PopoverTrigger>
-          <PopoverContent data-testid="UserInformation">
-            <PopoverArrow />
-            <PopoverBody>
-              <PopoverTitle fontWeight="bold" paddingBlockEnd={"15px"}>{t('User information')}</PopoverTitle>
-              <Stack spacing={2}>
-                <Text>{user?.name}</Text>
-                <Text>{user?.email}</Text>
-                <Button type="primary" onClick={logout}>Logout</Button>
-              </Stack>
-            </PopoverBody>
-          </PopoverContent>
-        </PopoverRoot>
-      </div>
-    </header>
+
+      {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
+      {false && <IconButton variant="ghost" title={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>}
+      <IconButton variant="ghost" title={t("clear_thread")} onClick={clearThread} data-testid="ClearChatBtn"><AiOutlineClear /></IconButton>
+      <IconButton variant="ghost" title={t("download_thread")} onClick={downloadThread}><MdOutlineSimCardDownload /></IconButton>
+      <a href={issueUrl} target="_blank" title={t("open_issue")}><IconButton variant="ghost" aria-label={t("open_issue")}><IoLogoGithub /></IconButton></a>
+      <PopoverRoot>
+        <PopoverTrigger data-testid="UserInformationBtn">
+          <Avatar.Root size="sm">
+            <Avatar.Fallback name={user?.name} />
+            <Avatar.Image src={user?.avatar} />
+          </Avatar.Root>
+        </PopoverTrigger>
+        <PopoverContent data-testid="UserInformation">
+          <PopoverArrow />
+          <PopoverBody>
+            <PopoverTitle fontWeight="bold" paddingBlockEnd={"15px"}>{t('User information')}</PopoverTitle>
+            <Stack spacing={2}>
+              <Text>{user?.name}</Text>
+              <Text>{user?.email}</Text>
+              <Button type="primary" onClick={logout}>Logout</Button>
+            </Stack>
+          </PopoverBody>
+        </PopoverContent>
+      </PopoverRoot>
+
+    </HStack>
   )
 }
 
