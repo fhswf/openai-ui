@@ -15,7 +15,8 @@ export const initState: GlobalState = {
       messages: [
         {
           content: t("system_welcome"),
-          sentTime: Date.now(),
+          // use only seconds here
+          sentTime: Math.floor(Date.now() / 1000),
           role: "assistant",
           id: Date.now(),
         },
