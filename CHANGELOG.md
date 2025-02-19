@@ -1,3 +1,10 @@
+## [0.13.7](https://github.com/fhswf/openai-ui/compare/v0.13.6...v0.13.7) (2025-02-19)
+
+
+### Bug Fixes
+
+* correct access list ([1cc3a80](https://github.com/fhswf/openai-ui/commit/1cc3a80f4ae3c0b839b4eb27e58a7f1ed1d631a1))
+
 ## [0.13.6](https://github.com/fhswf/openai-ui/compare/v0.13.5...v0.13.6) (2025-02-19)
 
 
