@@ -1,3 +1,10 @@
+## [0.13.4](https://github.com/fhswf/openai-ui/compare/v0.13.3...v0.13.4) (2025-02-18)
+
+
+### Bug Fixes
+
+* **ui:** message count in header bar ([d7bdfea](https://github.com/fhswf/openai-ui/commit/d7bdfeafcf8bb0b1b4150bef555a1f7408ad9d92))
+
 ## [0.13.3](https://github.com/fhswf/openai-ui/compare/v0.13.2...v0.13.3) (2025-02-18)
 
 
