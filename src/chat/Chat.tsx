@@ -61,7 +61,7 @@ export default function Chat() {
 
 
   const allowedEmails = [
-    'neus.burkhard@fh - swf.de',
+    'neus.burkhard@fh-swf.de',
     'kuepluece.hatice@fh-swf.de',
     'wienke.annalisa@fh-swf.de',
     'andermahr.sabine@fh-swf.de',
