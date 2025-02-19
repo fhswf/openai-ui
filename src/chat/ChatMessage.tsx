@@ -36,6 +36,7 @@ import styles from './style/message.module.less'
 import { classnames } from '../components/utils'
 import { useTranslation } from "react-i18next";
 import { MessageBar } from './MessageBar';
+import { processLaTeX } from "./utils/latex";
 
 
 export function MessageHeader() {
@@ -124,7 +125,7 @@ export function MessageItem(props) {
             </div>
           </div>
           <MessageRender>
-            {content}
+            {processLaTeX(content)}
           </MessageRender>
         </div>
       </div>
