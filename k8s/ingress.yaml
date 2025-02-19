@@ -62,6 +62,15 @@ spec:
     certResolver: default
 ---
 apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirectscheme
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: openai.ki.fh-swf.de-http
@@ -72,6 +81,8 @@ spec:
   routes:
     - kind: Rule
       match: Host(`openai.ki.fh-swf.de`)
+      middlewares:
+        - name: redirectscheme
       priority: 10
       services:
         - kind: Service
