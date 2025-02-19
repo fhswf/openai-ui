@@ -1,3 +1,10 @@
+## [0.13.8](https://github.com/fhswf/openai-ui/compare/v0.13.7...v0.13.8) (2025-02-19)
+
+
+### Bug Fixes
+
+* redirect http to https ([042370c](https://github.com/fhswf/openai-ui/commit/042370c61b18ab711060a4d93bd39482df84b3ed))
+
 ## [0.13.7](https://github.com/fhswf/openai-ui/compare/v0.13.6...v0.13.7) (2025-02-19)
 
 
