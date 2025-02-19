@@ -1,3 +1,10 @@
+## [0.13.6](https://github.com/fhswf/openai-ui/compare/v0.13.5...v0.13.6) (2025-02-19)
+
+
+### Bug Fixes
+
+* timestamp of initial chatbot message ([86cefd6](https://github.com/fhswf/openai-ui/commit/86cefd64001391576778d533cf2da1d1548a26fc))
+
 ## [0.13.5](https://github.com/fhswf/openai-ui/compare/v0.13.4...v0.13.5) (2025-02-19)
 
 
