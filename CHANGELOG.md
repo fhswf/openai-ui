@@ -1,3 +1,10 @@
+## [0.13.10](https://github.com/fhswf/openai-ui/compare/v0.13.9...v0.13.10) (2025-02-19)
+
+
+### Bug Fixes
+
+* formula rendering ([940860b](https://github.com/fhswf/openai-ui/commit/940860b47f922de711bdfdbb2dc642b141df6ea1))
+
 ## [0.13.9](https://github.com/fhswf/openai-ui/compare/v0.13.8...v0.13.9) (2025-02-19)
 
 
