@@ -1,3 +1,10 @@
+## [0.13.14](https://github.com/fhswf/openai-ui/compare/v0.13.13...v0.13.14) (2025-02-20)
+
+
+### Bug Fixes
+
+* lazy rendering of markdown messages ([f16f50b](https://github.com/fhswf/openai-ui/commit/f16f50bfd174e5a04e5019bd29d7b85736901f69))
+
 ## [0.13.13](https://github.com/fhswf/openai-ui/compare/v0.13.12...v0.13.13) (2025-02-20)
 
 
