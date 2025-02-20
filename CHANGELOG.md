@@ -1,3 +1,10 @@
+## [0.13.12](https://github.com/fhswf/openai-ui/compare/v0.13.11...v0.13.12) (2025-02-20)
+
+
+### Bug Fixes
+
+* **ui:** improve responsiveness ([60c8e6d](https://github.com/fhswf/openai-ui/commit/60c8e6dc95584f48e99c86e5d628a58c70d61727))
+
 ## [0.13.11](https://github.com/fhswf/openai-ui/compare/v0.13.10...v0.13.11) (2025-02-20)
 
 
