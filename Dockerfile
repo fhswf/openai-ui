@@ -6,7 +6,7 @@ COPY package.json /app
 COPY package-lock.json /app
 COPY . /app
 
-RUN npm install
+RUN npm ci
 ENV NODE_ENV=production
 ENV VITE_API_URL=/api/v1/chat/completions
 ENV VITE_API_BASE_URL=https://openai.ki.fh-swf.de/api/v1
