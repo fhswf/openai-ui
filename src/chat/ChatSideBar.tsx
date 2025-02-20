@@ -56,7 +56,7 @@ const Option = (props) => {
     return null
   }
   return (
-    <Tooltip content={tooltip}><IconButton aria-label={tooltip} variant="ghost" onClick={onClick} {...testId} >{ICONS[type]()}</IconButton></Tooltip>
+    <Tooltip content={tooltip}><IconButton aria-label={tooltip} variant={props.variant || "ghost"} onClick={onClick} {...testId} >{ICONS[type]()}</IconButton></Tooltip>
   )
 }
 
@@ -165,8 +165,8 @@ export function ChatSideBar() {
       data-testid="LeftSideBar">
 
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
-        <Option type="apps" onClick={toggleApps} dataTestId="btn_apps" tooltip={t("Apps")} />
-        <Option type="history" onClick={toggleHistory} dataTestId="btn_history" tooltip={t("History")} />
+        <Option type="apps" variant={is.apps ? "outline" : "ghosted"} onClick={toggleApps} dataTestId="btn_apps" tooltip={t("Apps")} />
+        <Option type="history" variant={!is.apps ? "outline" : "ghosted"} onClick={toggleHistory} dataTestId="btn_history" tooltip={t("History")} />
         <Option type={options.general.theme}
           onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
           tooltip={t("Theme")}
