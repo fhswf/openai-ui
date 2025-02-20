@@ -1,3 +1,10 @@
+## [0.13.17](https://github.com/fhswf/openai-ui/compare/v0.13.16...v0.13.17) (2025-02-20)
+
+
+### Bug Fixes
+
+* **ui:** add hint whether app or history is active ([4ccb14e](https://github.com/fhswf/openai-ui/commit/4ccb14e8aca8b54a387df126ad55d8d27dede719))
+
 ## [0.13.16](https://github.com/fhswf/openai-ui/compare/v0.13.15...v0.13.16) (2025-02-20)
 
 
