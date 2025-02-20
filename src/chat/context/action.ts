@@ -86,8 +86,16 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     newChat(app) {
       const { currentApp, is, options, currentChat, chat } = state;
       const newApp = app || currentApp;
-      let messages: Messages = [{ content: newApp?.content || t("system_welcome"), sentTime: Math.floor(Date.now() / 1000), role: newApp.role, id: Date.now(), }]
-      console.log("newChat: ", newApp, chat, newApp.title)
+      console.log("newChat: ", currentApp, newApp, chat, newApp?.title, newApp?.role)
+      let messages: Messages = [
+        {
+          content: newApp?.content || t("system_welcome"),
+          sentTime: Math.floor(Date.now() / 1000),
+          role: newApp.role,
+          id: Date.now(),
+        }
+      ]
+
       const chatList = [
         {
           title: newApp?.title || t("new_conversation"),
@@ -123,6 +131,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         chat,
       });
     },
+
     removeChat(index) {
       const chat = [...state.chat];
       chat.splice(index, 1);
@@ -136,6 +145,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     },
 
     setMessage(content) {
+      console.log("setMessage: %o");
       const typeingMessage =
         content === ""
           ? {}

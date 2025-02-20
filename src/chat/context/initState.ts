@@ -1,4 +1,5 @@
 import { GlobalState } from "./types";
+import { initApps } from "../apps/context/initState";
 
 import i18n from "../../i18n/config";
 const { t } = i18n;
@@ -25,7 +26,7 @@ export const initState: GlobalState = {
 
   ],
   currentChat: 0,
-  currentApp: null,
+  currentApp: initApps.apps[0],
   options: {
     account: {
       name: "Anonymus",
