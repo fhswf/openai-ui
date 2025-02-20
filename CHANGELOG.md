@@ -1,3 +1,10 @@
+## [0.13.15](https://github.com/fhswf/openai-ui/compare/v0.13.14...v0.13.15) (2025-02-20)
+
+
+### Bug Fixes
+
+* scroll to end when a chat message is added ([f4a53d1](https://github.com/fhswf/openai-ui/commit/f4a53d12a20148bd0087a477039a2e29150bf449))
+
 ## [0.13.14](https://github.com/fhswf/openai-ui/compare/v0.13.13...v0.13.14) (2025-02-20)
 
 
