@@ -1,3 +1,10 @@
+## [0.13.11](https://github.com/fhswf/openai-ui/compare/v0.13.10...v0.13.11) (2025-02-20)
+
+
+### Bug Fixes
+
+* prevent layout shift ([45c8494](https://github.com/fhswf/openai-ui/commit/45c8494bbee7cf3b962e6ae225f2005648d9edec))
+
 ## [0.13.10](https://github.com/fhswf/openai-ui/compare/v0.13.9...v0.13.10) (2025-02-19)
 
 
