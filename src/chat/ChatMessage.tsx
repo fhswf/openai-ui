@@ -56,7 +56,10 @@ export function MessageHeader() {
 
 
   return (
-    <HStack as="header" spacing={2} padding={2} borderBottomWidth="1px" justifyContent="space-between" data-testid="ChatHeader">
+    <HStack as="header"
+      spacing={2} padding={2} borderBottomWidth="1px"
+      justifyContent="space-between"
+      data-testid="ChatHeader">
 
       <Stack flexGrow={1} gap="1px" paddingInlineStart={2}>
         <Text data-testid="HeaderTitle" textStyle="lg">{message?.title}</Text>
@@ -100,6 +103,8 @@ export function MessageItem(props) {
   const { t } = useTranslation();
   const avatar = options.general.theme === 'dark' ? avatar_white : avatar_black
 
+  console.log("content: %o", content)
+  let message = processLaTeX(content)
   return (
     <div className={classnames(styles.item, styles[role])} data-testid={dataTestId}>
       <Avatar.Root size="xs">
@@ -125,7 +130,7 @@ export function MessageItem(props) {
             </div>
           </div>
           <MessageRender>
-            {processLaTeX(content)}
+            {message}
           </MessageRender>
         </div>
       </div>
