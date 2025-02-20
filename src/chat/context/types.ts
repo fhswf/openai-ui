@@ -61,6 +61,7 @@ export type GlobalState = {
         config: boolean;
         fullScreen: boolean;
         sidebar: boolean;
+        toolbar: boolean;
         inputing: boolean;
         thinking: boolean;
         apps: boolean;

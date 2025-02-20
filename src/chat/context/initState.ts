@@ -59,6 +59,7 @@ export const initState: GlobalState = {
     config: false,
     fullScreen: true,
     sidebar: false,
+    toolbar: false,
     inputing: false,
     thinking: false,
     apps: true,

@@ -76,7 +76,7 @@ i18n
                     chatbot_description: "K!mpuls ist der datenschutzfreundliche Zugang der Fachhochschule Südwestfalen zu den Sprachmodellen von OpenAI.",
                     system_welcome: "Hallo, ich bin K!mpuls, Dein FH-Chatbot. Wie kann ich Dir helfen?",
                     "copy": "Kopieren",
-                    "Enter something....": "Geben Sie etwas ein …",
+                    "Enter something....": "Gib Deine Frage ein …",
                     "Remove Messages": "Nachrichten entfernen",
                     "Remove Message": "Nachricht entfernen",
                     "Search...": "Suche …",

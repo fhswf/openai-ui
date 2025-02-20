@@ -2,7 +2,8 @@ import React from 'react'
 import { ErrorBoundary } from "react-error-boundary";
 import { Alert, Button, Center, Heading, HStack, Text } from "@chakra-ui/react"
 import { Toaster, toaster } from "../components/ui/toaster"
-import { ChatMessage, MessageHeader } from './ChatMessage'
+import { ChatMessage } from './ChatMessage'
+import { MessageHeader } from './MessageHeader';
 import { ChatSideBar } from './ChatSideBar'
 import { ChatOptions } from './ChatOptions'
 import { Apps } from './apps/index'

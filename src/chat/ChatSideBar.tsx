@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog"
-import { Avatar, Button, Heading, IconButton, Link, Stack, Text } from "@chakra-ui/react"
+import { Avatar, Box, Button, Heading, IconButton, Link, Stack, Text } from "@chakra-ui/react"
 import { IoHelpCircleOutline } from "react-icons/io5";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
@@ -158,7 +158,11 @@ export function ChatSideBar() {
   }, []);
 
   return (
-    <aside role="toolbar" className={classnames(styles.sider, 'flex-c-sb flex-column')} data-testid="LeftSideBar">
+    <Box role="toolbar"
+      as="aside"
+      hideBelow={is.toolbar ? "base" : "md"}
+      className={classnames(styles.sider, 'flex-c-sb flex-column')}
+      data-testid="LeftSideBar">
 
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
         <Option type="apps" onClick={toggleApps} dataTestId="btn_apps" tooltip={t("Apps")} />
@@ -205,7 +209,7 @@ export function ChatSideBar() {
         </DialogRoot>
 
       </div>
-    </aside>
+    </Box>
   )
 
 
