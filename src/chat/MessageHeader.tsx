@@ -35,7 +35,7 @@ export function MessageHeader() {
             <IconButton
                 hideFrom="md"
                 variant="ghost"
-                title={t("toggle_toolbar")}
+                title={is.toolbar ? t("hide_toolbar") : t("show_toolbar")}
                 onClick={() => setIs({ toolbar: !is.toolbar })}>{columnIcon}</IconButton>
             <Stack flexGrow={1} gap="1px" paddingInlineStart={2}>
                 <Text data-testid="HeaderTitle" textStyle="lg">{message?.title}</Text>

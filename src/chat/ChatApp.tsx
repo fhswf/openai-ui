@@ -1,8 +1,7 @@
 import React, { Suspense, useEffect } from 'react'
 import { ChatProvider, useGlobal } from "./context"
-import { Loading } from '../components/Loading'
 import { useTheme } from '../components/hooks'
-import { Theme } from "@chakra-ui/react"
+import { Theme, ProgressCircle } from "@chakra-ui/react"
 
 import './style.less'
 const Chat = React.lazy(() => import("./Chat"))
@@ -12,8 +11,14 @@ const Chat = React.lazy(() => import("./Chat"))
 export default function ChatApp() {
   const [current, toggleCurrent] = useTheme()
 
+  const loading = (
+    <ProgressCircle.Root
+      size="lg"
+      color="blue.400"
+    />
+  )
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={loading}>
       <ChatProvider>
         <Theme value={current}>
           <Chat />

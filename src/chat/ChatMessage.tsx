@@ -1,5 +1,5 @@
 import React from 'react'
-import { Avatar, Icon, IconButton } from "@chakra-ui/react";
+import { Avatar, Icon, IconButton, Skeleton } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip"
 import { GrDocumentDownload } from "react-icons/gr";
 import { AiOutlineOpenAI } from "react-icons/ai";
@@ -9,7 +9,7 @@ import { RiSendPlane2Line } from "react-icons/ri";
 import { MdEdit } from "react-icons/md";
 
 import { CopyIcon, ScrollView, EmptyChat, ChatHelp } from './component'
-import { MessageRender } from './MessageRender'
+import { LazyRenderer, MessageRender } from './MessageRender'
 import { ConfigInfo } from './ConfigInfo'
 import { useGlobal } from './context'
 import { useSendKey } from './hooks/useSendKey'
@@ -31,7 +31,6 @@ export function MessageItem(props) {
   const { t } = useTranslation();
   const avatar = options.general.theme === 'dark' ? avatar_white : avatar_black
 
-  console.log("content: %o", content)
   let message = processLaTeX(content)
   return (
     <div className={classnames(styles.item, styles[role])} data-testid={dataTestId}>
@@ -57,9 +56,9 @@ export function MessageItem(props) {
               </React.Fragment> : <CopyIcon value={content} />}
             </div>
           </div>
-          <MessageRender>
+          <LazyRenderer>
             {message}
-          </MessageRender>
+          </LazyRenderer>
         </div>
       </div>
     </div>
@@ -70,22 +69,19 @@ export function MessageContainer() {
   const { options } = useGlobal()
   const { message } = useMessage()
   const { messages = [] } = message || {}
-  if (options?.openai?.apiKey) {
-    return (
-      <React.Fragment>
-        {
-          messages?.length ? <div className={styles.container} data-testid="ChatListContainer">
-            {messages
-              .filter(message => message.role !== "system")
-              .map((item, index) => <MessageItem key={item.id} {...item} dataTestId="ChatMessage" />)}
-            {/* message?.error && <Error /> */}
-          </div> : <ChatHelp />
-        }
-      </React.Fragment>
-    )
-  } else {
-    return <EmptyChat />
-  }
+
+  return (
+    <React.Fragment>
+      {
+        <div className={styles.container} data-testid="ChatListContainer">
+          {messages
+            .filter(message => message.role !== "system")
+            .map((item, index) => <MessageItem key={item.id} {...item} dataTestId="ChatMessage" />)}
+        </div>
+      }
+    </React.Fragment>
+  )
+
 }
 
 export function ChatMessage() {

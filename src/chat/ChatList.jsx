@@ -131,13 +131,13 @@ export function ChatItem(props) {
 
 
 export function ChatList() {
-  const { chat, newChat } = useGlobal()
+  const { chat, newChat, currentApp } = useGlobal()
   return (
     <Flex gap="4" direction="column" data-testid="ConversationList">
       {chat.length ? chat.map((item, index) => <ChatItem key={index} index={index} {...item} />) : <ListEmpty />}
       <Button alignSelf="center"
         type="primary"
-        onClick={newChat}
+        onClick={() => newChat(currentApp)}
         variant="surface"
         data-testid="ConversationCreateBtn"><IoAdd />{t("New Conversation")}</Button>
     </Flex>

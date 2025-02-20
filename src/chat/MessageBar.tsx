@@ -1,16 +1,12 @@
-import React from "react";
+import React, { BaseSyntheticEvent, SyntheticEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useOptions, useSendKey } from "./hooks";
 import { useGlobal } from "./context";
-import { Loading } from '../components'
-import { Button, Icon, IconButton, Progress, Stack, Text, Textarea } from "@chakra-ui/react";
-import { HStack, Input, Kbd } from "@chakra-ui/react"
-import { InputGroup } from "../components/ui/input-group"
+import { Button, HStack, Kbd, Progress, Stack, Text, Textarea } from "@chakra-ui/react";
 import { Switch } from "../components/ui/switch"
 import styles from './style/message.module.less'
 import CodeEditor from '@uiw/react-textarea-code-editor';
 import { MdOutlineCancel } from "react-icons/md";
-import { RiSendPlane2Line } from "react-icons/ri";
 
 export function MessageBar() {
     const { sendMessage, setMessage, is, options, setIs, typeingMessage, clearTypeing, stopResonse } = useGlobal();
@@ -58,7 +54,8 @@ export function MessageBar() {
                             onFocus={() => setIs({ inputing: true })} onBlur={() => setIs({ inputing: false })}
                             variant="outline" autoresize
                             borderWidth={0} outlineWidth={0}
-                            placeholder={t("Enter something....")} onInput={(ev) => setMessage(ev.target.value)} />
+                            placeholder={t("Enter something....")}
+                            onInput={(ev: BaseSyntheticEvent) => setMessage(ev.target.value)} />
                 }
                 <HStack justify={"flex-end"} paddingInlineStart={2} paddingInlineEnd={2}>
                     <Switch size="sm" colorScheme="blue" marginInlineEnd="auto" checked={options.general.codeEditor}
@@ -66,7 +63,9 @@ export function MessageBar() {
                         {t("Code Editor")}
                     </Switch>
                     <Button variant="outline" onClick={clearTypeing} data-testid="ClearMessageBtn">{t("clear")}</Button>
-                    <Button type="primary"
+                    <Button
+                        colorPalette={is.thinking ? "gray" : "blue"} 
+                        type="submit"
                         disabled={is.thinking || !typeingMessage?.content}
                         onClick={sendMessage}
                         data-testid="SendMessageBtn">{t("send")}
