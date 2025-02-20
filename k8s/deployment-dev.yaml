@@ -19,15 +19,15 @@ spec:
         io.kompose.service: openai-ui
     spec:
       containers:
-        - image: ghcr.io/fhswf/openai-ui:0.13.10
+        - image: ghcr.io/fhswf/openai-ui:0.13.11
           name: ui
           ports:
             - containerPort: 80
           env:
             - name: VITE_RELEASE
-              value: 0.13.10
+              value: 0.13.11
             - name: VITE_BUILD_SHA
-              value: 940860b47f922de711bdfdbb2dc642b141df6ea1
+              value: 49364a659813525aa274cb912c600dadcad98986
           resources:
             limits:
               memory: 128Mi
