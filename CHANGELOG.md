@@ -1,3 +1,10 @@
+## [0.13.16](https://github.com/fhswf/openai-ui/compare/v0.13.15...v0.13.16) (2025-02-20)
+
+
+### Bug Fixes
+
+* use npm ci in Dockerfile ([6942758](https://github.com/fhswf/openai-ui/commit/694275898ca8b97b0fde2ee21ddc40d48ab17d29))
+
 ## [0.13.15](https://github.com/fhswf/openai-ui/compare/v0.13.14...v0.13.15) (2025-02-20)
 
 
