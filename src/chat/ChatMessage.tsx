@@ -27,7 +27,7 @@ import { processLaTeX } from "./utils/latex";
 
 export function MessageItem(props) {
   const { content, sentTime, role, id, dataTestId } = props
-  const { removeMessage, editMessage, user, options } = useGlobal()
+  const { removeMessage, editMessage, user, options, is } = useGlobal()
   const { t } = useTranslation();
   const avatar = options.general.theme === 'dark' ? avatar_white : avatar_black
 
@@ -56,7 +56,7 @@ export function MessageItem(props) {
               </React.Fragment> : <CopyIcon value={content} />}
             </div>
           </div>
-          <LazyRenderer>
+          <LazyRenderer isVisible={is.thinking}>
             {message}
           </LazyRenderer>
         </div>
@@ -89,7 +89,7 @@ export function ChatMessage() {
 
   return (
     <div className={styles.message}>
-      <ScrollView data-testid="ChatList">
+      <ScrollView id="chat_list" data-testid="ChatList">
         <MessageContainer />
       </ScrollView>
       <MessageBar />

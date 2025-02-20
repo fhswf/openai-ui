@@ -145,7 +145,6 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     },
 
     setMessage(content) {
-      console.log("setMessage: %o");
       const typeingMessage =
         content === ""
           ? {}
@@ -522,6 +521,10 @@ export async function executeChatRequest(setState, is, newChat, messages: Messag
         setState({
           is: { ...is, thinking: content.length },
           chat: newChat,
+        });
+        document.getElementById("chat_list").scrollTo({
+          top: document.getElementById("chat_list").scrollHeight,
+          behavior: "smooth"
         });
       },
       () => {

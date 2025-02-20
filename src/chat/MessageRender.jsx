@@ -53,7 +53,7 @@ const Renderer = forwardRef((props, ref) =>
 )
 
 export const LazyRenderer = (props) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(props?.isVisible || false);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -74,5 +74,8 @@ export const LazyRenderer = (props) => {
     };
   }, []);
 
-  return isVisible ? <Renderer {...props} ref={ref} /> : <Skeleton ref={ref} flex="1" height="5" variant="pulse" />;
+  return isVisible ?
+    <Renderer {...props} ref={ref} />
+    :
+    <Skeleton ref={ref} flex="1" height="10lh" variant="pulse" />;
 }
