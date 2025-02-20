@@ -1,3 +1,10 @@
+## [0.13.13](https://github.com/fhswf/openai-ui/compare/v0.13.12...v0.13.13) (2025-02-20)
+
+
+### Bug Fixes
+
+* make sure currentApp is initialized properly ([ee4eb6f](https://github.com/fhswf/openai-ui/commit/ee4eb6f5a6bd4e6a0962aa24ab473c192da62d6c))
+
 ## [0.13.12](https://github.com/fhswf/openai-ui/compare/v0.13.11...v0.13.12) (2025-02-20)
 
 
