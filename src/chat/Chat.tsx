@@ -23,9 +23,11 @@ import rehypeKatex from 'rehype-katex'
 import { func } from 'prop-types';
 import { useTranslation } from 'react-i18next';
 
+
 function ErrorFallback({ error, resetErrorBoundary }) {
   console.log("error: %o %s", error.stack, typeof error.stack)
-  const { t } = useTranslation();
+  const t = (key) => key
+  //const { t } = useTranslation();
   const resetSettings = () => {
     console.log("resetSettings")
     localStorage.setItem("SESSIONS", "");
@@ -117,7 +119,6 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
           <ChatSideBar />
           <div>
             <Markdown
-              className="z-ui-markdown"
               remarkPlugins={[remarkGfm, remarkMath, smartypants]}
               rehypePlugins={[rehypeKatex]}
             >

@@ -17,7 +17,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@chakra-ui/react": "^3.7.0",
+    "@chakra-ui/react": "^3.8.1",
     "@emotion/react": "^11.14.0",
     "@uiw/react-textarea-code-editor": "^3.0.2",
     "dotenv": "^16.4.5",
@@ -25,25 +25,24 @@
     "i18next": "^24.2.2",
     "i18next-browser-languagedetector": "^8.0.4",
     "i18next-http-backend": "^3.0.2",
-    "katex": "^0.16.7",
+    "katex": "^0.16.21",
     "next-themes": "^0.4.4",
-    "openai": "^4.38.5",
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
+    "openai": "^4.85.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-error-boundary": "^5.0.0",
     "react-i18next": "^15.4.1",
     "react-icons": "^5.4.0",
-    "react-markdown": "^9.1.0",
-    "react-syntax-highlighter": "^15.5.0",
+    "react-markdown": "^10.0.0",
+    "react-syntax-highlighter": "^15.6.1",
     "rehype-highlight": "^7.0.0",
     "rehype-katex": "^7.0.0",
     "rehype-raw": "^7.0.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
-    "remark-smartypants": "^2.1.0",
-    "tailwindcss": "^3.4.1",
-    "webextension-polyfill": "^0.10.0"
+    "remark-smartypants": "^3.0.2",
+    "tailwindcss": "^4.0.8"
   },
   "release": {
     "branches": [
@@ -59,6 +58,32 @@
       "@semantic-release/git"
     ]
   },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "parserPreset": "conventional-changelog-atom",
+    "formatter": "@commitlint/format",
+    "rules": {
+      "type-enum": [
+        2,
+        "always",
+        [
+          "foo"
+        ]
+      ]
+    },
+    "defaultIgnores": true,
+    "helpUrl": "https://github.com/conventional-changelog/commitlint/#what-is-commitlint",
+    "prompt": {
+      "messages": {},
+      "questions": {
+        "type": {
+          "description": "please input type:"
+        }
+      }
+    }
+  },
   "devDependencies": {
     "@chromatic-com/storybook": "^3.2.4",
     "@semantic-release/changelog": "^6.0.3",
@@ -67,14 +92,7 @@
     "@semantic-release/github": "^11.0.1",
     "@semantic-release/npm": "^12.0.1",
     "@semantic-release/release-notes-generator": "^14.0.3",
-    "@storybook/addon-essentials": "^8.5.6",
-    "@storybook/addon-interactions": "^8.5.6",
-    "@storybook/addon-onboarding": "^8.5.6",
-    "@storybook/blocks": "^8.5.6",
-    "@storybook/react": "^8.5.6",
-    "@storybook/react-vite": "^8.5.6",
-    "@storybook/test": "^8.5.6",
-    "@types/react": "^18.2.67",
+    "@types/react": "^19.0.10",
     "@vitejs/plugin-react": "^4.3.4",
     "css-loader": "^6.7.3",
     "cypress": "^13.7.2",
@@ -96,6 +114,6 @@
     "style-loader": "^4.0.0",
     "typescript": "^5.7.3",
     "url-loader": "^4.1.1",
-    "vite": "^6.1.0"
+    "vite": "^6.1.1"
   }
 }
