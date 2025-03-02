@@ -1,6 +1,6 @@
 import React from 'react'
 import { ErrorBoundary } from "react-error-boundary";
-import { Alert, Button, Center, Heading, HStack, Text } from "@chakra-ui/react"
+import { Alert, Button, Center, Grid, GridItem, Heading, HStack, Text } from "@chakra-ui/react"
 import { Toaster, toaster } from "../components/ui/toaster"
 import { ChatMessage } from './ChatMessage'
 import { MessageHeader } from './MessageHeader';
@@ -22,6 +22,7 @@ import smartypants from 'remark-smartypants'
 import rehypeKatex from 'rehype-katex'
 import { func } from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import { MessageBar } from './MessageBar';
 
 function ErrorFallback({ error, resetErrorBoundary }) {
   console.log("error: %o %s", error.stack, typeof error.stack)
@@ -135,32 +136,44 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
       </div>)
   }
   return (
-    <div className={classnames(styles.chat, chatStyle)}>
-      <MessageHeader />
-      <div className={styles.chat_inner}>
+    <Grid
+      gridTemplateAreas={`"header header" "side main" "side input"`}
+      gridTemplateColumns={"max-content 1fr"}
+      gridTemplateRows={"max-content 1fr max-content"}
+      height="100lvh" width="100%"
+      className={classnames(styles.chat, chatStyle)}
+    >
+      <GridItem gridArea={"header"}>
+        <MessageHeader />
+      </GridItem>
 
+      <GridItem gridArea={"side"} display={is.toolbar ? "inherit" : "none"}>
         <ChatSideBar />
-        {
-          is?.config ?
-            <Config />
-            :
-            <main className={styles.main}>
+      </GridItem>
 
-              <ErrorBoundary fallbackRender={ErrorFallback}>
-                <div className={styles.chat_content}>
-                  {
-                    is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
-                      <ScrollView>
-                        {is?.apps ? <Apps /> : <ChatList />}
-                      </ScrollView>
-                    </div>
-                  }
-                  <ChatMessage />
-                </div>
-              </ErrorBoundary>
-            </main>
-        }
-      </div>
-    </div>
+      {
+        is?.config ?
+          <Config />
+          :
+          <GridItem as="main" gridArea={"main"} overflow="auto">
+            <ErrorBoundary fallbackRender={ErrorFallback}>
+              <div className={styles.chat_content}>
+                {
+                  is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
+                    <ScrollView>
+                      {is?.apps ? <Apps /> : <ChatList />}
+                    </ScrollView>
+                  </div>
+                }
+                <ChatMessage />
+              </div>
+            </ErrorBoundary>
+          </GridItem>
+
+      }
+      <GridItem gridArea={"input"}>
+        <MessageBar />
+      </GridItem>
+    </Grid>
   )
 }

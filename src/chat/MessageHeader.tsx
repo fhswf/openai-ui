@@ -1,8 +1,18 @@
-import { PopoverRoot, PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody, PopoverTitle } from '../components/ui/popover';
-import { Avatar, HStack, Stack, Text, IconButton, Button } from '@chakra-ui/react';
 import React from 'react';
+import { Avatar, HStack, Stack, Text, IconButton, Button, MenuItemGroup, MenuSeparator } from '@chakra-ui/react';
+import { PopoverRoot, PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody, PopoverTitle } from '../components/ui/popover';
+import {
+    MenuContent,
+    MenuItem,
+    MenuRadioItem,
+    MenuRadioItemGroup,
+    MenuRoot,
+    MenuTrigger,
+} from "../components/ui/menu"
+
 import { useTranslation } from 'react-i18next';
 import { AiOutlineClear } from 'react-icons/ai';
+import { IoChatboxOutline } from "react-icons/io5";
 import { IoSettingsOutline, IoReloadOutline, IoLogoGithub } from 'react-icons/io5';
 import { LuPanelLeftClose, LuPanelLeftOpen } from 'react-icons/lu';
 import { MdOutlineSimCardDownload } from 'react-icons/md';
@@ -12,7 +22,7 @@ import { useMessage } from './hooks';
 
 
 export function MessageHeader() {
-    const { is, setIs, clearThread, reloadThread, downloadThread, showSettings, options, user } = useGlobal();
+    const { is, setIs, setState, clearThread, newChat, reloadThread, downloadThread, showSettings, options, user, chat, currentChat } = useGlobal();
     const { message } = useMessage();
     const messages = message?.messages;
     const columnIcon = is.toolbar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />;
@@ -42,10 +52,26 @@ export function MessageHeader() {
                 <Text textStyle="xs">{t('count_messages', { count: messages?.filter(item => item.role !== "system").length })}</Text>
             </Stack>
 
+            <MenuRoot>
+                <MenuTrigger>
+                    <IconButton variant="ghost" title={t("more_actions")}><IoChatboxOutline /></IconButton>
+                </MenuTrigger>
+                <MenuContent>
+                    <MenuItemGroup title={t("actions")}>
+                        <MenuItem onClick={newChat} value="a">{t("new_chat")}</MenuItem>
+                        <MenuItem onClick={clearThread} value="b">{t("clear_thread")}</MenuItem>
+                    </MenuItemGroup>
+                    <MenuSeparator />
+                    <MenuRadioItemGroup title={t("chats")} value={currentChat} onValueChange={(e) => setState({ currentChat: e.value })}>
+                        {chat.map((c, index) => (
+                            <MenuRadioItem key={index} value={index}>{c.title}</MenuRadioItem>
+                        ))}
+                    </MenuRadioItemGroup>
 
+                </MenuContent>
+            </MenuRoot>
             {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
             {false && <IconButton variant="ghost" title={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>}
-            <IconButton variant="ghost" title={t("clear_thread")} onClick={clearThread} data-testid="ClearChatBtn"><AiOutlineClear /></IconButton>
             <IconButton variant="ghost" title={t("download_thread")} onClick={downloadThread}><MdOutlineSimCardDownload /></IconButton>
             <a href={issueUrl} target="_blank" title={t("open_issue")}><IconButton variant="ghost" aria-label={t("open_issue")}><IoLogoGithub /></IconButton></a>
             <PopoverRoot>

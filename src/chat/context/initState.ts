@@ -36,7 +36,7 @@ export const initState: GlobalState = {
     general: {
       language: "de",
       theme: "light",
-      sendCommand: "ENTER",
+      sendCommand: "COMMAND_ENTER",
       size: "normal",
       codeEditor: false,
       gravatar: false,

@@ -1,16 +1,19 @@
 .message {
-  background-color: var(--background-color-gray);
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
   flex: 1 1 auto;
   font-size: var(--font-size-base);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 
-  &>div {
-    width: 100%;
+  width: max-content;
+  min-width: 30rem;
+  max-width: 100%;
+
+  &.user {
+    align-self: flex-end;
   }
 }
+
 
 
 .length {
@@ -94,13 +97,7 @@
   }
 }
 
-.user {
-  flex-direction: row-reverse;
 
-  .z-avatar {
-    margin-left: var(--spacing);
-  }
-}
 
 .container {
   flex: 1;
