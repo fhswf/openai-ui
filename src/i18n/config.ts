@@ -96,6 +96,8 @@ i18n
                     chat_settings: "Chat-Einstellungen",
                     clear_thread: "Unterhaltung löschen",
                     reload_thread: "Unterhaltung neu laden",
+                    new_chat: "Neuer Unterhaltung",
+                    more_actions: "Mehr Aktionen",
                     general: "Allgemein",
                     files: "Dateien",
                     name: "Name",
