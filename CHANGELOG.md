@@ -1,3 +1,13 @@
+# [0.14.0](https://github.com/fhswf/openai-ui/compare/v0.13.17...v0.14.0) (2025-03-03)
+
+
+### Features
+
+* ui improvements ([a6bf9f1](https://github.com/fhswf/openai-ui/commit/a6bf9f197a345e1a63c95ba794468dee6f8af942))
+* ui improvements ([98e430a](https://github.com/fhswf/openai-ui/commit/98e430a75a2e19c1f6bf99abf70c60456932eb48))
+* ui updates ([8b55ad0](https://github.com/fhswf/openai-ui/commit/8b55ad07c1e8abc4d99d3d1e6532f5f9d1dc6b21))
+* ui updates ([18ebee7](https://github.com/fhswf/openai-ui/commit/18ebee7c6c72a511326c1ac58a76d86da76a5ae6))
+
 ## [0.13.17](https://github.com/fhswf/openai-ui/compare/v0.13.16...v0.13.17) (2025-02-20)
 
 
