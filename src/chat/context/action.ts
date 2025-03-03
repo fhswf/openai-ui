@@ -6,8 +6,8 @@ import { Chat, GlobalState, Options, OptionAction, GlobalActions, Message, Messa
 import React from "react";
 import { createMessage, createRun, getMessages, getRunSteps, initChat, retrieveRun, getImageURL, retrieveAssistant, modifyAssistant, getFileURL, retrieveFile } from "../service/assistant";
 import { processLaTeX } from "../utils/latex";
+import { useApps } from "../apps/context";
 
-import OpenAI from "openai";
 
 
 export default function action(state: Partial<GlobalState>, dispatch: React.Dispatch<GlobalAction>): GlobalActions {
@@ -100,6 +100,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         {
           title: newApp?.title || t("new_conversation"),
           id: Date.now(),
+          app: newApp.id,
           messages,
           ct: Date.now(),
           botStart: newApp.botStarts,
@@ -136,12 +137,11 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       const chat = [...state.chat];
       chat.splice(index, 1);
       const payload =
-        state.currentChat === index
+        state.currentChat === index && index > 0
           ? { chat, currentChat: index - 1 }
           : { chat };
-      setState({
-        ...payload,
-      });
+      console.log("removeChat: %o", payload);
+      setState(payload);
     },
 
     setMessage(content) {
@@ -496,6 +496,7 @@ export async function executeChatRequest(setState, is, newChat, messages: Messag
     is: { ...is, thinking: true },
     typeingMessage: {},
     chat: newChat,
+    currentChat
   });
   const controller = new AbortController();
   try {

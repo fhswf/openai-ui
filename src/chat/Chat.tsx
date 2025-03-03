@@ -147,7 +147,7 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
         <MessageHeader />
       </GridItem>
 
-      <GridItem gridArea={"side"} display={is.toolbar ? "inherit" : "none"}>
+      <GridItem gridArea={"side"} as="aside" className={is.toolbar ? styles.showToolbar : styles.hideToolbar}>
         <ChatSideBar />
       </GridItem>
 

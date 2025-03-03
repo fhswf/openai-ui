@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect } from 'react'
 import { ChatProvider, useGlobal } from "./context"
+import { AppsProvider } from './apps/context'
 import { useTheme } from '../components/hooks'
 import { Theme, ProgressCircle } from "@chakra-ui/react"
 
@@ -20,9 +21,11 @@ export default function ChatApp() {
   return (
     <Suspense fallback={loading}>
       <ChatProvider>
-        <Theme value={current}>
-          <Chat />
-        </Theme>
+        <AppsProvider>
+          <Theme value={current}>
+            <Chat />
+          </Theme>
+        </AppsProvider>
       </ChatProvider>
     </Suspense>
   )

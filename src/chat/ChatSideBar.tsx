@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog"
-import { Avatar, Box, Button, Heading, IconButton, Link, Stack, Text } from "@chakra-ui/react"
+import { Avatar, Box, Button, Heading, IconButton, Link, Spacer, Stack, Text, VStack } from "@chakra-ui/react"
 import { IoHelpCircleOutline } from "react-icons/io5";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
@@ -158,15 +158,13 @@ export function ChatSideBar() {
   }, []);
 
   return (
-    <Box role="toolbar"
+    <VStack role="toolbar"
       as="aside"
       hideBelow={is.toolbar ? "base" : "md"}
       className={classnames(styles.sider, 'flex-c-sb flex-column')}
       data-testid="LeftSideBar">
 
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
-        <Option type="apps" variant={is.apps ? "outline" : "ghosted"} onClick={toggleApps} dataTestId="btn_apps" tooltip={t("Apps")} />
-        <Option type="history" variant={!is.apps ? "outline" : "ghosted"} onClick={toggleHistory} dataTestId="btn_history" tooltip={t("History")} />
         <Option type={options.general.theme}
           onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
           tooltip={t("Theme")}
@@ -175,7 +173,7 @@ export function ChatSideBar() {
         <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
           tooltip={`${is.fullScreen ? t('Minimize') : t('Maximize')}`} />
       </div>
-
+      <Spacer />
       <div className={classnames(styles.tool, 'flex-c-sb flex-column')}>
         <DialogRoot open={!options.account.terms || open}
           onOpenChange={(e) => setOpen(e.open)} size="lg">
@@ -209,7 +207,7 @@ export function ChatSideBar() {
         </DialogRoot>
 
       </div>
-    </Box>
+    </VStack>
   )
 
 

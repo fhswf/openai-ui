@@ -1,0 +1,27 @@
+.chatmenu {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100%;
+    justify-items: stretch;
+    align-items: stretch;
+}
+
+.chatlist {
+    overflow-y: auto;
+    display: block;
+}
+
+.chatitem {
+    width: 100%
+}
+
+.chatcard {
+    flex-grow: 1;
+}
+
+.current {
+    .chatcard {
+        background-color: var(--chakra-colors-blue-500);
+    }
+}

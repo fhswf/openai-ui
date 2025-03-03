@@ -1,14 +1,7 @@
-import React from 'react';
-import { Avatar, HStack, Stack, Text, IconButton, Button, MenuItemGroup, MenuSeparator } from '@chakra-ui/react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Avatar, Card, HStack, Stack, Text, IconButton, Button, MenuItemGroup, MenuSeparator } from '@chakra-ui/react';
 import { PopoverRoot, PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody, PopoverTitle } from '../components/ui/popover';
-import {
-    MenuContent,
-    MenuItem,
-    MenuRadioItem,
-    MenuRadioItemGroup,
-    MenuRoot,
-    MenuTrigger,
-} from "../components/ui/menu"
+
 
 import { useTranslation } from 'react-i18next';
 import { AiOutlineClear } from 'react-icons/ai';
@@ -18,6 +11,9 @@ import { LuPanelLeftClose, LuPanelLeftOpen } from 'react-icons/lu';
 import { MdOutlineSimCardDownload } from 'react-icons/md';
 import { useGlobal } from './context';
 import { useMessage } from './hooks';
+import { MessageMenu } from './MessageMenu';
+
+
 
 
 
@@ -52,24 +48,7 @@ export function MessageHeader() {
                 <Text textStyle="xs">{t('count_messages', { count: messages?.filter(item => item.role !== "system").length })}</Text>
             </Stack>
 
-            <MenuRoot>
-                <MenuTrigger>
-                    <IconButton variant="ghost" title={t("more_actions")}><IoChatboxOutline /></IconButton>
-                </MenuTrigger>
-                <MenuContent>
-                    <MenuItemGroup title={t("actions")}>
-                        <MenuItem onClick={newChat} value="a">{t("new_chat")}</MenuItem>
-                        <MenuItem onClick={clearThread} value="b">{t("clear_thread")}</MenuItem>
-                    </MenuItemGroup>
-                    <MenuSeparator />
-                    <MenuRadioItemGroup title={t("chats")} value={currentChat} onValueChange={(e) => setState({ currentChat: e.value })}>
-                        {chat.map((c, index) => (
-                            <MenuRadioItem key={index} value={index}>{c.title}</MenuRadioItem>
-                        ))}
-                    </MenuRadioItemGroup>
-
-                </MenuContent>
-            </MenuRoot>
+            <MessageMenu />
             {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
             {false && <IconButton variant="ghost" title={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>}
             <IconButton variant="ghost" title={t("download_thread")} onClick={downloadThread}><MdOutlineSimCardDownload /></IconButton>
@@ -94,6 +73,6 @@ export function MessageHeader() {
                 </PopoverContent>
             </PopoverRoot>
 
-        </HStack>
+        </HStack >
     );
 }
