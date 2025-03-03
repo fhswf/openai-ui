@@ -316,6 +316,35 @@
     margin: var(--spacing) auto 0;
   }
 
+  .copy {
+    position: relative;
+    top: 2.8em;
+    right: 1ex;
+    color: gray;
+
+    svg {
+      height: 18px;
+      width: 18px;
+    }
+
+    &:hover {
+      color: var(--primary);
+    }
+  }
+
+  .code-header {
+    display: flex;
+    flex-direction: row;
+    height: 0;
+    width: 100%;
+    align-items: flex-end;
+    justify-content: flex-end;
+    background: var(--background-color-gray);
+    padding: 0;
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+  }
+
   code,
   tt {
     background-color: var(--background-color-gray);
@@ -325,6 +354,7 @@
     font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas,
       Liberation Mono, monospace;
   }
+
 
   code:before,
   code:after,

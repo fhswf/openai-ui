@@ -25,7 +25,7 @@ export function CopyIcon(props) {
 
   return (
     <Tooltip content={text}>
-      <IconButton minWidth="24px" size="sm" variant="plain" onClick={handleCopy} >
+      <IconButton minWidth="24px" size="sm" variant="ghost" onClick={handleCopy} >
         {icon}
       </IconButton>
     </Tooltip>

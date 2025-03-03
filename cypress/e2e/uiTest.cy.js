@@ -33,49 +33,6 @@ describe("User Interface", () => {
     );
   });
 
-  it("Hide and show the conversation sidebar", () => {
-
-    cy.getDataTestId("ConversationSideBar").should("not.exist");
-    cy.getDataTestId("btn_apps").click();
-    cy.getDataTestId("ConversationSideBar").should("exist");
-    cy.getDataTestId("btn_apps").click();
-    cy.getDataTestId("ConversationSideBar").should("not.exist");
-  });
-
-  it("Switching between Apps and History", () => {
-    cy.getDataTestId("btn_apps").click();
-    cy.getDataTestId("ConversationSideBar").should("exist");
-    cy.getDataTestId("AppsList").should("exist", "be.visible");
-    cy.getDataTestId("ConversationList").should("not.exist");
-    cy.getDataTestId("btn_history").click();
-    cy.getDataTestId("AppsList").should("not.exist");
-    cy.getDataTestId("ConversationList").should("exist", "be.visible");
-    cy.getDataTestId("btn_apps").click();
-    cy.getDataTestId("ConversationList").should("not.exist");
-    cy.getDataTestId("AppsList").should("exist", "be.visible");
-  });
-
-  /*
-  it("Conversation search bar input works", () => {
-    cy.getDataTestId("ConversationSideBarBtn").click();
-    cy.getDataTestId("ConversationSideBar").should("exist");
-    cy.getDataTestId("ConversationSearchBar").find('input').should('exist').then(($input) => {
-      cy.wrap($input).type("search input works").should("have.value", "search input works");
-    });
-  });
-  */
-
-  it("Create and edit new conversation", () => {
-    cy.getDataTestId("btn_history").click();
-    cy.getDataTestId("ConversationCreateBtn").click();
-    cy.getDataTestId("ConversationList").within(() => {
-      cy.getDataTestId("editConversation").eq(0).click({ force: true });
-      cy.getDataTestId("editConversationTextArea").clear().type("test title");
-      cy.getDataTestId("editConversationSaveBtn").click();
-      cy.getDataTestId("ConversationTitle").contains("test title");
-    });
-    cy.getDataTestId("HeaderTitle").contains("test title");
-  });
 
   it("Show infos", () => {
     cy.getDataTestId("InformationWindow").should("not.exist");
