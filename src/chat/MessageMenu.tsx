@@ -42,7 +42,9 @@ export function MessageMenu() {
     };
 
     return (
-        <MenuRoot onOpenChange={(e) => setMenuOpen(e)} immediate={true}>
+        <MenuRoot
+            onOpenChange={(e) => setMenuOpen(e)}
+            onHighlightChange={(e) => console.log('Highlight: %o', e)}>
             <MenuTrigger>
                 <IconButton variant="ghost" title={t("more_actions")}><RiChatHistoryLine /></IconButton>
             </MenuTrigger>

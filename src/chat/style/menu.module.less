@@ -13,15 +13,24 @@
 }
 
 .chatitem {
-    width: 100%
+    width: 100%;
+
+    &[data-highlighted] .chatcard {
+        border-color: var(--chakra-colors-blue-500);
+        outline-color: var(--chakra-colors-blue-500);
+        outline-width: var(--chakra-borders-md);
+    }
 }
+
+
 
 .chatcard {
     flex-grow: 1;
+    border-width: var(--chakra-borders-sm);
 }
 
 .current {
     .chatcard {
-        background-color: var(--chakra-colors-blue-500);
+        border-color: var(--chakra-colors-blue-500);
     }
 }
