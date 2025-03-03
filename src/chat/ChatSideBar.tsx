@@ -189,11 +189,10 @@ export function ChatSideBar() {
               <DialogTitle>{t('About')}</DialogTitle>
               {options.account.terms ? <DialogCloseTrigger /> : null}
             </DialogHeader>
-            <DialogBody>
+            <DialogBody className="z-ui-markdown">
               {metadata.release ? (<Text>Version: <Link target="blank" href={"https://github.com/fhswf/openai-ui/releases/tag/v" + metadata?.release}>{metadata?.release}</Link> (
                 <Link target="blank" href={"https://github.com/fhswf/openai-ui/commit/" + metadata?.build_sha}>commit {String(metadata?.build_sha).substring(0, 7)}</Link>)</Text>) : null}
               <Markdown
-                className="z-ui-markdown"
                 remarkPlugins={[remarkGfm, remarkMath, smartypants]}
                 rehypePlugins={[rehypeKatex]}
               >

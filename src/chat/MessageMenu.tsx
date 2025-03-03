@@ -23,7 +23,7 @@ import { RiChatHistoryLine } from "react-icons/ri";
 
 export function MessageMenu() {
     const { is, setIs, setState, clearThread, newChat, removeChat, reloadThread, downloadThread, showSettings, options, user, chat, currentChat } = useGlobal();
-    const { apps } = useApps();
+    const { apps, category } = useApps();
     const { t } = useTranslation();
 
     const [menuOpen, setMenuOpen] = useState(false);
@@ -42,9 +42,7 @@ export function MessageMenu() {
     };
 
     return (
-        <MenuRoot
-            onOpenChange={(e) => setMenuOpen(e)}
-            onHighlightChange={(e) => console.log('Highlight: %o', e)}>
+        <MenuRoot onOpenChange={(e) => setMenuOpen(e)}>
             <MenuTrigger>
                 <IconButton variant="ghost" title={t("more_actions")}><RiChatHistoryLine /></IconButton>
             </MenuTrigger>
@@ -52,9 +50,10 @@ export function MessageMenu() {
                 <MenuItemGroup title={t("new_chat")}>
                     {
                         apps.map((app, index) => {
+                            const cat = category.filter(item => item.id == app.category)[0];
                             return (
                                 <MenuItem key={app.id} onClick={() => newChat(app)} value={app.id} aria-keyshortcuts={index}>
-                                    {app.title}
+                                    <span className={classnames(styles.icon, `ico-${cat.icon}`)}></span> {app.title}
                                 </MenuItem>
                             )
                         })
@@ -65,10 +64,7 @@ export function MessageMenu() {
                     title={t("chats")}
                     className={styles.chatlist}
                     value={chat[currentChat].id}
-                    onValueChange={(e) => {
-                        let index = chat.findIndex(item => item.id == e.value);
-                        setState({ currentChat: index });
-                    }}>
+                >
                     {chat
                         // sort currentChat to the top
                         .toSorted((a, b) => a.id == chat[currentChat].id ? -1 : b.id == chat[currentChat].id ? 1 : 0)
@@ -95,14 +91,18 @@ export function MessageMenu() {
                                     <Card.Root size="sm" className={styles.chatcard}>
                                         <Card.Header>
                                             <HStack>
-                                                {new Date(c.ct).toLocaleString()}
+                                                {c.title}
                                                 <Spacer />
                                                 <IconButton variant="ghost" size="xs" focusRing="none" title={t("delete_chat")} onClick={() => deleteChat(c.id)}><MdOutlineDeleteOutline /></IconButton>
                                             </HStack>
                                         </Card.Header>
                                         <Card.Body>
-                                            <Card.Title>{c.title}</Card.Title>
-                                            <Text textStyle="xs">{t('count_messages', { count: c.messages?.filter(item => item.role !== "system").length })}</Text>
+                                            <Card.Description><Text truncate>{c.messages.filter((m) => m.role == "user")[0]?.content}</Text></Card.Description>
+                                            <HStack>
+                                                <Text textStyle="xs">{new Date(c.ct).toLocaleString()}</Text>
+                                                <Spacer />
+                                                <Text>{t('count_messages', { count: c.messages?.filter(item => item.role !== "system").length })}</Text>
+                                            </HStack>
                                         </Card.Body>
                                     </Card.Root>
                                 </MenuItem>

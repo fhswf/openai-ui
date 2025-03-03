@@ -50,7 +50,7 @@ export const MessageRender = memo((props) => {
 
   return (
     <MarkdownHooks
-      className="z-ui-markdown"
+    
       children={props.children}
       remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
       rehypePlugins={[rehypeKatex]}
@@ -72,7 +72,7 @@ export const MessageRender = memo((props) => {
             </>
 
           ) : (
-            <code {...props} className={`code-line`}>
+            <code {...props}>
               {children}
             </code>
           )
@@ -84,7 +84,7 @@ export const MessageRender = memo((props) => {
 
 const Renderer = forwardRef((props, ref) =>
 (
-  <div ref={ref}>
+  <div ref={ref} className='z-ui-markdown'>
     <MessageRender {...props} />
   </div>
 )

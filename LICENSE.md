@@ -1,7 +1,7 @@
 MIT License
 
 Copyright (c) 2023 [ninasaul](https://github.com/ninasaul)<br>
-Copyright (c) 2024 Fachhochschule Südwestfalen
+Copyright (c) 2025 Fachhochschule Südwestfalen
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
