@@ -27,7 +27,7 @@ spec:
             - name: VITE_RELEASE
               value: ''
             - name: VITE_BUILD_SHA
-              value: 12492e8fdb96a87f8e5c1204ddb02e2adaf09c9e
+              value: d5c794f4a0b3df4fe9205e61eb7ae6b54f51f331
           resources:
             limits:
               memory: 128Mi
