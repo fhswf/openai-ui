@@ -107,7 +107,7 @@ spec:
       - frontend:
           service:
             name: openai-ui
-            port: openai-ui
+            port:
               number: 80
         path: /
         pathType: Prefix
