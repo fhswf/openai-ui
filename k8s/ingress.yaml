@@ -89,3 +89,25 @@ spec:
           name: openai-ui
           namespace: openai-proxy
           port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    traefik.frontend.passHostHeader: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+  name: openai.fh-swf.cloud
+  namespace: openai-proxy
+spec:
+  rules:
+  - host: openai.fh-swf.cloud
+    http:
+      paths:
+      - frontend:
+          service:
+            name: openai-ui
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
