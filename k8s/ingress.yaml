@@ -95,6 +95,7 @@ kind: Ingress
 metadata:
   annotations:
     traefik.frontend.passHostHeader: "true"
+    traefik.ingress.kubernetes.io/router.priority: "10"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
   name: openai.fh-swf.cloud-frontend
@@ -111,11 +112,3 @@ spec:
               number: 3000
         path: /api
         pathType: Prefix   
-      - backend:
-          service:
-            name: openai-ui
-            port:
-              number: 80
-        path: /
-        pathType: Prefix
-     
