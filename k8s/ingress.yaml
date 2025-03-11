@@ -107,8 +107,8 @@ spec:
       paths:
       - backend:
           service:
-            name: openai-proxy
+            name: openai-ui
             port:
-              number: 3000
-        path: /api
+              number: 80
+        path: /
         pathType: Prefix   
