@@ -111,3 +111,10 @@ spec:
               number: 80
         path: /
         pathType: Prefix
+      - backend:
+          service:
+            name: openai-proxy
+            port:
+              number: 3000
+        path: /api
+        pathType: Prefix        
