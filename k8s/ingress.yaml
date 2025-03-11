@@ -97,7 +97,7 @@ metadata:
     traefik.frontend.passHostHeader: "true"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-  name: openai.fh-swf.cloud
+  name: openai.fh-swf.cloud-frontend
   namespace: openai-proxy
 spec:
   rules:
@@ -111,12 +111,4 @@ spec:
             port: openai-proxy
               number: 80
         path: /
-        pathType: Prefix
-      - backend:
-          service:
-            name: openai-proxy
-            namespace: openai-proxy
-            port:
-              number: 3000
-        path: /api
         pathType: Prefix
