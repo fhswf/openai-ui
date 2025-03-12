@@ -42,26 +42,6 @@ spec:
     certResolver: default
 ---
 apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: openai.ki.fh-swf.de
-  namespace: openai-proxy
-spec:
-  entryPoints:
-    - web-secure
-  routes:
-    - kind: Rule
-      match: Host(`openai.ki.fh-swf.de`)
-      priority: 10
-      services:
-        - kind: Service
-          name: openai-ui
-          namespace: openai-proxy
-          port: 80
-  tls:
-    certResolver: default
----
-apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: redirectscheme
@@ -69,26 +49,6 @@ spec:
   redirectScheme:
     scheme: https
     permanent: true
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: openai.ki.fh-swf.de-http
-  namespace: openai-proxy
-spec:
-  entryPoints:
-    - web
-  routes:
-    - kind: Rule
-      match: Host(`openai.ki.fh-swf.de`)
-      middlewares:
-        - name: redirectscheme
-      priority: 10
-      services:
-        - kind: Service
-          name: openai-ui
-          namespace: openai-proxy
-          port: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -103,6 +63,29 @@ metadata:
 spec:
   rules:
   - host: openai.fh-swf.cloud
+    http:
+      paths:
+      - backend:
+          service:
+            name: openai-ui
+            port:
+              number: 80
+        path: /
+        pathType: Prefix   
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    traefik.frontend.passHostHeader: "true"
+    traefik.ingress.kubernetes.io/router.priority: "10"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+  name: openai.fh-swf.cloud-frontend
+  namespace: openai-proxy
+spec:
+  rules:
+  - host: openai.ki.fh-swf.de
     http:
       paths:
       - backend:
