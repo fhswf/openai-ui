@@ -1,12 +1,20 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Avatar, Card, HStack, Stack, Text, IconButton, Button, MenuItemGroup, MenuSeparator } from '@chakra-ui/react';
+import { Avatar, Card, HStack, Stack, Text, IconButton, Button } from '@chakra-ui/react';
 import { PopoverRoot, PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody, PopoverTitle } from '../components/ui/popover';
-
-
+import {
+    MenuContent,
+    MenuItem,
+    MenuItemCommand,
+    MenuItemGroup,
+    MenuRadioItem,
+    MenuRadioItemGroup,
+    MenuRoot,
+    MenuSeparator,
+    MenuTrigger,
+} from "../components/ui/menu"
 import { useTranslation } from 'react-i18next';
-import { AiOutlineClear } from 'react-icons/ai';
-import { IoChatboxOutline } from "react-icons/io5";
-import { IoSettingsOutline, IoReloadOutline, IoLogoGithub } from 'react-icons/io5';
+import { IoLogoMarkdown, IoSettingsOutline, IoReloadOutline, IoLogoGithub } from 'react-icons/io5';
+import { BiSolidFileJson } from "react-icons/bi";
 import { LuPanelLeftClose, LuPanelLeftOpen } from 'react-icons/lu';
 import { MdOutlineSimCardDownload } from 'react-icons/md';
 import { useGlobal } from './context';
@@ -51,7 +59,20 @@ export function MessageHeader() {
             <MessageMenu />
             {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
             {false && <IconButton variant="ghost" title={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>}
-            <IconButton variant="ghost" title={t("download_thread")} onClick={downloadThread}><MdOutlineSimCardDownload /></IconButton>
+            <MenuRoot>
+                <MenuTrigger>
+                    <IconButton variant="ghost" title={t("download_thread")}><MdOutlineSimCardDownload /></IconButton>
+                </MenuTrigger>
+                <MenuContent>
+                    <MenuItem value="json" onClick={() => downloadThread("json")} >
+                        <BiSolidFileJson /> {t("download_json")}
+                    </MenuItem>
+                    <MenuItem value="markdown" onClick={() => downloadThread("markdown")} >
+                        <IoLogoMarkdown /> {t("download_markdown")}
+                    </MenuItem>
+                </MenuContent>
+            </MenuRoot>
+
             <a href={issueUrl} target="_blank" title={t("open_issue")}><IconButton variant="ghost" aria-label={t("open_issue")}><IoLogoGithub /></IconButton></a>
             <PopoverRoot>
                 <PopoverTrigger data-testid="UserInformationBtn">
