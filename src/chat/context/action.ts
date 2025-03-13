@@ -169,16 +169,31 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         })
     },
 
-    downloadThread() {
+    downloadThread(format = "json") {
       const chat = state.chat[state.currentChat];
       const messages = chat.messages;
-      const content = JSON.stringify(messages, null, 2);
-      const blob = new Blob([content], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `chat_${chat.id}.json`;
-      a.click();
+
+      if (format === "markdown") {
+        const content = messages
+          .map((m) => {
+            return `${m.role === "assistant" ? "## Assistant\n" : "## User\n"}${m.content}\n\n`;
+          })
+          .join("\n");
+        const blob = new Blob([content], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `chat_${chat.id}.md`;
+        a.click();
+      } else if (format === "json") {
+        const content = JSON.stringify(messages, null, 2);
+        const blob = new Blob([content], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `chat_${chat.id}.json`;
+        a.click();
+      }
     },
 
     reloadThread() {

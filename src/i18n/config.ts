@@ -182,6 +182,8 @@ i18n
                     "hide_sidebar": "Seitenleiste ausblenden",
                     "show_sidebar": "Seitenleiste einblenden",
                     "chats": "Chats",
+                    "download_json": "als JSON herunterladen",
+                    "download_markdown": "als Markdown herunterladen",
                 },
             },
         },
