@@ -20,16 +20,19 @@ export const MessageRender = memo((props) => {
   const { options } = useGlobal()
   const style = options.general.theme === 'dark' ? oneDark : oneLight
 
+  let textRef = useRef(null);
 
   function CopyIcon(props) {
-    const { text = "copy", value, className } = props
+    const { value, className } = props
     const [icon, setIcon] = useState(LuClipboardCopy);
     const { t } = useTranslation();
 
-    async function handleCopy(e) {
+
+    const handleCopy = async (e) => {
       try {
-        console.log('handleCopy: %o', e.target.parentNode.parentNode.parentNode.innerText);
-        const text = e.target.parentNode.parentNode.parentNode.nextSibling.innerText;
+        console.log('handleCopy: %o', textRef.current.innerText);
+
+        const text = textRef.current.innerText;
         await navigator.clipboard.writeText(text);
         setIcon(LuClipboardCheck);
         setTimeout(() => {
@@ -50,7 +53,7 @@ export const MessageRender = memo((props) => {
 
   return (
     <MarkdownHooks
-    
+
       children={props.children}
       remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
       rehypePlugins={[rehypeKatex]}
@@ -62,7 +65,7 @@ export const MessageRender = memo((props) => {
               <div className="code-header">
                 <CopyIcon />
               </div>
-              <SyntaxHighlighter
+              <SyntaxHighlighter ref={textRef}
                 {...rest}
                 children={children}
                 style={style}
