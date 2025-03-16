@@ -34,6 +34,7 @@ import rehypeKatex from 'rehype-katex'
 
 import styles from './style/sider.module.less'
 import 'katex/dist/katex.min.css'
+import semver from 'semver'
 
 
 const ICONS = {
@@ -117,7 +118,9 @@ export function ChatSideBar() {
 
   const [open, setOpen] = useState(false)
   const [metadata, setMetadata] = useState({})
-  const { is, setIs, setState, options, user } = useGlobal()
+  const [releaseData, setReleaseData] = useState({})
+  const [newRelease, setNewRelease] = useState(false)
+  const { is, setIs, setState, options, user, version } = useGlobal()
   const { setGeneral, setAccount } = useOptions()
 
 
@@ -154,8 +157,22 @@ export function ChatSideBar() {
       .then((data) => {
         console.log(data)
         setMetadata(data)
+        if (semver.gt(data.release, version)) {
+          console.log('New release: %s', data.release)
+          setNewRelease(true)
+          setState({ version: data.release })
+        }
+        fetch(`${data.repo_url}/releases/tags/v${data.release}`)
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("release data: %j", data)
+            setReleaseData(data)
+          })
+          .catch((error) => {
+            console.error("Error fetching release data: %s", error)
+          })
       });
-  }, []);
+  }, [version]);
 
   return (
     <VStack role="toolbar"

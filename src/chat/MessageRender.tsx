@@ -12,6 +12,7 @@ import remarkMath from 'remark-math'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import rehypeKatex from 'rehype-katex'
+import rehypeRaw from "rehype-raw";
 import './style/markdown.less'
 import 'katex/dist/katex.min.css'
 import { useTranslation } from 'react-i18next';
@@ -44,7 +45,7 @@ export const MessageRender = memo((props) => {
     }
 
     return (
-      <span className="copy" minWidth="24px" size="sm" variant="ghost" onClick={handleCopy} >
+      <span className="copy" onClick={handleCopy} >
         {icon}
       </span>
     )
@@ -53,10 +54,9 @@ export const MessageRender = memo((props) => {
 
   return (
     <MarkdownHooks
-
       children={props.children}
       remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
-      rehypePlugins={[rehypeKatex]}
+      rehypePlugins={[rehypeKatex, rehypeRaw]}
       components={{
         code({ node, inline, className, children, ...rest }) {
           const match = /language-(\w+)/.exec(className || '')
@@ -85,15 +85,20 @@ export const MessageRender = memo((props) => {
   )
 })
 
-const Renderer = forwardRef((props, ref) =>
-(
+const Renderer = forwardRef(({ ...props }, ref) => (
   <div ref={ref} className='z-ui-markdown'>
-    <MessageRender {...props} />
+    <MessageRender {...props}>
+      {props.children}
+    </MessageRender>
   </div>
-)
-)
+));
 
-export const LazyRenderer = (props) => {
+type LazyRendererProps = {
+  children: any;
+  isVisible: boolean
+}
+
+export const LazyRenderer = (props: LazyRendererProps) => {
   const [isVisible, setIsVisible] = useState(props?.isVisible || false);
   const ref = useRef(null);
 
@@ -116,7 +121,9 @@ export const LazyRenderer = (props) => {
   }, []);
 
   return isVisible ?
-    <Renderer {...props} ref={ref} />
+    <Renderer ref={ref} >
+      {props.children}
+    </Renderer>
     :
     <Skeleton ref={ref} flex="1" height="10lh" variant="pulse" />;
 }

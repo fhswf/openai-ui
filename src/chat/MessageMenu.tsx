@@ -43,7 +43,7 @@ export function MessageMenu() {
 
     return (
         <MenuRoot onOpenChange={(e) => setMenuOpen(e)}>
-            <MenuTrigger>
+            <MenuTrigger asChild>
                 <IconButton variant="ghost" title={t("more_actions")}><RiChatHistoryLine /></IconButton>
             </MenuTrigger>
             <MenuContent className={styles.chatmenu}>
@@ -69,17 +69,14 @@ export function MessageMenu() {
                         // sort currentChat to the top
                         .toSorted((a, b) => a.id == chat[currentChat].id ? -1 : b.id == chat[currentChat].id ? 1 : 0)
                         .map((c, index) => {
-                            console.log('Chat: %o', c);
-                            if (chat[currentChat].id == c.id) {
-                                console.log('Current chat: %o', c);
-                            }
+
                             const itemProps = chat[currentChat].id == c.id ? { ref: currentRef, className: styles.current } : {};
 
                             return (
                                 <MenuItem key={c.id}
                                     className={styles.chatitem}
-                                    valueText={index}
-                                    value={c.id} {...itemProps}
+                                    valueText={String(index)}
+                                    value={String(c.id)} {...itemProps}
                                     onClick={
                                         () => {
                                             console.log('Select chat: %o', c);
@@ -87,7 +84,7 @@ export function MessageMenu() {
                                             setState({ currentChat: index });
                                         }
                                     }
-                                    aria-keyshortcuts={index}>
+                                    as="div">
                                     <Card.Root size="sm" className={styles.chatcard}>
                                         <Card.Header>
                                             <HStack>

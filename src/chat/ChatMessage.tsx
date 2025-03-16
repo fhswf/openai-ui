@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Avatar, Card, HStack, Icon, IconButton, Skeleton, Spacer, Stack, Text } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip"
 import { GrDocumentDownload } from "react-icons/gr";
@@ -20,7 +20,7 @@ import avatar_white from '../assets/images/OpenAI-white-monoblossom.svg'
 import styles from './style/message.module.less'
 
 import { useTranslation } from "react-i18next";
-import { MessageBar } from './MessageBar';
+import { MessageInput } from './MessageInput';
 import { processLaTeX } from "./utils/latex";
 
 
@@ -29,6 +29,7 @@ export function MessageItem(props) {
   const { removeMessage, editMessage, user, options, is } = useGlobal()
   const { t } = useTranslation();
   const avatar = options.general.theme === 'dark' ? avatar_white : avatar_black
+
 
   let message = processLaTeX(content)
   return (
@@ -88,15 +89,15 @@ export function MessageContainer() {
 }
 
 export function ChatMessage() {
-  const { is } = useGlobal()
+  const { is, setState } = useGlobal()
+
 
   return (
-    <div className={styles.message}>
-      <ScrollView id="chat_list" data-testid="ChatList">
-        <MessageContainer />
-      </ScrollView>
 
-    </div>
+    <ScrollView id="chat_list" data-testid="ChatList">
+      <MessageContainer />
+    </ScrollView>
+
   )
 }
 

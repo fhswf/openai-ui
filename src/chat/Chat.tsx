@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { ErrorBoundary } from "react-error-boundary";
 import { Alert, Button, Center, Grid, GridItem, Heading, HStack, Text } from "@chakra-ui/react"
 import { Toaster, toaster } from "../components/ui/toaster"
@@ -22,7 +22,8 @@ import smartypants from 'remark-smartypants'
 import rehypeKatex from 'rehype-katex'
 import { func } from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { MessageBar } from './MessageBar';
+import { MessageInput } from './MessageInput';
+import { use } from 'chai';
 
 
 function ErrorFallback({ error, resetErrorBoundary }) {
@@ -59,9 +60,8 @@ export default function Chat() {
   const { is, user } = useGlobal()
   const { t } = useTranslation();
   const chatStyle = is?.fullScreen ? styles.full : styles.normal
-  const onSearch = (e) => {
-    console.log(e)
-  }
+
+
 
 
 
@@ -173,7 +173,7 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
 
       }
       <GridItem gridArea={"input"}>
-        <MessageBar />
+        <MessageInput />
       </GridItem>
     </Grid>
   )
