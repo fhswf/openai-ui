@@ -1,4 +1,4 @@
-import React, { BaseSyntheticEvent, SyntheticEvent } from "react";
+import React, { BaseSyntheticEvent, SyntheticEvent, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useOptions, useSendKey } from "./hooks";
 import { useGlobal } from "./context";
@@ -7,12 +7,21 @@ import { Switch } from "../components/ui/switch"
 import styles from './style/message.module.less'
 import CodeEditor from '@uiw/react-textarea-code-editor';
 import { MdOutlineCancel } from "react-icons/md";
+import { use } from "chai";
 
-export function MessageBar() {
-    const { sendMessage, setMessage, is, options, setIs, typeingMessage, clearTypeing, stopResonse } = useGlobal();
+export function MessageInput() {
+    const { sendMessage, setMessage, eventProcessor, is, options, setIs, typeingMessage, clearTypeing } = useGlobal();
     const { setGeneral } = useOptions()
     const { t } = useTranslation();
     useSendKey(sendMessage, options.general.sendCommand);
+
+    useEffect(() => {
+        console.log("MessageBar: eventProcessor: %o", eventProcessor)
+    }, [eventProcessor])
+
+    const stopResponse = () => {
+        eventProcessor?.stop()
+    }
 
     return (
         <div className={styles.bar}>
@@ -28,11 +37,14 @@ export function MessageBar() {
                     is.thinking &&
                     <HStack justify={"flex-end"}>
                         <Progress.Root size="xs" width="20em" value={null}>
+                            <Progress.Label>
+                                {is.tool ? t(is.tool) : t("Thinking...")}
+                            </Progress.Label>
                             <Progress.Track>
                                 <Progress.Range />
                             </Progress.Track>
                         </Progress.Root>
-                        <Button variant="ghost" title={t("cancel")} onClick={stopResonse}>
+                        <Button variant="ghost" title={t("cancel")} onClick={stopResponse}>
                             {t("cancel")} <MdOutlineCancel />
                         </Button>
                     </HStack>
@@ -64,7 +76,7 @@ export function MessageBar() {
                     </Switch>
                     <Button variant="outline" onClick={clearTypeing} data-testid="ClearMessageBtn">{t("clear")}</Button>
                     <Button
-                        colorPalette={is.thinking ? "gray" : "blue"} 
+                        colorPalette={is.thinking ? "gray" : "blue"}
                         type="submit"
                         disabled={is.thinking || !typeingMessage?.content}
                         onClick={sendMessage}

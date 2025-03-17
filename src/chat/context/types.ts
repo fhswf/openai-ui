@@ -1,3 +1,5 @@
+import { ToolChoiceTypes } from "openai/resources/responses/responses.mjs";
+import internal from "stream";
 
 export enum GlobalActionType {
     SET_STATE = "SET_STATE",
@@ -39,6 +41,7 @@ export type OpenAIOptions = {
     max_tokens: number;
     n: number;
     stream: boolean;
+    tools: Map<string, boolean>;
 };
 
 export type Options = {
@@ -65,9 +68,11 @@ export type GlobalState = {
         inputing: boolean;
         thinking: boolean;
         apps: boolean;
+        tool: string;
     };
     typeingMessage: any;
     user: any;
+    eventProcessor?: any;
     version: string;
     content: string;
 };
@@ -102,15 +107,18 @@ export type GlobalActions = {
     setOptions: (arg: OptionAction) => void;
     setIs: (arg: any) => void;
     currentList: () => any;
-    stopResonse: () => void;
+    stopResponse: () => void;
 };
 
 export type Message = {
     content: string;
     sentTime?: number;
+    startTime?: number;
+    endTime?: number;
     role: string;
     id: number | string;
     thread_id?: string;
+    usage?: any;
 };
 
 export type Messages = Message[];
