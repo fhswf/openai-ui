@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Avatar, Card, HStack, Icon, IconButton, Skeleton, Spacer, Stack, Text } from "@chakra-ui/react";
+import { Avatar, Badge, Card, HStack, Icon, IconButton, Skeleton, Spacer, Stack, Text } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip"
 import { GrDocumentDownload } from "react-icons/gr";
 import { AiOutlineOpenAI } from "react-icons/ai";
@@ -28,7 +28,7 @@ import { IoTimerOutline } from 'react-icons/io5';
 
 
 export function MessageItem(props) {
-  const { content, sentTime, role, id, dataTestId, usage, startTime, endTime } = props
+  const { content, sentTime, role, id, dataTestId, usage, startTime, endTime, toolsUsed } = props
   const { removeMessage, editMessage, user, options, is } = useGlobal()
   const { t } = useTranslation();
   const avatar = options.general.theme === 'dark' ? avatar_white : avatar_black
@@ -47,13 +47,11 @@ export function MessageItem(props) {
     const { usage, startTime, endTime } = props
     const formatter = new Intl.NumberFormat()
 
-    console.log("Usage: %o", usage)
     if (!usage) {
-      console.log("no usage data")
       return null
     }
     const elapsed = props.startTime && props.endTime ? props.endTime - props.startTime : null
-    console.log("elapsed: %o", elapsed)
+
     return (
       <HStack>
         {elapsed &&
@@ -74,6 +72,21 @@ export function MessageItem(props) {
     )
   }
 
+  function ToolUse(props) {
+    const { toolsUsed } = props
+
+    if (!toolsUsed) {
+      return null;
+    }
+    return toolsUsed.map((tool, index) => {
+      return (
+        <Tooltip key={index} content={t(tool.type + "_description")}>
+          <Badge>{t(tool.type)}</Badge>
+        </Tooltip>
+      )
+    })
+  }
+
   let message = processLaTeX(content)
   return (
     <Card.Root data-testid={dataTestId} className={classnames(styles.message, role === "user" ? styles.user : styles.assistant)} >
@@ -84,6 +97,7 @@ export function MessageItem(props) {
             <Avatar.Image src={role === 'user' ? user?.avatar : avatar} />
           </Avatar.Root>
           <Text>{dateFormat(sentTime)}</Text>
+          <ToolUse toolsUsed={toolsUsed} />
         </HStack>
       </Card.Header>
       <Card.Body>

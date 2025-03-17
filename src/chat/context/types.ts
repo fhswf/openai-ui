@@ -119,6 +119,7 @@ export type Message = {
     id: number | string;
     thread_id?: string;
     usage?: any;
+    toolsUsed?: any[];
 };
 
 export type Messages = Message[];
