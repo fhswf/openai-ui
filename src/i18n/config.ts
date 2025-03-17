@@ -187,6 +187,8 @@ i18n
                     tool_options: "Werkzeug-Optionen",
                     model_options: "Modell",
                     release_notes: "Versionshinweise",
+                    web_search_call: "Web-Suche",
+                    web_search_call_description: "Bei dieser Antwort wurde eine Web-Suche durchgeführt.",
                 },
             },
         },

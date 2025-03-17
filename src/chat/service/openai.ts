@@ -228,7 +228,7 @@ class EventProcessor {
 
   process(event) {
     console.log(event);
-    let message = null;
+    let message = this.chat[this.currentChat].messages[this.chat[this.currentChat].messages.length - 1];;
 
     switch (event.type) {
 
@@ -247,7 +247,7 @@ class EventProcessor {
 
       case "response.completed":
         console.log(event.response.usage);
-        message = this.chat[this.currentChat].messages[this.chat[this.currentChat].messages.length - 1];
+
         message.usage = event.response.usage;
         message.endTime = Date.now();
         this.updateChat();
@@ -257,9 +257,11 @@ class EventProcessor {
       case "response.output_item.added":
         switch (event.item.type) {
           case "web_search_call":
-            let info = "<div>" + t("Searching the Web...") + "</div>\n\n";
-            console.log("info: %o", info);
-            this.appendMessage(info);
+            if (!message.toolsUsed) {
+              message.toolsUsed = [];
+            }
+            message.toolsUsed.push(event.item);
+            this.updateChat();
         }
         break;
 
