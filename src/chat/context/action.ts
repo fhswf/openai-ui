@@ -1,12 +1,12 @@
-import { fetchStream } from "../service/index";
 import i18next, { t, use } from "i18next";
-import * as MessagesAPI from "openai/resources/beta/threads/messages";
 import * as StepsAPI from "openai/resources/beta/threads/runs/steps";
-import { Chat, GlobalState, Options, OptionAction, GlobalActions, Message, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
+import { Chat, GlobalState, OptionAction, GlobalActions, Message, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
 import React from "react";
-import { createMessage, createRun, getMessages, getRunSteps, initChat, retrieveRun, getImageURL, retrieveAssistant, modifyAssistant, getFileURL, retrieveFile } from "../service/assistant";
+import { getMessages, getRunSteps, initChat, retrieveRun, getImageURL, retrieveAssistant, modifyAssistant, getFileURL, retrieveFile } from "../service/openai_assistant";
 import { processLaTeX } from "../utils/latex";
 import { useApps } from "../apps/context";
+import { createResponse, executeChatRequest } from "../service/openai";
+import { executeAssistantRequest } from "../service/openai";
 
 
 
@@ -17,14 +17,48 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       payload: { ...payload },
     });
 
+  const setIs = (arg) => {
+    const { is } = state;
+    setState({ is: { ...is, ...arg } });
+  }
+
   const startChat = (chat: Chat[], currentChat: number) =>
     dispatch({
       type: GlobalActionType.START_CHAT,
       payload: { chat, currentChat },
     });
 
+  const sendMessage = () => {
+    const { typeingMessage, options, chat, is, currentChat, user } = state;
+    if (typeingMessage?.content) {
+      const newMessage = {
+        ...typeingMessage,
+        sentTime: Math.floor(Date.now() / 1000),
+      };
+      let messages: Messages = [];
+      console.log("sendMessage", chat);
+      if (chat[currentChat]?.messages) {
+        messages = [...chat[currentChat].messages];
+      }
+      messages.push(newMessage);
+      let newChat = [...chat];
+      newChat.splice(currentChat, 1, { ...chat[currentChat], messages });
+      if (options.openai.mode === "assistant") {
+        executeAssistantRequest(setState, is, newChat, messages, options, currentChat, chat, user);
+      }
+      else {
+        createResponse({ ...state, chat: newChat, setState, setIs }, this)
+          .then(() => {
+            setState({ typeingMessage: {} });
+          })
+        // executeChatRequest(setState, is, newChat, messages, options, currentChat, chat);
+      }
+    }
+  }
+
   return {
     setState,
+    setIs,
     doLogin(): void {
       console.log("doLogin");
       window.location.href = import.meta.env.VITE_LOGIN_URL;
@@ -33,29 +67,8 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       console.log("clear");
       setState({ typeingMessage: {} });
     },
-    sendMessage(): void {
-      const { typeingMessage, options, chat, is, currentChat, user } = state;
-      if (typeingMessage?.content) {
-        const newMessage = {
-          ...typeingMessage,
-          sentTime: Math.floor(Date.now() / 1000),
-        };
-        let messages: Messages = [];
-        console.log("sendMessage", chat);
-        if (chat[currentChat]?.messages) {
-          messages = [...chat[currentChat].messages];
-        }
-        messages.push(newMessage);
-        let newChat = [...chat];
-        newChat.splice(currentChat, 1, { ...chat[currentChat], messages });
-        if (options.openai.mode === "assistant") {
-          executeAssistantRequest(setState, is, newChat, messages, options, currentChat, chat, user);
-        }
-        else {
-          executeChatRequest(setState, is, newChat, messages, options, currentChat, chat);
-        }
-      }
-    },
+
+    sendMessage,
 
     setApp(app) {
       console.log("setApp", app);
@@ -368,16 +381,11 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       setState({ options });
     },
 
-    setIs(arg) {
-      const { is } = state;
-      setState({ is: { ...is, ...arg } });
-    },
-
     currentList() {
       return state.chat[state.currentChat];
     },
 
-    stopResonse() {
+    stopResponse() {
       setState({
         is: { ...state.is, thinking: false },
       });
@@ -385,196 +393,4 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
   };
 }
 
-async function executeAssistantRequest(setState, is, newChat: Chat[], messages: Messages, options: Options, currentChat: number, chat: Chat[], user) {
-
-  let currentMessage: Message = null;
-  let currentSnippet = "";
-  let snippets = [];
-
-  setState({
-    is: { ...is, thinking: true },
-    typeingMessage: {},
-    chat: newChat,
-  });
-  console.log("executeAssistantRequest, chat: %o, currentChat: %d ", newChat, currentChat);
-  let _chat = newChat[currentChat];
-  const controller = new AbortController();
-  console.log("executeAssistantRequest, chat: ", _chat, messages);
-
-  if (!_chat.thread) {
-    console.log("initChat: ", user);
-    try {
-      _chat = await initChat(_chat, user?.sub);
-    } catch (error) {
-      console.log(error);
-    }
-  }
-  console.log("executeAssistantRequest, chat: ", _chat);
-
-  _chat.messages?.map(async (message) => {
-    console.log("message: ", message);
-    if (!message.thread_id) {
-      let _message = await createMessage(_chat, message);
-      console.log("message: ", _message);
-      message.thread_id = _message.thread_id;
-    }
-    return message;
-  });
-
-  const newSnippet = () => {
-    snippets.push(currentSnippet);
-    currentSnippet = "";
-  }
-
-  const newMessage = (message: MessagesAPI.Message | StepsAPI.RunStep) => {
-    console.log("new message: %o", message);
-    let role = "assistant";
-    if (role in message) {
-      role = (<MessagesAPI.Message>(message)).role;
-    }
-    currentMessage = {
-      content: "",
-      role,
-      sentTime: message.created_at,
-      id: message.id,
-    };
-    postMessage("")
-  }
-
-  const postMessage = (content: string) => {
-    console.log("post message: %o %s", currentMessage, content);
-    currentSnippet = processLaTeX(content);
-    currentMessage.content = snippets.join("\n") + currentSnippet;
-    newChat.splice(currentChat, 1, {
-      ...chat[currentChat],
-      messages: [
-        ...messages,
-        currentMessage,
-      ],
-    });
-    setState({
-      is: { ...is, thinking: content.length },
-      chat: newChat,
-    });
-  }
-
-  const stream = createRun(_chat.thread, options.openai.assistant);
-  stream
-    .on('messageCreated', (message) => newMessage(message))
-    .on('runStepCreated', (runStep) => {
-      if (!currentMessage) {
-        newMessage(runStep)
-      }
-    })
-    .on('textCreated', (text) => {
-      newSnippet();
-      postMessage(text.value);
-    })
-    .on('textDelta', (textDelta, snapshot) => postMessage(snapshot.value))
-    .on('toolCallCreated', (toolCall) => {
-      console.log(`\nassistant > ${toolCall.type}\n\n`);
-      newSnippet();
-    })
-    .on('toolCallDelta', (toolCallDelta, snapshot) => {
-      if (toolCallDelta.type === 'code_interpreter') {
-        if (toolCallDelta.code_interpreter.input) {
-          console.log(toolCallDelta.code_interpreter.input);
-          postMessage("```Python\n" + toolCallDelta.code_interpreter.input + "\n```");
-        }
-        if (toolCallDelta.code_interpreter.outputs) {
-          console.log("\noutput >\n");
-          toolCallDelta.code_interpreter.outputs.forEach(output => {
-            if (output.type === "logs") {
-              console.log(`\n${output.logs}\n`);
-              postMessage("```Python\n" + output.logs + "\n```");
-            }
-          });
-        }
-      }
-    })
-    .on('imageFileDone', (imageFile) => {
-      console.log(`\nassistant > image file: ${imageFile.file_id}\n\n`);
-      newSnippet();
-      postMessage(`![Image](${getImageURL(_chat.thread, "", imageFile.file_id)})`);
-    })
-    .on('end', () => {
-      console.log('done');
-      setState({
-        is: { ...is, thinking: false },
-      });
-    });
-}
-
-
-export async function executeChatRequest(setState, is, newChat, messages: Messages, options: Options, currentChat, chat) {
-  setState({
-    is: { ...is, thinking: true },
-    typeingMessage: {},
-    chat: newChat,
-    currentChat
-  });
-  const controller = new AbortController();
-  try {
-    console.log("executeChatRequest, options: ", options.openai);
-    const res = await fetchStream(options.openai,
-      messages.map((item) => {
-        const { sentTime, id, ...rest } = item;
-        return { ...rest };
-      }),
-      (content) => {
-        newChat.splice(currentChat, 1, {
-          ...chat[currentChat],
-          messages: [
-            ...messages,
-            {
-              content,
-              role: "assistant",
-              sentTime: Math.floor(Date.now() / 1000),
-              id: Date.now(),
-            },
-          ],
-        });
-        setState({
-          is: { ...is, thinking: content.length },
-          chat: newChat,
-        });
-        document.getElementById("chat_list").scrollTo({
-          top: document.getElementById("chat_list").scrollHeight,
-          behavior: "smooth"
-        });
-      },
-      () => {
-        setState({
-          is: { ...is, thinking: false },
-        });
-      },
-      (res) => {
-        console.log(res);
-        const error = res || {};
-        if (error) {
-          if (error.message === "Unauthorized") {
-            console.log("Unauthorized");
-            window.location.href = import.meta.env.VITE_LOGIN_URL;
-          }
-          else {
-            newChat.splice(currentChat, 1, {
-              ...chat[currentChat],
-              messages,
-              error,
-            });
-          }
-
-
-          setState({
-            chat: newChat,
-            is: { ...is, thinking: false },
-          });
-        }
-      },
-      () => { });
-    console.log(res);
-  } catch (error) {
-    console.log(error);
-  }
-}
 

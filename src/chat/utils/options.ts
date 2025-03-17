@@ -66,6 +66,13 @@ export const modelOptions = [
   },
 ];
 
+export const toolOptions = [
+  {
+    label: "Web Search",
+    value: "web_search_preview",
+  },
+];
+
 export const languageOptions = [
   {
     label: "English",

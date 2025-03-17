@@ -61,7 +61,8 @@ export const ChatProvider = ({ children }) => {
 
 
   useEffect(() => {
-    const stateToSave = latestState.current;
+    const stateToSave = { ...latestState.current };
+    delete stateToSave.is;
     localStorage.setItem("SESSIONS", JSON.stringify(stateToSave));
   }, [latestState.current]);
 

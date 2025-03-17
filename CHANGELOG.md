@@ -1,3 +1,24 @@
+## [0.15.1](https://github.com/fhswf/openai-ui/compare/v0.15.0...v0.15.1) (2025-03-17)
+
+
+### Bug Fixes
+
+* show tool usage ([e8418ff](https://github.com/fhswf/openai-ui/commit/e8418ff8bdbde3c06d5335a7eb1e09b87151dd6d))
+
+# [0.15.0](https://github.com/fhswf/openai-ui/compare/v0.14.0...v0.15.0) (2025-03-17)
+
+
+### Bug Fixes
+
+* copy of code ([b56289c](https://github.com/fhswf/openai-ui/commit/b56289c8eb5925321b727d3afbfe4796f3575199))
+
+
+### Features
+
+* improved GitHub menu ([673dabf](https://github.com/fhswf/openai-ui/commit/673dabf1271c401b9ef64602990569401095600e))
+* Response API & web search ([47998a6](https://github.com/fhswf/openai-ui/commit/47998a69613e5d9bf3ae43629baf347295616b6f))
+* show token usage & elapsed time ([156569c](https://github.com/fhswf/openai-ui/commit/156569cb981dbe69a218d43d107dde419eff07d6))
+
 # [0.14.0](https://github.com/fhswf/openai-ui/compare/v0.13.17...v0.14.0) (2025-03-03)
 
 
