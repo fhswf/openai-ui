@@ -94,7 +94,7 @@ export function MessageMenu() {
                                             </HStack>
                                         </Card.Header>
                                         <Card.Body>
-                                            <Card.Description><Text truncate>{c.messages.filter((m) => m.role == "user")[0]?.content}</Text></Card.Description>
+                                            <Card.Description asChild><Text truncate>{c.messages.filter((m) => m.role == "user")[0]?.content}</Text></Card.Description>
                                             <HStack>
                                                 <Text textStyle="xs">{new Date(c.ct).toLocaleString()}</Text>
                                                 <Spacer />
