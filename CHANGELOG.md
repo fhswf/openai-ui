@@ -1,3 +1,17 @@
+# [0.16.0](https://github.com/fhswf/openai-ui/compare/v0.15.1...v0.16.0) (2025-03-17)
+
+
+### Bug Fixes
+
+* chakra-ui nesting issue ([7f2a1c4](https://github.com/fhswf/openai-ui/commit/7f2a1c49c99c0fd34ea30aaae9184648430ad015))
+
+
+### Features
+
+* download options ([6f859e4](https://github.com/fhswf/openai-ui/commit/6f859e4e6910ded79316c356380d87c556048ad9))
+* download options ([849d00b](https://github.com/fhswf/openai-ui/commit/849d00bb284fda8cdd1d1dd4b04e44df6812fa99))
+* download options ([2e5910a](https://github.com/fhswf/openai-ui/commit/2e5910a57d061c934fbdf876d69b5fd681ea75e1))
+
 ## [0.15.1](https://github.com/fhswf/openai-ui/compare/v0.15.0...v0.15.1) (2025-03-17)
 
 
