@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { modifyAssistant, retrieveAssistant, retrieveFile, createFile, deleteFile, assistantsModels, Model } from "./service/assistant";
+import { modifyAssistant, retrieveAssistant, retrieveFile, createFile, deleteFile, assistantsModels, Model } from "./service/openai_assistant";
 import { Box, Button, ButtonGroup, Card, CardBody, CardFooter, CardHeader, Field, Flex, Heading, IconButton, Input, SimpleGrid, Spacer, Stack, StackSeparator } from '@chakra-ui/react'
 import { Panel, Icon, Textarea, Title } from "../components";
 import {

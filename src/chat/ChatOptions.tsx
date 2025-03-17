@@ -30,7 +30,7 @@ import { classnames } from '../components/utils'
 import { useOptions } from './hooks'
 import { t, use } from 'i18next'
 import { initState } from './context/initState'
-import { getAssistants } from './service/assistant'
+import { getAssistants } from './service/openai_assistant'
 import { OptionActionType } from './context/types'
 import { Trans } from 'react-i18next'
 
