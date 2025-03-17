@@ -183,12 +183,16 @@ i18n
                     "hide_sidebar": "Seitenleiste ausblenden",
                     "show_sidebar": "Seitenleiste einblenden",
                     "chats": "Chats",
+
+                    "download_json": "als JSON herunterladen",
+                    "download_markdown": "als Markdown herunterladen",
                     chat_options: "Chat-Optionen",
                     tool_options: "Werkzeug-Optionen",
                     model_options: "Modell",
                     release_notes: "Versionshinweise",
                     web_search_call: "Web-Suche",
                     web_search_call_description: "Bei dieser Antwort wurde eine Web-Suche durchgeführt.",
+
                 },
             },
         },
