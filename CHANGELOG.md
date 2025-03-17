@@ -1,3 +1,10 @@
+## [0.15.1](https://github.com/fhswf/openai-ui/compare/v0.15.0...v0.15.1) (2025-03-17)
+
+
+### Bug Fixes
+
+* show tool usage ([e8418ff](https://github.com/fhswf/openai-ui/commit/e8418ff8bdbde3c06d5335a7eb1e09b87151dd6d))
+
 # [0.15.0](https://github.com/fhswf/openai-ui/compare/v0.14.0...v0.15.0) (2025-03-17)
 
 
