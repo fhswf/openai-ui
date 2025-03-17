@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Avatar, Card, HStack, Stack, Text, IconButton, Button, MenuItemGroup, MenuSeparator, Menu } from '@chakra-ui/react';
+import { Avatar, Card, HStack, Stack, Text, IconButton, Button, MenuItemGroup, MenuSeparator, Menu, Popover } from '@chakra-ui/react';
 import { PopoverRoot, PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody, PopoverTitle } from '../components/ui/popover';
 import { useTranslation } from 'react-i18next';
 import { AiOutlineClear } from 'react-icons/ai';
@@ -13,6 +13,7 @@ import { useMessage } from './hooks';
 import { MessageMenu } from './MessageMenu';
 import { modelOptions, toolOptions } from './utils/options'
 import { OptionActionType } from './context/types';
+import { GitHubMenu } from './GitHubMenu';
 
 
 
@@ -24,7 +25,7 @@ export function MessageHeader() {
     const columnIcon = is.toolbar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />;
 
     const { t } = useTranslation();
-    const issueUrl = import.meta.env.VITE_ISSUE_URL || 'https://github.com/fhswf/openai-ui/issues/new?template=Blank+issue';
+
 
     const logout = () => {
         console.log('Logout');
@@ -55,7 +56,7 @@ export function MessageHeader() {
 
             <Menu.Root>
                 <Menu.Trigger asChild>
-                    <IconButton variant="ghost" title={t("chat_options")}><CgOptions /></IconButton>
+                    <IconButton variant="ghost" accessKey="o" title={t("chat_options")}><CgOptions /></IconButton>
                 </Menu.Trigger>
                 <Menu.Positioner>
                     <Menu.Content>
@@ -97,7 +98,8 @@ export function MessageHeader() {
             {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
             {false && <IconButton variant="ghost" title={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>}
             <IconButton variant="ghost" title={t("download_thread")} onClick={downloadThread}><MdOutlineSimCardDownload /></IconButton>
-            <a href={issueUrl} target="_blank" title={t("open_issue")}><IconButton variant="ghost" aria-label={t("open_issue")}><IoLogoGithub /></IconButton></a>
+            <GitHubMenu />
+
             <PopoverRoot>
                 <PopoverTrigger data-testid="UserInformationBtn">
                     <Avatar.Root size="sm">
@@ -120,4 +122,6 @@ export function MessageHeader() {
 
         </HStack >
     );
+
+
 }
