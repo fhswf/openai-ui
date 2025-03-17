@@ -113,9 +113,12 @@ export type GlobalActions = {
 export type Message = {
     content: string;
     sentTime?: number;
+    startTime?: number;
+    endTime?: number;
     role: string;
     id: number | string;
     thread_id?: string;
+    usage?: any;
 };
 
 export type Messages = Message[];

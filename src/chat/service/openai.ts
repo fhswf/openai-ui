@@ -238,21 +238,26 @@ class EventProcessor {
           role: "assistant",
           content: "",
           sentTime: Math.floor(Date.now() / 1000),
-          id: Date.now(),
+          startTime: Date.now(),
+          id: event.response.id,
         };
         this.chat[this.currentChat].messages.push(message);
         this.updateChat();
         break;
 
       case "response.completed":
-        console.log(event.usage);
+        console.log(event.response.usage);
+        message = this.chat[this.currentChat].messages[this.chat[this.currentChat].messages.length - 1];
+        message.usage = event.response.usage;
+        message.endTime = Date.now();
+        this.updateChat();
         this.setIs({ thinking: false });
         break;
 
       case "response.output_item.added":
         switch (event.item.type) {
           case "web_search_call":
-            let info = "<p>" + t("Searching the Web...") + "</p>";
+            let info = "<div>" + t("Searching the Web...") + "</div>\n\n";
             console.log("info: %o", info);
             this.appendMessage(info);
         }

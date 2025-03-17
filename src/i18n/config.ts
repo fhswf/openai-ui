@@ -186,6 +186,7 @@ i18n
                     chat_options: "Chat-Optionen",
                     tool_options: "Werkzeug-Optionen",
                     model_options: "Modell",
+                    release_notes: "Versionshinweise",
                 },
             },
         },
