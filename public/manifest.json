@@ -1,7 +1,7 @@
 {
   "name": "K!mpuls Chatbot",
   "description": "Use the K!mpuls Chatbot to acces OpenAI models securly.",
-  "version": "0.14.0",
+  "version": "0.15.1",
   "manifest_version": 3,
   "author": "Christian Gawron",
   "homepage_url": "https://openai.ki.fh-swf.de",
