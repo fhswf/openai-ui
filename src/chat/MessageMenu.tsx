@@ -103,7 +103,7 @@ export function MessageMenu() {
                                                 </HStack>
                                             </Card.Header>
                                             <Card.Body>
-                                                <Card.Description asChild>
+                                                <Card.Description className={styles.description} asChild>
                                                     <Text>{getTitle(c.messages.filter((m) => m.role == "user"))}</Text>
                                                 </Card.Description>
                                                 {getImage(c.messages.filter((m) => m.role == "user"))}
