@@ -144,6 +144,7 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
       height="100lvh" width="100%"
       className={classnames(styles.chat, chatStyle)}
     >
+      <Toaster />
       <GridItem gridArea={"header"}>
         <MessageHeader />
       </GridItem>
@@ -172,6 +173,7 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
           </GridItem>
 
       }
+
       <GridItem gridArea={"input"}>
         <MessageInput />
       </GridItem>

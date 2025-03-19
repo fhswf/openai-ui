@@ -87,7 +87,21 @@ export function MessageItem(props) {
     })
   }
 
-  let message = processLaTeX(content)
+  let message = ""
+  let image_url = null
+  if (typeof content == "string") {
+    message = processLaTeX(content)
+  }
+  else {
+    content.map((item, index) => {
+      if (item.type === "input_text") {
+        message += item.text
+      }
+      else if (item.type === "input_image") {
+        image_url = item.image_url
+      }
+    })
+  }
   return (
     <Card.Root data-testid={dataTestId} className={classnames(styles.message, role === "user" ? styles.user : styles.assistant)} >
       <Card.Header justifyContent={role === 'user' ? 'flex-end' : 'flex-start'}>
@@ -104,6 +118,7 @@ export function MessageItem(props) {
         <LazyRenderer isVisible={is.thinking}>
           {message}
         </LazyRenderer>
+        {image_url && <img src={image_url} alt="image" className={styles.image} />}
       </Card.Body>
       <Card.Footer>
         <HStack width={"100%"} justifyContent="space-between">

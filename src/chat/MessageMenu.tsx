@@ -1,28 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-    MenuContent,
-    MenuItem,
-    MenuItemCommand,
-    MenuItemGroup,
-    MenuRadioItem,
-    MenuRadioItemGroup,
-    MenuRoot,
-    MenuSeparator,
-    MenuTrigger,
-} from "../components/ui/menu"
+
 import { useGlobal } from "./context";
 import { useApps } from "./apps/context";
 import React from "react";
-import { Card, HStack, IconButton, Kbd, Spacer, Text } from "@chakra-ui/react";
+import { Card, HStack, IconButton, Kbd, Dialog, SimpleGrid, Spacer, Text, Heading } from "@chakra-ui/react";
 import { classnames } from '../components/utils'
 import styles from './style/menu.module.less';
 import { useTranslation } from "react-i18next";
-import { IoChatboxOutline } from "react-icons/io5";
+import { IoChatboxOutline, IoCloseOutline } from "react-icons/io5";
+import { IoIosClose } from "react-icons/io";
 import { MdOutlineDeleteOutline } from "react-icons/md";
-import { RiChatHistoryLine } from "react-icons/ri";
+import { RiChatHistoryLine, RiChatNewLine } from "react-icons/ri";
+import { Message } from "./context/types";
+import { Toaster, toaster } from "../components/ui/toaster";
 
 export function MessageMenu() {
-    const { is, setIs, setState, clearThread, newChat, removeChat, reloadThread, downloadThread, showSettings, options, user, chat, currentChat } = useGlobal();
+    const { is, setIs, setState, clearThread, newChat, removeChat, reloadThread, downloadThread, showSettings, options, user, chat, currentApp, currentChat } = useGlobal();
     const { apps, category } = useApps();
     const { t } = useTranslation();
 
@@ -41,72 +34,115 @@ export function MessageMenu() {
         removeChat(index);
     };
 
+    function getTitle(messages: Message[]): React.ReactNode | Iterable<React.ReactNode> {
+        const content = messages[0]?.content;
+        if (typeof content === 'string') {
+            return content;
+        }
+        else if (Array.isArray(content)) {
+            let array = content as any[];
+            return array.find((item: { type: string; text: string }) => item.type == "input_text")?.text || t("empty_chat");
+        }
+        else return t("empty_chat");
+    }
+
+    function getImage(messages: Message[]): React.ReactNode | Iterable<React.ReactNode> {
+        const content = messages[0]?.content;
+        if (typeof content === 'string') {
+            return null;
+        }
+        else if (Array.isArray(content)) {
+            let array = content as any[];
+            let url = array.find((item: { type: string; text: string }) => item.type == "input_image")?.image_url;
+            if (url) {
+                return <img src={url} alt="image" className={styles.image} />;
+            }
+        }
+    }
+
     return (
-        <MenuRoot onOpenChange={(e) => setMenuOpen(e)}>
-            <MenuTrigger asChild>
-                <IconButton variant="ghost" title={t("more_actions")}><RiChatHistoryLine /></IconButton>
-            </MenuTrigger>
-            <MenuContent className={styles.chatmenu}>
-                <MenuItemGroup title={t("new_chat")}>
-                    {
-                        apps.map((app, index) => {
-                            const cat = category.filter(item => item.id == app.category)[0];
-                            return (
-                                <MenuItem key={app.id} onClick={() => newChat(app)} value={app.id} aria-keyshortcuts={index}>
-                                    <span className={classnames(styles.icon, `ico-${cat.icon}`)}></span> {app.title}
-                                </MenuItem>
-                            )
-                        })
-                    }
-                </MenuItemGroup>
-                <MenuSeparator />
-                <MenuItemGroup
-                    title={t("chats")}
-                    className={styles.chatlist}
-                    value={chat[currentChat].id}
-                >
-                    {chat
-                        // sort currentChat to the top
-                        .toSorted((a, b) => a.id == chat[currentChat].id ? -1 : b.id == chat[currentChat].id ? 1 : 0)
-                        .map((c, index) => {
+        <Dialog.Root onOpenChange={(e) => setMenuOpen(e)} size="xl" >
+            <Dialog.Trigger asChild>
+                <IconButton variant="ghost" title={t("chat_history")}><RiChatHistoryLine /></IconButton>
+            </Dialog.Trigger>
+            <Dialog.Backdrop />
+            <Dialog.Positioner>
+                <Dialog.Content>
+                    <Dialog.CloseTrigger asChild>
+                        <IconButton variant="ghost" title={t("close")}><IoCloseOutline /></IconButton>
+                    </Dialog.CloseTrigger>
+                    <Dialog.Header>
+                        <Dialog.Title>
+                            {t("chat_history")}
+                        </Dialog.Title>
+                    </Dialog.Header>
+                    <Dialog.Body>
+                        <SimpleGrid columns={3} gap={"2em"} className={styles.grid}>
+                            {chat
+                                // sort currentChat to the top
+                                //.toSorted((a, b) => a.id == chat[currentChat].id ? -1 : b.id == chat[currentChat].id ? 1 : 0)
+                                .map((c, index) => {
 
-                            const itemProps = chat[currentChat].id == c.id ? { ref: currentRef, className: styles.current } : {};
+                                    const itemProps = chat[currentChat].id == c.id ? { ref: currentRef, className: styles.current } : {};
 
-                            return (
-                                <MenuItem key={c.id}
-                                    className={styles.chatitem}
-                                    valueText={String(index)}
-                                    value={String(c.id)} {...itemProps}
-                                    onClick={
-                                        () => {
-                                            console.log('Select chat: %o', c);
-                                            let index = chat.findIndex(item => item.id == c.id);
-                                            setState({ currentChat: index });
-                                        }
-                                    }
-                                    as="div">
-                                    <Card.Root size="sm" className={styles.chatcard}>
-                                        <Card.Header>
-                                            <HStack>
-                                                {c.title}
-                                                <Spacer />
-                                                <IconButton variant="ghost" size="xs" focusRing="none" title={t("delete_chat")} onClick={() => deleteChat(c.id)}><MdOutlineDeleteOutline /></IconButton>
-                                            </HStack>
-                                        </Card.Header>
-                                        <Card.Body>
-                                            <Card.Description asChild><Text truncate>{c.messages.filter((m) => m.role == "user")[0]?.content}</Text></Card.Description>
-                                            <HStack>
-                                                <Text textStyle="xs">{new Date(c.ct).toLocaleString()}</Text>
-                                                <Spacer />
-                                                <Text>{t('count_messages', { count: c.messages?.filter(item => item.role !== "system").length })}</Text>
-                                            </HStack>
-                                        </Card.Body>
-                                    </Card.Root>
-                                </MenuItem>
-                            )
-                        })}
-                </MenuItemGroup>
-            </MenuContent>
-        </MenuRoot>
+
+                                    return (
+                                        <Card.Root size="sm" key={c.id}
+                                            className={styles.card} {...itemProps}
+                                            onClick={(e) => {
+                                                console.log('Clicking on chat %o', c.id);
+                                                setState({ currentChat: index });
+                                            }}>
+                                            <Card.Header>
+                                                <HStack width={"100%"} justifyContent="space-between" alignItems="baseline">
+                                                    <Heading>
+                                                        {c.title}
+                                                    </Heading>
+                                                    <Spacer />
+                                                    <Text textStyle="xs">{new Date(c.ct).toLocaleString()}</Text>
+                                                </HStack>
+                                            </Card.Header>
+                                            <Card.Body>
+                                                <Card.Description asChild>
+                                                    <Text>{getTitle(c.messages.filter((m) => m.role == "user"))}</Text>
+                                                </Card.Description>
+                                                {getImage(c.messages.filter((m) => m.role == "user"))}
+                                            </Card.Body>
+                                            <Card.Footer>
+                                                <HStack width={"100%"} justifyContent="space-between" alignItems="center">
+                                                    <IconButton variant="ghost" size="xs" focusRing="none" title={t("delete_chat")} onClick={() => deleteChat(c.id)}><MdOutlineDeleteOutline /></IconButton>
+                                                    <Spacer />
+                                                    <Text>{t('count_messages', { count: c.messages?.filter(item => item.role !== "system").length })}</Text>
+                                                </HStack>
+                                            </Card.Footer>
+                                        </Card.Root>
+                                    )
+                                })}
+                        </SimpleGrid>
+                    </Dialog.Body>
+                    <Dialog.Footer>
+                        <HStack width={"100%"} justifyContent="space-between" alignItems="center">
+                            <IconButton variant="ghost" size="xs" focusRing="none"
+                                title={t("new_chat")}
+                                onClick={() => {
+                                    newChat(currentApp)
+                                }}
+                            ><RiChatNewLine /></IconButton>
+                            <Spacer />
+                            <IconButton variant="ghost" size="xs" focusRing="none"
+                                title={t("clear_chat")}
+                                onClick={() => {
+                                    toaster.create({
+                                        title: t("error_occurred"),
+                                        description: "error.message",
+                                        duration: 5000,
+                                        type: "error",
+                                    })
+                                }}></IconButton>
+                        </HStack>
+                    </Dialog.Footer>
+                </Dialog.Content>
+            </Dialog.Positioner>
+        </Dialog.Root >
     );
 }

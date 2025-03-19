@@ -13,6 +13,7 @@ import { Stream } from "openai/streaming.mjs";
 import { ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
 import { Tooltip } from "@chakra-ui/react";
 import React from "react";
+import { toaster } from "../../components/ui/toaster";
 
 export async function* streamAsyncIterable(stream) {
   const reader = stream.getReader();
@@ -184,8 +185,24 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
     eventProcessor,
   });
 
-  for await (const event of stream) {
-    eventProcessor.process(event);
+  try {
+    for await (const event of stream) {
+      eventProcessor.process(event);
+    }
+  }
+  catch (error) {
+    console.log("error: %o", error);
+    eventProcessor.stop();
+    setIs({ ...is, thinking: false });
+    setState({
+      eventProcessor: null,
+    });
+    toaster.create({
+      title: t("error_occurred"),
+      description: error.message || "",
+      duration: 5000,
+      type: "error",
+    })
   }
 }
 
@@ -283,6 +300,17 @@ class EventProcessor {
         console.log(event.call);
         this.setIs({ tool: null, thinking: true });
         break;
+
+      case "error":
+        console.log(event.error);
+        this.setIs({ tool: null, thinking: false });
+        this.stop();
+        toaster.create({
+          title: t("error_occurred"),
+          description: event.error.message || "",
+          duration: 5000,
+          type: "error",
+        })
     }
   }
 }

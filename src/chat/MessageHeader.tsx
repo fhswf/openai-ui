@@ -22,11 +22,15 @@ import { LuPanelLeftClose, LuPanelLeftOpen } from 'react-icons/lu';
 import { MdOutlineSimCardDownload } from 'react-icons/md';
 import { CgOptions } from "react-icons/cg";
 import { useGlobal } from './context';
+import { useApps } from "./apps/context";
 import { useMessage } from './hooks';
+import { classnames } from '../components/utils'
+import styles from './style/menu.module.less';
 import { MessageMenu } from './MessageMenu';
 import { modelOptions, toolOptions } from './utils/options'
 import { OptionActionType } from './context/types';
 import { GitHubMenu } from './GitHubMenu';
+import { RiChatNewFill, RiChatNewLine } from 'react-icons/ri';
 
 
 
@@ -34,6 +38,7 @@ import { GitHubMenu } from './GitHubMenu';
 export function MessageHeader() {
     const { is, setIs, setOptions, setState, clearThread, newChat, reloadThread, downloadThread, showSettings, options, user, chat, currentChat } = useGlobal();
     const { message } = useMessage();
+    const { apps, category } = useApps();
     const messages = message?.messages;
     const columnIcon = is.toolbar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />;
 
@@ -48,12 +53,21 @@ export function MessageHeader() {
 
     function setWebSearch(e: boolean): void {
         console.log('Set web search: %o', e);
-        setOptions({ type: OptionActionType.OPENAI, data: { ...options.openai, tools: { ...options.openai.tools, "web-search": e } } });
+        let tools: Map<String, boolean> = options.openai?.tools || new Map();
+        if (e) {
+            tools["web-search"] = true;
+        } else {
+            delete tools["web-search"];
+        }
+        setOptions({
+            type: OptionActionType.OPENAI,
+            data: { ...options.openai, tools }
+        });
     }
 
     return (
         <HStack as="header"
-            spacing={2} padding={2} borderBottomWidth="1px"
+            padding={2} borderBottomWidth="1px"
             justifyContent="space-between"
             data-testid="ChatHeader">
 
@@ -66,6 +80,8 @@ export function MessageHeader() {
                 <Text data-testid="HeaderTitle" textStyle="lg">{message?.title}</Text>
                 <Text textStyle="xs">{t('count_messages', { count: messages?.filter(item => item.role !== "system").length })}</Text>
             </Stack>
+
+
 
             <Menu.Root>
                 <Menu.Trigger asChild>
@@ -105,6 +121,27 @@ export function MessageHeader() {
                         </Menu.ItemGroup>
                     </Menu.Content>
                 </Menu.Positioner>
+            </Menu.Root>
+
+
+            <Menu.Root>
+                <Menu.Trigger asChild>
+                    <IconButton variant="ghost" accessKey="n" title={t("new_chat")}><RiChatNewLine /></IconButton>
+                </Menu.Trigger>
+                <MenuContent>
+                    <MenuItemGroup title={t("new_chat")}>
+                        {
+                            apps.map((app, index) => {
+                                const cat = category.filter(item => item.id == app.category)[0];
+                                return (
+                                    <MenuItem key={app.id} onClick={() => newChat(app)} value={app.id} aria-keyshortcuts={index}>
+                                        <span className={classnames(styles.icon, `ico-${cat.icon}`)}></span> {app.title}
+                                    </MenuItem>
+                                )
+                            })
+                        }
+                    </MenuItemGroup>
+                </MenuContent>
             </Menu.Root>
 
             <MessageMenu />
@@ -149,3 +186,4 @@ export function MessageHeader() {
 
 
 }
+

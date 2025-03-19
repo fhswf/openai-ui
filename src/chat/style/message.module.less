@@ -12,6 +12,14 @@
   &.user {
     align-self: flex-end;
   }
+
+  img {
+    max-height: 96px;
+    width: auto;
+    height: auto;
+    border-radius: var(--border-radius);
+    object-fit: contain;
+  }
 }
 
 
@@ -97,7 +105,9 @@
   }
 }
 
-
+.textarea {
+  max-height: 30lvh;
+}
 
 .container {
   flex: 1;
@@ -143,6 +153,14 @@
       font-size: 18px;
       color: var(--text-color);
     }
+  }
+
+  img {
+    max-height: 64px;
+    //max-width: 64px;
+    width: auto;
+    height: auto;
+    border-radius: var(--border-radius);
   }
 }
 
@@ -198,6 +216,15 @@
 }
 
 .info {}
+
+.dragover {
+  &[data-name="dropzone"] {
+    background-color: var(--background-color-gray);
+    border-color: var(--primary);
+    border-width: 2px;
+    border-style: dashed;
+  }
+}
 
 @media screen and (max-width: 600px) {
   .z-chat {

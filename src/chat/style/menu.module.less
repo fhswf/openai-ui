@@ -22,16 +22,14 @@
     }
 }
 
-
-
-.chatcard {
-    flex-grow: 1;
-    border-width: var(--chakra-borders-sm);
-    max-width: 400px;
+.card {
+    &:hover {
+        background-color: var(--chakra-colors-gray-100);
+        border-color: var(--chakra-colors-blue-500);
+    }
 }
 
 .current {
-    .chatcard {
-        border-color: var(--chakra-colors-blue-500);
-    }
+    background-color: var(--chakra-colors-blue-50);
+    //border-color: var(--chakra-colors-blue-500);
 }

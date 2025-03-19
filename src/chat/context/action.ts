@@ -31,10 +31,24 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
   const sendMessage = () => {
     const { typeingMessage, options, chat, is, currentChat, user } = state;
     if (typeingMessage?.content) {
-      const newMessage = {
-        ...typeingMessage,
-        sentTime: Math.floor(Date.now() / 1000),
-      };
+      let newMessage = null;
+      if (typeingMessage.images) {
+        const text = typeingMessage.content;
+        const images = typeingMessage.images;
+        newMessage = { sentTime: Math.floor(Date.now() / 1000), role: "user" };
+        newMessage.content = [];
+        newMessage.content.push({ type: "input_text", text });
+        images.forEach((image) => {
+          newMessage.content.push({ type: "input_image", image_url: image });
+        });
+        console.log("sendMessage: %o", newMessage);
+      }
+      else {
+        newMessage = {
+          ...typeingMessage,
+          sentTime: Math.floor(Date.now() / 1000),
+        };
+      }
       let messages: Messages = [];
       console.log("sendMessage", chat);
       if (chat[currentChat]?.messages) {
@@ -51,7 +65,6 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
           .then(() => {
             setState({ typeingMessage: {} });
           })
-        // executeChatRequest(setState, is, newChat, messages, options, currentChat, chat);
       }
     }
   }
@@ -126,7 +139,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         executeChatRequest(setState, is, _chat, messages, options, 0, _chat);
       }
       else {
-        console.log("no botStarts");
+        console.debug("starting chat: %o", _chat);
         startChat(_chat, 0)
       }
     },
