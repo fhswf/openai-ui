@@ -1,3 +1,10 @@
+## [0.17.1](https://github.com/fhswf/openai-ui/compare/v0.17.0...v0.17.1) (2025-03-19)
+
+
+### Bug Fixes
+
+* limit message text in chat history dialog to 5 lines ([0808d7b](https://github.com/fhswf/openai-ui/commit/0808d7bd3b1c356e7e1ee2ea948a73417f849488))
+
 # [0.17.0](https://github.com/fhswf/openai-ui/compare/v0.16.0...v0.17.0) (2025-03-19)
 
 
