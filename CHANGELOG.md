@@ -1,3 +1,10 @@
+# [0.17.0](https://github.com/fhswf/openai-ui/compare/v0.16.0...v0.17.0) (2025-03-19)
+
+
+### Features
+
+* improve chat history ([9dd918e](https://github.com/fhswf/openai-ui/commit/9dd918e55cda7cad8856dd5c597eb8dc967ae083))
+
 # [0.16.0](https://github.com/fhswf/openai-ui/compare/v0.15.1...v0.16.0) (2025-03-17)
 
 
