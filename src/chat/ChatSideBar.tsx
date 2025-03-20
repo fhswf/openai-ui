@@ -118,9 +118,8 @@ export function ChatSideBar() {
 
   const [open, setOpen] = useState(false)
   const [metadata, setMetadata] = useState({})
-  const [releaseData, setReleaseData] = useState({})
   const [newRelease, setNewRelease] = useState(false)
-  const { is, setIs, setState, options, user, version } = useGlobal()
+  const { is, setIs, setState, options, user, version, release } = useGlobal()
   const { setGeneral, setAccount } = useOptions()
 
 
@@ -157,20 +156,20 @@ export function ChatSideBar() {
       .then((data) => {
         console.log(data)
         setMetadata(data)
-        if (semver.gt(data.release, version)) {
+        if (semver.gt(data.release, version) || !release) {
           console.log('New release: %s', data.release)
           setNewRelease(true)
           setState({ version: data.release })
+          fetch(`${data.repo_url}/releases/tags/v${data.release}`)
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("release data: %j", data)
+              setState({ release: data })
+            })
+            .catch((error) => {
+              console.error("Error fetching release data: %s", error)
+            })
         }
-        fetch(`${data.repo_url}/releases/tags/v${data.release}`)
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("release data: %j", data)
-            setReleaseData(data)
-          })
-          .catch((error) => {
-            console.error("Error fetching release data: %s", error)
-          })
       });
   }, [version]);
 

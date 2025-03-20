@@ -8,22 +8,15 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
+import { useGlobal } from "./context";
 
 export function GitHubMenu() {
     const { t } = useTranslation();
+    const { release } = useGlobal();
     const issueUrl = import.meta.env.VITE_ISSUE_URL || 'https://github.com/fhswf/openai-ui/issues/new?template=Blank+issue';
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [popoverOpen, setPopoverOpen] = useState(false);
-    const [releaseData, setReleaseData] = useState({ body: '' });
-
-    useEffect(() => {
-        // Fetch release data from an API or other source
-        fetch('https://api.github.com/repos/fhswf/openai-ui/releases/latest')
-            .then(response => response.json())
-            .then(data => setReleaseData(data))
-            .catch(error => console.error('Error fetching release data:', error));
-    }, []);
 
     return (
         <Menu.Root
@@ -53,10 +46,9 @@ export function GitHubMenu() {
                                         <Popover.Title>Release Notes</Popover.Title>
                                         <div className="z-ui-markdown">
                                             <Markdown
-
                                                 remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
                                                 rehypePlugins={[rehypeKatex, rehypeRaw]}>
-                                                {releaseData.body}
+                                                {release?.body}
                                             </Markdown>
                                         </div>
                                     </Popover.Body>

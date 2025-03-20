@@ -171,39 +171,56 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
       tools.push({ type: key as "web_search_preview" | "web_search_preview_2025_03_11" });
     });
 
-  console.log("createResponse: %o", tools);
-  const stream: Stream<ResponseStreamEvent> = await client.responses.create({
-    model: options.openai.model,
-    tools: tools,
-    input,
-    stream: true,
-  });
-  setIs({ ...is, thinking: true });
-  console.log("stream: %o", stream);
-  const eventProcessor = new EventProcessor(stream, global);
-  setState({
-    eventProcessor,
-  });
-
   try {
-    for await (const event of stream) {
-      eventProcessor.process(event);
-    }
-  }
-  catch (error) {
-    console.log("error: %o", error);
-    eventProcessor.stop();
-    setIs({ ...is, thinking: false });
-    setState({
-      eventProcessor: null,
+    console.log("createResponse: %o", tools);
+
+    const stream: Stream<ResponseStreamEvent> = await client.responses.create({
+      model: options.openai.model,
+      tools,
+      input,
+      stream: true,
     });
-    toaster.create({
-      title: t("error_occurred"),
-      description: error.message || "",
-      duration: 5000,
-      type: "error",
-    })
+
+    setIs({ ...is, thinking: true });
+    console.log("stream: %o", stream);
+
+    const eventProcessor = new EventProcessor(stream, global);
+    setState({ eventProcessor });
+
+    for await (const event of stream) {
+      try {
+        eventProcessor.process(event);
+      } catch (error) {
+        handleStreamError(error, eventProcessor);
+        break;
+      }
+    }
+  } catch (error) {
+    handleError(error);
   }
+
+function handleStreamError(error, eventProcessor) {
+  console.log("Stream error: %o", error);
+  eventProcessor.stop();
+  setIs({ ...is, thinking: false });
+  setState({ eventProcessor: null });
+  toaster.create({
+    title: t("error_occurred"),
+    description: error.message || "",
+    duration: 5000,
+    type: "error",
+  });
+}
+
+function handleError(error) {
+  console.log("Error: %o", error);
+  toaster.create({
+    title: t("error_occurred"),
+    description: error.message || "",
+    duration: 5000,
+    type: "error",
+  });
+}
 }
 
 class EventProcessor {

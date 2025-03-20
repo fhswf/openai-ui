@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useGlobal } from "./context";
 import { useApps } from "./apps/context";
 import React from "react";
-import { Card, HStack, IconButton, Kbd, Dialog, SimpleGrid, Spacer, Text, Heading } from "@chakra-ui/react";
+import { Card, HStack, IconButton, Kbd, Dialog, SimpleGrid, Spacer, Text, Heading, Button } from "@chakra-ui/react";
 import { classnames } from '../components/utils'
 import styles from './style/menu.module.less';
 import { useTranslation } from "react-i18next";
@@ -61,23 +61,30 @@ export function MessageMenu() {
     }
 
     return (
-        <Dialog.Root onOpenChange={(e) => setMenuOpen(e)} size="xl" >
+        <Dialog.Root open={menuOpen} size="full" >
             <Dialog.Trigger asChild>
-                <IconButton variant="ghost" title={t("chat_history")}><RiChatHistoryLine /></IconButton>
+                <IconButton variant="ghost" title={t("chat_history")}
+                    onClick={() => setMenuOpen(true)}
+                >
+                    <RiChatHistoryLine />
+                </IconButton>
             </Dialog.Trigger>
             <Dialog.Backdrop />
             <Dialog.Positioner>
-                <Dialog.Content>
+                <Dialog.Content className={styles.dialog}>
                     <Dialog.CloseTrigger asChild>
-                        <IconButton variant="ghost" title={t("close")}><IoCloseOutline /></IconButton>
+                        <IconButton variant="ghost" title={t("close")}
+                            onClick={() => setMenuOpen(false)}>
+                            <IoCloseOutline />
+                        </IconButton>
                     </Dialog.CloseTrigger>
                     <Dialog.Header>
                         <Dialog.Title>
                             {t("chat_history")}
                         </Dialog.Title>
                     </Dialog.Header>
-                    <Dialog.Body>
-                        <SimpleGrid columns={3} gap={"2em"} className={styles.grid}>
+                    <Dialog.Body className={styles.dialog_body}>
+                        <SimpleGrid minChildWidth="sm" gap={"2em"} className={styles.grid}>
                             {chat
                                 // sort currentChat to the top
                                 //.toSorted((a, b) => a.id == chat[currentChat].id ? -1 : b.id == chat[currentChat].id ? 1 : 0)
@@ -122,23 +129,20 @@ export function MessageMenu() {
                     </Dialog.Body>
                     <Dialog.Footer>
                         <HStack width={"100%"} justifyContent="space-between" alignItems="center">
-                            <IconButton variant="ghost" size="xs" focusRing="none"
+                            <Button
+                                size="xs"
+                                focusRing="none"
                                 title={t("new_chat")}
+                                variant="outline"
                                 onClick={() => {
                                     newChat(currentApp)
                                 }}
-                            ><RiChatNewLine /></IconButton>
+                            ><RiChatNewLine />{t("new_chat")}</Button>
                             <Spacer />
-                            <IconButton variant="ghost" size="xs" focusRing="none"
-                                title={t("clear_chat")}
-                                onClick={() => {
-                                    toaster.create({
-                                        title: t("error_occurred"),
-                                        description: "error.message",
-                                        duration: 5000,
-                                        type: "error",
-                                    })
-                                }}></IconButton>
+                            <Button type="primary"
+                                onClick={() => setMenuOpen(false)}>
+                                {t("close")}
+                            </Button>
                         </HStack>
                     </Dialog.Footer>
                 </Dialog.Content>

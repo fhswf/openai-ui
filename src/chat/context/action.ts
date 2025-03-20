@@ -171,14 +171,12 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     },
 
     setMessage(content) {
-      const typeingMessage =
-        content === ""
-          ? {}
-          : {
-            role: "user",
-            content,
-            id: Date.now(),
-          };
+      let typeingMessage = {
+        ...state.typeingMessage,
+        role: "user",
+        id: Date.now(),
+      };
+      typeingMessage.content = content;
       setState({ is: { ...state.is, typeing: true }, typeingMessage });
     },
 

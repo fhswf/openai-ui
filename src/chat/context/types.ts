@@ -74,7 +74,7 @@ export type GlobalState = {
     user: any;
     eventProcessor?: any;
     version: string;
-    content: string;
+    release?: any;
 };
 
 export type GlobalAction = { type: GlobalActionType.SET_STATE; payload: Partial<GlobalState>; } |

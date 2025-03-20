@@ -8,6 +8,7 @@ import styles from './style/message.module.less'
 import CodeEditor from '@uiw/react-textarea-code-editor';
 import { MdOutlineCancel } from "react-icons/md";
 import { use } from "chai";
+import { toaster } from "../components/ui/toaster";
 
 export function MessageInput() {
     const { setIs, sendMessage, setMessage, setState, eventProcessor, is, options, typeingMessage, clearTypeing } = useGlobal();
@@ -69,21 +70,35 @@ export function MessageInput() {
                     typeingMessage.images = [];
                 }
                 // check if the url is an image
-                /* Does not work in the browser due to CORS
-                fetch(url, { method: 'HEAD' })
+                const proxy = import.meta.env.VITE_PROXY_URL || "https://poxy.gawron.cloud/api";
+                let fetchUrl = `${proxy}?url=${encodeURIComponent(url)}`;
+                fetch(fetchUrl, { method: 'GET' })
                     .then((response) => {
                         console.log('Response: %o', response.headers.get('content-type'));
                         if (response.headers.get('content-type')?.startsWith('image')) {
                             typeingMessage.images.push(url);
                             setState({ typeingMessage });
                         }
+                        else {
+                            toaster.create({
+                                title: t("not_image"),
+                                description: t("not_image_description"),
+                                duration: 5000,
+                                type: "warning",
+                            })
+                        }
                     })
                     .catch((error) => {
                         console.error('Error: %o', error);
+                        toaster.create({
+                            title: t("error_occurred"),
+                            description: "error.message",
+                            duration: 5000,
+                            type: "error",
+                        })
                     });
-                */
-                typeingMessage.images.push(url);
-                setState({ typeingMessage });
+
+
 
             }}
             ref={inputRef}
@@ -136,7 +151,11 @@ export function MessageInput() {
                             borderWidth={0} outlineWidth={0}
                             placeholder={t("Enter something....")}
                             className={styles.textarea}
-                            onInput={(ev: BaseSyntheticEvent) => setMessage(ev.target.value)} />
+                            onInput={(ev: BaseSyntheticEvent) => {
+                                typeingMessage.content = ev.target.value;
+                                setMessage(typeingMessage.content);
+                        
+                            }} />
                 }
                 {
                     <HStack justify={"flex-end"} paddingInlineStart={2} paddingInlineEnd={2}>
