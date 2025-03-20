@@ -1,3 +1,10 @@
+## [0.17.2](https://github.com/fhswf/openai-ui/compare/v0.17.1...v0.17.2) (2025-03-20)
+
+
+### Bug Fixes
+
+* ui improvements ([64daa05](https://github.com/fhswf/openai-ui/commit/64daa0514111a25193a80bb485910af6d01fb393))
+
 ## [0.17.1](https://github.com/fhswf/openai-ui/compare/v0.17.0...v0.17.1) (2025-03-19)
 
 
