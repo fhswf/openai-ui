@@ -61,10 +61,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         executeAssistantRequest(setState, is, newChat, messages, options, currentChat, chat, user);
       }
       else {
-        createResponse({ ...state, chat: newChat, setState, setIs }, this)
-          .then(() => {
-            setState({ typeingMessage: {} });
-          })
+        createResponse({ ...state, chat: newChat, setState, setIs }, this);
       }
     }
   }

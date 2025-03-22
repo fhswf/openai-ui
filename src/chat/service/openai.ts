@@ -5,7 +5,7 @@ import * as MessagesAPI from "openai/resources/beta/threads/messages.mjs";
 import * as StepsAPI from "openai/resources/beta/threads/runs/steps.mjs";
 import { processLaTeX } from "../utils/latex";
 import { initChat, createMessage, createRun, getImageURL } from "./openai_assistant";
-import OpenAI from "openai";
+import OpenAI, { APIError } from "openai";
 
 import { t } from "i18next";
 import { ResponseStream } from "openai/lib/responses/ResponseStream.mjs";
@@ -154,14 +154,13 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
 
   const { options, chat, currentChat, is, setState, setIs } = global;
 
-
   console.log("messages: %o", chat[currentChat].messages);
   console.log("parent: %o", parent);
 
   const input: ResponseInput = chat[currentChat].messages.map((item) => {
     const { role, content, ...rest } = item;
     return { role, content } as ResponseInputItem;
-  })
+  });
 
   const tools: Tool[] = [];
 
@@ -171,56 +170,76 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
       tools.push({ type: key as "web_search_preview" | "web_search_preview_2025_03_11" });
     });
 
-  try {
-    console.log("createResponse: %o", tools);
+  console.log("createResponse: %o", tools);
 
-    const stream: Stream<ResponseStreamEvent> = await client.responses.create({
-      model: options.openai.model,
-      tools,
-      input,
-      stream: true,
+  client.responses.create({
+    model: options.openai.model,
+    tools,
+    input,
+    stream: true,
+  })
+    .then((stream: Stream<ResponseStreamEvent>) => {
+      setIs({ ...is, thinking: true });
+      console.log("stream: %o", stream);
+
+      const eventProcessor = new EventProcessor(stream, global);
+      setState({ eventProcessor });
+
+      const processStream = async () => {
+        try {
+          for await (const event of stream) {
+            eventProcessor.process(event);
+          }
+          console.log("Stream ended");
+        } catch (error) {
+          handleStreamError(error, eventProcessor);
+        }
+      };
+
+      processStream();
+    })
+    .catch((error) => {
+      handleError(error);
     });
 
-    setIs({ ...is, thinking: true });
-    console.log("stream: %o", stream);
-
-    const eventProcessor = new EventProcessor(stream, global);
-    setState({ eventProcessor });
-
-    for await (const event of stream) {
-      try {
-        eventProcessor.process(event);
-      } catch (error) {
-        handleStreamError(error, eventProcessor);
-        break;
-      }
-    }
-  } catch (error) {
-    handleError(error);
+  function handleStreamError(error, eventProcessor) {
+    console.log("Stream error: %o", error);
+    eventProcessor.stop();
+    setIs({ ...is, thinking: false });
+    setState({ eventProcessor: null });
+    toaster.create({
+      title: t("error_occurred"),
+      description: error.message || "",
+      duration: 5000,
+      type: "error",
+    });
   }
 
-function handleStreamError(error, eventProcessor) {
-  console.log("Stream error: %o", error);
-  eventProcessor.stop();
-  setIs({ ...is, thinking: false });
-  setState({ eventProcessor: null });
-  toaster.create({
-    title: t("error_occurred"),
-    description: error.message || "",
-    duration: 5000,
-    type: "error",
-  });
-}
+  function handleError(error) {
+    console.log("Error: %o %s", error, typeof error);
+    if (error instanceof APIError) {
+      const apiError = error as APIError;
+      console.log("APIError: %o %o", apiError, apiError.status);
+      if (apiError.status === 401) {
+        console.log("Unauthorized");
+        toaster.create({
+          title: t("login_required"),
+          description: t("login_required_description"),
+          duration: 2000,
+          type: "info",
+        });
+        window.location.href = import.meta.env.VITE_LOGIN_URL;
+        return
+      }
+    }
 
-function handleError(error) {
-  console.log("Error: %o", error);
-  toaster.create({
-    title: t("error_occurred"),
-    description: error.message || "",
-    duration: 5000,
-    type: "error",
-  });
-}
+    toaster.create({
+      title: t("error_occurred"),
+      description: error.message || "",
+      duration: 5000,
+      type: "error",
+    });
+  }
 }
 
 class EventProcessor {
@@ -275,6 +294,7 @@ class EventProcessor {
           startTime: Date.now(),
           id: event.response.id,
         };
+        this.setState({ typeingMessage: {} });
         this.chat[this.currentChat].messages.push(message);
         this.updateChat();
         break;
