@@ -1,3 +1,10 @@
+## [0.17.3](https://github.com/fhswf/openai-ui/compare/v0.17.2...v0.17.3) (2025-03-22)
+
+
+### Bug Fixes
+
+* improve handling of expired tokens ([4123cb1](https://github.com/fhswf/openai-ui/commit/4123cb18b9cf30b622bf986035099847db584be0))
+
 ## [0.17.2](https://github.com/fhswf/openai-ui/compare/v0.17.1...v0.17.2) (2025-03-20)
 
 
