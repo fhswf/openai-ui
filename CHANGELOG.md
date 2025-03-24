@@ -1,3 +1,10 @@
+## [0.17.4](https://github.com/fhswf/openai-ui/compare/v0.17.3...v0.17.4) (2025-03-24)
+
+
+### Bug Fixes
+
+* ignore tools option if not defined ([ba73f0a](https://github.com/fhswf/openai-ui/commit/ba73f0a03939d8f6178d6b80f867ade4c23ebd18))
+
 ## [0.17.3](https://github.com/fhswf/openai-ui/compare/v0.17.2...v0.17.3) (2025-03-22)
 
 
