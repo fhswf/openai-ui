@@ -16,7 +16,7 @@ ENV VITE_USER_URL=/api/user
 
 RUN NODE_ENV=production npm run build
 
-FROM nginx:1.21-alpine
+FROM nginx:1.27-bookworm
 
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
