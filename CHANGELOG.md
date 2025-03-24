@@ -1,3 +1,10 @@
+## [0.17.5](https://github.com/fhswf/openai-ui/compare/v0.17.4...v0.17.5) (2025-03-24)
+
+
+### Bug Fixes
+
+* nginx security update ([ccdaf65](https://github.com/fhswf/openai-ui/commit/ccdaf6593127b16ff5c6b6568228d36a4c0f44e9)), closes [FH-SWF#202503191000551](https://github.com/FH-SWF/issues/202503191000551)
+
 ## [0.17.4](https://github.com/fhswf/openai-ui/compare/v0.17.3...v0.17.4) (2025-03-24)
 
 
