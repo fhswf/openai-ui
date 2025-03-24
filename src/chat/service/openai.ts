@@ -164,11 +164,13 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
 
   const tools: Tool[] = [];
 
-  Object.keys(options.openai.tools)
-    .filter((key) => options.openai.tools[key])
-    .forEach((key) => {
-      tools.push({ type: key as "web_search_preview" | "web_search_preview_2025_03_11" });
-    });
+  if (options?.openai?.tools) {
+    Object.keys(options?.openai?.tools)
+      .filter((key) => options.openai.tools[key])
+      .forEach((key) => {
+        tools.push({ type: key as "web_search_preview" | "web_search_preview_2025_03_11" });
+      });
+  }
 
   console.log("createResponse: %o", tools);
 
@@ -217,9 +219,9 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
 
   function handleError(error) {
     console.log("Error: %o %s", error, typeof error);
-    if (error instanceof APIError) {
+    if (error && error instanceof APIError) {
       const apiError = error as APIError;
-      console.log("APIError: %o %o", apiError, apiError.status);
+      console.log("APIError: %o %o", apiError, apiError?.status);
       if (apiError.status === 401) {
         console.log("Unauthorized");
         toaster.create({
