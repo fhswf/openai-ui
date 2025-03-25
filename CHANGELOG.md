@@ -1,3 +1,10 @@
+## [0.17.6](https://github.com/fhswf/openai-ui/compare/v0.17.5...v0.17.6) (2025-03-25)
+
+
+### Bug Fixes
+
+* improve render times ([414017e](https://github.com/fhswf/openai-ui/commit/414017e3cfd44bf4ce050a42f2d330a839e8af21))
+
 ## [0.17.5](https://github.com/fhswf/openai-ui/compare/v0.17.4...v0.17.5) (2025-03-24)
 
 
