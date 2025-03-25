@@ -1,4 +1,4 @@
-import React, { memo, forwardRef, useEffect, useRef, useState } from 'react'
+import React, { memo, forwardRef, useEffect, useRef, useState, useMemo } from 'react'
 import { Skeleton } from '@chakra-ui/react'
 import { IconButton } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip"
@@ -17,7 +17,7 @@ import './style/markdown.less'
 import 'katex/dist/katex.min.css'
 import { useTranslation } from 'react-i18next';
 
-export const MessageRender = memo((props) => {
+export const MessageRender = (props) => {
   const { options } = useGlobal()
   const style = options.general.theme === 'dark' ? oneDark : oneLight
 
@@ -51,39 +51,40 @@ export const MessageRender = memo((props) => {
     )
   }
 
+  const rendered = useMemo(() => (<MarkdownHooks
+    children={props.children}
+    remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
+    rehypePlugins={[rehypeKatex, rehypeRaw]}
+    components={{
+      code({ node, inline, className, children, ...rest }) {
+        const match = /language-(\w+)/.exec(className || '')
+        return !inline && match ? (
+          <>
+            <div className="code-header">
+              <CopyIcon />
+            </div>
+            <SyntaxHighlighter ref={textRef}
+              {...rest}
+              children={children}
+              style={style}
+              language={match[1]}
+              PreTag="div"
+            />
+          </>
+
+        ) : (
+          <code {...props}>
+            {children}
+          </code>
+        )
+      }
+    }}
+  />), [props.children]);
 
   return (
-    <MarkdownHooks
-      children={props.children}
-      remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
-      rehypePlugins={[rehypeKatex, rehypeRaw]}
-      components={{
-        code({ node, inline, className, children, ...rest }) {
-          const match = /language-(\w+)/.exec(className || '')
-          return !inline && match ? (
-            <>
-              <div className="code-header">
-                <CopyIcon />
-              </div>
-              <SyntaxHighlighter ref={textRef}
-                {...rest}
-                children={children}
-                style={style}
-                language={match[1]}
-                PreTag="div"
-              />
-            </>
-
-          ) : (
-            <code {...props}>
-              {children}
-            </code>
-          )
-        }
-      }}
-    />
+    rendered
   )
-})
+}
 
 const Renderer = forwardRef(({ ...props }, ref) => (
   <div ref={ref} className='z-ui-markdown'>
@@ -99,14 +100,14 @@ type LazyRendererProps = {
 }
 
 export const LazyRenderer = (props: LazyRendererProps) => {
-  const [isVisible, setIsVisible] = useState(props?.isVisible || false);
+  const [isVisible, setIsVisible] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         console.log('isIntersecting: %o %o', entry, ref.current);
-        setIsVisible(true);
+        setIsVisible(entry.isIntersecting);
         observer.disconnect();
       }
     });
@@ -125,5 +126,5 @@ export const LazyRenderer = (props: LazyRendererProps) => {
       {props.children}
     </Renderer>
     :
-    <Skeleton ref={ref} flex="1" height="10lh" variant="pulse" />;
+    <Skeleton ref={ref} flex="1" height="10lh" variant="pulse" />
 }
