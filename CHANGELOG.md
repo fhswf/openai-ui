@@ -1,3 +1,10 @@
+## [0.17.9](https://github.com/fhswf/openai-ui/compare/v0.17.8...v0.17.9) (2025-03-26)
+
+
+### Bug Fixes
+
+* broken metadata ([9b9a579](https://github.com/fhswf/openai-ui/commit/9b9a579185ad183ed9f59315fd52a9932b5e7bf6))
+
 ## [0.17.8](https://github.com/fhswf/openai-ui/compare/v0.17.7...v0.17.8) (2025-03-26)
 
 
