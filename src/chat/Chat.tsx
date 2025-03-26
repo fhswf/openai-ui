@@ -79,7 +79,8 @@ export default function Chat() {
     'menk.eva@fh-swf.de',
     'reinecke.sandra@fh-swf.de',
     'kurowski.bernd@fh-swf.de',
-    'schoebel.denis@fh-swf.de'
+    'schoebel.denis@fh-swf.de',
+    'schluck.dirk@fh-swf.de'
   ];
 
   /**

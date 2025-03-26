@@ -71,7 +71,7 @@ describe("User Information", () => {
   });
 
   it("Open and close user information", () => {
-    cy.getDataTestId("UserInformation").should("not.be.visible");
+    cy.getDataTestId("UserInformation").should("not.exist");
     cy.getDataTestId("UserInformationBtn").click();
     cy.getDataTestId("UserInformation").should("be.visible", "exist");
     cy.getDataTestId("UserInformationBtn").click();

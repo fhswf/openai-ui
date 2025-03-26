@@ -86,10 +86,14 @@ export const MessageRender = (props) => {
   )
 }
 
-const Renderer = forwardRef(({ ...props }, ref) => (
+type RendererProps = {
+  children: React.ReactNode;
+};
+
+const Renderer = forwardRef<HTMLDivElement, RendererProps>(({ children, ...props }, ref) => (
   <div ref={ref} className='z-ui-markdown'>
     <MessageRender {...props}>
-      {props.children}
+      {children}
     </MessageRender>
   </div>
 ));
