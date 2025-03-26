@@ -1,3 +1,11 @@
+## [0.18.4](https://github.com/fhswf/openai-ui/compare/v0.18.3...v0.18.4) (2025-03-26)
+
+
+### Bug Fixes
+
+* add missing i18n key ([7280c3a](https://github.com/fhswf/openai-ui/commit/7280c3afaae79577d6c0b02b1416f0cc6c50a856))
+* color palette for dashboard ([f4c2033](https://github.com/fhswf/openai-ui/commit/f4c2033e735b5c831160bba6891c18ecf3672c5c))
+
 ## [0.18.3](https://github.com/fhswf/openai-ui/compare/v0.18.2...v0.18.3) (2025-03-26)
 
 
