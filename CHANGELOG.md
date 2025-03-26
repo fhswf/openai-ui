@@ -1,3 +1,11 @@
+## [0.17.7](https://github.com/fhswf/openai-ui/compare/v0.17.6...v0.17.7) (2025-03-26)
+
+
+### Bug Fixes
+
+* add release notes to metadata ([05354f7](https://github.com/fhswf/openai-ui/commit/05354f72b06678ce1fee354285d94f886a38af32))
+* add release notes to metadata ([77d0384](https://github.com/fhswf/openai-ui/commit/77d0384b7dd129c60cf635e2aa338da3d3a1c346))
+
 ## [0.17.6](https://github.com/fhswf/openai-ui/compare/v0.17.5...v0.17.6) (2025-03-25)
 
 
