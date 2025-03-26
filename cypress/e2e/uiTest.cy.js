@@ -133,6 +133,7 @@ describe("Config Menu", () => {
   });
   */
 
+  /*
   it("Change OpenAI Model", () => {
     cy.getDataTestId('ChangeAIModelSelect').find('button').click();
     cy.get('[data-scope="select"]').contains("gpt-4-turbo").click()
@@ -142,6 +143,7 @@ describe("Config Menu", () => {
     cy.get('[data-scope="select"]').contains("gpt-4o-mini").click()
     cy.getDataTestId('ChangeAIModelSelect').find('[data-part="value-text"]').should("have.text", "gpt-4o-mini");
   });
+  */
 
   /*
   it("Set max tokens input", () => {

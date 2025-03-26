@@ -55,8 +55,63 @@
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
       "@semantic-release/npm",
+      [
+        "semantic-release-replace-plugin",
+        {
+          "replacements": [
+            {
+              "files": [
+                "public/manifest.json"
+              ],
+              "from": "\"version\" = \".*\"",
+              "to": "\"version\" = \"${nextRelease.version}\"",
+              "results": [
+                {
+                  "file": "public/manifest.json",
+                  "hasChanged": true,
+                  "numMatches": 1,
+                  "numReplacements": 1
+                }
+              ],
+              "countMatches": true
+            },
+            {
+              "files": [
+                "public/metadata.json"
+              ],
+              "from": [
+                "\"release\" = \".*\"",
+                "\"build_sha\" = \".*\""
+              ],
+              "to": [
+                "\"release\" = \"${nextRelease.version}\"",
+                "\"build_sha\" = \"${nextRelease.gitHead}\""
+              ],
+              "results": [
+                {
+                  "file": "public/metadata.json",
+                  "hasChanged": true,
+                  "numMatches": 2,
+                  "numReplacements": 2
+                }
+              ],
+              "countMatches": true
+            }
+          ]
+        }
+      ],
       "@semantic-release/github",
-      "@semantic-release/git"
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "public/manifest.json",
+            "public/metadata.json",
+            "CHANGELOG.md"
+          ],
+          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        }
+      ]
     ]
   },
   "commitlint": {
@@ -109,6 +164,7 @@
     "prettier": "^2.8.6",
     "prop-types": "^15.8.1",
     "semantic-release": "^24.2.3",
+    "semantic-release-replace-plugin": "^1.2.7",
     "style-loader": "^4.0.0",
     "typescript": "^5.8.2",
     "url-loader": "^4.1.1",

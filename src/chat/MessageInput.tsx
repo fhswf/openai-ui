@@ -151,10 +151,10 @@ export function MessageInput() {
                             borderWidth={0} outlineWidth={0}
                             placeholder={t("Enter something....")}
                             className={styles.textarea}
-                            onInput={(ev: BaseSyntheticEvent) => {
+                            onChange={(ev: BaseSyntheticEvent) => {
                                 typeingMessage.content = ev.target.value;
                                 setMessage(typeingMessage.content);
-                        
+
                             }} />
                 }
                 {

@@ -43,24 +43,6 @@ jobs:
         run: echo "release_version=${{ steps.semantic_release.outputs.new_release_version }}" >> $GITHUB_OUTPUT 
         if: steps.semantic_release.outputs.new_release_published == 'true'
 
-      - name: Update yaml
-        if: steps.semantic_release.outputs.new_release_published == 'true'
-        uses: fjogeleit/yaml-update-action@main
-        with:
-          token: ${{ steps.cicd.outputs.token }}
-          changes: |
-            {
-              "public/manifest.json": {
-                "version": "${{ steps.semantic_release.outputs.new_release_version }}"
-              },
-              "public/metadata.json": {
-                "release": "${{ steps.semantic_release.outputs.new_release_version }}",
-                "build_sha": "${{ github.sha }}"
-              }
-            }
-          branch: main
-          message: 'Update version to ${{ steps.semantic_release.outputs.new_release_version }} [skip ci]'         
-
     outputs:
       new_release_published: ${{ steps.semantic_release.outputs.new_release_published }}
       new_release_version: ${{ steps.semantic_release.outputs.new_release_version }}
@@ -69,6 +51,7 @@ jobs:
   build:
     needs: release
     runs-on: ubuntu-latest
+    if: needs.release.outputs.new_release_published == 'true'
     steps:
       - name: ci-install token
         id: cicd
