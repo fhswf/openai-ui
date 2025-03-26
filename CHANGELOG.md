@@ -1,3 +1,10 @@
+# [0.18.0](https://github.com/fhswf/openai-ui/compare/v0.17.9...v0.18.0) (2025-03-26)
+
+
+### Features
+
+* usage statistics ([f58dfab](https://github.com/fhswf/openai-ui/commit/f58dfab68d1c73051c2ab26928ae5911eba0eb4d))
+
 ## [0.17.9](https://github.com/fhswf/openai-ui/compare/v0.17.8...v0.17.9) (2025-03-26)
 
 
