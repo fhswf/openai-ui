@@ -81,11 +81,13 @@
               ],
               "from": [
                 "\"release\" = \".*\"",
-                "\"build_sha\" = \".*\""
+                "\"build_sha\" = \".*\"",
+                "\"notes\" = \".*\""
               ],
               "to": [
                 "\"release\" = \"${nextRelease.version}\"",
-                "\"build_sha\" = \"${nextRelease.gitHead}\""
+                "\"build_sha\" = \"${nextRelease.gitHead}\"",
+                "\"notes\" = \"${nextRelease.notes}\""
               ],
               "results": [
                 {
