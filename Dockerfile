@@ -13,6 +13,7 @@ ENV VITE_API_BASE_URL=/api/v1
 ENV VITE_LOGIN_URL=/api/login
 ENV VITE_LOGOUT_URL=/api/logout
 ENV VITE_USER_URL=/api/user
+ENV VITE_DASHBOARD_URL=/api/dashboard
 
 RUN NODE_ENV=production npm run build
 

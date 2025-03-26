@@ -29,7 +29,7 @@ const DashboardChart = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch(import.meta.env.VITE_API_BASE_URL + '/dashboard');
+                const response = await fetch(import.meta.env.VITE_DASHBOARD_URL);
                 const result = await response.json();
                 setData(result);
             } catch (error) {
