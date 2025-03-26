@@ -1,3 +1,10 @@
+## [0.18.5](https://github.com/fhswf/openai-ui/compare/v0.18.4...v0.18.5) (2025-03-26)
+
+
+### Bug Fixes
+
+* broken URL ([40eb2fc](https://github.com/fhswf/openai-ui/commit/40eb2fc09968a258bfb8ab78e890594b8a30cc67))
+
 ## [0.18.4](https://github.com/fhswf/openai-ui/compare/v0.18.3...v0.18.4) (2025-03-26)
 
 
