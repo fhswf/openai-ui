@@ -83,27 +83,29 @@ const DashboardChart = () => {
             label: 'Gesamtzahl der Aufrufe (fh-swf.de)',
             data: totalCounts,
             fill: false,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(30, 136, 229, 0.8)',
+            backgroundColor: 'rgba(30, 136, 229, 0.6)',
         }]
     };
 
     const COLORS = [
-        'rgba(255, 99, 132, 0.6)',  // Soft Red
-        'rgba(54, 162, 235, 0.6)',  // Soft Blue
-        'rgba(255, 206, 86, 0.6)',  // Soft Yellow
-        'rgba(75, 192, 192, 0.6)',  // Soft Teal
-        'rgba(153, 102, 255, 0.6)', // Soft Purple
-        'rgba(255, 159, 64, 0.6)',  // Soft Orange
-        'rgba(201, 203, 207, 0.6)', // Soft Gray
-        'rgba(255, 127, 80, 0.6)',  // Coral
-        'rgba(144, 238, 144, 0.6)', // Light Green
-        'rgba(173, 216, 230, 0.6)', // Light Blue
-        'rgba(238, 130, 238, 0.6)', // Violet
-        'rgba(240, 230, 140, 0.6)', // Khaki
-        'rgba(135, 206, 250, 0.6)', // Sky Blue
-        'rgba(255, 182, 193, 0.6)', // Light Pink
-        'rgba(210, 105, 30, 0.6)'   // Chocolate
+
+        'rgba(255, 87, 34, 0.8)',
+        'rgba(33, 150, 243, 0.8)',
+        'rgba(76, 175, 80, 0.8)',
+        'rgba(255, 193, 7, 0.8)',
+        'rgba(156, 39, 176, 0.8)',
+        'rgba(233, 30, 99, 0.8)',
+        'rgba(0, 188, 212, 0.8)',
+        'rgba(255, 152, 0, 0.8)',
+        'rgba(96, 125, 139, 0.8)',
+        'rgba(255, 235, 59, 0.8)',
+        'rgba(0, 150, 136, 0.8)',
+        'rgba(158, 158, 158, 0.8)',
+        'rgba(240, 98, 146, 0.8)',
+        'rgba(48, 63, 159, 0.8)',
+        'rgba(30, 136, 229, 0.8)'
+
     ];
 
     const pieChartData = {
