@@ -1,3 +1,12 @@
+## [0.17.8](https://github.com/fhswf/openai-ui/compare/v0.17.7...v0.17.8) (2025-03-26)
+
+
+### Bug Fixes
+
+* fix ci build ([e5441ec](https://github.com/fhswf/openai-ui/commit/e5441ec6c5f0493f6196ab13f65bbf2c5a1d0ca6))
+* fix ci build ([35ff2d9](https://github.com/fhswf/openai-ui/commit/35ff2d9656b1e730faea9f5b05b9cfc08e16294f))
+* fix ci build ([382ee8f](https://github.com/fhswf/openai-ui/commit/382ee8f9ea32ca04e3538daaa03af986c16f1cf0))
+
 ## [0.17.7](https://github.com/fhswf/openai-ui/compare/v0.17.6...v0.17.7) (2025-03-26)
 
 
