@@ -12,8 +12,8 @@ import {
     MenuTrigger,
 } from "../components/ui/menu"
 
-import { Avatar, Card, HStack, Stack, Text, IconButton, Button, Menu, Popover } from '@chakra-ui/react';
-import { PopoverRoot, PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody, PopoverTitle } from '../components/ui/popover';
+import { Avatar, Card, HStack, Stack, Text, IconButton, Button, Menu, Popover, Dialog, CloseButton } from '@chakra-ui/react';
+
 
 import { useTranslation } from 'react-i18next';
 import { IoLogoMarkdown, IoSettingsOutline, IoReloadOutline, IoLogoGithub } from 'react-icons/io5';
@@ -166,37 +166,51 @@ export function MessageHeader() {
                 </MenuContent>
             </MenuRoot>
             <GitHubMenu />
-            <PopoverRoot lazyMount>
-                <PopoverTrigger data-testid="UsageInformationBtn" asChild>
+
+            <Dialog.Root lazyMount size="cover">
+                <Dialog.Trigger data-testid="UsageInformationBtn" asChild>
                     <IconButton variant="ghost" title={t("usage_information")}><AiOutlineBarChart /></IconButton>
-                </PopoverTrigger>
-                <PopoverContent data-testid="UserInformation">
-                    <PopoverArrow />
-                    <PopoverBody>
-                        <PopoverTitle fontWeight="bold" paddingBlockEnd={"15px"}>{t('usage_information')}</PopoverTitle>
-                        <DashboardChart />
-                    </PopoverBody>
-                </PopoverContent>
-            </PopoverRoot>
-            <PopoverRoot lazyMount>
-                <PopoverTrigger data-testid="UserInformationBtn">
+                </Dialog.Trigger>
+                <Dialog.Backdrop />
+                <Dialog.Positioner>
+                    <Dialog.Content data-testid="UsageInformation" >
+                        <Dialog.Header>
+                            <Dialog.Title fontWeight="bold" paddingBlockEnd={"15px"}>{t('usage_information')}</Dialog.Title>
+                            <Dialog.CloseTrigger asChild>
+                                <CloseButton size="sm" />
+                            </Dialog.CloseTrigger>
+                        </Dialog.Header>
+                        <Dialog.Body className={styles.dashboard}>
+
+                            <DashboardChart />
+                        </Dialog.Body>
+
+                    </Dialog.Content>
+                </Dialog.Positioner>
+            </Dialog.Root>
+
+            <Popover.Root lazyMount>
+                <Popover.Trigger data-testid="UserInformationBtn">
                     <Avatar.Root size="sm">
                         <Avatar.Fallback name={user?.name} />
                         <Avatar.Image src={user?.avatar} />
                     </Avatar.Root>
-                </PopoverTrigger>
-                <PopoverContent data-testid="UserInformation">
-                    <PopoverArrow />
-                    <PopoverBody>
-                        <PopoverTitle fontWeight="bold" paddingBlockEnd={"15px"}>{t('User information')}</PopoverTitle>
-                        <Stack spacing={2}>
-                            <Text>{user?.name}</Text>
-                            <Text>{user?.email}</Text>
-                            <Button type="primary" onClick={logout}>Logout</Button>
-                        </Stack>
-                    </PopoverBody>
-                </PopoverContent>
-            </PopoverRoot>
+                </Popover.Trigger>
+                <Popover.Positioner>
+                    <Popover.Arrow />
+                    <Popover.Content data-testid="UserInformation">
+                        <Popover.Arrow />
+                        <Popover.Body>
+                            <Popover.Title fontWeight="bold" paddingBlockEnd={"15px"}>{t('User information')}</Popover.Title>
+                            <Stack spacing={2}>
+                                <Text>{user?.name}</Text>
+                                <Text>{user?.email}</Text>
+                                <Button type="primary" onClick={logout}>Logout</Button>
+                            </Stack>
+                        </Popover.Body>
+                    </Popover.Content>
+                </Popover.Positioner>
+            </Popover.Root>
 
         </HStack >
     );

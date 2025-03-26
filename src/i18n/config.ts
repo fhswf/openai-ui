@@ -204,8 +204,12 @@ i18n
                     not_image_description: "Sie können nur Bilder hochladen.",
 
                     total_requests: "Gesamtzahl der Aufrufe (fh-swf.de) über die Monate",
-                    usage_information: "Nutzungsstatisitk",
+                    total_requests_title: "Gesamtzahl der Aufrufe",
+                    requests_breakdown_legend: "Aufschlüsselung der Aufrufe nach Bereichen",
+                    requests_breakdown_title: "Aufschlüsselung der Aufrufe",
+                    usage_information: "Nutzungsstatistik",
                     usage_information_description: "Hier finden Sie eine Übersicht über die Nutzung des Chatbots.",
+
                 },
             },
         },
