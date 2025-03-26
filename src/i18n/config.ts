@@ -202,6 +202,10 @@ i18n
                     error_occurred: "Ein Fehler ist aufgetreten",
                     not_image: "Kein Bild",
                     not_image_description: "Sie können nur Bilder hochladen.",
+
+                    total_requests: "Gesamtzahl der Aufrufe (fh-swf.de) über die Monate",
+                    usage_information: "Nutzungsstatisitk",
+                    usage_information_description: "Hier finden Sie eine Übersicht über die Nutzung des Chatbots.",
                 },
             },
         },

@@ -31,6 +31,9 @@ import { modelOptions, toolOptions } from './utils/options'
 import { OptionActionType } from './context/types';
 import { GitHubMenu } from './GitHubMenu';
 import { RiChatNewFill, RiChatNewLine } from 'react-icons/ri';
+import { FaChartBar } from "react-icons/fa";
+import DashboardChart from './DashboardChart';
+import { AiOutlineBarChart } from 'react-icons/ai';
 
 
 
@@ -84,6 +87,8 @@ export function MessageHeader() {
 
 
             <Menu.Root>
+
+
                 <Menu.Trigger asChild>
                     <IconButton variant="ghost" accessKey="o" title={t("chat_options")}><CgOptions /></IconButton>
                 </Menu.Trigger>
@@ -161,7 +166,19 @@ export function MessageHeader() {
                 </MenuContent>
             </MenuRoot>
             <GitHubMenu />
-            <PopoverRoot>
+            <PopoverRoot lazyMount>
+                <PopoverTrigger data-testid="UsageInformationBtn" asChild>
+                    <IconButton variant="ghost" title={t("usage_information")}><AiOutlineBarChart /></IconButton>
+                </PopoverTrigger>
+                <PopoverContent data-testid="UserInformation">
+                    <PopoverArrow />
+                    <PopoverBody>
+                        <PopoverTitle fontWeight="bold" paddingBlockEnd={"15px"}>{t('usage_information')}</PopoverTitle>
+                        <DashboardChart />
+                    </PopoverBody>
+                </PopoverContent>
+            </PopoverRoot>
+            <PopoverRoot lazyMount>
                 <PopoverTrigger data-testid="UserInformationBtn">
                     <Avatar.Root size="sm">
                         <Avatar.Fallback name={user?.name} />

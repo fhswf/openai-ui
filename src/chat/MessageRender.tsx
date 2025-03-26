@@ -1,5 +1,5 @@
 import React, { memo, forwardRef, useEffect, useRef, useState, useMemo } from 'react'
-import { Skeleton } from '@chakra-ui/react'
+import { Skeleton, SkeletonText } from '@chakra-ui/react'
 import { IconButton } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip"
 import { LuClipboardCheck } from "react-icons/lu";
@@ -126,5 +126,5 @@ export const LazyRenderer = (props: LazyRendererProps) => {
       {props.children}
     </Renderer>
     :
-    <Skeleton ref={ref} flex="1" height="10lh" variant="pulse" />
+    <SkeletonText ref={ref} flex="1" noOfLines={10} gap={4} variant="pulse" />
 }
