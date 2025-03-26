@@ -207,6 +207,7 @@ i18n
                     total_requests_title: "Gesamtzahl der Aufrufe",
                     requests_breakdown_legend: "Aufschlüsselung der Aufrufe nach Bereichen",
                     requests_breakdown_title: "Aufschlüsselung der Aufrufe",
+                    requests_breakdown_label: "# Zugriffe",
                     usage_information: "Nutzungsstatistik",
                     usage_information_description: "Hier finden Sie eine Übersicht über die Nutzung des Chatbots.",
 
