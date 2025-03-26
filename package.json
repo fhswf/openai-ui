@@ -65,6 +65,14 @@
               ],
               "from": "\"version\" = \".*\"",
               "to": "\"version\" = \"${nextRelease.version}\"",
+              "results": [
+                {
+                  "file": "public/manifest.json",
+                  "hasChanged": true,
+                  "numMatches": 1,
+                  "numReplacements": 1
+                }
+              ],
               "countMatches": true
             },
             {
@@ -80,6 +88,14 @@
                 "\"release\" = \"${nextRelease.version}\"",
                 "\"build_sha\" = \"${nextRelease.gitHead}\"",
                 "\"notes\" = \"${nextRelease.notes}\""
+              ],
+              "results": [
+                {
+                  "file": "public/metadata.json",
+                  "hasChanged": true,
+                  "numMatches": 3,
+                  "numReplacements": 3
+                }
               ],
               "countMatches": true
             }
