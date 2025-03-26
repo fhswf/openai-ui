@@ -81,20 +81,18 @@
               ],
               "from": [
                 "\"release\": \".*\"",
-                "\"build_sha\": \".*\"",
-                "\"notes\": \".*\""
+                "\"build_sha\": \".*\""
               ],
               "to": [
                 "\"release\": \"${nextRelease.version}\"",
-                "\"build_sha\": \"${nextRelease.gitHead}\"",
-                "\"notes\": \"${nextRelease.notes}\""
+                "\"build_sha\": \"${nextRelease.gitHead}\""
               ],
               "results": [
                 {
                   "file": "public/metadata.json",
                   "hasChanged": true,
-                  "numMatches": 3,
-                  "numReplacements": 3
+                  "numMatches": 2,
+                  "numReplacements": 2
                 }
               ],
               "countMatches": true
