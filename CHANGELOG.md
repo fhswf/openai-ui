@@ -1,3 +1,10 @@
+## [0.18.1](https://github.com/fhswf/openai-ui/compare/v0.18.0...v0.18.1) (2025-03-26)
+
+
+### Bug Fixes
+
+* improve dashboard ([0479846](https://github.com/fhswf/openai-ui/commit/0479846c3f461db547c0aac905503415ee1dd52e))
+
 # [0.18.0](https://github.com/fhswf/openai-ui/compare/v0.17.9...v0.18.0) (2025-03-26)
 
 
