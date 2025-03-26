@@ -63,8 +63,8 @@
               "files": [
                 "public/manifest.json"
               ],
-              "from": "\"version\" = \".*\"",
-              "to": "\"version\" = \"${nextRelease.version}\"",
+              "from": "\"version\": = \".*\"",
+              "to": "\"version\": = \"${nextRelease.version}\"",
               "results": [
                 {
                   "file": "public/manifest.json",
@@ -80,14 +80,14 @@
                 "public/metadata.json"
               ],
               "from": [
-                "\"release\" = \".*\"",
-                "\"build_sha\" = \".*\"",
-                "\"notes\" = \".*\""
+                "\"release\": = \".*\"",
+                "\"build_sha\": = \".*\"",
+                "\"notes\": = \".*\""
               ],
               "to": [
-                "\"release\" = \"${nextRelease.version}\"",
-                "\"build_sha\" = \"${nextRelease.gitHead}\"",
-                "\"notes\" = \"${nextRelease.notes}\""
+                "\"release\": = \"${nextRelease.version}\"",
+                "\"build_sha\": = \"${nextRelease.gitHead}\"",
+                "\"notes\": = \"${nextRelease.notes}\""
               ],
               "results": [
                 {
@@ -102,7 +102,17 @@
           ]
         }
       ],
-      "@semantic-release/github",
+      [
+        "@semantic-release/github",
+        {
+          "assets": [
+            {
+              "path": "public/metadata.json",
+              "label": "metadata.json"
+            }
+          ]
+        }
+      ],
       [
         "@semantic-release/git",
         {
