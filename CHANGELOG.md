@@ -1,3 +1,10 @@
+## [0.18.6](https://github.com/fhswf/openai-ui/compare/v0.18.5...v0.18.6) (2025-03-27)
+
+
+### Bug Fixes
+
+* increase resource limits ([204a8ab](https://github.com/fhswf/openai-ui/commit/204a8ab58ab8890b71e6003dd08e90f188b2b722))
+
 ## [0.18.5](https://github.com/fhswf/openai-ui/compare/v0.18.4...v0.18.5) (2025-03-26)
 
 
