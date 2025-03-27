@@ -108,15 +108,22 @@ describe("Config Menu", () => {
   */
 
   it("Set api base url input", () => {
-    cy.getDataTestId('ApiBaseURLInput').clear().should("have.value", "").type("a_cypress_input_test").should("have.value", "a_cypress_input_test");
+    cy.getDataTestId('ApiBaseURLInput').clear({ force: true })
+    cy.getDataTestId('ApiBaseURLInput').should("have.value", "")
+    cy.getDataTestId('ApiBaseURLInput').type("a_cypress_input_test", { force: true })
+    cy.getDataTestId('ApiBaseURLInput').should("have.value", "a_cypress_input_test");
   });
 
   it("Set api key input", () => {
-    cy.getDataTestId('APIKeyInput').clear().should("have.value", "").type("a_cypress_input_test").should("have.value", "a_cypress_input_test");
+    cy.getDataTestId('APIKeyInput')
+      .clear({ force: true }).should("have.value", "")
+      .type("a_cypress_input_test", { force: true }).should("have.value", "a_cypress_input_test");
   });
 
   it("Set organisation id input", () => {
-    cy.getDataTestId('APIOrganisationIDInput').clear().should("have.value", "").type("a_cypress_id_test").should("have.value", "a_cypress_id_test");
+    cy.getDataTestId('APIOrganisationIDInput')
+      .clear({ force: true }).should("have.value", "")
+      .type("a_cypress_id_test", { force: true }).should("have.value", "a_cypress_id_test");
   });
 
   /*
@@ -160,15 +167,21 @@ describe("Config Menu", () => {
   */
 
   it("Set api base url input", () => {
-    cy.getDataTestId('ApiBaseURLInput').clear().should("have.value", "").type("a_cypress_input_test").should("have.value", "a_cypress_input_test");
+    cy.getDataTestId('ApiBaseURLInput')
+      .clear({ force: true }).should("have.value", "")
+      .type("a_cypress_input_test", { force: true }).should("have.value", "a_cypress_input_test");
   });
 
   it("Set api key input", () => {
-    cy.getDataTestId('APIKeyInput').clear().should("have.value", "").type("a_cypress_input_test").should("have.value", "a_cypress_input_test");
+    cy.getDataTestId('APIKeyInput')
+      .clear({ force: true }).should("have.value", "")
+      .type("a_cypress_input_test", { force: true }).should("have.value", "a_cypress_input_test");
   });
 
   it("Set organisation id input", () => {
-    cy.getDataTestId('APIOrganisationIDInput').clear().should("have.value", "").type("a_cypress_id_test").should("have.value", "a_cypress_id_test");
+    cy.getDataTestId('APIOrganisationIDInput')
+      .clear({ force: true }).should("have.value", "")
+      .type("a_cypress_id_test", { force: true }).should("have.value", "a_cypress_id_test");
   });
 
   it("Close the settings", () => {

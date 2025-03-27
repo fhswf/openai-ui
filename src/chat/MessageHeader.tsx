@@ -35,7 +35,7 @@ import { FaChartBar } from "react-icons/fa";
 import DashboardChart from './DashboardChart';
 import { AiOutlineBarChart } from 'react-icons/ai';
 
-
+import '../assets/icon/style.css';
 
 
 export function MessageHeader() {
@@ -197,7 +197,6 @@ export function MessageHeader() {
                     </Avatar.Root>
                 </Popover.Trigger>
                 <Popover.Positioner>
-                    <Popover.Arrow />
                     <Popover.Content data-testid="UserInformation">
                         <Popover.Arrow />
                         <Popover.Body>

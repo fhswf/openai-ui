@@ -1,8 +1,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { modifyAssistant, retrieveAssistant, retrieveFile, createFile, deleteFile, assistantsModels, Model } from "./service/openai_assistant";
-import { Box, Button, ButtonGroup, Card, CardBody, CardFooter, CardHeader, Field, Flex, Heading, IconButton, Input, SimpleGrid, Spacer, Stack, StackSeparator } from '@chakra-ui/react'
-import { Panel, Icon, Textarea, Title } from "../components";
+import { Box, Button, ButtonGroup, Card, CardBody, CardFooter, CardHeader, Field, Flex, Heading, IconButton, Input, SimpleGrid, Spacer, Stack, StackSeparator, Textarea } from '@chakra-ui/react'
 import {
     SelectContent,
     SelectItem,
@@ -20,7 +19,7 @@ import { t } from "i18next";
 
 import { Toaster, toaster } from "../components/ui/toaster"
 import { OptionActionType } from "./context/types";
-import { AiOutlineDelete } from "react-icons/ai";
+import { AiOutlineClose, AiOutlineDelete } from "react-icons/ai";
 
 
 export interface AssistantProps {
@@ -43,7 +42,9 @@ function ConfigHeader() {
                 <Heading size="lg">Assistant Settings</Heading>
                 <Spacer />
                 <IconButton variant="ghost" aria-label="Close" size="sm"
-                    onClick={cancel} icon={<i className="ico ico-close" />} />
+                    onClick={cancel}>
+                    <AiOutlineClose />
+                </IconButton>
             </Flex>
         </Card.Header>
     )

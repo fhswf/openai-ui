@@ -3,6 +3,7 @@
     padding: var(--spacing-min);
   }
 }
+
 .error {
   border: 1px solid var(--error-border-color);
   background-color: var(--error-background-color);
@@ -11,27 +12,34 @@
   color: var(--red);
   border-radius: var(--border-radius);
 }
+
 .scroll {
   scroll-behavior: smooth;
   overflow-y: auto;
   flex: 1;
+  background-color: var(--background-color-gray);
+
   &::-webkit-scrollbar-track-piece {
-    background-color: var(--background-color-gary);
+    background-color: var(--background-color-gray);
     border-radius: 0;
   }
+
   &::-webkit-scrollbar {
     width: 0;
     height: 0;
   }
+
   &::-webkit-scrollbar-thumb {
     background-color: var(--background-color);
     border-radius: var(--border-radius);
   }
+
   &::-webkit-scrollbar-thumb:hover {
     background-color: var(--background-color);
     border-radius: var(--border-radius);
   }
 }
+
 .help {
   display: flex;
   align-items: center;
@@ -39,20 +47,24 @@
   padding: calc(var(--spacing) * 10) 0;
   flex-direction: column;
 }
+
 .empty {
   padding: calc(var(--spacing) * 10) 0;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
+
   &_input {
     width: 400px;
     margin-right: var(--spacing-min);
   }
+
   &_inner {
     flex: 1;
     display: flex;
   }
+
   &_text {
     font-size: 12px;
     color: var(--background-color-gary);

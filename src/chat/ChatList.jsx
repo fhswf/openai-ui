@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react'
-import { Icon, Title, Popover } from '../components'
 import { Button, Card, Field, Flex, HStack, IconButton, Spacer, Textarea } from "@chakra-ui/react"
 import { FiEdit } from "react-icons/fi";
 import { MdOutlineDelete } from "react-icons/md";

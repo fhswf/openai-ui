@@ -106,7 +106,7 @@ export function MessageItem(props) {
     <Card.Root data-testid={dataTestId} className={classnames(styles.message, role === "user" ? styles.user : styles.assistant)} >
       <Card.Header justifyContent={role === 'user' ? 'flex-end' : 'flex-start'}>
         <HStack>
-          <Avatar.Root size="xs" >
+          <Avatar.Root size="sm">
             <Avatar.Fallback name={user?.name} />
             <Avatar.Image src={role === 'user' ? user?.avatar : avatar} />
           </Avatar.Root>

@@ -4,12 +4,8 @@ import { Switch } from '../components/ui/switch'
 
 import { useGlobal } from './context'
 import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
-import { Button, Card, CardBody, Flex, Field, Heading, IconButton, Input, HStack, Stack, StackSeparator, createListCollection } from "@chakra-ui/react";
-import {
-  NumberInputField,
-  NumberInputLabel,
-  NumberInputRoot,
-} from "../components/ui/number-input"
+import { Button, Card, Field, Heading, Input, Stack, createListCollection } from "@chakra-ui/react";
+
 import {
   RadioCardItem,
   RadioCardLabel,

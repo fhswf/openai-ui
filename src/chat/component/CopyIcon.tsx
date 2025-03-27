@@ -8,15 +8,15 @@ import { t } from 'i18next';
 
 export function CopyIcon(props) {
   const { text = "copy", value, className } = props
-  const [icon, setIcon] = useState(LuClipboardCopy);
+  const [icon, setIcon] = useState<React.ReactNode>(<LuClipboardCopy />);
   const { t } = useTranslation();
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(value);
-      setIcon(LuClipboardCheck);
+      setIcon(<LuClipboardCheck />);
       setTimeout(() => {
-        setIcon(LuClipboardCopy);
+        setIcon(<LuClipboardCopy />);
       }, 1500);
     } catch (err) {
       console.error('Failed to copy: ', err);
