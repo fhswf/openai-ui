@@ -30,10 +30,10 @@ spec:
               value: 41842766382b96d8268f9ce41eaca31237c2c88e
           resources:
             limits:
+              memory: 256Mi
+              cpu: 1000m
+            requests:
               memory: 128Mi
               cpu: 500m
-            requests:
-              memory: 64Mi
-              cpu: 250m
       restartPolicy: Always
 status: {}
