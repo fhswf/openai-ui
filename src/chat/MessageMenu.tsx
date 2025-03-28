@@ -66,7 +66,7 @@ export function MessageMenu() {
                 <IconButton variant="ghost" title={t("chat_history")}
                     onClick={() => setMenuOpen(true)}
                 >
-                    <RiChatHistoryLine />
+                    <RiChatHistoryLine aria-label={t("chat_history")} />
                 </IconButton>
             </Dialog.Trigger>
             <Dialog.Backdrop />

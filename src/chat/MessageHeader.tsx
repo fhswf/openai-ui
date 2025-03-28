@@ -12,7 +12,7 @@ import {
     MenuTrigger,
 } from "../components/ui/menu"
 
-import { Avatar, Card, HStack, Stack, Text, IconButton, Button, Menu, Popover, Dialog, CloseButton } from '@chakra-ui/react';
+import { Avatar, Card, HStack, Stack, Text, IconButton, Button, Menu, Popover, Dialog, CloseButton, Heading } from '@chakra-ui/react';
 
 
 import { useTranslation } from 'react-i18next';
@@ -80,17 +80,17 @@ export function MessageHeader() {
                 title={is.toolbar ? t("hide_toolbar") : t("show_toolbar")}
                 onClick={() => setIs({ toolbar: !is.toolbar })}>{columnIcon}</IconButton>
             <Stack flexGrow={1} gap="1px" paddingInlineStart={2}>
-                <Text data-testid="HeaderTitle" textStyle="lg">{message?.title}</Text>
+                <Heading data-testid="HeaderTitle" textStyle="lg">{message?.title}</Heading>
                 <Text textStyle="xs">{t('count_messages', { count: messages?.filter(item => item.role !== "system").length })}</Text>
             </Stack>
 
 
 
             <Menu.Root>
-
-
                 <Menu.Trigger asChild>
-                    <IconButton variant="ghost" accessKey="o" title={t("chat_options")}><CgOptions /></IconButton>
+                    <IconButton variant="ghost" accessKey="o" title={t("chat_options")}>
+                        <CgOptions aria-label={t("chat_options")} />
+                    </IconButton>
                 </Menu.Trigger>
                 <Menu.Positioner>
                     <Menu.Content>
@@ -131,7 +131,9 @@ export function MessageHeader() {
 
             <Menu.Root>
                 <Menu.Trigger asChild>
-                    <IconButton variant="ghost" accessKey="n" title={t("new_chat")}><RiChatNewLine /></IconButton>
+                    <IconButton variant="ghost" accessKey="n" title={t("new_chat")}>
+                        <RiChatNewLine aria-label={t("new_chat")} />
+                    </IconButton>
                 </Menu.Trigger>
                 <MenuContent>
                     <MenuItemGroup title={t("new_chat")}>
@@ -150,11 +152,14 @@ export function MessageHeader() {
             </Menu.Root>
 
             <MessageMenu />
+
             {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
-            {false && <IconButton variant="ghost" title={t("reload_thread")} onClick={reloadThread}><IoReloadOutline /></IconButton>}
+           
             <MenuRoot>
                 <MenuTrigger asChild>
-                    <IconButton variant="ghost" title={t("download_thread")}><MdOutlineSimCardDownload /></IconButton>
+                    <IconButton variant="ghost" title={t("download_thread")}>
+                        <MdOutlineSimCardDownload aria-label={t("download_thread")} />
+                    </IconButton>
                 </MenuTrigger>
                 <MenuContent>
                     <MenuItem value="json" onClick={() => downloadThread("json")} >
@@ -169,7 +174,9 @@ export function MessageHeader() {
 
             <Dialog.Root lazyMount size="cover">
                 <Dialog.Trigger data-testid="UsageInformationBtn" asChild>
-                    <IconButton variant="ghost" title={t("usage_information")}><AiOutlineBarChart /></IconButton>
+                    <IconButton variant="ghost" title={t("usage_information")}>
+                        <AiOutlineBarChart aria-label={t("usage_information")} />
+                    </IconButton>
                 </Dialog.Trigger>
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
@@ -201,7 +208,7 @@ export function MessageHeader() {
                         <Popover.Arrow />
                         <Popover.Body>
                             <Popover.Title fontWeight="bold" paddingBlockEnd={"15px"}>{t('User information')}</Popover.Title>
-                            <Stack spacing={2}>
+                            <Stack gap={2}>
                                 <Text>{user?.name}</Text>
                                 <Text>{user?.email}</Text>
                                 <Button type="primary" onClick={logout}>Logout</Button>

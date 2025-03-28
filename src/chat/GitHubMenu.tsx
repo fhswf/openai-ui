@@ -28,7 +28,9 @@ export function GitHubMenu() {
                 }
             }}>
             <Menu.Trigger asChild>
-                <IconButton variant="ghost" aria-label={t("open_issue")}><IoLogoGithub /></IconButton>
+                <IconButton variant="ghost" title={t("open_issue")}>
+                    <IoLogoGithub aria-label={t("open_issue")} />
+                </IconButton>
             </Menu.Trigger>
             <Menu.Positioner>
                 <Menu.Content>
@@ -52,9 +54,13 @@ export function GitHubMenu() {
                                             </Markdown>
                                         </div>
                                     </Popover.Body>
-                                    <Popover.CloseTrigger asChild>
-                                        <HStack justifyContent={"center"}><Button type="primary" variant={"ghost"}>Close</Button></HStack>
-                                    </Popover.CloseTrigger>
+                                    <Popover.Footer>
+                                        <Popover.CloseTrigger asChild>
+                                            <HStack justifyContent={"center"}>
+                                                <Button type="primary" variant={"ghost"}>Close</Button>
+                                            </HStack>
+                                        </Popover.CloseTrigger>
+                                    </Popover.Footer>
                                 </Popover.Content>
                             </Popover.Positioner>
                         </Portal>
