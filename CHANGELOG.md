@@ -1,3 +1,10 @@
+## [0.19.1](https://github.com/fhswf/openai-ui/compare/v0.19.0...v0.19.1) (2025-03-28)
+
+
+### Bug Fixes
+
+* summation error in per-role statistic ([13e97b5](https://github.com/fhswf/openai-ui/commit/13e97b59f5e9ffc4f2c28024ab2d2d2b1829ac75))
+
 # [0.19.0](https://github.com/fhswf/openai-ui/compare/v0.18.8...v0.19.0) (2025-03-28)
 
 
