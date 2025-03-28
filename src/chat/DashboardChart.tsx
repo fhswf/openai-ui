@@ -6,6 +6,7 @@ import { t } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Skeleton, Tabs } from "@chakra-ui/react";
 import styles from "./style/dashboard.module.less";
+import { getStackGroupsByAxisId } from "recharts/types/util/ChartUtils";
 
 
 const DashboardChart = () => {
@@ -39,8 +40,6 @@ const DashboardChart = () => {
     const scopeData = {};
     const roleData = {};
     const labels = [];
-
-    console.log("Data: ", data[0]);
 
     // Daten verarbeiten
     data[0]
@@ -198,28 +197,27 @@ const DashboardChart = () => {
             value: ((roleData[role] / roleData['member']) * 100),
             fill: COLORS[index % COLORS.length],
         }));
-    console.log("Pie Chart Data: ", roleChartData);
 
     const RADIAN = Math.PI / 180;
     const renderPieLabel = (data) => ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-        const radius = innerRadius + (outerRadius - innerRadius) * 0.7; // Adjust radius to position text in the middle of the pie-piece
+        const radius = innerRadius + (outerRadius - innerRadius) * 0.8; // Adjust radius to position text in the middle of the pie-piece
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
         const rotation = midAngle; // Calculate rotation angle for radial direction
 
-        console.log("label: ", percent, midAngle, scopeChartData[index]);
+        console.log("label: ", percent, midAngle, data[index]);
         if (percent < 0.02) {
             return null;
         }
-        const offset = midAngle > 0 ? 0 : 180;
+        const offset = Math.abs(midAngle) < 90 ? 0 : 180;
         return (
             <text
                 x={x}
                 y={y}
                 fill="white"
-                textAnchor="middle"
+                textAnchor={offset ? "start" : "end"}
                 dominantBaseline="central"
-                transform={`rotate(${offset - rotation}, ${x}, ${y})`} // Rotate text to align radially
+                transform={`rotate(${snapAngle(offset - rotation)}, ${x}, ${y})`} // Rotate text to align radially
             >
                 {`${data[index].name}`}
             </text>
@@ -227,7 +225,6 @@ const DashboardChart = () => {
     };
 
     const CustomTooltip = ({ active, payload, label }) => {
-        console.log("CustomTooltip: ", active, payload, label);
 
         if (active && payload && payload.length) {
             const { name, longName, count, value } = payload[0].payload;
@@ -242,6 +239,16 @@ const DashboardChart = () => {
 
         return null;
     };
+
+    const getStartAngle = (data) => {
+        const maxValue = data[0].value;
+        return 180 + maxValue * 1.8;
+    }
+
+    const snapAngle = (angle) => {
+        const snappedAngle = Math.round(angle / 5) * 5;
+        return snappedAngle;
+    }
 
     return (
         <Tabs.Root defaultValue="total_requests" className={styles.chart}>
@@ -284,8 +291,8 @@ const DashboardChart = () => {
                             label={renderPieLabel(scopeChartData)}
                             labelLine={false}
                             outerRadius={"100%"}
-                            startAngle={180}
-                            endAngle={-180}
+                            startAngle={getStartAngle(scopeChartData)}
+                            endAngle={getStartAngle(scopeChartData) - 360}
                         >
                             {scopeChartData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -307,8 +314,8 @@ const DashboardChart = () => {
                             label={renderPieLabel(roleChartData)}
                             labelLine={false}
                             outerRadius={"100%"}
-                            startAngle={180}
-                            endAngle={-180}
+                            startAngle={getStartAngle(roleChartData)}
+                            endAngle={getStartAngle(roleChartData) - 360}
                         >
                             {roleChartData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.fill} />
