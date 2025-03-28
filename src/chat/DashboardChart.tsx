@@ -80,7 +80,10 @@ const DashboardChart = () => {
                     monthTotal = 0;
 
                     month.roles.forEach(roles => {
-                        roleData[roles.role] = roles.count || 0;
+                        if (!roleData[roles.role]) {
+                            roleData[roles.role] = 0;
+                        }
+                        roleData[roles.role] += roles.count;
                     });
 
                 });
