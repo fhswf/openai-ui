@@ -1,5 +1,5 @@
 {
-  "release": "0.19.1",
-  "build_sha": "13e97b59f5e9ffc4f2c28024ab2d2d2b1829ac75",
+  "release": "0.19.2",
+  "build_sha": "de7b172cb9b4f713d14726f5bad493d13f93ab29",
   "repo_url": "https://api.github.com/repos/fhswf/openai-ui"
 }
