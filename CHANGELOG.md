@@ -1,3 +1,10 @@
+# [0.19.0](https://github.com/fhswf/openai-ui/compare/v0.18.8...v0.19.0) (2025-03-28)
+
+
+### Features
+
+* add statistic by role ([4535d44](https://github.com/fhswf/openai-ui/commit/4535d4470243ef1c43428c5c404ecac38e1c8922))
+
 ## [0.18.8](https://github.com/fhswf/openai-ui/compare/v0.18.7...v0.18.8) (2025-03-28)
 
 
