@@ -36,35 +36,57 @@ const DashboardChart = () => {
     }
 
     const totalCounts = [];
-    const affiliationsData = {};
+    const scopeData = {};
+    const roleData = {};
     const labels = [];
 
+    console.log("Data: ", data[0]);
+
     // Daten verarbeiten
-    data.forEach(yearData => {
-        let monthTotal = 0;
-        yearData.months
-            .sort((a, b) => a.month - b.month)
-            .forEach(month => {
-                labels.push(`${month.month}/${yearData._id}`);
-                monthTotal = 0;
+    data[0]
+        .byScope
+        .forEach(yearData => {
+            let monthTotal = 0;
+            yearData.months
+                .sort((a, b) => a.month - b.month)
+                .forEach(month => {
+                    labels.push(`${month.month}/${yearData._id}`);
+                    monthTotal = 0;
 
-                month.affiliations.forEach(affiliation => {
-                    if (affiliation.affiliation === "fh-swf.de") {
-                        totalCounts.push(affiliation.count);
-                    }
-
-                    // Schlüsseln nach der gewünschten Form
-                    const match = affiliation.affiliation.match(/[^.]+\.fh-swf\.de/);
-                    if (match) {
-                        if (!affiliationsData[match[0]]) {
-                            affiliationsData[match[0]] = 0;
+                    month.scopes.forEach(scopes => {
+                        if (scopes.scope === "fh-swf.de") {
+                            totalCounts.push(scopes.count);
                         }
-                        affiliationsData[match[0]] += affiliation.count;
-                    }
-                });
 
-            });
-    });
+                        // Schlüsseln nach der gewünschten Form
+                        const match = scopes.scope.match(/[^.]+\.fh-swf\.de/);
+                        if (match) {
+                            if (!scopeData[match[0]]) {
+                                scopeData[match[0]] = 0;
+                            }
+                            scopeData[match[0]] += scopes.count;
+                        }
+                    });
+
+                });
+        });
+    data[0]
+        .byRole
+        .forEach(yearData => {
+            let monthTotal = 0;
+            yearData.months
+                .sort((a, b) => a.month - b.month)
+                .forEach(month => {
+                    monthTotal = 0;
+
+                    month.roles.forEach(roles => {
+                        roleData[roles.role] = roles.count || 0;
+                    });
+
+                });
+        });
+
+    console.log("roleData: ", roleData);
 
     const lineChartData = {
         labels,
@@ -107,6 +129,19 @@ const DashboardChart = () => {
         }
     }
 
+    const getRoleName = (role: string) => {
+        switch (role) {
+            case "student":
+                return t("Student*in");
+            case "faculty":
+                return t("Professor*in");
+            case "staff":
+                return t("Mitarbeiter*in");
+            default:
+                return role;
+        }
+    }
+
     const COLORS = [
         'rgba(255, 87, 34, 0.8)',
         'rgba(33, 150, 243, 0.8)',
@@ -138,28 +173,38 @@ const DashboardChart = () => {
 
     ];
 
-    const totalAffiliationsCount: number = Object.values(affiliationsData).reduce((sum: number, count: number) => sum + count, 0) as number;
+    const totalAffiliationsCount: number = Object.values(scopeData).reduce((sum: number, count: number) => sum + count, 0) as number;
 
-    const pieChartData = Object.keys(affiliationsData)
-        .sort((a, b) => affiliationsData[b] - affiliationsData[a])
+    const scopeChartData = Object.keys(scopeData)
+        .sort((a, b) => scopeData[b] - scopeData[a])
         .map((affiliation, index) => ({
             affiliation,
             name: getName(affiliation)[0],
             longName: getName(affiliation)[1],
-            count: affiliationsData[affiliation],
-            value: ((affiliationsData[affiliation] / totalAffiliationsCount) * 100),
+            count: scopeData[affiliation],
+            value: ((scopeData[affiliation] / totalAffiliationsCount) * 100),
             fill: COLORS[index % COLORS.length],
         }));
-    console.log("Pie Chart Data: ", pieChartData);
+
+    const roleChartData = ["student", "faculty", "staff"]
+        .sort((a, b) => roleData[b] - roleData[a])
+        .map((role, index) => ({
+            name: getRoleName(role),
+            longName: getRoleName(role),
+            count: roleData[role],
+            value: ((roleData[role] / roleData['member']) * 100),
+            fill: COLORS[index % COLORS.length],
+        }));
+    console.log("Pie Chart Data: ", roleChartData);
 
     const RADIAN = Math.PI / 180;
-    const renderPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+    const renderPieLabel = (data) => ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
         const radius = innerRadius + (outerRadius - innerRadius) * 0.7; // Adjust radius to position text in the middle of the pie-piece
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
         const rotation = midAngle; // Calculate rotation angle for radial direction
 
-        console.log("label: ", percent, midAngle, pieChartData[index]);
+        console.log("label: ", percent, midAngle, scopeChartData[index]);
         if (percent < 0.02) {
             return null;
         }
@@ -173,7 +218,7 @@ const DashboardChart = () => {
                 dominantBaseline="central"
                 transform={`rotate(${offset - rotation}, ${x}, ${y})`} // Rotate text to align radially
             >
-                {`${pieChartData[index].name}`}
+                {`${data[index].name}`}
             </text>
         );
     };
@@ -201,13 +246,16 @@ const DashboardChart = () => {
                 <Tabs.Trigger value="total_requests">
                     {t('total_requests_title')}
                 </Tabs.Trigger>
-                <Tabs.Trigger value="requests_breakdown">
-                    {t('requests_breakdown_title')}
+                <Tabs.Trigger value="scope_breakdown">
+                    {t('scope_breakdown_title')}
+                </Tabs.Trigger>
+                <Tabs.Trigger value="role_breakdown">
+                    {t('role_breakdown_title')}
                 </Tabs.Trigger>
                 <Tabs.Indicator />
             </Tabs.List>
             <Tabs.Content value="total_requests" className={styles.chart_container}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="90%">
                     <BarChart data={lineChartData.labels.map((label, index) => ({
                         label,
                         value: lineChartData.datasets[0].data[index],
@@ -221,22 +269,45 @@ const DashboardChart = () => {
                     </BarChart>
                 </ResponsiveContainer>
             </Tabs.Content>
-            <Tabs.Content value="requests_breakdown" className={styles.chart_container}>
+            <Tabs.Content value="scope_breakdown" className={styles.chart_container}>
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
-                            data={pieChartData}
+                            data={scopeChartData}
                             dataKey="value"
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            label={renderPieLabel}
+                            label={renderPieLabel(scopeChartData)}
                             labelLine={false}
                             outerRadius={"100%"}
                             startAngle={180}
                             endAngle={-180}
                         >
-                            {pieChartData.map((entry, index) => (
+                            {scopeChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                    </PieChart>
+                </ResponsiveContainer>
+            </Tabs.Content>
+            <Tabs.Content value="role_breakdown" className={styles.chart_container}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={roleChartData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            label={renderPieLabel(roleChartData)}
+                            labelLine={false}
+                            outerRadius={"100%"}
+                            startAngle={180}
+                            endAngle={-180}
+                        >
+                            {roleChartData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.fill} />
                             ))}
                         </Pie>

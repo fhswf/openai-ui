@@ -210,7 +210,8 @@ i18n
                     requests_breakdown_label: "# Zugriffe",
                     usage_information: "Nutzungsstatistik",
                     usage_information_description: "Hier finden Sie eine Übersicht über die Nutzung des Chatbots.",
-
+                    scope_breakdown_title: "Aufschlüsselung der Zugriffe nach Bereichen",
+                    role_breakdown_title: "Aufschlüsselung der Zugriffe nach Rollen",
                 },
             },
         },

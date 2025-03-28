@@ -36,6 +36,7 @@ import DashboardChart from './DashboardChart';
 import { AiOutlineBarChart } from 'react-icons/ai';
 
 import '../assets/icon/style.css';
+import { ErrorBoundary } from 'react-error-boundary';
 
 
 export function MessageHeader() {
@@ -154,7 +155,7 @@ export function MessageHeader() {
             <MessageMenu />
 
             {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
-           
+
             <MenuRoot>
                 <MenuTrigger asChild>
                     <IconButton variant="ghost" title={t("download_thread")}>
@@ -188,8 +189,9 @@ export function MessageHeader() {
                             </Dialog.CloseTrigger>
                         </Dialog.Header>
                         <Dialog.Body className={styles.dashboard}>
-
-                            <DashboardChart />
+                            <ErrorBoundary fallbackRender={() => <div>{t("error")}</div>}>
+                                <DashboardChart />
+                            </ErrorBoundary>
                         </Dialog.Body>
 
                     </Dialog.Content>
