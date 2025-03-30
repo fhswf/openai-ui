@@ -20,6 +20,7 @@
     "@chakra-ui/react": "^3.13.0",
     "@emotion/react": "^11.14.0",
     "@uiw/react-textarea-code-editor": "^3.0.2",
+    "classnames": "^2.5.1",
     "dotenv": "^16.4.5",
     "eventsource-parser": "^1.0.0",
     "i18next": "^24.2.2",

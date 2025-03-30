@@ -1,30 +1,62 @@
-import React, { BaseSyntheticEvent, SyntheticEvent, useEffect } from "react";
+import React, { BaseSyntheticEvent, SyntheticEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useOptions, useSendKey } from "./hooks";
 import { useGlobal } from "./context";
-import { Button, HStack, Kbd, Progress, Stack, StepsStatus, Text, Textarea } from "@chakra-ui/react";
+import { Button, HStack, IconButton, Kbd, Progress, Stack, StepsStatus, Text, Textarea } from "@chakra-ui/react";
 import { Switch } from "../components/ui/switch"
 import styles from './style/message.module.less'
 import CodeEditor from '@uiw/react-textarea-code-editor';
 import { MdOutlineCancel } from "react-icons/md";
 import { use } from "chai";
+import { CiMicrophoneOff, CiMicrophoneOn } from "react-icons/ci";
 import { toaster } from "../components/ui/toaster";
+import classNames from 'classnames';
 
 export function MessageInput() {
     const { setIs, sendMessage, setMessage, setState, eventProcessor, is, options, typeingMessage, clearTypeing } = useGlobal();
     const { setGeneral } = useOptions()
     const { t } = useTranslation();
     const inputRef = React.createRef<HTMLDivElement>();
-    useSendKey(sendMessage, options.general.sendCommand);
 
+    const [recognition, setRecognition] = useState(null);
+    const [recognitionActive, setRecognitionActive] = useState(false);
+    useSendKey(sendMessage, options.general.sendCommand);
 
     useEffect(() => {
         console.log("MessageBar: eventProcessor: %o", eventProcessor)
     }, [eventProcessor])
 
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const _recognition = SpeechRecognition ? new SpeechRecognition() : null;
+        if (!_recognition) {
+            console.warn("SpeechRecognition is not supported in this browser.");
+            return;
+        }
+        console.log("MessageBar: recognition: %o", _recognition);
+        setRecognition(_recognition);
+
+        _recognition.onspeechend = () => {
+            console.log("MessageBar: recognition speech end");
+            setRecognitionActive(false);
+        }
+        _recognition.onaudioend = () => {
+            console.log("MessageBar: recognition audio end");
+            setRecognitionActive(false);
+        }
+        _recognition.onerror = (event) => {
+            console.error("MessageBar: recognition error: %o", event);
+            setRecognitionActive(false);
+        }
+    }, []);
+
     const stopResponse = () => {
         eventProcessor?.stop()
     }
+
+    const voiceClasses = classNames(styles.voice, {
+        [styles.active]: recognitionActive,
+    });
 
     return (
         <div className={styles.bar}
@@ -98,8 +130,6 @@ export function MessageInput() {
                         })
                     });
 
-
-
             }}
             ref={inputRef}
         >
@@ -154,7 +184,6 @@ export function MessageInput() {
                             onChange={(ev: BaseSyntheticEvent) => {
                                 typeingMessage.content = ev.target.value;
                                 setMessage(typeingMessage.content);
-
                             }} />
                 }
                 {
@@ -171,7 +200,37 @@ export function MessageInput() {
                         onCheckedChange={(ev) => setGeneral({ codeEditor: ev.checked })}>
                         {t("Code Editor")}
                     </Switch>
-                    <Button variant="outline" onClick={clearTypeing} data-testid="ClearMessageBtn">{t("clear")}</Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            typeingMessage.content = "";
+                            clearTypeing()
+                        }}
+                        data-testid="ClearMessageBtn">
+                        {t("clear")}
+                    </Button>
+                    {
+                        recognition ?
+                            <IconButton variant="outline" className={voiceClasses} onClick={() => {
+                                if (recognitionActive) {
+                                    recognition.stop();
+                                    setRecognitionActive(false);
+                                }
+                                else {
+                                    recognition.start();
+                                    recognition.onresult = (event) => {
+                                        if (event.results.length > 0) {
+                                            console.log("MessageBar: recognition result: %o", event.results[0])
+                                            const result = event.results[0][0];
+                                            typeingMessage.content = (typeingMessage.content || "") + result.transcript;
+                                            setMessage(typeingMessage.content);
+                                        }
+                                    }
+                                    setRecognitionActive(true);
+                                }
+                            }} data-testid="VoiceMessageBtn">{recognitionActive ? <CiMicrophoneOff /> : <CiMicrophoneOn />}</IconButton>
+                            : null
+                    }
                     <Button
                         colorPalette={is.thinking ? "gray" : "blue"}
                         type="submit"
