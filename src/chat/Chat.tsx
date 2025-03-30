@@ -143,7 +143,6 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
       gridTemplateAreas={`"header header" "side main" "side input"`}
       gridTemplateColumns={"max-content 1fr"}
       gridTemplateRows={"max-content 1fr max-content"}
-      height="100lvh" width="100%"
       className={classnames(styles.chat, chatStyle)}
     >
       <Toaster />
