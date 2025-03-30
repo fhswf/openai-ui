@@ -1,3 +1,10 @@
+## [0.20.3](https://github.com/fhswf/openai-ui/compare/v0.20.2...v0.20.3) (2025-03-30)
+
+
+### Bug Fixes
+
+* code quality issues ([2656899](https://github.com/fhswf/openai-ui/commit/2656899db9e5f39635df615ba8170fadf659e896))
+
 ## [0.20.2](https://github.com/fhswf/openai-ui/compare/v0.20.1...v0.20.2) (2025-03-30)
 
 
