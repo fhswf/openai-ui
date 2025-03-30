@@ -1,3 +1,10 @@
+## [0.19.2](https://github.com/fhswf/openai-ui/compare/v0.19.1...v0.19.2) (2025-03-28)
+
+
+### Bug Fixes
+
+* improve pie charts ([de7b172](https://github.com/fhswf/openai-ui/commit/de7b172cb9b4f713d14726f5bad493d13f93ab29))
+
 ## [0.19.1](https://github.com/fhswf/openai-ui/compare/v0.19.0...v0.19.1) (2025-03-28)
 
 
