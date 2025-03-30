@@ -36,4 +36,5 @@ spec:
               memory: 128Mi
               cpu: 500m
       restartPolicy: Always
+      autoMountServiceAccountToken: false
 status: {}

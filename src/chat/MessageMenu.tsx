@@ -15,7 +15,7 @@ import { Message } from "./context/types";
 import { Toaster, toaster } from "../components/ui/toaster";
 
 export function MessageMenu() {
-    const { is, setIs, setState, clearThread, newChat, removeChat, reloadThread, downloadThread, showSettings, options, user, chat, currentApp, currentChat } = useGlobal();
+    const { is, setIs, setState, newChat, removeChat, options, user, chat, currentApp, currentChat } = useGlobal();
     const { apps, category } = useApps();
     const { t } = useTranslation();
 

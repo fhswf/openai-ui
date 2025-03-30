@@ -100,7 +100,6 @@ export type GlobalActions = {
     removeChat: (index: number) => void;
     setMessage: (content: string) => void;
     clearThread: () => void;
-    reloadThread: () => void;
     downloadThread: (format?: string) => void;
     editMessage: (id: number) => void;
     removeMessage: (id: number) => void;

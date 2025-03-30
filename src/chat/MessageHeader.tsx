@@ -40,7 +40,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 
 
 export function MessageHeader() {
-    const { is, setIs, setOptions, setState, clearThread, newChat, reloadThread, downloadThread, showSettings, options, user, chat, currentChat } = useGlobal();
+    const { is, setIs, setOptions, newChat, downloadThread, showSettings, options, user, chat, currentChat } = useGlobal();
     const { message } = useMessage();
     const { apps, category } = useApps();
     const messages = message?.messages;

@@ -58,15 +58,15 @@ const DashboardChart = () => {
                         }
 
                         // Schlüsseln nach der gewünschten Form
-                        const match = scopes.scope.match(/[^.]+\.fh-swf\.de/);
+                        const match = scopes.scope.endsWith(".fh-swf.de") && scopes.scope.split(".").length === 3 ? scopes.scope.split(".")[0] : null;
+                        console.log("match: ", match);
                         if (match) {
-                            if (!scopeData[match[0]]) {
-                                scopeData[match[0]] = 0;
+                            if (!scopeData[match]) {
+                                scopeData[match] = 0;
                             }
-                            scopeData[match[0]] += scopes.count;
+                            scopeData[match] += scopes.count;
                         }
                     });
-
                 });
         });
     data[0]
@@ -89,6 +89,7 @@ const DashboardChart = () => {
         });
 
     console.log("roleData: ", roleData);
+    console.log("scopeData: ", scopeData);
 
     const lineChartData = {
         labels,
@@ -116,19 +117,16 @@ const DashboardChart = () => {
         "rektor": ["Rektorat", "Rektorat"],
     }
 
-    const getName = (affiliation: string) => {
-        const match = affiliation.match(/([^\.]+)\.fh-swf\.de/);
-        if (match) {
-            const name = match[1];
-            if (name in NAMES) {
-                return NAMES[name];
-            }
-            const parts = name.split("-");
-            if (parts.length > 1) {
-                return [parts.map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(" "), affiliation];
-            }
-            return [name.charAt(0).toUpperCase() + name.slice(1), affiliation];
+    const getName = (match: string) => {
+        const name = match;
+        if (name in NAMES) {
+            return NAMES[name];
         }
+        const parts = name.split("-");
+        if (parts.length > 1) {
+            return [parts.map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(" "), match];
+        }
+        return [name.charAt(0).toUpperCase() + name.slice(1), match];
     }
 
     const getRoleName = (role: string) => {
