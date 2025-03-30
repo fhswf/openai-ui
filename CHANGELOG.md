@@ -1,3 +1,10 @@
+# [0.20.0](https://github.com/fhswf/openai-ui/compare/v0.19.2...v0.20.0) (2025-03-30)
+
+
+### Features
+
+* speech input ([2bcac57](https://github.com/fhswf/openai-ui/commit/2bcac573d2d8ebe2ad4b60e475dbc9797ccf7446))
+
 ## [0.19.2](https://github.com/fhswf/openai-ui/compare/v0.19.1...v0.19.2) (2025-03-28)
 
 
