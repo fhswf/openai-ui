@@ -1,3 +1,10 @@
+## [0.20.1](https://github.com/fhswf/openai-ui/compare/v0.20.0...v0.20.1) (2025-03-30)
+
+
+### Bug Fixes
+
+* layout glitch ([42582ab](https://github.com/fhswf/openai-ui/commit/42582abf431e8f380d1fae806e537cc94e7029de))
+
 # [0.20.0](https://github.com/fhswf/openai-ui/compare/v0.19.2...v0.20.0) (2025-03-30)
 
 
