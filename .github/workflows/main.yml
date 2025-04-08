@@ -136,6 +136,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ needs.release.outputs.new_release_version }}
+            BUILD_SHA=${{ github.sha }}
 
       - name: Update yaml
         uses: fjogeleit/yaml-update-action@main

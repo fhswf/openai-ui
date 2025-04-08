@@ -1,5 +1,8 @@
 FROM node:20-alpine as build
 
+ARG VERSION=0.0.0
+ARG BUILD_SHA=unknown
+
 WORKDIR /app
 
 COPY package.json /app
@@ -14,6 +17,8 @@ ENV VITE_LOGIN_URL=/api/login
 ENV VITE_LOGOUT_URL=/api/logout
 ENV VITE_USER_URL=/api/user
 ENV VITE_DASHBOARD_URL=/api/dashboard
+ENV VITE_VERSION=$VERSION
+ENV VITE_BUILD_SHA=$BUILD_SHA
 
 RUN NODE_ENV=production npm run build
 
