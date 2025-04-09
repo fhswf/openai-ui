@@ -71,7 +71,7 @@ export function MessageHeader() {
 
     return (
         <HStack as="header"
-            padding={2} borderBottomWidth="1px"
+            padding={1} borderBottomWidth="1px"
             justifyContent="space-between"
             data-testid="ChatHeader">
 
@@ -80,7 +80,7 @@ export function MessageHeader() {
                 variant="ghost"
                 title={is.toolbar ? t("hide_toolbar") : t("show_toolbar")}
                 onClick={() => setIs({ toolbar: !is.toolbar })}>{columnIcon}</IconButton>
-            <Stack flexGrow={1} gap="1px" paddingInlineStart={2}>
+            <Stack flexGrow={1} gap="1px" paddingInlineStart={2} className={styles.title}>
                 <Heading data-testid="HeaderTitle" textStyle="lg">{message?.title}</Heading>
                 <Text textStyle="xs">{t('count_messages', { count: messages?.filter(item => item.role !== "system").length })}</Text>
             </Stack>

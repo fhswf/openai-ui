@@ -196,7 +196,7 @@ export function MessageInput() {
                     </HStack>
                 }
                 <HStack justify={"flex-end"} paddingInlineStart={2} paddingInlineEnd={2}>
-                    <Switch size="sm" colorScheme="blue" marginInlineEnd="auto" checked={options.general.codeEditor}
+                    <Switch size="sm" colorScheme="blue" className={styles.editorToggle} marginInlineEnd="auto" checked={options.general.codeEditor}
                         onCheckedChange={(ev) => setGeneral({ codeEditor: ev.checked })}>
                         {t("Code Editor")}
                     </Switch>

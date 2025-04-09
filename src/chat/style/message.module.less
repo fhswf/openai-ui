@@ -6,7 +6,11 @@
   flex-direction: column;
 
   width: max-content;
-  min-width: 30rem;
+
+  @media(min-width: 768px) {
+    min-width: 30rem;
+  }
+
   max-width: 100%;
 
   &.user {
@@ -234,6 +238,12 @@
 .active {
   color: var(--chakra-colors-red-500);
   border: 1px solid var(--chakra-colors-red-500);
+}
+
+.editorToggle {
+  @media(max-width: 768px) {
+    display: none;
+  }
 }
 
 @media screen and (max-width: 600px) {

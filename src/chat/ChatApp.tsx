@@ -12,6 +12,7 @@ const Chat = React.lazy(() => import("./Chat"))
 export default function ChatApp() {
   const [current, toggleCurrent] = useTheme()
 
+  
   const loading = (
     <ProgressCircle.Root
       size="lg"

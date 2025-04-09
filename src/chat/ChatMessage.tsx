@@ -102,6 +102,7 @@ export function MessageItem(props) {
       }
     })
   }
+
   return (
     <Card.Root data-testid={dataTestId} className={classnames(styles.message, role === "user" ? styles.user : styles.assistant)} >
       <Card.Header justifyContent={role === 'user' ? 'flex-end' : 'flex-start'}>

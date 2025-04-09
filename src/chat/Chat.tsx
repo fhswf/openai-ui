@@ -25,10 +25,24 @@ import { func } from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { MessageInput } from './MessageInput';
 import { use } from 'chai';
-
+import {
+  ATTR_ERROR_TYPE,
+  ATTR_EXCEPTION_MESSAGE,
+  ATTR_EXCEPTION_STACKTRACE
+} from '@opentelemetry/semantic-conventions';
+import { logger, SeverityNumber } from './utils/instrumentation'
 
 function ErrorFallback({ error, resetErrorBoundary }) {
+
   console.log("error: %o %s", error.stack, typeof error.stack)
+
+  logger.emit({
+    severityNumber: SeverityNumber.ERROR,
+    severityText: "ERROR",
+    body: { message: error.message, stack: error.stack.toString() },
+    attributes: { [ATTR_ERROR_TYPE]: 'exception', [ATTR_EXCEPTION_MESSAGE]: error.message, [ATTR_EXCEPTION_STACKTRACE]: error.stack.toString() },
+  });
+
   const t = (key) => key
   //const { t } = useTranslation();
   const resetSettings = () => {
@@ -62,8 +76,17 @@ export default function Chat() {
   const { t } = useTranslation();
   const chatStyle = is?.fullScreen ? styles.full : styles.normal
 
-
-
+  window.onerror = function (message, source, lineno, colno, error) {
+    logger.emit({
+      severityNumber: SeverityNumber.ERROR,
+      severityText: "ERROR",
+      body: { message: typeof message === 'string' ? message : message?.toString(), source, lineno, colno, stack: error.stack.toString() },
+      attributes: { [ATTR_ERROR_TYPE]: 'exception', [ATTR_EXCEPTION_MESSAGE]: error.message.toString(), [ATTR_EXCEPTION_STACKTRACE]: error.stack.toString() },
+    });
+    console.log("window.onerror: %o %o", error, error.stack)
+    toaster.create({ type: "error", title: "An Error Occurred", description: (`${message}, ${source}, ${lineno}, ${colno}`) })
+    return true;
+  }
 
 
   const allowedEmails = [
@@ -115,69 +138,52 @@ Der Zugriff ist aktuell nur für folgende Personen möglich:
 - Beschäftigte des Dezernats 8
 `
 
-  if (!checkUser()) {
-    return (
-      <div className={classnames(styles.chat, chatStyle)}>
-        <div className={styles.chat_inner}>
-          <ChatSideBar />
-          <div>
-            <Markdown
-              remarkPlugins={[remarkGfm, remarkMath, smartypants]}
-              rehypePlugins={[rehypeKatex]}
-            >
-              {userText}
-            </Markdown>
-            <div>
-              <p>Ihre Benutzerdaten lauten:</p>
-
-              <pre>
-                {JSON.stringify(user, null, 2)}
-              </pre>
-            </div>
-          </div>
-        </div>
-      </div>)
-  }
+  
   return (
-    <Grid
-      gridTemplateAreas={`"header header" "side main" "side input"`}
-      gridTemplateColumns={"max-content 1fr"}
-      gridTemplateRows={"max-content 1fr max-content"}
-      className={classnames(styles.chat, chatStyle)}
-    >
-      <Toaster />
-      <GridItem gridArea={"header"}>
-        <MessageHeader />
-      </GridItem>
+    <ErrorBoundary fallbackRender={ErrorFallback}>
+      <Grid
+        gridTemplateAreas={`"header header" "side main" "side input"`}
+        gridTemplateColumns={"max-content 1fr"}
+        gridTemplateRows={"max-content 1fr max-content"}
+        className={classnames(styles.chat, chatStyle)}
+      >
+        <Toaster />
 
-      <GridItem gridArea={"side"} as="aside" className={is?.toolbar ? styles.showToolbar : styles.hideToolbar}>
-        <ChatSideBar />
-      </GridItem>
+        <GridItem gridArea={"header"}>
+          <MessageHeader />
+        </GridItem>
 
-      {
-        is?.config ?
-          <Config />
-          :
-          <GridItem as="main" gridArea={"main"} overflow="auto">
-            <ErrorBoundary fallbackRender={ErrorFallback}>
-              <div className={styles.chat_content}>
-                {
-                  is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
-                    <ScrollView>
-                      {is?.apps ? <Apps /> : <ChatList />}
-                    </ScrollView>
-                  </div>
-                }
-                <ChatMessage />
-              </div>
-            </ErrorBoundary>
-          </GridItem>
+        <GridItem gridArea={"side"} as="aside" className={is?.toolbar ? styles.showToolbar : styles.hideToolbar}>
+          <ChatSideBar />
+        </GridItem>
 
-      }
+        {
+          is?.config ?
+            <Config />
+            :
+            <GridItem as="main" gridArea={"main"} overflow="auto">
+              <ErrorBoundary fallbackRender={ErrorFallback}>
+                <div className={styles.chat_content}>
 
-      <GridItem gridArea={"input"}>
-        <MessageInput />
-      </GridItem>
-    </Grid>
+                  {
+
+                    is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
+                      <ScrollView>
+                        {is?.apps ? <Apps /> : <ChatList />}
+                      </ScrollView>
+                    </div>
+                  }
+                  <ChatMessage />
+                </div>
+              </ErrorBoundary>
+            </GridItem>
+
+        }
+
+        <GridItem gridArea={"input"}>
+          <MessageInput />
+        </GridItem>
+      </Grid>
+    </ErrorBoundary>
   )
 }
