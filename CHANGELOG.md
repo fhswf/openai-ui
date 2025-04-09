@@ -1,3 +1,10 @@
+# [0.21.0](https://github.com/fhswf/openai-ui/compare/v0.20.3...v0.21.0) (2025-04-09)
+
+
+### Features
+
+* access for all members ([47e923e](https://github.com/fhswf/openai-ui/commit/47e923ef1da71b561366a5cd5d1a7029ef1684d6))
+
 ## [0.20.3](https://github.com/fhswf/openai-ui/compare/v0.20.2...v0.20.3) (2025-03-30)
 
 
