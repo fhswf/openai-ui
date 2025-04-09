@@ -131,6 +131,8 @@ export function ChatItem(props) {
 
 export function ChatList() {
   const { chat, newChat, currentApp } = useGlobal()
+
+
   return (
     <Flex gap="4" direction="column" data-testid="ConversationList">
       {chat.length ? chat.map((item, index) => <ChatItem key={index} index={index} {...item} />) : <ListEmpty />}
