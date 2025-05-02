@@ -17,3 +17,8 @@ This project is based on
 - Single Sign-On (SSO) via OpenID Connect (OIDC) for authentication.
 - Markdown support for chat messages.
 - Code editor for chat messages.
+
+
+## Ganz wichtige Mitteilung
+
+Wichtige Funktion ist implementiert.
