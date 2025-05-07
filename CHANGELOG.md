@@ -1,3 +1,10 @@
+## [0.21.1](https://github.com/fhswf/openai-ui/compare/v0.21.0...v0.21.1) (2025-05-07)
+
+
+### Bug Fixes
+
+* improve error handling ([b6fe140](https://github.com/fhswf/openai-ui/commit/b6fe140580ce9656d0e1a58dc9058fab900599c2))
+
 # [0.21.0](https://github.com/fhswf/openai-ui/compare/v0.20.3...v0.21.0) (2025-04-09)
 
 
