@@ -23,6 +23,7 @@ import smartypants from 'remark-smartypants'
 import rehypeKatex from 'rehype-katex'
 import { func } from 'prop-types';
 import { useTranslation } from 'react-i18next';
+import { t } from 'i18next';
 import { MessageInput } from './MessageInput';
 import { use } from 'chai';
 import {
@@ -43,12 +44,15 @@ function ErrorFallback({ error, resetErrorBoundary }) {
     attributes: { [ATTR_ERROR_TYPE]: 'exception', [ATTR_EXCEPTION_MESSAGE]: error.message, [ATTR_EXCEPTION_STACKTRACE]: error.stack.toString() },
   });
 
-  const t = (key) => key
-  //const { t } = useTranslation();
+  //const t = (key) => key
+  // const { t } = useTranslation();
+
   const resetSettings = () => {
     console.log("resetSettings")
     localStorage.setItem("SESSIONS", "");
+    window.location.reload();
   }
+
   return (
     <Center height="100%" margin="10ex">
       <Alert.Root variant="surface" status="error" >
@@ -89,56 +93,49 @@ export default function Chat() {
   }
 
 
-  const allowedEmails = [
-    'neus.burkhard@fh-swf.de',
-    'kuepluece.hatice@fh-swf.de',
-    'wienke.annalisa@fh-swf.de',
-    'andermahr.sabine@fh-swf.de',
-    'kleineberg.matthaeus@fh-swf.de',
-    'meffert.inga@fh-swf.de',
-    'goedde.kirsten@fh-swf.de',
-    'hillebrand.melanie@fh-swf.de',
-    'kern.sebastian@fh-swf.de',
-    'lueck.veith@fh-swf.de',
-    'menk.eva@fh-swf.de',
-    'reinecke.sandra@fh-swf.de',
-    'kurowski.bernd@fh-swf.de',
-    'schoebel.denis@fh-swf.de',
-    'schluck.dirk@fh-swf.de'
-  ];
+
 
   /**
    * Check if the user is allowed to access the chat
    * @returns {boolean} true if the user is allowed to access the chat 
    */
   function checkUser() {
-    if (!user) return false
-    if (
-      // User is a faculty member of fh-swf.de
-      user?.affiliations['fh-swf.de']?.indexOf('faculty') > -1 ||
-      // User is a student at fb-in.fh-swf.de
-      user?.affiliations['fb-in.fh-swf.de']?.indexOf('student') > -1 ||
-      // User is a staff member of fb-in.fh-swf.de
-      user?.affiliations['fb-in.fh-swf.de']?.indexOf('staff') > -1 ||
-      // User is an employee of the department 8
-      allowedEmails.includes(user?.email)
-    )
+    if (!(user?.affiliations && user.affiliations['fh-swf.de']))
+      return false
+    else
       return true
-    return false
   }
 
   const userText = `
-  ## Kein Zugriff
+  # Kein Zugriff
 
-Diese Anwendung befindet sich im Pilotbetrieb.
-Der Zugriff ist aktuell nur für folgende Personen möglich:
-
-- Mitglieder des Fachbereichs Informatik & Naturwissenschaften,
-- Professor*innen der Fachhochschule Südwestfalen,
-- Beschäftigte des Dezernats 8
+Der Zugriff auf den Chat ist nur für Mitglieder der FH SWF möglich. Wenn du ein Mitglied bist, melde dich bitte mit Deiner Hochschulkennung an.
 `
 
-  
+  if (!checkUser()) {
+    return (
+      <div className={classnames(styles.chat, chatStyle)}>
+        <MessageHeader />
+        <div className={styles.chat_inner}>
+
+          <div>
+            <Markdown
+              remarkPlugins={[remarkGfm, smartypants]}
+            >
+              {userText}
+            </Markdown>
+            <div>
+              <p>Ihre Benutzerdaten lauten:</p>
+
+              <pre>
+                {JSON.stringify(user, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </div>
+      </div>)
+  }
+
   return (
     <ErrorBoundary fallbackRender={ErrorFallback}>
       <Grid
