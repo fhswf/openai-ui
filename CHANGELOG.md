@@ -1,3 +1,10 @@
+## [0.21.2](https://github.com/fhswf/openai-ui/compare/v0.21.1...v0.21.2) (2025-05-24)
+
+
+### Bug Fixes
+
+* tool menu / web search ([0d9e893](https://github.com/fhswf/openai-ui/commit/0d9e8930d991216d4a8deb72afed02c04ec96a57))
+
 ## [0.21.1](https://github.com/fhswf/openai-ui/compare/v0.21.0...v0.21.1) (2025-05-07)
 
 
