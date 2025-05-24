@@ -1,16 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-import {
-    MenuContent,
-    MenuItem,
-    MenuItemCommand,
-    MenuItemGroup,
-    MenuRadioItem,
-    MenuRadioItemGroup,
-    MenuRoot,
-    MenuSeparator,
-    MenuTrigger,
-} from "../components/ui/menu"
 
 import { Avatar, Card, HStack, Stack, Text, IconButton, Button, Menu, Popover, Dialog, CloseButton, Heading } from '@chakra-ui/react';
 
@@ -55,13 +44,13 @@ export function MessageHeader() {
     };
 
 
-    function setWebSearch(e: boolean): void {
-        console.log('Set web search: %o', e);
+    function setTool(tool: string, e: boolean): void {
+        console.log('Set tool: %s %o', tool, e);
         let tools: Map<String, boolean> = options.openai?.tools || new Map();
         if (e) {
-            tools["web-search"] = true;
+            tools[tool] = true;
         } else {
-            delete tools["web-search"];
+            delete tools[tool];
         }
         setOptions({
             type: OptionActionType.OPENAI,
@@ -118,7 +107,7 @@ export function MessageHeader() {
                                         value={item.value}
                                         key={item.value}
                                         checked={options.openai?.tools && item.value in options.openai.tools}
-                                        onCheckedChange={(e) => setOptions({ type: OptionActionType.OPENAI, data: { ...options.openai, tools: { ...options.openai.tools, [item.value]: e } } })}>
+                                        onCheckedChange={(e) => setTool(item.value, e)}>
                                         {item.label}
                                         <Menu.ItemIndicator />
                                     </Menu.CheckboxItem>
@@ -136,41 +125,41 @@ export function MessageHeader() {
                         <RiChatNewLine aria-label={t("new_chat")} />
                     </IconButton>
                 </Menu.Trigger>
-                <MenuContent>
-                    <MenuItemGroup title={t("new_chat")}>
+                <Menu.Content>
+                    <Menu.ItemGroup title={t("new_chat")}>
                         {
                             apps.map((app, index) => {
                                 const cat = category.filter(item => item.id == app.category)[0];
                                 return (
-                                    <MenuItem key={app.id} onClick={() => newChat(app)} value={app.id} aria-keyshortcuts={index}>
+                                    <Menu.Item key={app.id} onClick={() => newChat(app)} value={app.id} aria-keyshortcuts={index}>
                                         <span className={classnames(styles.icon, `ico-${cat.icon}`)}></span> {app.title}
-                                    </MenuItem>
+                                    </Menu.Item>
                                 )
                             })
                         }
-                    </MenuItemGroup>
-                </MenuContent>
+                    </Menu.ItemGroup>
+                </Menu.Content>
             </Menu.Root>
 
             <MessageMenu />
 
             {options.openai.mode == "assistant" ? <IconButton variant="ghost" title={t("chat_settings")} onClick={showSettings}><IoSettingsOutline /></IconButton> : null}
 
-            <MenuRoot>
-                <MenuTrigger asChild>
+            <Menu.Root>
+                <Menu.Trigger asChild>
                     <IconButton variant="ghost" title={t("download_thread")}>
                         <MdOutlineSimCardDownload aria-label={t("download_thread")} />
                     </IconButton>
-                </MenuTrigger>
-                <MenuContent>
-                    <MenuItem value="json" onClick={() => downloadThread("json")} >
+                </Menu.Trigger>
+                <Menu.Content>
+                    <Menu.Item value="json" onClick={() => downloadThread("json")} >
                         <BiSolidFileJson /> {t("download_json")}
-                    </MenuItem>
-                    <MenuItem value="markdown" onClick={() => downloadThread("markdown")} >
+                    </Menu.Item>
+                    <Menu.Item value="markdown" onClick={() => downloadThread("markdown")} >
                         <IoLogoMarkdown /> {t("download_markdown")}
-                    </MenuItem>
-                </MenuContent>
-            </MenuRoot>
+                    </Menu.Item>
+                </Menu.Content>
+            </Menu.Root>
             <GitHubMenu />
 
             <Dialog.Root lazyMount size="cover">
