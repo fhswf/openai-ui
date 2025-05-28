@@ -26,6 +26,7 @@ import { AiOutlineBarChart } from 'react-icons/ai';
 
 import '../assets/icon/style.css';
 import { ErrorBoundary } from 'react-error-boundary';
+import { ToolChoiceTypes, Tool } from 'openai/resources/responses/responses.mjs';
 
 
 export function MessageHeader() {
@@ -44,13 +45,15 @@ export function MessageHeader() {
     };
 
 
-    function setTool(tool: string, e: boolean): void {
-        console.log('Set tool: %s %o', tool, e);
-        let tools: Map<String, boolean> = options.openai?.tools || new Map();
-        if (e) {
-            tools[tool] = true;
+    function setTool(tool: Tool['type'], checked: boolean): void {
+        console.log('Set tool: %s %o', tool, checked);
+        let tools = Array.isArray(options.openai?.tools) ? [...options.openai.tools] : [];
+        if (checked) {
+            if (!tools.some(t => t.type === tool)) {
+                tools.push({ type: tool });
+            }
         } else {
-            delete tools[tool];
+            tools = tools.filter(t => t.type !== tool);
         }
         setOptions({
             type: OptionActionType.OPENAI,
@@ -106,7 +109,7 @@ export function MessageHeader() {
                                     <Menu.CheckboxItem
                                         value={item.value}
                                         key={item.value}
-                                        checked={options.openai?.tools && item.value in options.openai.tools}
+                                        checked={options.openai?.tools.find(t => t.type === item.value) ? true : false}
                                         onCheckedChange={(e) => setTool(item.value, e)}>
                                         {item.label}
                                         <Menu.ItemIndicator />
