@@ -1,5 +1,4 @@
 import { ToolChoiceTypes, Tool } from "openai/resources/responses/responses.mjs";
-import { Tooltip } from "recharts";
 import internal from "stream";
 
 
@@ -45,7 +44,7 @@ export type OpenAIOptions = {
     max_tokens: number;
     n: number;
     stream: boolean;
-    tools: object;
+    tools: object
 };
 
 export type Options = {
