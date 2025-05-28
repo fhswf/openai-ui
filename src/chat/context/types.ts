@@ -1,4 +1,4 @@
-import { ToolChoiceTypes } from "openai/resources/responses/responses.mjs";
+import { ToolChoiceTypes, Tool } from "openai/resources/responses/responses.mjs";
 import internal from "stream";
 
 export enum GlobalActionType {
@@ -41,7 +41,7 @@ export type OpenAIOptions = {
     max_tokens: number;
     n: number;
     stream: boolean;
-    tools: Map<String, boolean>;
+    tools: Array<Tool>;
 };
 
 export type Options = {
