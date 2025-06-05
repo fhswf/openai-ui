@@ -1,3 +1,10 @@
+## [0.21.3](https://github.com/fhswf/openai-ui/compare/v0.21.2...v0.21.3) (2025-06-05)
+
+
+### Bug Fixes
+
+* proxy for image load ([6b91081](https://github.com/fhswf/openai-ui/commit/6b91081956f530eb8810d0dd9dabe30bdbfcb84a))
+
 ## [0.21.2](https://github.com/fhswf/openai-ui/compare/v0.21.1...v0.21.2) (2025-05-24)
 
 
