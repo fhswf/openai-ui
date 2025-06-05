@@ -102,7 +102,7 @@ export function MessageInput() {
                     typeingMessage.images = [];
                 }
                 // check if the url is an image
-                const proxy = import.meta.env.VITE_PROXY_URL || "https://poxy.gawron.cloud/api";
+                const proxy = import.meta.env.VITE_PROXY_URL || "https://proxy.gawron.cloud/api";
                 let fetchUrl = `${proxy}?url=${encodeURIComponent(url)}`;
                 fetch(fetchUrl, { method: 'GET' })
                     .then((response) => {
