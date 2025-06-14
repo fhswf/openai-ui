@@ -110,7 +110,7 @@ export const LazyRenderer = (props: LazyRendererProps) => {
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        console.log('isIntersecting: %o %o', entry, ref.current);
+        //console.log('isIntersecting: %o %o', entry, ref.current);
         setIsVisible(entry.isIntersecting);
         observer.disconnect();
       }
