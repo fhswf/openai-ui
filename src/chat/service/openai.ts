@@ -444,8 +444,6 @@ class EventProcessor {
         })
     }
   }
-
-
 }
 
 export async function executeAssistantRequest(setState, is, newChat: Chat[], messages: Messages, options: Options, currentChat: number, chat: Chat[], user) {
