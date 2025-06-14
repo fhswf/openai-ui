@@ -28,10 +28,12 @@ import { IoTimerOutline } from 'react-icons/io5';
 
 
 export function MessageItem(props) {
-  const { content, sentTime, role, id, dataTestId, usage, startTime, endTime, toolsUsed } = props
+  const { content, images, sentTime, role, id, dataTestId, usage, startTime, endTime, toolsUsed } = props
   const { removeMessage, editMessage, user, options, is } = useGlobal()
   const { t } = useTranslation();
   const avatar = options.general.theme === 'dark' ? avatar_white : avatar_black
+
+  //console.log("MessageItem props:", props);
 
   type UsageProps = {
     usage?: {
@@ -43,7 +45,6 @@ export function MessageItem(props) {
   };
 
   function Usage(props: UsageProps) {
-
     const { usage, startTime, endTime } = props
     const formatter = new Intl.NumberFormat()
 
@@ -119,6 +120,19 @@ export function MessageItem(props) {
         <LazyRenderer isVisible={is.thinking}>
           {message}
         </LazyRenderer>
+        {images && images.map((image, index) => {
+          console.log("Image:", image);
+          // create data URL from blob
+          return image.blob.arrayBuffer().then(buffer => {
+            const binary = String.fromCharCode(...new Uint8Array(buffer));
+            const base64 = btoa(binary);
+            const image_url = `data:${image.mime_type};base64,${base64}`;
+            console.log("Image URL:", image_url);
+            return (<img key={index} src={image_url} alt={`image-${index}`} className={styles.image} />)
+          });
+
+
+        })}
         {image_url && <img src={image_url} alt="image" className={styles.image} />}
       </Card.Body>
       <Card.Footer>

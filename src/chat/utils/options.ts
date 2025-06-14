@@ -1,4 +1,5 @@
 import { t } from "i18next";
+import { Tool } from "openai/resources/responses/responses.mjs";
 
 export const shortcutKey = "Ctrl+Enter";
 export const keyboard = {
@@ -54,6 +55,7 @@ export const modeOptions = [
 
 
 export const modelOptions = [
+  { label: "gpt-4.1-nano", value: "gpt-4.1-nano" },
   { label: "gpt-4o-mini", value: "gpt-4o-mini" },
   {
     label: "gpt-4-turbo", value: "gpt-4-turbo",
@@ -66,12 +68,32 @@ export const modelOptions = [
   },
 ];
 
-export const toolOptions = [
-  {
-    label: "Web Search",
-    value: "web_search_preview",
-  },
-];
+export const toolOptions: Map<string, Tool> = new Map([
+  [
+    "Web Search",
+    {
+      type: "web_search_preview"
+    }
+  ],
+  [
+    "DeepWiki",
+    {
+      "type": "mcp",
+      "server_label": "DeepWiki",
+      "server_url": "https://mcp.deepwiki.com/mcp",
+      "require_approval": "never",
+    },
+  ],
+  [
+    "Calendly",
+    {
+      type: "mcp",
+      server_label: "Calendly",
+      server_url: "https://mcp.composio.dev/composio/server/8bcfcc4e-994c-4270-9506-74bf73c83da8/mcp?include_composio_helper_actions=true",
+      require_approval: "never"
+    }
+  ]
+]);
 
 export const languageOptions = [
   {

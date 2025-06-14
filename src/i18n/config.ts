@@ -224,6 +224,22 @@ i18n
                     export: "Exportieren",
                     export_settings: "Einstellungen exportieren",
                     export_settings_help: "Hier können Sie Ihre Konfiguration exportieren."
+                    "MCP Services": "MCP-Dienste",
+                    "Edit MCP Services": "MCP-Dienste bearbeiten",
+                    "Add/Save Service": "Dienst hinzufügen/speichern",
+                    "Add/Remove MCP Services": "MCP-Dienste hinzufügen/entfernen",
+                    "Add Service": "Dienst hinzufügen",
+                    "Save Service": "Dienst speichern",
+                    "Label": "Bezeichnung",
+                    "Server URL": "Server-URL",
+                    "Allowed Tools": "Erlaubte Werkzeuge",
+                    "Comma separated": "Kommagetrennt",
+                    "Require Approval": "Genehmigung erforderlich",
+                    "Always": "Immer",
+                    "Never": "Niemals",
+
+                    "image_generation_call": "Bildgenerierung",
+                    "image_generation_call_description": "Bei dieser Antwort wurde eine Bildgenerierung durchgeführt."
                 },
             },
         },

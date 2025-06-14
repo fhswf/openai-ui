@@ -1,14 +1,14 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
+import { Tool, ToolChoiceTypes } from './context/types';
 
-import { Avatar, Card, HStack, Stack, Text, IconButton, Button, Menu, Popover, Dialog, CloseButton, Heading } from '@chakra-ui/react';
-
+import { Avatar, Card, HStack, Stack, Text, IconButton, Button, Menu, Popover, Dialog, CloseButton, Heading, Portal, Field, Input, Select, Checkbox, Separator, createListCollection } from '@chakra-ui/react';
 
 import { useTranslation } from 'react-i18next';
 import { IoLogoMarkdown, IoSettingsOutline, IoReloadOutline, IoLogoGithub } from 'react-icons/io5';
 import { BiSolidFileJson } from "react-icons/bi";
-import { LuPanelLeftClose, LuPanelLeftOpen } from 'react-icons/lu';
-import { MdOutlineSimCardDownload } from 'react-icons/md';
+import { LuChevronRight, LuPanelLeftClose, LuPanelLeftOpen } from 'react-icons/lu';
+import { MdDelete, MdEdit, MdOutlineSimCardDownload } from 'react-icons/md';
 import { CgOptions } from "react-icons/cg";
 import { useGlobal } from './context';
 import { useApps } from "./apps/context";
@@ -26,7 +26,7 @@ import { AiOutlineBarChart } from 'react-icons/ai';
 
 import '../assets/icon/style.css';
 import { ErrorBoundary } from 'react-error-boundary';
-import { ToolChoiceTypes, Tool } from 'openai/resources/responses/responses.mjs';
+
 
 
 export function MessageHeader() {
@@ -37,30 +37,72 @@ export function MessageHeader() {
     const columnIcon = is.toolbar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />;
 
     const { t } = useTranslation();
+    const contentRef = useRef<HTMLDivElement>(null)
 
+    const [editMCPServices, setEditMCPServices] = useState(false);
+
+    const [mcpToolForm, setMcpToolForm] = useState({
+        label: "",
+        server_url: "",
+        require_approval: "never",
+        allowed_tools: [],
+    });
+
+    const approval_options = createListCollection({
+        items: [
+            { label: t("Always"), value: "always" },
+            { label: t("Never"), value: "never" }
+        ]
+    });
 
     const logout = () => {
         console.log('Logout');
         window.location.href = import.meta.env.VITE_LOGOUT_URL || '/';
     };
 
-   
+    const editMCP = () => {
+        console.log('Edit MCP Services');
+        setEditMCPServices(true);
+    };
 
-    function setTool(tool: Tool['type'], checked: boolean): void {
+    if (!(typeof options.openai.tools === "object")) {
+        options.openai.tools = {};
+    }
+
+    function setTool(key: string, tool: Tool, checked: boolean): void {
         console.log('Set tool: %s %o', tool, checked);
-        let tools = Array.isArray(options.openai?.tools) ? [...options.openai.tools] : [];
+        let tools = options.openai.tools;
         if (checked) {
-            if (!tools.some(t => t.type === tool)) {
-                tools.push({ type: tool });
+            if (!(key in Object.keys(tools))) {
+                tools[key] = tool;
             }
         } else {
-            tools = tools.filter(t => t.type !== tool);
+            delete tools[key];
         }
         setOptions({
             type: OptionActionType.OPENAI,
             data: { ...options.openai, tools }
         });
     }
+
+    function editTool(key: string, tool: Tool.Mcp): void {
+        console.log('Edit tool: %s %o', key, tool);
+        setMcpToolForm({
+            label: tool.server_label || "",
+            server_url: tool.server_url || "",
+            require_approval: tool.require_approval as string || "never",
+            allowed_tools: tool.allowed_tools as string[] || [],
+        });
+        setEditMCPServices(true);
+    }
+
+    const mcpTools: Record<string, Tool> = {}  // Filter MCP tools from toolOptions
+
+    toolOptions.forEach((value, key) => {
+        if (value.type === "mcp")
+            mcpTools[key] = value;
+    });
+    console.log("MCP Tools:", mcpTools);
 
     return (
         <HStack as="header"
@@ -106,22 +148,181 @@ export function MessageHeader() {
                         <Menu.ItemGroup>
                             <Menu.ItemGroupLabel>{t("tool_options")}</Menu.ItemGroupLabel>
                             {
-                                toolOptions.map((item) => (
+                                Array.from(toolOptions.entries()).map(([key, value]) => (
                                     <Menu.CheckboxItem
-                                        value={item.value}
-                                        key={item.value}
-                                        checked={options.openai?.tools.find(t => t.type === item.value) ? true : false}
-                                        onCheckedChange={(e) => setTool(item.value, e)}>
-                                        {item.label}
+                                        value={value.type}
+                                        key={key}
+                                        checked={Object.keys(options.openai?.tools).find(k => k === key) !== undefined}
+                                        onCheckedChange={(e) => setTool(key, value, e)}>
                                         <Menu.ItemIndicator />
+                                        {key}
                                     </Menu.CheckboxItem>
                                 ))
                             }
+
+                            <Menu.Root positioning={{ placement: "right-start", gutter: 2 }}>
+                                <Menu.TriggerItem>
+                                    {t("MCP Services")} <LuChevronRight />
+                                </Menu.TriggerItem>
+                                <Portal>
+                                    <Menu.Positioner>
+                                        <Menu.Content>
+                                            {Object.entries(mcpTools).map(([key, tool]) => (
+                                                <Menu.CheckboxItem
+                                                    key={key}
+                                                    value={key}
+                                                    checked={Object.keys(options.openai?.tools).find(k => k === key) !== undefined}
+                                                    onCheckedChange={(e) => setTool(key, tool, e)}>
+                                                    <Menu.ItemIndicator />
+                                                    {tool.title || key}
+                                                </Menu.CheckboxItem>
+                                            ))}
+
+                                            <Menu.Item onClick={editMCP} value="edit_mcp_services">
+                                                {t("Add/Remove MCP Services")}
+                                            </Menu.Item>
+                                        </Menu.Content>
+                                    </Menu.Positioner>
+                                </Portal>
+                            </Menu.Root>
                         </Menu.ItemGroup>
                     </Menu.Content>
                 </Menu.Positioner>
             </Menu.Root>
 
+
+            <Dialog.Root open={editMCPServices} onOpenChange={(e) => setEditMCPServices(e.open)} lazyMount size="cover">
+                <Portal>
+                    <Dialog.Backdrop />
+                    <Dialog.Positioner>
+                        <Dialog.Content ref={contentRef}>
+
+                            <Dialog.Header>
+                                <Dialog.Title>
+                                    {t("Edit MCP Services")}
+                                </Dialog.Title>
+                            </Dialog.Header>
+                            <Dialog.Body>
+                                <Stack gap={4}>
+                                    <Stack gap={4}>
+                                        <Field.Root>
+                                            <Field.Label htmlFor="label">{t("Label")}</Field.Label>
+                                            <Input
+                                                id="label"
+                                                name="label"
+                                                required
+                                                className={styles.input}
+                                                value={mcpToolForm.label}
+                                                onChange={e => setMcpToolForm(f => ({ ...f, label: e.target.value }))}
+                                            />
+                                        </Field.Root>
+                                        <Field.Root>
+                                            <Field.Label htmlFor="server_url">{t("Server URL")}</Field.Label>
+                                            <Input
+                                                id="server_url"
+                                                name="server_url"
+                                                type="url"
+                                                required
+                                                className={styles.input}
+                                                value={mcpToolForm.server_url}
+                                                onChange={e => setMcpToolForm(f => ({ ...f, server_url: e.target.value }))}
+                                            />
+                                        </Field.Root>
+                                        <Field.Root>
+                                            <Select.Root collection={approval_options} size="sm" width="320px"
+                                                value={[mcpToolForm.require_approval]}
+                                                onValueChange={(e) => {
+                                                    console.log("Selected approval option:", e);
+                                                    setMcpToolForm(f => ({ ...f, require_approval: e.value[0] }))
+                                                }}>
+                                                <Select.HiddenSelect />
+                                                <Select.Label>{t("Require Approval")}</Select.Label>
+                                                <Select.Control>
+                                                    <Select.Trigger>
+                                                        <Select.ValueText placeholder="Select" />
+                                                    </Select.Trigger>
+
+                                                    <Select.IndicatorGroup>
+                                                        <Select.Indicator />
+                                                    </Select.IndicatorGroup>
+                                                </Select.Control>
+                                                <Portal container={contentRef}>
+                                                    <Select.Positioner>
+                                                        <Select.Content>
+                                                            {approval_options.items.map((framework) => (
+                                                                <Select.Item item={framework} key={framework.value}>
+                                                                    {framework.label}
+                                                                    <Select.ItemIndicator />
+                                                                </Select.Item>
+                                                            ))}
+                                                        </Select.Content>
+                                                    </Select.Positioner>
+                                                </Portal>
+                                            </Select.Root>
+                                        </Field.Root>
+                                        <Field.Root>
+                                            <Field.Label htmlFor="allowed_tools">{t("Allowed Tools")}</Field.Label>
+                                            <Input
+                                                id="allowed_tools"
+                                                name="allowed_tools"
+                                                placeholder={t("Comma separated")}
+                                                className={styles.input}
+                                                value={mcpToolForm.allowed_tools}
+                                                onChange={e => setMcpToolForm(f => ({ ...f, allowed_tools: e.target.value.split(',').map(item => item.trim()) }))}
+                                            />
+                                        </Field.Root>
+                                    </Stack>
+                                    <Button type="submit" colorScheme="blue">{t("Add/Save Service")}</Button>
+                                </Stack>
+
+
+                                <Separator marginBlockStart={4} marginBlockEnd={4} />
+
+                                <Stack padding={2} gap={2} as="form" onSubmit={e => { e.preventDefault(); /* handle submit here */ }}>
+                                    <Text fontWeight="bold">{t("MCP Services")}</Text>
+                                    <Stack padding={2} gap={2} className={styles.mcpServices}>
+                                        {Object.entries(mcpTools).map(([key, tool]) => (
+                                            <HStack key={key} justifyContent="space-between" alignItems="center">
+                                                <HStack>
+                                                    <Checkbox.Root
+                                                        size="sm"
+                                                        variant={"outline"}
+                                                        checked={Object.keys(options.openai?.tools).find(k => k === key) !== undefined}
+                                                        onCheckedChange={(e) => setTool(key, tool, e.checked)}>
+                                                        <Checkbox.HiddenInput />
+                                                        <Checkbox.Control />
+                                                    </Checkbox.Root>
+                                                    <Text>{tool.title || key}</Text>
+                                                </HStack>
+                                                <HStack gap={1} alignItems="center">
+
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            editTool(key, tool)
+                                                        }}>
+                                                        <MdEdit />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm">
+                                                        <MdDelete />
+                                                    </Button>
+                                                </HStack>
+                                            </HStack>
+                                        ))}
+                                    </Stack>
+
+
+                                </Stack>
+                            </Dialog.Body>
+                            <Dialog.Footer />
+                            <Dialog.CloseTrigger asChild>
+                                <CloseButton size="sm" />
+                            </Dialog.CloseTrigger>
+                        </Dialog.Content>
+                    </Dialog.Positioner>
+                </Portal>
+            </Dialog.Root>
 
             <Menu.Root>
                 <Menu.Trigger asChild>

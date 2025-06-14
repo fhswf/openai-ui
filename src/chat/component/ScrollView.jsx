@@ -14,7 +14,7 @@ export const ScrollView = (props) => {
 
   const scrollToBottom = () => {
     const currentHeight = scrollRef?.current?.scrollHeight
-    console.log('scrollToBottom: %o %o', currentHeight, height);
+    //console.log('scrollToBottom: %o %o', currentHeight, height);
     if (true || currentHeight - height > 60) {
       //scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
 
