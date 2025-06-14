@@ -231,7 +231,7 @@ i18n
 
                     "image_generation_call": "Bildgenerierung",
                     "image_generation_call_description": "Bei dieser Antwort wurde eine Bildgenerierung durchgeführt.",
-                    
+
                     import_export: "Import/Export",
                     import_export_description: "Hier können Sie Ihre Konfiguration (inkl. Chat-Historie) importieren oder exportieren.",
                     import: "Importieren",
@@ -244,6 +244,7 @@ i18n
                     export: "Exportieren",
                     export_settings: "Einstellungen exportieren",
                     export_settings_help: "Hier können Sie Ihre Konfiguration exportieren."
+
                 },
             },
         },
