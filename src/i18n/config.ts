@@ -212,6 +212,23 @@ i18n
                     usage_information_description: "Hier finden Sie eine Übersicht über die Nutzung des Chatbots.",
                     scope_breakdown_title: "Aufschlüsselung der Zugriffe nach Bereichen",
                     role_breakdown_title: "Aufschlüsselung der Zugriffe nach Rollen",
+
+                    "MCP Services": "MCP-Dienste",
+                    "Edit MCP Services": "MCP-Dienste bearbeiten",
+                    "Add/Save Service": "Dienst hinzufügen/speichern",
+                    "Add/Remove MCP Services": "MCP-Dienste hinzufügen/entfernen",
+                    "Add Service": "Dienst hinzufügen",
+                    "Save Service": "Dienst speichern",
+                    "Label": "Bezeichnung",
+                    "Server URL": "Server-URL",
+                    "Allowed Tools": "Erlaubte Werkzeuge",
+                    "Comma separated": "Kommagetrennt",
+                    "Require Approval": "Genehmigung erforderlich",
+                    "Always": "Immer",
+                    "Never": "Niemals",
+
+                    "image_generation_call": "Bildgenerierung",
+                    "image_generation_call_description": "Bei dieser Antwort wurde eine Bildgenerierung durchgeführt."
                 },
             },
         },

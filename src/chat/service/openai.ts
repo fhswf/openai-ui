@@ -164,15 +164,11 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
 
   const tools: Tool[] = [];
 
-  if (options?.openai?.tools) {
-    Object.keys(options?.openai?.tools)
-      .filter((key) => options.openai.tools[key])
-      .forEach((key) => {
-        tools.push({ type: key as "web_search_preview" | "web_search_preview_2025_03_11" });
-      });
-  }
-
-  console.log("createResponse: %o", tools);
+  Object.values(options.openai.tools).forEach((tool) => {
+    console.log("createResponse: tool: %o", tool);
+    tools.push(tool as Tool);
+  });
+  console.log("createResponse: tools: %o", tools);
 
   client.responses.create({
     model: options.openai.model,
@@ -282,7 +278,7 @@ class EventProcessor {
   }
 
   process(event) {
-    console.log(event);
+    console.log("event: %s %o", event.type, event);
     let message = this.chat[this.currentChat].messages[this.chat[this.currentChat].messages.length - 1];;
 
     switch (event.type) {
@@ -310,9 +306,32 @@ class EventProcessor {
         this.setIs({ thinking: false });
         break;
 
+      case "response.output_item.done":
+        console.log(event.item);
+        if (event.item.output_format === "png") {
+          const pngData = event.item.result;
+          const blob = new Blob([pngData], { type: "image/png" });
+          console.log("PNG data received: ", blob);
+          const imageUrl = URL.createObjectURL(blob);
+          console.log("Image URL created: ", imageUrl);
+          if (!message.images) {
+            message.images = [];
+          }
+          message.images.push({
+            blob: blob,
+            file_id: event.item.id,
+            type: "png",
+          });
+          console.log("Image added: ", imageUrl, message.images);
+          this.updateChat();
+        }
+        break;
+
       case "response.output_item.added":
         switch (event.item.type) {
+          case "mcp_call":
           case "web_search_call":
+          case "image_generation_call":
             if (!message.toolsUsed) {
               message.toolsUsed = [];
             }
@@ -353,8 +372,6 @@ class EventProcessor {
     }
   }
 }
-
-
 
 export async function executeAssistantRequest(setState, is, newChat: Chat[], messages: Messages, options: Options, currentChat: number, chat: Chat[], user) {
 
