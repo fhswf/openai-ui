@@ -22,7 +22,7 @@ ENV VITE_BUILD_SHA=$BUILD_SHA
 
 RUN NODE_ENV=production npm run build
 
-FROM nginx:1.27-bookworm
+FROM nginx:1.29-bookworm
 
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
