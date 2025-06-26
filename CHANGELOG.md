@@ -1,3 +1,10 @@
+## [0.21.4](https://github.com/fhswf/openai-ui/compare/v0.21.3...v0.21.4) (2025-06-26)
+
+
+### Bug Fixes
+
+* version bump nginx ([57e2d7a](https://github.com/fhswf/openai-ui/commit/57e2d7abe17059821c59409897d1494bbb6b5b65))
+
 ## [0.21.3](https://github.com/fhswf/openai-ui/compare/v0.21.2...v0.21.3) (2025-06-05)
 
 
