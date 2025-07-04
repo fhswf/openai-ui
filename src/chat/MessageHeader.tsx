@@ -102,7 +102,6 @@ export function MessageHeader() {
         if (value.type === "mcp")
             mcpTools[key] = value;
     });
-    console.log("MCP Tools:", mcpTools);
 
     return (
         <HStack as="header"
