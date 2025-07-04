@@ -81,7 +81,7 @@ export const toolOptions: Map<string, Tool> = new Map([
     {
       type: "image_generation",
       background: "transparent",
-      quality: "medium",
+      quality: "high",
       partial_images: 2
     }
   ],
