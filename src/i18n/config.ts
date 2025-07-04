@@ -213,6 +213,8 @@ i18n
                     scope_breakdown_title: "Aufschlüsselung der Zugriffe nach Bereichen",
                     role_breakdown_title: "Aufschlüsselung der Zugriffe nach Rollen",
 
+                    mcp_call: "MCP-Dienst",
+                    mcp_call_description: "Bei dieser Antwort wurde ein MCP-Dienst aufgerufen.",
                     "MCP Services": "MCP-Dienste",
                     "Edit MCP Services": "MCP-Dienste bearbeiten",
                     "Add/Save Service": "Dienst hinzufügen/speichern",
