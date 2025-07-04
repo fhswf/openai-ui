@@ -224,6 +224,8 @@ i18n
                     export: "Exportieren",
                     export_settings: "Einstellungen exportieren",
                     export_settings_help: "Hier können Sie Ihre Konfiguration exportieren."
+                    mcp_call: "MCP-Dienst",
+                    mcp_call_description: "Bei dieser Antwort wurde ein MCP-Dienst aufgerufen.",
                     "MCP Services": "MCP-Dienste",
                     "Edit MCP Services": "MCP-Dienste bearbeiten",
                     "Add/Save Service": "Dienst hinzufügen/speichern",

@@ -10,10 +10,11 @@ import OpenAI, { APIError } from "openai";
 import { t } from "i18next";
 import { ResponseStream } from "openai/lib/responses/ResponseStream.mjs";
 import { Stream } from "openai/streaming.mjs";
-import { ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
+import { ResponseImageGenCallCompletedEvent, ResponseImageGenCallPartialImageEvent, ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
 import { Tooltip } from "@chakra-ui/react";
 import React from "react";
 import { toaster } from "../../components/ui/toaster";
+import { url } from "inspector";
 
 export async function* streamAsyncIterable(stream) {
   const reader = stream.getReader();
@@ -150,6 +151,11 @@ const client = new OpenAI({
   }
 });
 
+export async function getResponse(id: string) {
+  const response = await client.responses.retrieve(id);
+  return response;
+}
+
 export async function createResponse(global: Partial<GlobalState> & Partial<GlobalActions>, parent) {
 
   const { options, chat, currentChat, is, setState, setIs } = global;
@@ -240,6 +246,41 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
   }
 }
 
+
+// For testing purposes, we can create a file object
+console.log("Creating a file object for testing purposes");
+
+const fileContent = atob("U3RyZW5nIGdlaGVpbQ==");
+const file = new File([fileContent], "foo.txt", {
+  type: "text/plain",
+});
+console.log("File created:", file);
+// Read the file
+const reader = new FileReader();
+reader.onload = () => {
+  console.log("reader: %s", reader.result);
+};
+reader.onerror = () => {
+  console.error("Error reading the file. Please try again.", "error");
+};
+reader.readAsText(file);
+
+
+navigator.storage.getDirectory().then(async (dir) => {
+  console.log("Directory: %o", dir);
+  // List files in the directory
+  for await (const [name, handle] of dir.entries()) {
+    console.log("File: %s, Handle: %o", name, handle);
+    if (handle.kind === "file") {
+      handle.getFile().then((file) => {
+        console.log("File: %s, Size: %d", file.name, file.size);
+      }).catch((error) => {
+        console.error("Error getting file: ", error);
+      });
+    }
+  }
+});
+
 class EventProcessor {
   chat: Chat[];
   currentChat: number;
@@ -247,6 +288,7 @@ class EventProcessor {
   setIs: (arg: any) => void;
   mainRef: any;
   stream: Stream<ResponseStreamEvent>;
+  opfs: FileSystemDirectoryHandle;
 
   constructor(stream: Stream<ResponseStreamEvent>, global: Partial<GlobalState> & Partial<GlobalActions>) {
     const { chat, currentChat, setState, setIs } = global;
@@ -255,12 +297,78 @@ class EventProcessor {
     this.currentChat = currentChat;
     this.setState = setState;
     this.setIs = setIs;
+
+    navigator.storage.getDirectory().then((dir) => {
+      console.log("Directory: %o", dir);
+      this.opfs = dir;
+    });
   }
 
   appendMessage(delta) {
     let message = this.chat[this.currentChat].messages[this.chat[this.currentChat].messages.length - 1];
     message.content += delta;
     this.updateChat();
+  }
+
+  appendImageToMessage(image_base64: string, message: Message, file_id: string) {
+    const fileContent = atob(image_base64);
+
+    let writable: FileSystemWritableFileStream;
+    let fileHandle: FileSystemFileHandle;
+    let file: File;
+
+    this.opfs.getFileHandle(`${file_id}.png`, { create: true })
+      .then((_fileHandle) => {
+        fileHandle = _fileHandle;
+        console.log("File handle created: ", fileHandle);
+        return fileHandle.createWritable();
+      })
+      .then((_writable) => {
+        writable = _writable;
+        console.log("Writable created: ", writable);
+        // Convert the base64 string to a Uint8Array
+        const byteCharacters = new Uint8Array(fileContent.length);
+        for (let i = 0; i < fileContent.length; i++) {
+          byteCharacters[i] = fileContent.charCodeAt(i);
+        }
+        return writable.write(byteCharacters);
+      })
+      .then(() => {
+        console.log("File written successfully");
+        return writable.close();
+      })
+      .then(() => {
+        console.log("Writable closed successfully");
+        fileHandle.getFile()
+          .then((_file) => {
+            file = _file;
+            console.log("File retrieved: ", file);
+            if (!message.images) {
+              message.images = {};
+            }
+            message.images[file_id] = {
+              src: URL.createObjectURL(file),
+              name: file.name,
+              size: file.size,
+              lastModified: file.lastModified,
+              file_id,
+              type: "png",
+            };
+            this.updateChat();
+          });
+
+      })
+      .catch((error) => {
+        console.error("Error writing file: ", error);
+        toaster.create({
+          title: t("error_occurred"),
+          description: error.message || "",
+          duration: 5000,
+          type: "error",
+        });
+      });
+
+
   }
 
   updateChat() {
@@ -298,7 +406,7 @@ class EventProcessor {
         break;
 
       case "response.completed":
-        console.log(event.response.usage);
+        console.log("response.completed: %o", event.response.usage);
 
         message.usage = event.response.usage;
         message.endTime = Date.now();
@@ -309,21 +417,9 @@ class EventProcessor {
       case "response.output_item.done":
         console.log(event.item);
         if (event.item.output_format === "png") {
-          const pngData = event.item.result;
-          const blob = new Blob([pngData], { type: "image/png" });
-          console.log("PNG data received: ", blob);
-          const imageUrl = URL.createObjectURL(blob);
-          console.log("Image URL created: ", imageUrl);
-          if (!message.images) {
-            message.images = [];
-          }
-          message.images.push({
-            blob: blob,
-            file_id: event.item.id,
-            type: "png",
-          });
-          console.log("Image added: ", imageUrl, message.images);
-          this.updateChat();
+          // event.item.result is a base64-encoded PNG string, decode it
+          const base64Data = event.item.result;
+          this.appendImageToMessage(base64Data, message, event.item.id);
         }
         break;
 
@@ -349,6 +445,15 @@ class EventProcessor {
         this.appendMessage(event.delta);
         break;
 
+      case "response.image_generation_call.partial_image":
+        console.log(event.call);
+        const image_base64 = event.partial_image_b64;
+        if (image_base64) {
+          this.appendImageToMessage(image_base64, message, event.item_id);
+        }
+        this.setIs({ tool: "image_generation", thinking: true });
+        break;
+
       case "response.web_search_call.in_progress":
         console.log(event.call);
         this.setIs({ tool: "web_search", thinking: true });
@@ -371,6 +476,8 @@ class EventProcessor {
         })
     }
   }
+
+
 }
 
 export async function executeAssistantRequest(setState, is, newChat: Chat[], messages: Messages, options: Options, currentChat: number, chat: Chat[], user) {

@@ -55,6 +55,7 @@ export const modeOptions = [
 
 
 export const modelOptions = [
+  { label: "gpt-4.1-mini", value: "gpt-4.1-mini" },
   { label: "gpt-4.1-nano", value: "gpt-4.1-nano" },
   { label: "gpt-4o-mini", value: "gpt-4o-mini" },
   {
@@ -76,6 +77,15 @@ export const toolOptions: Map<string, Tool> = new Map([
     }
   ],
   [
+    "Image Generation",
+    {
+      type: "image_generation",
+      background: "transparent",
+      quality: "medium",
+      partial_images: 2
+    }
+  ],
+  [
     "DeepWiki",
     {
       "type": "mcp",
@@ -83,15 +93,6 @@ export const toolOptions: Map<string, Tool> = new Map([
       "server_url": "https://mcp.deepwiki.com/mcp",
       "require_approval": "never",
     },
-  ],
-  [
-    "Calendly",
-    {
-      type: "mcp",
-      server_label: "Calendly",
-      server_url: "https://mcp.composio.dev/composio/server/8bcfcc4e-994c-4270-9506-74bf73c83da8/mcp?include_composio_helper_actions=true",
-      require_approval: "never"
-    }
   ]
 ]);
 
