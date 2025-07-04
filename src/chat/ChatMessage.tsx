@@ -120,18 +120,24 @@ export function MessageItem(props) {
         <LazyRenderer isVisible={is.thinking}>
           {message}
         </LazyRenderer>
-        {images && images.map((image, index) => {
+        {images && Object.entries(images).map(([fileName, image], index) => {
           console.log("Image:", image);
-          // create data URL from blob
-          return image.blob.arrayBuffer().then(buffer => {
-            const binary = String.fromCharCode(...new Uint8Array(buffer));
-            const base64 = btoa(binary);
-            const image_url = `data:${image.mime_type};base64,${base64}`;
-            console.log("Image URL:", image_url);
-            return (<img key={index} src={image_url} alt={`image-${index}`} className={styles.image} />)
-          });
-
-
+          if (image.src) {
+            // If image has a src, use it directly
+            return (<img key={fileName} src={image.src} alt={fileName} className={styles.image} />)
+          } else if (image.url) {
+            // create data URL from blob
+            return image.blob.arrayBuffer().then(buffer => {
+              const binary = String.fromCharCode(...new Uint8Array(buffer));
+              const base64 = btoa(binary);
+              const image_url = `data:${image.mime_type};base64,${base64}`;
+              console.log("Image URL:", image_url);
+              return (<img key={fileName} src={image_url} alt={fileName} className={styles.image} />)
+            });
+          }
+          return (
+            <Skeleton key={fileName} className={styles.image} />
+          )
         })}
         {image_url && <img src={image_url} alt="image" className={styles.image} />}
       </Card.Body>
