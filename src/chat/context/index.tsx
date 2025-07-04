@@ -22,6 +22,27 @@ const reduceState = (state: GlobalState) => {
   // Remove any properties that are not needed in the localStorage state
   const cleanState = { ...state };
   delete cleanState.is;
+  cleanState.chat = cleanState.chat.map((chat: Chat) => {
+    chat.messages = chat.messages.map((message: Message) => {
+      if (message.content && Array.isArray(message.content)) {
+        message.content = message.content.map((content) => {
+          if (content.type === "input_image" && content.image_url) {
+            // If the content is an image, remove the image_url property
+            const { image_url, ...rest } = content;
+            // If the image_url is too large, remove it
+            if (image_url.length > 100000) {
+              console.warn("Image URL is too large, removing it: %s", image_url);
+              return rest;
+            }
+          }
+          return content;
+        });
+      }
+      return message
+    });
+    return chat;
+  });
+  // Remove any properties that are not needed in the options
   return cleanState;
 };
 

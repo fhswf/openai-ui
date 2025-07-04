@@ -28,19 +28,58 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       payload: { chat, currentChat },
     });
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const { typeingMessage, options, chat, is, currentChat, user } = state;
+
+    const opfs = await navigator.storage.getDirectory();
+
     if (typeingMessage?.content) {
       let newMessage = null;
       if (typeingMessage.images) {
         const text = typeingMessage.content;
-        const images = typeingMessage.images;
         newMessage = { sentTime: Math.floor(Date.now() / 1000), role: "user" };
         newMessage.content = [];
         newMessage.content.push({ type: "input_text", text });
-        images.forEach((image) => {
-          newMessage.content.push({ type: "input_image", image_url: image });
-        });
+
+        console.log("transform images: %o", typeingMessage.images);
+        const images = await Promise.all(typeingMessage.images.map(async (image) => {
+          console.log("sendMessage: image: %o", image);
+          if (image.url) {
+            return { type: "input_image", image_url: image.url };
+          }
+          else if (image.name) {
+            console.log("sendMessage: reading file: %o", image.name);
+            // get file from OPFS
+            const fileHandle = await opfs.getFileHandle(image.name);
+            const promise = new Promise(async (resolve, reject) => {
+              if (!fileHandle) {
+                console.error("File not found in OPFS: %s", image.name);
+                reject(new Error(`File not found: ${image.name}`));
+                return;
+              }
+              // read file as data URL
+              const reader = new FileReader();
+              let result;
+              reader.onload = () => {
+                console.log("File read as data URL: %o", reader.result);
+                result = { type: "input_image", image_url: reader.result as string };
+                resolve(result);
+              }
+              reader.onerror = (error) => {
+                console.error("Error reading file: %o", error);
+                reject(error);
+              }
+              reader.readAsDataURL(await fileHandle.getFile());
+              console.log("FileReader started for image: %o", image.name);
+            })
+
+            return await promise;
+          }
+        }));
+        console.log("sendMessage: images: %o", images);
+
+        newMessage.content.push(...images);
+        newMessage.id = Date.now();
         console.log("sendMessage: %o", newMessage);
       }
       else {
