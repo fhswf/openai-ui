@@ -248,7 +248,6 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
 
 
 
-
 class EventProcessor {
   chat: Chat[];
   currentChat: number;
@@ -444,6 +443,8 @@ class EventProcessor {
         })
     }
   }
+
+
 }
 
 export async function executeAssistantRequest(setState, is, newChat: Chat[], messages: Messages, options: Options, currentChat: number, chat: Chat[], user) {
