@@ -247,39 +247,7 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
 }
 
 
-// For testing purposes, we can create a file object
-console.log("Creating a file object for testing purposes");
 
-const fileContent = atob("U3RyZW5nIGdlaGVpbQ==");
-const file = new File([fileContent], "foo.txt", {
-  type: "text/plain",
-});
-console.log("File created:", file);
-// Read the file
-const reader = new FileReader();
-reader.onload = () => {
-  console.log("reader: %s", reader.result);
-};
-reader.onerror = () => {
-  console.error("Error reading the file. Please try again.", "error");
-};
-reader.readAsText(file);
-
-
-navigator.storage.getDirectory().then(async (dir) => {
-  console.log("Directory: %o", dir);
-  // List files in the directory
-  for await (const [name, handle] of dir.entries()) {
-    console.log("File: %s, Handle: %o", name, handle);
-    if (handle.kind === "file") {
-      handle.getFile().then((file) => {
-        console.log("File: %s, Size: %d", file.name, file.size);
-      }).catch((error) => {
-        console.error("Error getting file: ", error);
-      });
-    }
-  }
-});
 
 class EventProcessor {
   chat: Chat[];
