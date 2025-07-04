@@ -121,10 +121,9 @@ export function MessageItem(props) {
           {message}
         </LazyRenderer>
         {images && Object.entries(images).map(([fileName, image], index) => {
-          console.log("Image:", image);
           if (image.src) {
             // If image has a src, use it directly
-            return (<img key={fileName} src={image.src} alt={fileName} className={styles.image} />)
+            return (<img key={fileName} src={image.src} alt={fileName} className={styles.generated_image} />)
           } else if (image.url) {
             // create data URL from blob
             return image.blob.arrayBuffer().then(buffer => {
@@ -177,7 +176,7 @@ export function MessageContainer() {
         <Stack data-testid="ChatListContainer">
           {messages
             .filter(message => message.role !== "system")
-            .map((item, index) => <MessageItem key={item.id} {...item} dataTestId="ChatMessage" />)}
+            .map((item, index) => <MessageItem key={item.id || item.sentTime} {...item} dataTestId="ChatMessage" />)}
         </Stack>
       }
     </React.Fragment>
