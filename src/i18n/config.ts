@@ -242,6 +242,7 @@ i18n
                     "Always": "Immer",
                     "Never": "Niemals",
 
+                    "image_generation": "Bildgenerierung",
                     "image_generation_call": "Bildgenerierung",
                     "image_generation_call_description": "Bei dieser Antwort wurde eine Bildgenerierung durchgeführt.",
                 },
