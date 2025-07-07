@@ -1,3 +1,10 @@
+# [0.22.0](https://github.com/fhswf/openai-ui/compare/v0.21.4...v0.22.0) (2025-07-07)
+
+
+### Features
+
+* import/export settings ([4c9c282](https://github.com/fhswf/openai-ui/commit/4c9c2826986bb42d09aed5c1c1823970e76e17b3))
+
 ## [0.21.4](https://github.com/fhswf/openai-ui/compare/v0.21.3...v0.21.4) (2025-06-26)
 
 
