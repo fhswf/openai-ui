@@ -241,7 +241,20 @@ i18n
                     "Never": "Niemals",
 
                     "image_generation_call": "Bildgenerierung",
-                    "image_generation_call_description": "Bei dieser Antwort wurde eine Bildgenerierung durchgeführt."
+                    "image_generation_call_description": "Bei dieser Antwort wurde eine Bildgenerierung durchgeführt.",
+                    
+                    import_export: "Import/Export",
+                    import_export_description: "Hier können Sie Ihre Konfiguration (inkl. Chat-Historie) importieren oder exportieren.",
+                    import: "Importieren",
+                    import_settings: "Einstellungen importieren",
+                    import_description: "Hier können Sie Ihre Konfiguration importieren.",
+                    import_settings_help: "Hier können Sie Ihre Konfiguration importieren. Bitte beachten Sie, dass alle bestehenden Einstellungen überschrieben werden.",
+                    import_settings_error: "Beim Importieren der Einstellungen ist ein Fehler aufgetreten. Bitte überprüfen Sie die Datei und versuchen Sie es erneut.",
+                    import_settings_success: "Einstellungen importiert",
+                    import_settings_success_desc: "Die Einstellungen wurden erfolgreich importiert.",
+                    export: "Exportieren",
+                    export_settings: "Einstellungen exportieren",
+                    export_settings_help: "Hier können Sie Ihre Konfiguration exportieren."
                 },
             },
         },
