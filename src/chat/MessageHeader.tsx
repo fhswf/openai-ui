@@ -43,6 +43,7 @@ export function MessageHeader() {
         window.location.href = import.meta.env.VITE_LOGOUT_URL || '/';
     };
 
+   
 
     function setTool(tool: string, e: boolean): void {
         console.log('Set tool: %s %o', tool, e);
