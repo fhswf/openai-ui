@@ -27,9 +27,6 @@ import { AiOutlineBarChart } from 'react-icons/ai';
 import '../assets/icon/style.css';
 import { ErrorBoundary } from 'react-error-boundary';
 
-
-
-
 export function MessageHeader() {
     const { is, setIs, setOptions, newChat, downloadThread, showSettings, options, user, chat, currentChat } = useGlobal();
     const { message } = useMessage();
