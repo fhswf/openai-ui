@@ -171,8 +171,12 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
   const tools: Tool[] = [];
 
   Object.values(options.openai.tools).forEach((tool) => {
-    console.log("createResponse: tool: %o", tool);
-    tools.push(tool as Tool);
+    if (tool instanceof Object) {
+      tools.push(tool as Tool);
+    }
+    else {
+      console.warn("createResponse: tool is not an object: %o", tool);
+    }
   });
   console.log("createResponse: tools: %o", tools);
 
