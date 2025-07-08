@@ -1,3 +1,44 @@
+# [0.23.0](https://github.com/fhswf/openai-ui/compare/v0.22.0...v0.23.0) (2025-07-08)
+
+
+### Bug Fixes
+
+* backward compability with old tool option ([3770563](https://github.com/fhswf/openai-ui/commit/3770563aab383ae8a0afc081d901df4ece930f33))
+* i18n ([5ed0f95](https://github.com/fhswf/openai-ui/commit/5ed0f9537704a46751a2b0afb3def403c71fd796))
+* i18n ([7f7d6ea](https://github.com/fhswf/openai-ui/commit/7f7d6eaa5eb756ede3f38564fad565f5b175f037))
+* i18n ([da12f2d](https://github.com/fhswf/openai-ui/commit/da12f2db5fc56777fbdf07097b169147ed1184fc))
+* i18n ([1893767](https://github.com/fhswf/openai-ui/commit/1893767586e53fa42ac50b2b9b2d0de5cd722c1f))
+* i18n ([98eb6ce](https://github.com/fhswf/openai-ui/commit/98eb6cebd4ded8800c6d081d00308f6f855f7305))
+* i18n ([cde62b2](https://github.com/fhswf/openai-ui/commit/cde62b267b6b682efc2015fbb85ff76eb30b833e))
+* i18n ([2f83202](https://github.com/fhswf/openai-ui/commit/2f8320215130edb1a8dc8785708e3134d8a2efca))
+* i18n ([9e7b0e8](https://github.com/fhswf/openai-ui/commit/9e7b0e8f4d77f6222b8238b9f0e227e210306bc8))
+* i18n ([70582ce](https://github.com/fhswf/openai-ui/commit/70582ce3f36e10f7754fdde733672d14fe27b799))
+* improve image generation ([a28681e](https://github.com/fhswf/openai-ui/commit/a28681ea610cd5b65506db337ee37f70d3355d73))
+* update i18n configuration and remove unused import/export entries ([ad232fc](https://github.com/fhswf/openai-ui/commit/ad232fc17d2aa2d37e5fc840d823b872898ff0f5))
+
+
+### Features
+
+* add image generation ([f0869e3](https://github.com/fhswf/openai-ui/commit/f0869e3812468809f2707f9b6af507f0e90e2888))
+* add image generation ([7492507](https://github.com/fhswf/openai-ui/commit/74925076a06b2b535647a88ac2f857f3caf9a641))
+* add image generation ([657acb2](https://github.com/fhswf/openai-ui/commit/657acb2fc9d59876ee19969de3f6c0adffbd411d))
+* add image generation ([28e691c](https://github.com/fhswf/openai-ui/commit/28e691c06f77c8ed4c052e5a6ddc9635b494384a))
+* add image generation ([e5cc7db](https://github.com/fhswf/openai-ui/commit/e5cc7db29985b0befe1219515f613c7421993860))
+* add image generation ([07502e8](https://github.com/fhswf/openai-ui/commit/07502e8811b765c0b583e633aa97067fea73f37d))
+* add image generation ([be277a5](https://github.com/fhswf/openai-ui/commit/be277a583a344e6a4c0e2961a13abb6af378f6c3))
+* image handling ([d498d94](https://github.com/fhswf/openai-ui/commit/d498d947c3d9afea7665afacdc895ed1237e6a8d))
+* image handling ([63617ea](https://github.com/fhswf/openai-ui/commit/63617ea27ee244514e0bac80c9a44b6e7bf8c24f))
+* image handling ([5673797](https://github.com/fhswf/openai-ui/commit/5673797f4c8364fe899a9732b429c124b62dd481))
+* image handling ([dc88ab4](https://github.com/fhswf/openai-ui/commit/dc88ab42b38a90877d3b0752f0c89a29a0c714f0))
+* tool support ([edc53f2](https://github.com/fhswf/openai-ui/commit/edc53f29c71a3a812695dc50d237e8e1e7dabaaa))
+* tool support ([8c9e146](https://github.com/fhswf/openai-ui/commit/8c9e14620d9279b889b9dd2b8074ded1816f8bce))
+* tool support ([0f12503](https://github.com/fhswf/openai-ui/commit/0f12503ceeee9e441fca4fb036bbcadff15ada00))
+* tool support ([9793154](https://github.com/fhswf/openai-ui/commit/9793154e1ac7f78a1cf53348e20ade68a97075fb))
+* tool support ([b0da2e6](https://github.com/fhswf/openai-ui/commit/b0da2e65870941014106703f16fd585eb352c4cd))
+* tool support ([efeaa0e](https://github.com/fhswf/openai-ui/commit/efeaa0e21552199994b300d9f0dc1dd5c0470bfe))
+* tool support ([6871044](https://github.com/fhswf/openai-ui/commit/687104424e10c21b27db5bac80757b20de94f2a1))
+* tool support ([2b9c25e](https://github.com/fhswf/openai-ui/commit/2b9c25ec843513904369a68dab48de1126dd3f95))
+
 # [0.22.0](https://github.com/fhswf/openai-ui/compare/v0.21.4...v0.22.0) (2025-07-07)
 
 
