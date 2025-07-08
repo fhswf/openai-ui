@@ -28,10 +28,12 @@ import { IoTimerOutline } from 'react-icons/io5';
 
 
 export function MessageItem(props) {
-  const { content, sentTime, role, id, dataTestId, usage, startTime, endTime, toolsUsed } = props
+  const { content, images, sentTime, role, id, dataTestId, usage, startTime, endTime, toolsUsed } = props
   const { removeMessage, editMessage, user, options, is } = useGlobal()
   const { t } = useTranslation();
   const avatar = options.general.theme === 'dark' ? avatar_white : avatar_black
+
+  //console.log("MessageItem props:", props);
 
   type UsageProps = {
     usage?: {
@@ -43,7 +45,6 @@ export function MessageItem(props) {
   };
 
   function Usage(props: UsageProps) {
-
     const { usage, startTime, endTime } = props
     const formatter = new Intl.NumberFormat()
 
@@ -119,6 +120,24 @@ export function MessageItem(props) {
         <LazyRenderer isVisible={is.thinking}>
           {message}
         </LazyRenderer>
+        {images && Object.entries(images).map(([fileName, image], index) => {
+          if (image.src) {
+            // If image has a src, use it directly
+            return (<img key={fileName} src={image.src} alt={fileName} className={styles.generated_image} />)
+          } else if (image.url) {
+            // create data URL from blob
+            return image.blob.arrayBuffer().then(buffer => {
+              const binary = String.fromCharCode(...new Uint8Array(buffer));
+              const base64 = btoa(binary);
+              const image_url = `data:${image.mime_type};base64,${base64}`;
+              console.log("Image URL:", image_url);
+              return (<img key={fileName} src={image_url} alt={fileName} className={styles.image} />)
+            });
+          }
+          return (
+            <Skeleton key={fileName} className={styles.image} />
+          )
+        })}
         {image_url && <img src={image_url} alt="image" className={styles.image} />}
       </Card.Body>
       <Card.Footer>
@@ -157,7 +176,7 @@ export function MessageContainer() {
         <Stack data-testid="ChatListContainer">
           {messages
             .filter(message => message.role !== "system")
-            .map((item, index) => <MessageItem key={item.id} {...item} dataTestId="ChatMessage" />)}
+            .map((item, index) => <MessageItem key={item.id || item.sentTime} {...item} dataTestId="ChatMessage" />)}
         </Stack>
       }
     </React.Fragment>

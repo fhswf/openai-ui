@@ -1,4 +1,5 @@
 import { t } from "i18next";
+import { Tool } from "openai/resources/responses/responses.mjs";
 
 export const shortcutKey = "Ctrl+Enter";
 export const keyboard = {
@@ -54,6 +55,8 @@ export const modeOptions = [
 
 
 export const modelOptions = [
+  { label: "gpt-4.1-mini", value: "gpt-4.1-mini" },
+  { label: "gpt-4.1-nano", value: "gpt-4.1-nano" },
   { label: "gpt-4o-mini", value: "gpt-4o-mini" },
   {
     label: "gpt-4-turbo", value: "gpt-4-turbo",
@@ -66,12 +69,30 @@ export const modelOptions = [
   },
 ];
 
-export const toolOptions = [
-  {
-    label: "Web Search",
-    value: "web_search_preview",
-  },
-];
+export const toolOptions: Map<string, Tool> = new Map([
+  [
+    "Web Search",
+    {
+      type: "web_search_preview"
+    }
+  ],
+  [
+    "Image Generation",
+    {
+      type: "image_generation",
+      partial_images: 2
+    }
+  ],
+  [
+    "DeepWiki",
+    {
+      "type": "mcp",
+      "server_label": "DeepWiki",
+      "server_url": "https://mcp.deepwiki.com/mcp",
+      "require_approval": "never",
+    },
+  ]
+]);
 
 export const languageOptions = [
   {

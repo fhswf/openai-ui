@@ -2,7 +2,7 @@ import React, { BaseSyntheticEvent, SyntheticEvent, useEffect, useState } from "
 import { useTranslation } from "react-i18next";
 import { useOptions, useSendKey } from "./hooks";
 import { useGlobal } from "./context";
-import { Button, HStack, IconButton, Kbd, Progress, Stack, StepsStatus, Text, Textarea } from "@chakra-ui/react";
+import { Button, HStack, IconButton, Kbd, Progress, Skeleton, Stack, StepsStatus, Text, Textarea } from "@chakra-ui/react";
 import { Switch } from "../components/ui/switch"
 import styles from './style/message.module.less'
 import CodeEditor from '@uiw/react-textarea-code-editor';
@@ -11,6 +11,52 @@ import { use } from "chai";
 import { CiMicrophoneOff, CiMicrophoneOn } from "react-icons/ci";
 import { toaster } from "../components/ui/toaster";
 import classNames from 'classnames';
+
+
+export function LazyImage(props: { name?: string, url?: string }) {
+    const { name, url } = props;
+    const [loaded, setLoaded] = useState(false);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        navigator.storage.getDirectory()
+            .then(async (opfs) => {
+                if (name) {
+                    const fileHandle = await opfs.getFileHandle(name);
+                    if (fileHandle) {
+                        const file = await fileHandle.getFile()
+                        const imageUrl = URL.createObjectURL(file);
+                        setImageUrl(imageUrl);
+                        setLoaded(true);
+                    }
+                }
+            })
+    }, [name, url]);
+
+    if (!url) {
+        if (imageUrl) {
+            return (
+                <img
+                    src={imageUrl}
+                    alt={name || "Image"}
+                    className={classNames(styles.image, { [styles.loaded]: loaded })}
+                    loading="lazy"
+                    onLoad={() => setLoaded(true)}
+                />
+            );
+        }
+        return <Skeleton className={styles.image} />;
+    }
+    console.log("LazyImage: url: %s", url);
+    return (
+        <img
+            src={url}
+            alt={name || "Image"}
+            className={classNames(styles.image, { [styles.loaded]: loaded })}
+            loading="lazy"
+        />
+    );
+}
 
 export function MessageInput() {
     const { setIs, sendMessage, setMessage, setState, eventProcessor, is, options, typeingMessage, clearTypeing } = useGlobal();
@@ -74,7 +120,8 @@ export function MessageInput() {
 
                 let target = event.target as HTMLElement;
                 const isLink = event.dataTransfer.types.includes("text/uri-list");
-                if (isLink) {
+                const isImage = event.dataTransfer.types.includes("Files") && Array.from(event.dataTransfer.items).some(item => item.type.startsWith("image/"));
+                if (isLink || isImage) {
                     event.preventDefault();
                     let target = event.target as HTMLElement;
                     inputRef.current.classList.add(styles.dragover);
@@ -95,41 +142,90 @@ export function MessageInput() {
                 event.stopPropagation();
                 event.preventDefault();
                 inputRef.current.classList.remove(styles.dragover);
-                const url = event.dataTransfer.getData("text/uri-list");
 
-                console.log('Drop URL: %o', url);
-                if (!typeingMessage.images) {
-                    typeingMessage.images = [];
+                const isLink = event.dataTransfer.types.includes("text/uri-list");
+                const isImage = event.dataTransfer.types.includes("Files") && Array.from(event.dataTransfer.items).some(item => item.type.startsWith("image/"));
+
+                if (!isLink && !isImage) {
+                    console.warn('Drop event does not contain a link or image');
+                    return;
                 }
-                // check if the url is an image
-                const proxy = import.meta.env.VITE_PROXY_URL || "https://proxy.gawron.cloud/api";
-                let fetchUrl = `${proxy}?url=${encodeURIComponent(url)}`;
-                fetch(fetchUrl, { method: 'GET' })
-                    .then((response) => {
-                        console.log('Response: %o', response.headers.get('content-type'));
-                        if (response.headers.get('content-type')?.startsWith('image')) {
-                            typeingMessage.images.push(url);
-                            setState({ typeingMessage });
-                        }
-                        else {
-                            toaster.create({
-                                title: t("not_image"),
-                                description: t("not_image_description"),
-                                duration: 5000,
-                                type: "warning",
-                            })
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('Error: %o', error);
-                        toaster.create({
-                            title: t("error_occurred"),
-                            description: "error.message",
-                            duration: 5000,
-                            type: "error",
-                        })
-                    });
+                else if (isLink) {
+                    console.log('Drop event contains a link');
+                    const url = event.dataTransfer.getData("text/uri-list");
 
+                    if (!typeingMessage.images) {
+                        typeingMessage.images = [];
+                    }
+                    // check if the url is an image
+                    const proxy = import.meta.env.VITE_PROXY_URL || "https://poxy.gawron.cloud/api";
+                    let fetchUrl = `${proxy}?url=${encodeURIComponent(url)}`;
+                    fetch(fetchUrl, { method: 'GET' })
+                        .then((response) => {
+                            if (response.headers.get('content-type')?.startsWith('image')) {
+                                typeingMessage.images.push({ url });
+                                setState({ typeingMessage });
+                            }
+                            else {
+                                toaster.create({
+                                    title: t("not_image"),
+                                    description: t("not_image_description"),
+                                    duration: 5000,
+                                    type: "warning",
+                                })
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Error: %o', error);
+                            toaster.create({
+                                title: t("error_occurred"),
+                                description: "error.message",
+                                duration: 5000,
+                                type: "error",
+                            })
+                        });
+                } else {
+                    // Handle image drop
+
+                    // Upload file and store in OPFS
+                    const files = Array.from(event.dataTransfer.files);
+                    console.log('Dropped files: %o', files);
+                    if (files.length === 0) {
+                        console.warn('No files dropped');
+                        return;
+                    }
+                    if (!typeingMessage.images) {
+                        typeingMessage.images = [];
+                    }
+                    files.forEach(file => {
+                        if (file.type.startsWith("image/")) {
+                            console.log('Processing dropped image file: %o', file);
+                            const reader = new FileReader();
+                            reader.onload = async (e) => {
+                                const opfs = await navigator.storage.getDirectory();
+                                const fileHandle = await opfs.getFileHandle(file.name, { create: true });
+                                const writable = await fileHandle.createWritable();
+                                await writable.write(e.target?.result);
+                                await writable.close();
+                                console.log('File written to OPFS: %o', fileHandle);
+
+
+                                typeingMessage.images.push({ name: file.name, size: file.size, lastModified: file.lastModified, type: file.type });
+                                setState({ typeingMessage });
+                            }
+                            reader.onerror = (error) => {
+                                console.error('Error reading file: %o', error);
+                                toaster.create({
+                                    title: t("error_occurred"),
+                                    description: error.message,
+                                    duration: 5000,
+                                    type: "error",
+                                });
+                            }
+                            reader.readAsArrayBuffer(file);
+                        }
+                    });
+                }
             }}
             ref={inputRef}
         >
@@ -189,9 +285,11 @@ export function MessageInput() {
                 {
                     <HStack justify={"flex-end"} paddingInlineStart={2} paddingInlineEnd={2}>
                         {
-                            typeingMessage?.images?.map((image, index) => (
-                                <img key={index} src={image} alt={image} />
-                            ))
+                            typeingMessage?.images?.map((image, index) => {
+                                return (
+                                    <LazyImage key={index} name={image.name} url={image.url} />
+                                )
+                            })
                         }
                     </HStack>
                 }

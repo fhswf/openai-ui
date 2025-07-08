@@ -1,5 +1,9 @@
-import { ToolChoiceTypes } from "openai/resources/responses/responses.mjs";
+import { ToolChoiceTypes, Tool } from "openai/resources/responses/responses.mjs";
+import { Tooltip } from "recharts";
 import internal from "stream";
+
+
+export type { Tool, ToolChoiceTypes };
 
 export enum GlobalActionType {
     SET_STATE = "SET_STATE",
@@ -41,7 +45,7 @@ export type OpenAIOptions = {
     max_tokens: number;
     n: number;
     stream: boolean;
-    tools: Map<String, boolean>;
+    tools: object
 };
 
 export type Options = {
@@ -110,6 +114,7 @@ export type GlobalActions = {
 };
 
 export type Message = {
+    images?: any;
     content: string;
     sentTime?: number;
     startTime?: number;

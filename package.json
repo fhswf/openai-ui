@@ -38,7 +38,7 @@
     "i18next-http-backend": "^3.0.2",
     "katex": "^0.16.21",
     "next-themes": "^0.4.4",
-    "openai": "^4.87.3",
+    "openai": "^4.103.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-error-boundary": "^6.0.0",

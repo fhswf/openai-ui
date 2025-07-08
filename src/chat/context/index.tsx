@@ -10,17 +10,79 @@ import action from "./action";
 import reducer from "./reducer";
 import { initState } from "./initState";
 import { fetchAndGetUser } from "../utils";
-import { GlobalAction, GlobalActions, GlobalState, GlobalActionType } from "./types";
+import { GlobalAction, GlobalActions, GlobalState, GlobalActionType, Chat, Message } from "./types";
+import { getResponse } from "../service/openai";
 
 
 export const ChatContext = createContext(null);
 export const MessagesContext = createContext<Dispatch<GlobalAction>>(null);
 
-function getState() {
+// save state to localStorage
+const reduceState = (state: GlobalState) => {
+  // Remove any properties that are not needed in the localStorage state
+  const cleanState = { ...state };
+  delete cleanState.is;
+  cleanState.chat = cleanState.chat.map((chat: Chat) => {
+    chat.messages = chat.messages.map((message: Message) => {
+      if (message.content && Array.isArray(message.content)) {
+        message.content = message.content.map((content) => {
+          if (content.type === "input_image" && content.image_url) {
+            // If the content is an image, remove the image_url property
+            const { image_url, ...rest } = content;
+            // If the image_url is too large, remove it
+            if (image_url.length > 100000) {
+              console.warn("Image URL is too large, removing it: %s", image_url);
+              return rest;
+            }
+          }
+          return content;
+        });
+      }
+      return message
+    });
+    return chat;
+  });
+  // Remove any properties that are not needed in the options
+  return cleanState;
+};
+
+const inflateState = async (state: GlobalState) => {
+  console.log("Inflating state: %o", state);
+
+  const opsf = await navigator.storage.getDirectory();
+
+  // Inflate the state by adding back any properties that were removed
+  const inflatedState = { ...state };
+  inflatedState.chat = await Promise.all(
+    inflatedState.chat.map(async (chat: Chat) => {
+      chat.messages = await Promise.all(
+        chat.messages.map(async (message) => {
+          // If message has images (now an object), add back the src property for each image
+          if (message.images && typeof message.images === "object") {
+            const updatedImages = { ...message.images };
+            await Promise.all(
+              Object.entries(updatedImages).map(async ([file_id, image]) => {
+                const file = await opsf.getFileHandle(image.name);
+                image.src = URL.createObjectURL(await file.getFile());
+                updatedImages[file_id] = image;
+              })
+            );
+            message.images = updatedImages;
+          }
+          return message;
+        })
+      );
+      return chat;
+    })
+  );
+  return inflatedState;
+};
+
+async function getState() {
   let state = initState;
 
   try {
-    state = JSON.parse(localStorage.getItem("SESSIONS"));
+    state = await inflateState(JSON.parse(localStorage.getItem("SESSIONS")));
   } catch (e) {
     console.error("error parsing state: %s", e);
   }
@@ -38,6 +100,8 @@ export const ChatProvider = ({ children }) => {
     console.error("error parsing state: %s", e);
   }
 
+
+
   const [state, dispatch] = useReducer(reducer, init);
   const actionList = action(state, dispatch);
   const latestState = useRef(state);
@@ -47,10 +111,14 @@ export const ChatProvider = ({ children }) => {
   }, [state]);
 
   useEffect(() => {
-    const savedState = getState();
-    if (savedState) {
-      dispatch({ type: GlobalActionType.SET_STATE, payload: savedState });
-    }
+    console.log("ChatProvider: useEffect: fetching state from localStorage");
+    const fetchState = async () => {
+      const savedState = await getState();
+      if (savedState) {
+        dispatch({ type: GlobalActionType.SET_STATE, payload: savedState });
+      }
+    };
+    fetchState();
   }, []);
 
   // get user
@@ -60,10 +128,11 @@ export const ChatProvider = ({ children }) => {
   }, [])
 
 
+
+
   useEffect(() => {
     const stateToSave = { ...latestState.current };
-    delete stateToSave.is;
-    localStorage.setItem("SESSIONS", JSON.stringify(stateToSave));
+    localStorage.setItem("SESSIONS", JSON.stringify(reduceState(stateToSave)));
   }, [latestState.current]);
 
 
