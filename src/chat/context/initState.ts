@@ -2,6 +2,7 @@ import { GlobalState } from "./types";
 import { initApps } from "../apps/context/initState";
 
 import i18n from "../../i18n/config";
+import { toolOptions } from "../utils";
 const { t } = i18n;
 
 export const initState: GlobalState = {
@@ -22,6 +23,7 @@ export const initState: GlobalState = {
           id: Date.now(),
         },
       ],
+      app: 0
     },
 
   ],
@@ -50,6 +52,8 @@ export const initState: GlobalState = {
       apiKey: "unused",
       max_tokens: 2048,
       n: 1,
+      tools: toolOptions,
+      toolsEnabled: new Set(),
       top_p: 1,
       stream: true,
       assistant: ""

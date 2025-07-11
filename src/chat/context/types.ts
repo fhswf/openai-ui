@@ -45,7 +45,8 @@ export type OpenAIOptions = {
     max_tokens: number;
     n: number;
     stream: boolean;
-    tools: object
+    tools: Map<string, Tool>;
+    toolsEnabled: Set<string>;
 };
 
 export type Options = {
