@@ -1,3 +1,10 @@
+# [0.24.0](https://github.com/fhswf/openai-ui/compare/v0.23.0...v0.24.0) (2025-07-11)
+
+
+### Features
+
+* manage MCP services ([2586049](https://github.com/fhswf/openai-ui/commit/25860497d733a2fdadc692a8c8dd03c734ac1894))
+
 # [0.23.0](https://github.com/fhswf/openai-ui/compare/v0.22.0...v0.23.0) (2025-07-08)
 
 
