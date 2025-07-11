@@ -34,6 +34,8 @@ export function MessageHeader() {
     const messages = message?.messages;
     const columnIcon = is.toolbar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />;
 
+    let tools: Map<string, Tool> = options.openai?.tools;
+
     const { t } = useTranslation();
     const contentRef = useRef<HTMLDivElement>(null)
 
@@ -64,22 +66,22 @@ export function MessageHeader() {
     };
 
     if (!(typeof options.openai.tools === "object")) {
-        options.openai.tools = {};
+        options.openai.tools = toolOptions;
     }
 
     function setTool(key: string, tool: Tool, checked: boolean): void {
-        console.log('Set tool: %s %o', tool, checked);
-        let tools = options.openai.tools;
+        console.log('Set tool: %s %o', key, checked);
+        if (!options.openai.toolsEnabled || !(options.openai.toolsEnabled instanceof Set)) {
+            options.openai.toolsEnabled = new Set<string>();
+        }
         if (checked) {
-            if (!(key in Object.keys(tools))) {
-                tools[key] = tool;
-            }
+            options.openai.toolsEnabled.add(key);
         } else {
-            delete tools[key];
+            options.openai.toolsEnabled.delete(key);
         }
         setOptions({
             type: OptionActionType.OPENAI,
-            data: { ...options.openai, tools }
+            data: { ...options.openai }
         });
     }
 
@@ -94,9 +96,62 @@ export function MessageHeader() {
         setEditMCPServices(true);
     }
 
-    const mcpTools: Record<string, Tool> = {}  // Filter MCP tools from toolOptions
+    function handleAddService() {
+        console.log('Add/Save MCP Service', mcpToolForm);
+        if (!mcpToolForm.label || !mcpToolForm.server_url) {
+            alert(t("Please fill in all required fields"));
+            return;
+        }
 
-    toolOptions.forEach((value, key) => {
+        const newTool: Tool.Mcp = {
+            type: "mcp",
+            server_label: mcpToolForm.label,
+            server_url: mcpToolForm.server_url,
+            require_approval: mcpToolForm.require_approval,
+        };
+
+        if (mcpToolForm.allowed_tools && mcpToolForm.allowed_tools.length > 0) {
+            newTool.allowed_tools = mcpToolForm.allowed_tools;
+        }
+
+        console.log("newTool:", newTool);
+        tools.set(mcpToolForm.label, newTool);
+        setOptions({
+            type: OptionActionType.OPENAI,
+            data: { ...options.openai, tools }
+        });
+    }
+
+    function handleDeleteService(key: string) {
+        console.log('Delete MCP Service', key);
+        if (!tools.has(key)) {
+            console.error(`Tool with key ${key} does not exist.`);
+            return;
+        }
+        tools.delete(key);
+        options.openai.toolsEnabled.delete(key);
+        setOptions({
+            type: OptionActionType.OPENAI,
+            data: { ...options.openai, tools }
+        });
+    }
+
+    if (!(options.openai.toolsEnabled instanceof Set)) {
+        console.error("ToolsEnabled is not a Set:", options.openai.toolsEnabled);
+        options.openai.toolsEnabled = new Set<string>();
+    }
+
+    if (!(tools instanceof Map) || tools.size === 0) {
+        console.error("Tools is not a Map:", tools);
+        tools = new Map(toolOptions.entries());  // Fallback to default tools if not a Map
+        setOptions({
+            type: OptionActionType.OPENAI,
+            data: { ...options.openai, tools }
+        });
+    }
+    const mcpTools: Record<string, Tool> = {}  // Filter MCP tools from tools
+
+    tools.forEach((value, key) => {
         if (value.type === "mcp")
             mcpTools[key] = value;
     });
@@ -116,8 +171,6 @@ export function MessageHeader() {
                 <Heading data-testid="HeaderTitle" textStyle="lg">{message?.title}</Heading>
                 <Text textStyle="xs">{t('count_messages', { count: messages?.filter(item => item.role !== "system").length })}</Text>
             </Stack>
-
-
 
             <Menu.Root>
                 <Menu.Trigger asChild>
@@ -145,11 +198,11 @@ export function MessageHeader() {
                         <Menu.ItemGroup>
                             <Menu.ItemGroupLabel>{t("tool_options")}</Menu.ItemGroupLabel>
                             {
-                                Array.from(toolOptions.entries()).map(([key, value]) => (
+                                Array.from(tools.entries()).map(([key, value]) => (
                                     <Menu.CheckboxItem
-                                        value={value.type}
+                                        value={value.type === "mcp" ? value.server_label : value.type}
                                         key={key}
-                                        checked={Object.keys(options.openai?.tools).find(k => k === key) !== undefined}
+                                        checked={options.openai?.toolsEnabled?.has(key) || false}
                                         onCheckedChange={(e) => setTool(key, value, e)}>
                                         <Menu.ItemIndicator />
                                         {key}
@@ -166,9 +219,9 @@ export function MessageHeader() {
                                         <Menu.Content>
                                             {Object.entries(mcpTools).map(([key, tool]) => (
                                                 <Menu.CheckboxItem
-                                                    key={key}
+                                                    key={tool.server_label}
                                                     value={key}
-                                                    checked={Object.keys(options.openai?.tools).find(k => k === key) !== undefined}
+                                                    checked={options.openai?.toolsEnabled?.has(key) || false}
                                                     onCheckedChange={(e) => setTool(key, tool, e)}>
                                                     <Menu.ItemIndicator />
                                                     {tool.title || key}
@@ -269,7 +322,7 @@ export function MessageHeader() {
                                             />
                                         </Field.Root>
                                     </Stack>
-                                    <Button type="submit" colorScheme="blue">{t("Add/Save Service")}</Button>
+                                    <Button onClick={handleAddService} colorPalette="blue">{t("Add/Save Service")}</Button>
                                 </Stack>
 
 
@@ -284,7 +337,7 @@ export function MessageHeader() {
                                                     <Checkbox.Root
                                                         size="sm"
                                                         variant={"outline"}
-                                                        checked={Object.keys(options.openai?.tools).find(k => k === key) !== undefined}
+                                                        checked={options.openai?.toolsEnabled?.has(key) || false}
                                                         onCheckedChange={(e) => setTool(key, tool, e.checked)}>
                                                         <Checkbox.HiddenInput />
                                                         <Checkbox.Control />
@@ -301,7 +354,7 @@ export function MessageHeader() {
                                                         }}>
                                                         <MdEdit />
                                                     </Button>
-                                                    <Button variant="ghost" size="sm">
+                                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteService(key)}>
                                                         <MdDelete />
                                                     </Button>
                                                 </HStack>
