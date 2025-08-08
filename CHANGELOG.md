@@ -1,3 +1,10 @@
+# [0.25.0](https://github.com/fhswf/openai-ui/compare/v0.24.0...v0.25.0) (2025-08-08)
+
+
+### Features
+
+* add gpt 5 models ([06c0803](https://github.com/fhswf/openai-ui/commit/06c0803447b623a9461ad0f6c09ef07bc046e22f))
+
 # [0.24.0](https://github.com/fhswf/openai-ui/compare/v0.23.0...v0.24.0) (2025-07-11)
 
 
