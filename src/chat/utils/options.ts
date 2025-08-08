@@ -55,6 +55,8 @@ export const modeOptions = [
 
 
 export const modelOptions = [
+  { label: "gpt-5-mini", value: "gpt-5-mini"},
+  { label: "gpt-5-nano", value: "gpt-5-nano"},
   { label: "gpt-4.1-mini", value: "gpt-4.1-mini" },
   { label: "gpt-4.1-nano", value: "gpt-4.1-nano" },
   { label: "gpt-4o-mini", value: "gpt-4o-mini" },
