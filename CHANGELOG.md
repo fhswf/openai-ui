@@ -1,3 +1,10 @@
+## [0.25.1](https://github.com/fhswf/openai-ui/compare/v0.25.0...v0.25.1) (2025-08-22)
+
+
+### Bug Fixes
+
+* Handle security exception in navigator.storage.getDirectory() ([77f52e1](https://github.com/fhswf/openai-ui/commit/77f52e165a797c6c5be03d9b3ba2bcc0f09b612c))
+
 # [0.25.0](https://github.com/fhswf/openai-ui/compare/v0.24.0...v0.25.0) (2025-08-08)
 
 
