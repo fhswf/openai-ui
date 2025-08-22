@@ -264,10 +264,22 @@ class EventProcessor {
     this.setState = setState;
     this.setIs = setIs;
 
-    navigator.storage.getDirectory().then((dir) => {
-      console.log("Directory: %o", dir);
-      this.opfs = dir;
-    });
+    navigator.storage.getDirectory()
+      .then((dir) => {
+        console.log("Directory: %o", dir);
+        this.opfs = dir;
+      })
+      .catch((error) => {
+        console.warn("Origin Private File System not supported: ", error);
+        toaster.create({
+          title: t("opfs_not_supported"),
+          description: t("opfs_not_supported_description"),
+          duration: 5000,
+          type: "warning",
+        });
+        this.opfs = null;
+      });
+    console.log("EventProcessor initialized: %o", this);
   }
 
   appendMessage(delta) {
@@ -282,6 +294,18 @@ class EventProcessor {
     let writable: FileSystemWritableFileStream;
     let fileHandle: FileSystemFileHandle;
     let file: File;
+
+    console.log("appendImageToMessage: %s %o", file_id, message);
+    if (!this.opfs) {
+      console.warn("OPFS not available, cannot append image to message");
+      toaster.create({
+        title: t("opfs_not_supported"),
+        description: t("opfs_not_supported_description"),
+        duration: 5000,
+        type: "warning",
+      });
+      return;
+    }
 
     this.opfs.getFileHandle(`${file_id}.png`, { create: true })
       .then((_fileHandle) => {

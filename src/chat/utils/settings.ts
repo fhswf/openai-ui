@@ -84,7 +84,14 @@ export function reduceState(state: GlobalState): GlobalState {
 export async function inflateState(state: GlobalState) {
     console.log("Inflating state: %o", state);
 
-    const opsf = await navigator.storage.getDirectory();
+    let opfs = null;
+
+    try {
+        opfs = await navigator.storage.getDirectory();
+    }
+    catch (error) {
+        console.error("Error getting OPFS directory: %o", error);
+    }
 
     // Inflate the state by adding back any properties that were removed
     const inflatedState = { ...state };
@@ -93,11 +100,11 @@ export async function inflateState(state: GlobalState) {
             chat.messages = await Promise.all(
                 chat.messages.map(async (message) => {
                     // If message has images (now an object), add back the src property for each image
-                    if (message.images && typeof message.images === "object") {
+                    if (opfs && message.images && typeof message.images === "object") {
                         const updatedImages = { ...message.images };
                         await Promise.all(
                             Object.entries(updatedImages).map(async ([file_id, image]) => {
-                                const file = await opsf.getFileHandle(image.name);
+                                const file = await opfs.getFileHandle(image.name);
                                 image.src = URL.createObjectURL(await file.getFile());
                                 updatedImages[file_id] = image;
                             })
