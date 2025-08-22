@@ -31,7 +31,14 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
   const sendMessage = async () => {
     const { typeingMessage, options, chat, is, currentChat, user } = state;
 
-    const opfs = await navigator.storage.getDirectory();
+    let opfs = null;
+    
+    try { 
+      opfs = await navigator.storage.getDirectory();
+    }
+    catch (error) {
+      console.error("Error getting OPFS directory: %o", error);
+    }
 
     if (typeingMessage?.content) {
       let newMessage = null;
@@ -47,8 +54,9 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
           if (image.url) {
             return { type: "input_image", image_url: image.url };
           }
-          else if (image.name) {
+          else if (image.name && opfs) {
             console.log("sendMessage: reading file: %o", image.name);
+          
             // get file from OPFS
             const fileHandle = await opfs.getFileHandle(image.name);
             const promise = new Promise(async (resolve, reject) => {

@@ -31,6 +31,9 @@ export function LazyImage(props: { name?: string, url?: string }) {
                     }
                 }
             })
+            .catch((error) => {
+                console.error("Error getting OPFS directory: %o", error);
+            });
     }, [name, url]);
 
     if (!url) {
@@ -202,14 +205,16 @@ export function MessageInput() {
                             console.log('Processing dropped image file: %o', file);
                             const reader = new FileReader();
                             reader.onload = async (e) => {
-                                const opfs = await navigator.storage.getDirectory();
-                                const fileHandle = await opfs.getFileHandle(file.name, { create: true });
-                                const writable = await fileHandle.createWritable();
-                                await writable.write(e.target?.result);
-                                await writable.close();
-                                console.log('File written to OPFS: %o', fileHandle);
-
-
+                                try {
+                                    const opfs = await navigator.storage.getDirectory();
+                                    const fileHandle = await opfs.getFileHandle(file.name, { create: true });
+                                    const writable = await fileHandle.createWritable();
+                                    await writable.write(e.target?.result);
+                                    await writable.close();
+                                    console.log('File written to OPFS: %o', fileHandle);
+                                } catch (error) {
+                                    console.error("Error writing file to OPFS: %o", error);
+                                }
                                 typeingMessage.images.push({ name: file.name, size: file.size, lastModified: file.lastModified, type: file.type });
                                 setState({ typeingMessage });
                             }

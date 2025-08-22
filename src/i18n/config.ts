@@ -245,6 +245,9 @@ i18n
                     "image_generation": "Bildgenerierung",
                     "image_generation_call": "Bildgenerierung",
                     "image_generation_call_description": "Bei dieser Antwort wurde eine Bildgenerierung durchgeführt.",
+
+                    opfs_not_supported: "Origin Private File System (OPFS) wird von Ihrem Browser nicht unterstützt.",
+                    opfs_not_supported_desc: "OPFS wird von Ihrem Browser nicht unterstützt, Bilder können nicht gespeichert werden. Bitte aktualisieren Sie Ihren Browser, um diese Funktion zu nutzen.",
                 },
             },
         },
