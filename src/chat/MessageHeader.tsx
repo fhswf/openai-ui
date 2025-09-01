@@ -141,12 +141,20 @@ export function MessageHeader() {
         options.openai.toolsEnabled = new Set<string>();
     }
 
-    if (!(tools instanceof Map) || tools.size === 0) {
+    if (!(tools instanceof Map)) {
         console.error("Tools is not a Map:", tools);
         tools = new Map(toolOptions.entries());  // Fallback to default tools if not a Map
         setOptions({
             type: OptionActionType.OPENAI,
             data: { ...options.openai, tools }
+        });
+    }
+    else {
+        // Check for new tools in toolOptions
+        toolOptions.forEach((value, key) => {
+            if (!tools.has(key)) {
+                tools.set(key, value);
+            }
         });
     }
     const mcpTools: Record<string, Tool> = {}  // Filter MCP tools from tools
