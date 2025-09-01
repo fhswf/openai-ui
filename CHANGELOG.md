@@ -1,3 +1,10 @@
+## [0.26.1](https://github.com/fhswf/openai-ui/compare/v0.26.0...v0.26.1) (2025-09-01)
+
+
+### Bug Fixes
+
+* display new tools in option menu ([b5ec253](https://github.com/fhswf/openai-ui/commit/b5ec2532f772252480d4e0ee31298e218b55714d))
+
 # [0.26.0](https://github.com/fhswf/openai-ui/compare/v0.25.1...v0.26.0) (2025-09-01)
 
 
