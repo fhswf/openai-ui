@@ -1,3 +1,10 @@
+# [0.26.0](https://github.com/fhswf/openai-ui/compare/v0.25.1...v0.26.0) (2025-09-01)
+
+
+### Features
+
+* add code interpreter tool ([8d04e3d](https://github.com/fhswf/openai-ui/commit/8d04e3d15ff3a97fb2cb090c7e09ba8b961fefa8))
+
 ## [0.25.1](https://github.com/fhswf/openai-ui/compare/v0.25.0...v0.25.1) (2025-08-22)
 
 
