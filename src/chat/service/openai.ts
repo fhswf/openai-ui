@@ -418,6 +418,7 @@ class EventProcessor {
           case "mcp_call":
           case "web_search_call":
           case "image_generation_call":
+          case "code_interpreter_call":
             if (!message.toolsUsed) {
               message.toolsUsed = [];
             }
