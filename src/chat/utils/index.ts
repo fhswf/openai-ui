@@ -42,7 +42,9 @@ export function fetchAndGetUser(dispatch, options) {
 
     .then(user => {
       user.avatar = null;
+      console.log("updating user: ", user);
       dispatch({ type: "SET_STATE", payload: { user } });
+      
       if (options.general.gravatar) {
         console.log("user uses gravatar");
         sha256Digest(user.email).then(hash => {
