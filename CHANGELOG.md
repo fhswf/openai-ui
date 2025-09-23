@@ -1,3 +1,10 @@
+## [0.26.2](https://github.com/fhswf/openai-ui/compare/v0.26.1...v0.26.2) (2025-09-23)
+
+
+### Bug Fixes
+
+* tracking permission issue ([ff489cf](https://github.com/fhswf/openai-ui/commit/ff489cf9742fd116dd73b779a69650008944a3f0))
+
 ## [0.26.1](https://github.com/fhswf/openai-ui/compare/v0.26.0...v0.26.1) (2025-09-01)
 
 
