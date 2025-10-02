@@ -180,6 +180,8 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
     tools,
     input,
     stream: true,
+    include: ['web_search_call.action.sources'],
+    //reasoning: { effort: "medium", summary: "detailed" }
   })
     .then((stream: Stream<ResponseStreamEvent>) => {
       setIs({ ...is, thinking: true });
