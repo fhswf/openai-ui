@@ -408,11 +408,16 @@ class EventProcessor {
 
       case "response.output_item.done":
         console.log(event.item);
+        let toolIndex = message.toolsUsed?.findIndex((tool) => tool.id === event.item.id);
+        if (toolIndex >= 0) {
+          message.toolsUsed[toolIndex] = event.item;
+        }
         if (event.item.output_format === "png") {
           // event.item.result is a base64-encoded PNG string, decode it
           const base64Data = event.item.result;
           this.appendImageToMessage(base64Data, message, event.item.id);
         }
+        this.updateChat();
         break;
 
       case "response.output_item.added":
