@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react'
-import { Avatar, Badge, Card, HStack, Icon, IconButton, Skeleton, Spacer, Stack, Text } from "@chakra-ui/react";
+import { Tool } from "openai/resources/responses/responses.mjs";
+
+import { Avatar, Badge, Card, HStack, Icon, IconButton, Skeleton, Spacer, Stack, Tag, Text } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip"
 import { GrDocumentDownload } from "react-icons/gr";
 import { AiOutlineOpenAI } from "react-icons/ai";
@@ -79,13 +81,22 @@ export function MessageItem(props) {
     if (!toolsUsed) {
       return null;
     }
-    return toolsUsed.map((tool, index) => {
-      return (
-        <Tooltip key={index} content={t(tool.type + "_description")}>
-          <Badge>{t(tool.type)}</Badge>
-        </Tooltip>
-      )
-    })
+
+    const groupedTools = Array.from(Map.groupBy<String, Tool>(toolsUsed, tool => tool.type));
+    console.log("Grouped tools:", groupedTools);
+
+    return (
+      <HStack>
+        {groupedTools.map(([key, tools]) => (
+          <Tooltip key={key.toString()} content={t(key + "_description")}>
+            <Tag.Root size={'md'}>
+              <Tag.Label>{t(key.toString())}</Tag.Label>
+              <Tag.EndElement alignSelf={"baseline"}><Badge colorPalette="green" size={'xs'}>{tools.length}</Badge></Tag.EndElement>
+            </Tag.Root>
+          </Tooltip>
+        ))}
+      </HStack>
+    );
   }
 
   let message = ""
