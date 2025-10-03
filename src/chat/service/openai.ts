@@ -423,6 +423,10 @@ class EventProcessor {
       case "response.output_item.added":
         switch (event.item.type) {
           case "mcp_call":
+          case "mcp_list_tools":
+          case "reasoning":
+          case "custom_tool_call":
+          case "function_call":
           case "web_search_call":
           case "image_generation_call":
           case "code_interpreter_call":
@@ -431,6 +435,17 @@ class EventProcessor {
             }
             message.toolsUsed.push(event.item);
             this.updateChat();
+            break;
+          case "mcp_approval_request":
+            console.log("MCP Approval Request: %o", event.item);
+            toaster.create({
+              title: t("mcp_approval_request"),
+              description: t("mcp_approval_request_description"),
+              duration: 10000,
+              type: "info",
+            });
+            break;
+
         }
         break;
 
