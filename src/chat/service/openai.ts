@@ -10,7 +10,7 @@ import OpenAI, { APIError } from "openai";
 import { t } from "i18next";
 import { ResponseStream } from "openai/lib/responses/ResponseStream.mjs";
 import { Stream } from "openai/streaming.mjs";
-import { ResponseImageGenCallCompletedEvent, ResponseImageGenCallPartialImageEvent, ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
+import { ResponseImageGenCallCompletedEvent, ResponseImageGenCallPartialImageEvent, ResponseIncludable, ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
 import { Tooltip } from "@chakra-ui/react";
 import React from "react";
 import { toaster } from "../../components/ui/toaster";
@@ -175,14 +175,18 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
   });
   console.log("createResponse: tools: %o", tools);
 
-  client.responses.create({
+  const response_options = {
     model: options.openai.model,
     tools,
     input,
     stream: true,
-    include: ['web_search_call.action.sources'],
-    //reasoning: { effort: "medium", summary: "detailed" }
-  })
+    include: ['web_search_call.action.sources', ] as ResponseIncludable[],
+  };
+  if (options.openai.model.startsWith("gpt-5")) {
+    response_options['reasoning'] = { effort: "medium", summary: "detailed" };
+  }
+
+  client.responses.create(response_options)
     .then((stream: Stream<ResponseStreamEvent>) => {
       setIs({ ...is, thinking: true });
       console.log("stream: %o", stream);
