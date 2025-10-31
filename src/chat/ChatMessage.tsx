@@ -145,14 +145,14 @@ export function MessageItem(props) {
                 break;
               case "reasoning":
                 info.title = t("Reasoning Step") + " " + (index + 1);
-                info.items = info.summary.length ? (<ul>{info.summary.map((item, index) => (<li key={index}>{(<LazyRenderer>{item.text}</LazyRenderer>)}</li>))}</ul>) : (<Text>{t("No information available.")}</Text>);
+                info.items = info.summary?.length ? (<ul>{info.summary.map((item, index) => (<li key={index}>{(<LazyRenderer>{item.text}</LazyRenderer>)}</li>))}</ul>) : (<Text>{t("No information available.")}</Text>);
                 break;
               case "web_search_call":
-                info.title = "" + tool.action.query;
+                info.title = "" + tool.action?.query;
                 info.items = (
                   <VStack alignItems="flex-start">
                     <Text>{t("Search Results:")}</Text>
-                    <ul>{tool.action.sources.map((result, index) => <React.Fragment key={index}><li><a href={result.url} target="_blank" rel="noopener noreferrer">{result.url}</a> </li></React.Fragment>)}</ul>
+                    <ul>{tool.action?.sources.map((result, index) => <React.Fragment key={index}><li><a href={result.url} target="_blank" rel="noopener noreferrer">{result.url}</a> </li></React.Fragment>)}</ul>
                   </VStack>
                 );
                 break;
@@ -162,7 +162,7 @@ export function MessageItem(props) {
           .map((tool, index) => (
             <Accordion.Item key={index} value={tool.id} justifyContent="space-between" padding="2">
               <Accordion.ItemTrigger>
-                <Span flex="1">{tool.title || tool.action?.query || (t(key) + " " + index)}</Span>
+                <Span flex="1">{tool.title || tool.action?.query || (t(key) + " " + (index + 1))}</Span>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
               <Accordion.ItemContent>
