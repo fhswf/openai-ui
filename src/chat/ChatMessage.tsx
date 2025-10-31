@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react'
-import { Avatar, Badge, Card, HStack, Icon, IconButton, Skeleton, Spacer, Stack, Text } from "@chakra-ui/react";
+import { Tool } from "openai/resources/responses/responses.mjs";
+
+import { Accordion, Avatar, Badge, Card, Heading, HStack, Icon, IconButton, Popover, Skeleton, Spacer, Span, Stack, Tag, Text, VStack } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip"
 import { GrDocumentDownload } from "react-icons/gr";
 import { AiOutlineOpenAI } from "react-icons/ai";
@@ -79,13 +81,100 @@ export function MessageItem(props) {
     if (!toolsUsed) {
       return null;
     }
-    return toolsUsed.map((tool, index) => {
-      return (
-        <Tooltip key={index} content={t(tool.type + "_description")}>
-          <Badge>{t(tool.type)}</Badge>
-        </Tooltip>
-      )
-    })
+
+    const groupedTools = Array.from(Map.groupBy<String, Tool>(toolsUsed, tool => tool.type));
+    console.log("Grouped tools:", groupedTools);
+
+    return (
+      <HStack>
+        {groupedTools.map(([key, tools]) => (
+          <Popover.Root key={key.toString()} >
+            <Popover.Trigger>
+              <Tooltip content={t(key + "_description")}>
+                <Tag.Root size={'md'}>
+                  <Tag.Label>{t(key.toString())}</Tag.Label>
+                  <Tag.EndElement alignSelf={"baseline"}><Badge colorPalette="green" size={'xs'}>{tools.length}</Badge></Tag.EndElement>
+                </Tag.Root>
+              </Tooltip>
+            </Popover.Trigger>
+            <Popover.Positioner>
+              <Popover.Content>
+                <Popover.CloseTrigger />
+                <Popover.Arrow>
+                  <Popover.ArrowTip />
+                </Popover.Arrow>
+                <Popover.Body overflowY={"auto"}>
+                  <Popover.Title><Heading>{t(key + "_title")}</Heading></Popover.Title>
+                  <Popover.Description >
+                    {renderToolDetails(tools, key)}
+                  </Popover.Description>
+                </Popover.Body>
+              </Popover.Content>
+            </Popover.Positioner>
+          </Popover.Root>
+        ))}
+      </HStack>
+    );
+
+    function renderToolDetails(tools: Tool[], key: String) {
+      return <Accordion.Root>
+        {tools
+          .map((tool, index) => {
+            const info = { ...tool };
+            console.log("Tool:", tool);
+            switch (tool.type) {
+              case "mcp_list_tools":
+                info.title = "" + tool.server_label;
+                info.items = (<dl>{tool.tools.map(_t => <><dt key={_t.id}>{_t.name}</dt> <dd>{_t.description || t("No description available.")} </dd></>)}</dl>);
+                break;
+              case "mcp_call":
+                let parsedArgs = {};
+                try {
+                  parsedArgs = JSON.parse(tool.arguments || '{}');
+                } catch (error) {
+                  console.error("Error parsing tool arguments:", error);
+                  parsedArgs = {};
+                }
+                info.title = "" + tool.name;
+                info.items = (
+                  <VStack alignItems="flex-start">
+                    <Text>{Object.entries(parsedArgs).map(([key, value], index) => <React.Fragment key={index}><dt>{key}</dt><dd>{value}</dd></React.Fragment>) || t("No arguments provided.")}</Text>
+                    <LazyRenderer>{tool.output || t("No additional information available.")}</LazyRenderer>
+                  </VStack>
+                );
+                break;
+              case "reasoning":
+                info.title = t("Reasoning Step") + " " + (index + 1);
+                info.items = info.summary.length ? (<ul>{info.summary.map((item, index) => (<li key={index}>{(<LazyRenderer>{item.text}</LazyRenderer>)}</li>))}</ul>) : (<Text>{t("No information available.")}</Text>);
+                break;
+              case "web_search_call":
+                info.title = "" + tool.action.query;
+                info.items = (
+                  <VStack alignItems="flex-start">
+                    <Text>{t("Search Results:")}</Text>
+                    <ul>{tool.action.sources.map((result, index) => <React.Fragment key={index}><li><a href={result.url} target="_blank" rel="noopener noreferrer">{result.url}</a> </li></React.Fragment>)}</ul>
+                  </VStack>
+                );
+                break;
+            }
+            return info;
+          })
+          .map((tool, index) => (
+            <Accordion.Item key={index} value={tool.id} justifyContent="space-between" padding="2">
+              <Accordion.ItemTrigger>
+                <Span flex="1">{tool.title || tool.action?.query || (t(key) + " " + index)}</Span>
+                <Accordion.ItemIndicator />
+              </Accordion.ItemTrigger>
+              <Accordion.ItemContent>
+                <Accordion.ItemBody>
+                  {tool.items || t("No additional information available.")}
+                </Accordion.ItemBody>
+              </Accordion.ItemContent>
+
+            </Accordion.Item>
+          ))}
+      </Accordion.Root>;
+    }
   }
 
   let message = ""

@@ -19,7 +19,7 @@ function replacer(key, value) {
     }
 }
 
-function reviver(key, value) {
+export function reviver(key, value) {
     if (typeof value === 'object' && value !== null) {
         if (value.dataType === 'Map') {
             return new Map(value.value);

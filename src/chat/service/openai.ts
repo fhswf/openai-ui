@@ -10,7 +10,7 @@ import OpenAI, { APIError } from "openai";
 import { t } from "i18next";
 import { ResponseStream } from "openai/lib/responses/ResponseStream.mjs";
 import { Stream } from "openai/streaming.mjs";
-import { ResponseImageGenCallCompletedEvent, ResponseImageGenCallPartialImageEvent, ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
+import { ResponseImageGenCallCompletedEvent, ResponseImageGenCallPartialImageEvent, ResponseIncludable, ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
 import { Tooltip } from "@chakra-ui/react";
 import React from "react";
 import { toaster } from "../../components/ui/toaster";
@@ -175,12 +175,18 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
   });
   console.log("createResponse: tools: %o", tools);
 
-  client.responses.create({
+  const response_options = {
     model: options.openai.model,
     tools,
     input,
     stream: true,
-  })
+    include: ['web_search_call.action.sources', ] as ResponseIncludable[],
+  };
+  if (options.openai.model.startsWith("gpt-5")) {
+    response_options['reasoning'] = { effort: "medium", summary: "detailed" };
+  }
+
+  client.responses.create(response_options)
     .then((stream: Stream<ResponseStreamEvent>) => {
       setIs({ ...is, thinking: true });
       console.log("stream: %o", stream);
@@ -406,23 +412,44 @@ class EventProcessor {
 
       case "response.output_item.done":
         console.log(event.item);
+        let toolIndex = message.toolsUsed?.findIndex((tool) => tool.id === event.item.id);
+        if (toolIndex >= 0) {
+          message.toolsUsed[toolIndex] = event.item;
+        }
         if (event.item.output_format === "png") {
           // event.item.result is a base64-encoded PNG string, decode it
           const base64Data = event.item.result;
           this.appendImageToMessage(base64Data, message, event.item.id);
         }
+        this.updateChat();
         break;
 
       case "response.output_item.added":
         switch (event.item.type) {
           case "mcp_call":
+          case "mcp_list_tools":
+          case "reasoning":
+          case "custom_tool_call":
+          case "function_call":
           case "web_search_call":
           case "image_generation_call":
+          case "code_interpreter_call":
             if (!message.toolsUsed) {
               message.toolsUsed = [];
             }
             message.toolsUsed.push(event.item);
             this.updateChat();
+            break;
+          case "mcp_approval_request":
+            console.log("MCP Approval Request: %o", event.item);
+            toaster.create({
+              title: t("mcp_approval_request"),
+              description: t("mcp_approval_request_description"),
+              duration: 10000,
+              type: "info",
+            });
+            break;
+
         }
         break;
 

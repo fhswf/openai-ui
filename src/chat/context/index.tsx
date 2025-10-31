@@ -12,7 +12,7 @@ import { initState } from "./initState";
 import { fetchAndGetUser } from "../utils";
 import { GlobalAction, GlobalActions, GlobalState, GlobalActionType, Chat, Message, App, Options } from "./types";
 import { getResponse } from "../service/openai";
-import { inflateState, loadState, reduceState, saveState } from "../utils/settings";
+import { inflateState, loadState, reduceState, reviver, saveState } from "../utils/settings";
 
 
 export const ChatContext = createContext(null);
@@ -36,7 +36,7 @@ export const ChatProvider = ({ children }) => {
   let init: GlobalState = initState;
 
   try {
-    let stored = JSON.parse(localStorage.getItem("SESSIONS"));
+    let stored = JSON.parse(localStorage.getItem("SESSIONS"), reviver);
     init = { ...init, ...stored };
   } catch (e) {
     console.error("error parsing state: %s", e);
