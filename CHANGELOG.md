@@ -1,3 +1,21 @@
+# [0.27.0](https://github.com/fhswf/openai-ui/compare/v0.26.2...v0.27.0) (2025-10-31)
+
+
+### Bug Fixes
+
+* handle exception in JSON parsing ([0e5fd3b](https://github.com/fhswf/openai-ui/commit/0e5fd3bf84a5324186ad38606b7bcfd12fade4b3))
+* update tool when output item is done ([0c680ff](https://github.com/fhswf/openai-ui/commit/0c680ff4a6eb7f8da1f1a2e3fa5533781cdb7bd3))
+* use reviver function when loading state ([327631f](https://github.com/fhswf/openai-ui/commit/327631f2b32440293fca755ac6ba7b7c3dc7ab97))
+
+
+### Features
+
+* add code interpreter tool ([8ea8716](https://github.com/fhswf/openai-ui/commit/8ea871603afe3facfb9ac1d0fc42d4fd1399ba9c))
+* add sources for web search call ([a9f4a64](https://github.com/fhswf/openai-ui/commit/a9f4a64ed513adb5afb4d80c9183959c74057350))
+* add tool call details ([fd0db7f](https://github.com/fhswf/openai-ui/commit/fd0db7fddd06b7aca10ff5adf6a04a3b032492a3))
+* group tool calls ([b1e5165](https://github.com/fhswf/openai-ui/commit/b1e516557fcff9d7333ab34e79c72a100fe147e4))
+* handle more tools ([d0955ca](https://github.com/fhswf/openai-ui/commit/d0955ca5370fe1cdc086d4007772faabc04cb14f))
+
 ## [0.26.2](https://github.com/fhswf/openai-ui/compare/v0.26.1...v0.26.2) (2025-09-23)
 
 
