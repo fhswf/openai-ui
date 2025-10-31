@@ -117,10 +117,17 @@ export function MessageItem(props) {
                               info.items = (<dl>{tool.tools.map(_t => <><dt key={_t.id}>{_t.name}</dt> <dd>{_t.description || t("No description available.")} </dd></>)}</dl>);
                               break;
                             case "mcp_call":
+                              let parsedArgs = {}
+                              try {
+                                parsedArgs = JSON.parse(tool.arguments || '{}')
+                              } catch (error) {
+                                console.error("Error parsing tool arguments:", error);
+                                parsedArgs = {}
+                              }
                               info.title = "" + tool.name;
                               info.items = (
                                 <VStack alignItems="flex-start">
-                                  <Text>{Object.entries(JSON.parse(tool.arguments)).map(([key, value], index) => <><dt key={index}>{key}</dt><dd>{value}</dd></>) || t("No arguments provided.")}</Text>
+                                  <Text>{Object.entries(parsedArgs).map(([key, value], index) => <React.Fragment key={index}><dt>{key}</dt><dd>{value}</dd></React.Fragment>) || t("No arguments provided.")}</Text>
                                   <LazyRenderer>{tool.output || t("No additional information available.")}</LazyRenderer>
                                 </VStack>
                               );
