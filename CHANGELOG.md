@@ -1,3 +1,10 @@
+## [0.27.1](https://github.com/fhswf/openai-ui/compare/v0.27.0...v0.27.1) (2025-10-31)
+
+
+### Bug Fixes
+
+* handle missing information gracefully ([afd8437](https://github.com/fhswf/openai-ui/commit/afd8437d7e429588f8b96fd49658d7822b654ad6))
+
 # [0.27.0](https://github.com/fhswf/openai-ui/compare/v0.26.2...v0.27.0) (2025-10-31)
 
 
