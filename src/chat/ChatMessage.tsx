@@ -152,14 +152,14 @@ export function MessageItem(props) {
                 info.items = (
                   <VStack alignItems="flex-start">
                     <Text>{t("Search Results:")}</Text>
-                    <ul>{tool.action?.sources.map((result, index) => <React.Fragment key={index}><li><a href={result.url} target="_blank" rel="noopener noreferrer">{result.url}</a> </li></React.Fragment>)}</ul>
+                    <ul>{tool.action?.sources?.map((result, index) => <React.Fragment key={index}><li><a href={result.url} target="_blank" rel="noopener noreferrer">{result.url}</a> </li></React.Fragment>)}</ul>
                   </VStack>
                 );
                 break;
             }
             return info;
           })
-          .map((tool, index) => (
+          ?.map((tool, index) => (
             <Accordion.Item key={index} value={tool.id} justifyContent="space-between" padding="2">
               <Accordion.ItemTrigger>
                 <Span flex="1">{tool.title || tool.action?.query || (t(key) + " " + (index + 1))}</Span>
@@ -183,7 +183,7 @@ export function MessageItem(props) {
     message = processLaTeX(content)
   }
   else {
-    content.map((item, index) => {
+    content?.map((item, index) => {
       if (item.type === "input_text") {
         message += item.text
       }
@@ -209,7 +209,7 @@ export function MessageItem(props) {
         <LazyRenderer isVisible={is.thinking}>
           {message}
         </LazyRenderer>
-        {images && Object.entries(images).map(([fileName, image], index) => {
+        {images && Object.entries(images)?.map(([fileName, image], index) => {
           if (image.src) {
             // If image has a src, use it directly
             return (<img key={fileName} src={image.src} alt={fileName} className={styles.generated_image} />)

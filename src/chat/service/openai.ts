@@ -164,7 +164,18 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
   console.log("parent: %o", parent);
 
   const input: ResponseInput = chat[currentChat].messages.map((item) => {
+    console.log("input item: %o", item);
     const { role, content, ...rest } = item;
+    if (content && typeof content === "object" && Array.isArray(content)) {
+      const cleaned = content.map((item) => {
+        if (item.type === "input_image") {
+          const { name, ...rest } = item;
+          return { ...rest };
+        }
+        return item;
+      });
+      return { role, content: cleaned } as ResponseInputItem;
+    }
     return { role, content } as ResponseInputItem;
   });
 
@@ -180,7 +191,7 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
     tools,
     input,
     stream: true,
-    include: ['web_search_call.action.sources', ] as ResponseIncludable[],
+    include: ['web_search_call.action.sources',] as ResponseIncludable[],
   };
   if (options.openai.model.startsWith("gpt-5")) {
     response_options['reasoning'] = { effort: "medium", summary: "detailed" };

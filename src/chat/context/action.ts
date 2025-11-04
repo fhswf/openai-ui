@@ -70,7 +70,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
               let result;
               reader.onload = () => {
                 console.log("File read as data URL: %o", reader.result);
-                result = { type: "input_image", image_url: reader.result as string };
+                result = { type: "input_image", image_url: reader.result as string, name: image.name };
                 resolve(result);
               }
               reader.onerror = (error) => {
