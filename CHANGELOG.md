@@ -1,3 +1,10 @@
+## [0.27.2](https://github.com/fhswf/openai-ui/compare/v0.27.1...v0.27.2) (2025-11-04)
+
+
+### Bug Fixes
+
+* handle missing source in web search call ([3fc0021](https://github.com/fhswf/openai-ui/commit/3fc00211e65200169dc925678376433cadcc0f73))
+
 ## [0.27.1](https://github.com/fhswf/openai-ui/compare/v0.27.0...v0.27.1) (2025-10-31)
 
 
