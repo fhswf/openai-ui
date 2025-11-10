@@ -1,3 +1,10 @@
+# [0.28.0](https://github.com/fhswf/openai-ui/compare/v0.27.2...v0.28.0) (2025-11-10)
+
+
+### Features
+
+* tool details ([2c80c01](https://github.com/fhswf/openai-ui/commit/2c80c0120331701332e06e36b0c52d3416be2af1))
+
 ## [0.27.2](https://github.com/fhswf/openai-ui/compare/v0.27.1...v0.27.2) (2025-11-04)
 
 
