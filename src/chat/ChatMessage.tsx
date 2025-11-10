@@ -88,7 +88,7 @@ export function MessageItem(props) {
     return (
       <HStack>
         {groupedTools.map(([key, tools]) => (
-          <Popover.Root key={key.toString()} >
+          <Popover.Root key={key.toString()} size="lg">
             <Popover.Trigger>
               <Tooltip content={t(key + "_description")}>
                 <Tag.Root size={'md'}>
@@ -98,7 +98,7 @@ export function MessageItem(props) {
               </Tooltip>
             </Popover.Trigger>
             <Popover.Positioner>
-              <Popover.Content>
+              <Popover.Content width="70vw" height="70vh">
                 <Popover.CloseTrigger />
                 <Popover.Arrow>
                   <Popover.ArrowTip />
@@ -153,6 +153,17 @@ export function MessageItem(props) {
                   <VStack alignItems="flex-start">
                     <Text>{t("Search Results:")}</Text>
                     <ul>{tool.action?.sources?.map((result, index) => <React.Fragment key={index}><li><a href={result.url} target="_blank" rel="noopener noreferrer">{result.url}</a> </li></React.Fragment>)}</ul>
+                  </VStack>
+                );
+                break;
+              case "code_interpreter_call":
+                info.title = t("Code Interpreter Step") + " " + (index + 1);
+                info.items = (
+                  <VStack alignItems="flex-start">
+                    <Text>{t("Code")}:</Text>
+                    <LazyRenderer>{"```python\n" + tool.code + "\n```" || t("No additional information available.")}</LazyRenderer>
+                    <Text>{t("Outputs")}:</Text>
+                    {tool.outputs?.map((output, index) => <LazyRenderer key={index}>{"```json\n" + JSON.stringify(output) + "\n```"}</LazyRenderer>)}
                   </VStack>
                 );
                 break;

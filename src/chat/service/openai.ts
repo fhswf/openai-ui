@@ -191,7 +191,7 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
     tools,
     input,
     stream: true,
-    include: ['web_search_call.action.sources',] as ResponseIncludable[],
+    include: ['web_search_call.action.sources', 'code_interpreter_call.outputs'] as ResponseIncludable[],
   };
   if (options.openai.model.startsWith("gpt-5")) {
     response_options['reasoning'] = { effort: "medium", summary: "detailed" };

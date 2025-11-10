@@ -93,11 +93,11 @@ export const toolOptions: Map<string, Tool> = new Map([
     }
   ],
   [
-    "DeepWiki",
+    "FH SWF (beta)",
     {
       "type": "mcp",
-      "server_label": "DeepWiki",
-      "server_url": "https://mcp.deepwiki.com/mcp",
+      "server_label": "FH_SWF",
+      "server_url": "https://mcp.fh-swf.cloud/mcp",
       "require_approval": "never",
     },
   ]
