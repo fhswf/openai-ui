@@ -2,5 +2,9 @@
     "sonarlint.connectedMode.project": {
         "connectionId": "hopper",
         "projectKey": "fhswf_openai-ui_AY5mLbV1WNlYFiIpzZdP"
-    }
+    },
+    "i18n-ally.localesPaths": [
+        "src/i18n"
+    ],
+    "react-i18n.i18nPaths": "src\\i18n"
 }
