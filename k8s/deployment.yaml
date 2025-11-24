@@ -22,13 +22,6 @@ spec:
       containers:
         - image: ghcr.io/fhswf/openai-ui:0.28.1
           name: ui
-          ports:
-            - containerPort: 80
-          env:
-            - name: VITE_RELEASE
-              value: 0.28.1
-            - name: VITE_BUILD_SHA
-              value: 2ce04038c0b2ca8cdb76ef9abe2a370a79fcc110
           resources:
             limits:
               memory: 512Mi
@@ -36,6 +29,13 @@ spec:
             requests:
               memory: 128Mi
               cpu: 500m
+          ports:
+            - containerPort: 80
+          env:
+            - name: VITE_RELEASE
+              value: 0.28.1
+            - name: VITE_BUILD_SHA
+              value: 2ce04038c0b2ca8cdb76ef9abe2a370a79fcc110
       restartPolicy: Always
       
 status: {}
