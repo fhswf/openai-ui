@@ -1,3 +1,10 @@
+## [0.28.1](https://github.com/fhswf/openai-ui/compare/v0.28.0...v0.28.1) (2025-11-24)
+
+
+### Bug Fixes
+
+* handle potential undefined currentChat in MessageMenu ([446ccbe](https://github.com/fhswf/openai-ui/commit/446ccbe35f4219b0f167324673f0bbdbe79ede62)), closes [#71](https://github.com/fhswf/openai-ui/issues/71)
+
 # [0.28.0](https://github.com/fhswf/openai-ui/compare/v0.27.2...v0.28.0) (2025-11-10)
 
 
