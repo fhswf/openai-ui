@@ -90,7 +90,7 @@ export function MessageMenu() {
                                 //.toSorted((a, b) => a.id == chat[currentChat].id ? -1 : b.id == chat[currentChat].id ? 1 : 0)
                                 .map((c, index) => {
 
-                                    const itemProps = chat[currentChat].id == c.id ? { ref: currentRef, className: styles.current } : {};
+                                    const itemProps = chat[currentChat]?.id == c.id ? { ref: currentRef, className: styles.current } : {};
 
 
                                     return (
