@@ -20,8 +20,8 @@ spec:
     spec:
       autoMountServiceAccountToken: false
       containers:
-        - image: ghcr.io/fhswf/openai-ui:0.28.1
-          name: ui
+        - name: openai-ui
+          image: ghcr.io/fhswf/openai-ui:0.28.1
           resources:
             limits:
               memory: 512Mi
