@@ -18,6 +18,7 @@ spec:
       labels:
         io.kompose.service: openai-ui
     spec:
+      autoMountServiceAccountToken: false
       containers:
         - image: ghcr.io/fhswf/openai-ui:0.28.1
           name: ui
@@ -36,5 +37,5 @@ spec:
               memory: 128Mi
               cpu: 500m
       restartPolicy: Always
-      autoMountServiceAccountToken: false
+      
 status: {}
