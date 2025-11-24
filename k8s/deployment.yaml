@@ -23,12 +23,12 @@ spec:
         - name: openai-ui
           image: ghcr.io/fhswf/openai-ui:0.28.1
           resources:
-            limits:
-              memory: 512Mi
-              cpu: 2000m
             requests:
               memory: 128Mi
               cpu: 500m
+            limits:
+              memory: 512Mi
+              cpu: 2000m
           ports:
             - containerPort: 80
           env:
