@@ -219,70 +219,23 @@ export function ChatOptions() {
 
           <Heading size="md" paddingBlockStart="2em">{t("Global OpenAI Config")}</Heading>
 
-
           <Field.Root mt="4">
-
-            <RadioCard.Root defaultValue={openai.mode} onValueChange={(ev) => setAPIMode(ev.value)} data-testid="ChangeAIModeSelect">
-              <RadioCard.Label>{t("api_mode")}</RadioCard.Label>
-              <Stack direction={{ base: "column", md: "row" }} gap="10" align="stretch">
-                {modeOptions.map((item) => (
-                  <RadioCard.Item
-                    label={item.label}
-                    description={item.description}
-                    key={item.value}
-                    value={item.value}
-                    maxWidth="48em"
-                  />
+            <Select.Root collection={createListCollection({ items: modelOptions })} maxWidth="30em" onValueChange={val => setModel({ model: val.value[0] })}
+              data-testid="ChangeAIModelSelect">
+              <Select.Label>{t("openai_model_help")}</Select.Label>
+              <Select.Trigger>
+                <Select.ValueText placeholder={openai.model} />
+              </Select.Trigger>
+              <Select.Content>
+                {modelOptions.map((model) => (
+                  <Select.Item item={model} key={model.value}>
+                    {model.label}
+                  </Select.Item>
                 ))}
-              </Stack>
-            </RadioCard.Root>
-            <Field.HelperText>{t("api_mode_help")}</Field.HelperText>
+              </Select.Content>
+            </Select.Root>
+            <Field.HelperText>{t("openai_model_help")}</Field.HelperText>
           </Field.Root>
-
-          {
-            openai.mode === 'assistant' ?
-
-              (
-                <Field.Root mt="4">
-                  <Select.Root collection={createListCollection({ items: assistants })} maxWidth="30em" onValueChange={val => setAssistant(val.value[0])}
-                    data-testid="ChangeAIModelSelect">
-                    <Select.Label>{t("assistant")}</Select.Label>
-                    <Select.Trigger>
-                      <Select.ValueText placeholder={getAssistantLabel(openai.assistant)} />
-                    </Select.Trigger>
-                    <Select.Content>
-                      {assistants.map((assistant) => (
-                        <Select.Item item={assistant} key={assistant.value}>
-                          {assistant.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Root>
-                  <Field.HelperText>{t("assistent_help")}</Field.HelperText>
-                </Field.Root>
-              )
-
-              :
-              (
-                <Field.Root mt="4">
-                  <Select.Root collection={createListCollection({ items: modelOptions })} maxWidth="30em" onValueChange={val => setModel({ model: val.value[0] })}
-                    data-testid="ChangeAIModelSelect">
-                    <Select.Label>{t("openai_model_help")}</Select.Label>
-                    <Select.Trigger>
-                      <Select.ValueText placeholder={openai.model} />
-                    </Select.Trigger>
-                    <Select.Content>
-                      {modelOptions.map((model) => (
-                        <Select.Item item={model} key={model.value}>
-                          {model.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Root>
-                  <Field.HelperText>{t("openai_model_help")}</Field.HelperText>
-                </Field.Root>
-              )
-          }
 
           <Field.Root mt="4">
             <Slider.Root colorPalette="blue"

@@ -5,9 +5,7 @@ import React from "react";
 import { getMessages, getRunSteps, initChat, retrieveRun, getImageURL, retrieveAssistant, modifyAssistant, getFileURL, retrieveFile } from "../service/openai_assistant";
 import { processLaTeX } from "../utils/latex";
 import { useApps } from "../apps/context";
-import { createResponse, executeChatRequest } from "../service/openai";
-import { executeAssistantRequest } from "../service/openai";
-
+import { createResponse } from "../service/openai";
 
 
 export default function action(state: Partial<GlobalState>, dispatch: React.Dispatch<GlobalAction>): GlobalActions {
@@ -32,8 +30,8 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     const { typeingMessage, options, chat, is, currentChat, user } = state;
 
     let opfs = null;
-    
-    try { 
+
+    try {
       opfs = await navigator.storage.getDirectory();
     }
     catch (error) {
@@ -56,7 +54,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
           }
           else if (image.name && opfs) {
             console.log("sendMessage: reading file: %o", image.name);
-          
+
             // get file from OPFS
             const fileHandle = await opfs.getFileHandle(image.name);
             const promise = new Promise(async (resolve, reject) => {
@@ -104,12 +102,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       messages.push(newMessage);
       let newChat = [...chat];
       newChat.splice(currentChat, 1, { ...chat[currentChat], messages });
-      if (options.openai.mode === "assistant") {
-        executeAssistantRequest(setState, is, newChat, messages, options, currentChat, chat, user);
-      }
-      else {
-        createResponse({ ...state, chat: newChat, setState, setIs }, this);
-      }
+      createResponse({ ...state, chat: newChat, setState, setIs }, this);
     }
   }
 
@@ -180,7 +173,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       let _chat: Chat[] = chatList;
       if (newApp.botStarts) {
         console.log("botStarts");
-        executeChatRequest(setState, is, _chat, messages, options, 0, _chat);
+        createResponse({ ...state, chat: _chat, setState, setIs }, this);
       }
       else {
         console.debug("starting chat: %o", _chat);
