@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 
 
 test('Chat Message Send', async ({ page }) => {
-    await page.goto('https://openai.ki.fh-swf.de');
+    await page.goto("");
     await page.getByTestId('ChatTextArea').click();
     await page.getByTestId('ChatTextArea').fill('Test');
     await page.getByTestId('SendMessageBtn').click();
