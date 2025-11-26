@@ -6,17 +6,14 @@ import { useGlobal } from './context'
 import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
 import { Button, Card, Field, FileUploadFileAcceptDetails, HStack, Heading, Input, Stack, createListCollection } from "@chakra-ui/react";
 
-import { RadioCard } from "@chakra-ui/react"
 import { Select } from "@chakra-ui/react"
 import { FileUpload } from "@chakra-ui/react"
 import { Slider } from "@chakra-ui/react"
 
-import styles from './style/config.module.less'
-import { classnames } from '../components/utils'
+
 import { useOptions } from './hooks'
 import { t, use } from 'i18next'
 import { initState } from './context/initState'
-import { getAssistants } from './service/openai_assistant'
 import { GlobalState, OptionActionType } from './context/types'
 import { Trans } from 'react-i18next'
 import { exportSettings, importSettings } from './utils/settings'
@@ -29,36 +26,9 @@ export function ChatOptions() {
   const { account, openai, general } = options
   // const { avatar, name } = account
   // const { max_tokens, apiKey, temperature, baseUrl, organizationId, top_p, model } = openai
-  const { setAccount, setGeneral, setAPIMode, setModel, setAssistant } = useOptions()
+  const { setAccount, setGeneral, setModel } = useOptions()
   const [assistants, setAssistants] = React.useState([]);
   const { setState, setIs, is } = useGlobal()
-
-
-  useEffect(() => {
-    if (openai.mode === 'assistant') {
-      getAssistants()
-        .then((assistants) => {
-          console.log(assistants);
-          let options = assistants.data
-            //.filter((item) => item.metadata["public"] === "True")
-            .map((item) => {
-              return { label: item.name || "", value: item.id }
-            });
-          console.log("options: %o", options);
-          setAssistants(options);
-          if (openai.assistant === "") {
-            setAssistant(options[0].value);
-          }
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-          if (error.message === "Unauthorized") {
-            return window.location.href = import.meta.env.VITE_LOGIN_URL;
-          }
-        })
-    }
-  }, [openai.mode]);
-
 
   const tempMarks = [...Array(11).keys()].map((i) => ({ value: 0.2 * i, label: (0.2 * i).toFixed(1) }));
   const topPMarks = [...Array(11).keys()].map((i) => ({ value: 0.1 * i, label: (0.1 * i).toFixed(1) }));

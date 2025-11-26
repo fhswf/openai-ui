@@ -1,10 +1,6 @@
 import i18next, { t, use } from "i18next";
-import * as StepsAPI from "openai/resources/beta/threads/runs/steps";
 import { Chat, GlobalState, OptionAction, GlobalActions, Message, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
 import React from "react";
-import { getMessages, getRunSteps, initChat, retrieveRun, getImageURL, retrieveAssistant, modifyAssistant, getFileURL, retrieveFile } from "../service/openai_assistant";
-import { processLaTeX } from "../utils/latex";
-import { useApps } from "../apps/context";
 import { createResponse } from "../service/openai";
 
 
