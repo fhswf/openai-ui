@@ -9,8 +9,8 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v5
+    - uses: actions/setup-node@v5
       with:
         node-version: lts/*
     - name : Install Yarn
@@ -21,6 +21,14 @@ jobs:
       run: npx playwright install --with-deps
     - name: Run Playwright tests
       run: npx playwright test
+      env:
+        PLAYWRIGHT_TEST_BASE_URL: http://localhost:5173
+        VITE_LOGIN_URL: https://openai.ki.fh-swf.de/api/login
+        VITE_LOGOUT_URL: https://openai.ki.fh-swf.de/api/logout
+        VITE_API_BASE_URL: https://openai.ki.fh-swf.de/api/v1
+        VITE_USER_URL: https://openai.ki.fh-swf.de/api/user
+        VITE_PROXY_URL: https://proxy.gawron.cloud/api
+        VITE_DASHBOARD_URL: https://openai.ki.fh-swf.de/api/dashboard
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
