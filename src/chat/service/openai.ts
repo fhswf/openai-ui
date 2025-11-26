@@ -83,7 +83,7 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
   }
 
   client.responses.create(response_options)
-    .then((stream: Stream<ResponseStreamEvent>) => {
+    .then(async (stream: Stream<ResponseStreamEvent>) => {
       setIs({ ...is, thinking: true });
       console.log("stream: %o", stream);
 
@@ -156,7 +156,7 @@ class EventProcessor {
   setIs: (arg: any) => void;
   mainRef: any;
   stream: Stream<ResponseStreamEvent>;
-  opfs: FileSystemDirectoryHandle;
+  static opfs: FileSystemDirectoryHandle = null;
 
   constructor(stream: Stream<ResponseStreamEvent>, global: Partial<GlobalState> & Partial<GlobalActions>) {
     const { chat, currentChat, setState, setIs } = global;
@@ -165,23 +165,28 @@ class EventProcessor {
     this.currentChat = currentChat;
     this.setState = setState;
     this.setIs = setIs;
+  }
 
-    navigator.storage.getDirectory()
-      .then((dir) => {
-        console.log("Directory: %o", dir);
-        this.opfs = dir;
-      })
-      .catch((error) => {
-        console.warn("Origin Private File System not supported: ", error);
-        toaster.create({
-          title: t("opfs_not_supported"),
-          description: t("opfs_not_supported_description"),
-          duration: 5000,
-          type: "warning",
+  async initOPFS() {
+    console.log("Initializing EventProcessor OPFS");
+    if (!EventProcessor.opfs) {
+      await navigator.storage.getDirectory()
+        .then((dir) => {
+          console.log("Directory: %o", dir);
+          EventProcessor.opfs = dir;
+        })
+        .catch((error) => {
+          console.warn("Origin Private File System not supported: ", error);
+          toaster.create({
+            title: t("opfs_not_supported"),
+            description: t("opfs_not_supported_description"),
+            duration: 5000,
+            type: "warning",
+          });
+          EventProcessor.opfs = null;
         });
-        this.opfs = null;
-      });
-    console.log("EventProcessor initialized: %o", this);
+      console.log("EventProcessor initialized: %o", this);
+    }
   }
 
   appendMessage(delta) {
@@ -190,7 +195,7 @@ class EventProcessor {
     this.updateChat();
   }
 
-  appendImageToMessage(image_base64: string, message: Message, file_id: string) {
+  async appendImageToMessage(image_base64: string, message: Message, file_id: string) {
     const fileContent = atob(image_base64);
 
     let writable: FileSystemWritableFileStream;
@@ -198,18 +203,15 @@ class EventProcessor {
     let file: File;
 
     console.log("appendImageToMessage: %s %o", file_id, message);
-    if (!this.opfs) {
-      console.warn("OPFS not available, cannot append image to message");
-      toaster.create({
-        title: t("opfs_not_supported"),
-        description: t("opfs_not_supported_description"),
-        duration: 5000,
-        type: "warning",
-      });
-      return;
+    if (!EventProcessor.opfs) {
+      await this.initOPFS();
+      if (!EventProcessor.opfs) {
+        console.error("OPFS not initialized");
+        return;
+      }
     }
 
-    this.opfs.getFileHandle(`${file_id}.png`, { create: true })
+    EventProcessor.opfs.getFileHandle(`${file_id}.png`, { create: true })
       .then((_fileHandle) => {
         fileHandle = _fileHandle;
         console.log("File handle created: ", fileHandle);
@@ -277,7 +279,7 @@ class EventProcessor {
     this.setIs({ thinking: false });
   }
 
-  process(event) {
+  async process(event) {
     console.log("event: %s %o", event.type, event);
     let message = this.chat[this.currentChat].messages[this.chat[this.currentChat].messages.length - 1];;
 
@@ -315,7 +317,7 @@ class EventProcessor {
         if (event.item.output_format === "png") {
           // event.item.result is a base64-encoded PNG string, decode it
           const base64Data = event.item.result;
-          this.appendImageToMessage(base64Data, message, event.item.id);
+          await this.appendImageToMessage(base64Data, message, event.item.id);
         }
         this.updateChat();
         break;
