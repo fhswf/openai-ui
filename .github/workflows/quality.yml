@@ -87,6 +87,7 @@ jobs:
         VITE_DASHBOARD_URL: https://openai.ki.fh-swf.de/api/dashboard
     - name: Generate coverage report
       run: npx nyc report --reporter=lcov --report-dir=coverage
+      if: ${{ !cancelled() }}
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
@@ -95,6 +96,7 @@ jobs:
         retention-days: 30
     - name: SonarQube
       uses: sonarsource/sonarqube-scan-action@v6
+      if: ${{ !cancelled() }}
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
