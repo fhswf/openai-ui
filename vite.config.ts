@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import IstanbulPlugin from 'vite-plugin-istanbul';
 import { resolve, join } from 'path'
 import * as fs from 'fs';
 import { chakra } from '@chakra-ui/react';
@@ -38,8 +39,9 @@ export default defineConfig({
                 }
             }
         },
+        sourcemap: true,
     },
-    plugins: [react(), redirectToDir()],
+    plugins: [react(), redirectToDir(), IstanbulPlugin({ include: 'src/*' })],
     css: {
         preprocessorOptions: {
             less: {

@@ -1,6 +1,7 @@
 
 .cache/
 coverage/
+.nyc_output/
 dist/*
 node_modules/
 cypress/screenshots
@@ -21,3 +22,9 @@ cypress/videos/
 cypress/screenshots/
 
 *storybook.log
+
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
