@@ -104,7 +104,6 @@ export type GlobalActions = {
     editChat: (index: number, title: string) => void;
     removeChat: (index: number) => void;
     setMessage: (content: string) => void;
-    clearThread: () => void;
     downloadThread: (format?: string) => void;
     editMessage: (id: number) => void;
     removeMessage: (id: number) => void;

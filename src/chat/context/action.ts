@@ -1,5 +1,5 @@
-import i18next, { t, use } from "i18next";
-import { Chat, GlobalState, OptionAction, GlobalActions, Message, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
+import i18next, { t } from "i18next";
+import { Chat, GlobalState, OptionAction, GlobalActions, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
 
@@ -23,7 +23,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     });
 
   const sendMessage = async () => {
-    const { typeingMessage, options, chat, is, currentChat, user } = state;
+    const { typeingMessage, chat, currentChat } = state;
 
     let opfs = null;
 
@@ -123,7 +123,6 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
 
     showSettings() {
       const { mode, assistant } = state.options.openai;
-      const chat = state.chat[state.currentChat];
       if (mode !== "assistant") {
         console.log("no settings for %s", mode);
         return
@@ -211,19 +210,6 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       };
       typeingMessage.content = content;
       setState({ is: { ...state.is, typeing: true }, typeingMessage });
-    },
-
-    clearThread() {
-      const chat = [...state.chat];
-      const user = state.user;
-      initChat(chat[state.currentChat], user.sub)
-        .then((_chat) => {
-          chat[state.currentChat] = _chat;
-          chat[state.currentChat].messages = [];
-          setState({
-            chat,
-          });
-        })
     },
 
     downloadThread(format = "json") {

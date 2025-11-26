@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Radio, RadioGroup } from '../components/ui/radio'
 import { Switch } from '../components/ui/switch'
 
 import { useGlobal } from './context'
-import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
-import { Button, Card, Field, FileUploadFileAcceptDetails, HStack, Heading, Input, Stack, createListCollection } from "@chakra-ui/react";
+import { themeOptions, languageOptions, sendCommandOptions, modelOptions } from './utils/options'
+import { Button, Card, Field, FileUploadFileAcceptDetails, Heading, Input, Stack, createListCollection } from "@chakra-ui/react";
 
 import { Select } from "@chakra-ui/react"
 import { FileUpload } from "@chakra-ui/react"
@@ -12,9 +12,9 @@ import { Slider } from "@chakra-ui/react"
 
 
 import { useOptions } from './hooks'
-import { t, use } from 'i18next'
+import { t } from 'i18next'
 import { initState } from './context/initState'
-import { GlobalState, OptionActionType } from './context/types'
+import { GlobalState } from './context/types'
 import { Trans } from 'react-i18next'
 import { exportSettings, importSettings } from './utils/settings'
 import { HiUpload } from "react-icons/hi"
@@ -23,21 +23,13 @@ import { toaster } from "../components/ui/toaster";
 
 export function ChatOptions() {
   const { options } = useGlobal()
-  const { account, openai, general } = options
-  // const { avatar, name } = account
-  // const { max_tokens, apiKey, temperature, baseUrl, organizationId, top_p, model } = openai
-  const { setAccount, setGeneral, setModel } = useOptions()
-  const [assistants, setAssistants] = React.useState([]);
+  const { openai, general } = options
+  const { setGeneral, setModel } = useOptions()
   const { setState, setIs, is } = useGlobal()
 
   const tempMarks = [...Array(11).keys()].map((i) => ({ value: 0.2 * i, label: (0.2 * i).toFixed(1) }));
   const topPMarks = [...Array(11).keys()].map((i) => ({ value: 0.1 * i, label: (0.1 * i).toFixed(1) }));
   const tokenMarks = [...Array(4).keys()].map((i) => ({ value: 1024 * 2 ** i, label: (1024 * 2 ** i).toString() }));
-
-  function getAssistantLabel(id) {
-    let assistant = assistants.find((item) => item.value === id);
-    return assistant ? assistant.label : "";
-  }
 
   return (
     <Card.Root w="100%">
