@@ -30,8 +30,10 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          build: npm ci
-          start: npm start
+          build: yarn install
+          start: yarn dev
+          wait-on: 'http://localhost:5173'
+          wait-on-timeout: 60
           browser: chrome
           spec: cypress/e2e/uiTest.cy.js
           record: false
