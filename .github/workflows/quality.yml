@@ -22,15 +22,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: 22
           cache: 'yarn'
+          cache-dependency-path: '**/yarn.lock'
 
       # Install npm dependencies, cache them correctly
       # and run all Cypress tests
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          build: yarn install
+          install-command: yarn install
           start: yarn dev
           wait-on: 'http://localhost:5173'
           wait-on-timeout: 60
