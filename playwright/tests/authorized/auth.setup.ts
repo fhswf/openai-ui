@@ -1,4 +1,4 @@
-import { test as setup, expect } from '@playwright/test';
+import { test as setup, expect } from '../baseFixtures';
 import { url } from 'node:inspector';
 import path from 'node:path';
 
