@@ -12,15 +12,15 @@ jobs:
       CYPRESS_USER_NAME: "${{ secrets.CYPRESS_USER_NAME }}"
       CYPRESS_USER_PASSWORD: "${{ secrets.CYPRESS_USER_PASSWORD }}"
       LANGUAGE: de
-    container:
-      image: cypress/browsers:node-20.9.0-chrome-118.0.5993.88-1-ff-118.0.2-edge-118.0.2088.46-1
-      options: --user 1001
+    #container:
+    #  image: cypress/browsers:node-20.9.0-chrome-118.0.5993.88-1-ff-118.0.2-edge-118.0.2088.46-1
+    #  options: --user 1001
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      - run: corepack enable && corepack prepare yarn@stable --activate
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'yarn'
@@ -32,7 +32,7 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           install-command: yarn install
-          start: yarn dev
+          start: yarn start
           wait-on: 'http://localhost:5173'
           wait-on-timeout: 60
           browser: chrome
