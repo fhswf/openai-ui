@@ -11,8 +11,7 @@ This project is based on
 
 ## Features
 
-- Chat with OpenAI's [chat completions API](https://platform.openai.com/docs/guides/text-generation/chat-completions-api)
-- Chat with OpenAI's [assistants API](https://platform.openai.com/docs/assistants/overview)
+- Chat with OpenAI's [Responses API](https://platform.openai.com/docs/api-reference/responses)
 - Access via a proxy server for privacy.
 - Single Sign-On (SSO) via OpenID Connect (OIDC) for authentication.
 - Markdown support for chat messages.
