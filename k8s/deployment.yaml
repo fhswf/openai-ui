@@ -21,7 +21,7 @@ spec:
       autoMountServiceAccountToken: false
       containers:
         - name: openai-ui
-          image: ghcr.io/fhswf/openai-ui:0.28.1
+          image: ghcr.io/fhswf/openai-ui:0.28.2
           resources:
             requests:
               ephemeral-storage: 256Mi
@@ -34,9 +34,8 @@ spec:
             - containerPort: 80
           env:
             - name: VITE_RELEASE
-              value: 0.28.1
+              value: 0.28.2
             - name: VITE_BUILD_SHA
-              value: 2ce04038c0b2ca8cdb76ef9abe2a370a79fcc110
+              value: 30154d3f01cba5bc5559f915f7b73cec5afc1591
       restartPolicy: Always
-      
 status: {}
