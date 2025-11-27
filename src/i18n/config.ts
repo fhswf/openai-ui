@@ -40,6 +40,11 @@ i18n
                 // `translation` is the default namespace.
                 // More details about namespaces shortly.
                 translation: {
+                    user_not_allowed: `
+# No Access
+
+Access to the chat is only available to members of FH SWF. If you are a member, please log in with your university credentials.
+`,
                     hello_world: "Hello, World!",
                     count_messages: "{{count}} messages",
                     chatbot_title: "K!mpuls, the privacy-friendly chatbot of FH Südwestfalen",
@@ -71,6 +76,12 @@ i18n
             // German
             de: {
                 translation: {
+                    user_not_allowed: `
+# Kein Zugriff
+
+Der Zugriff auf den Chat ist nur für **Mitglieder der FH SWF** möglich. 
+Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
+`,
                     hello_world: "Hallo, Welt!",
                     chatbot_title: "K!mpuls",
                     chatbot_description: "K!mpuls ist der datenschutzfreundliche Zugang der Fachhochschule Südwestfalen zu den Sprachmodellen von OpenAI.",

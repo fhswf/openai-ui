@@ -1,31 +1,23 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { ErrorBoundary } from "react-error-boundary";
 import { Alert, Button, Center, Grid, GridItem, Heading, HStack, Text } from "@chakra-ui/react"
 import { Toaster, toaster } from "../components/ui/toaster"
 import { ChatMessage } from './ChatMessage'
 import { MessageHeader } from './MessageHeader';
 import { ChatSideBar } from './ChatSideBar'
-
-import { Apps } from './apps/index'
-import { ChatList } from './ChatList'
 import { classnames } from '../components/utils'
 import { useGlobal } from './context'
 
 import styles from './style/chat.module.less'
-import { ScrollView } from './component'
 import './style.less'
 
 import { Config } from './Config'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import remarkMath from 'remark-math'
 import smartypants from 'remark-smartypants'
-import rehypeKatex from 'rehype-katex'
-import { func } from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { t } from 'i18next';
 import { MessageInput } from './MessageInput';
-import { use } from 'chai';
 import {
   ATTR_ERROR_TYPE,
   ATTR_EXCEPTION_MESSAGE,
@@ -33,7 +25,12 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import { logger, SeverityNumber } from './utils/instrumentation'
 
-function ErrorFallback({ error, resetErrorBoundary }) {
+type ErrorFallbackProps = {
+  error: Error,
+  resetErrorBoundary: () => void
+}
+
+function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
 
   console.log("error: %o %s", error.stack, typeof error.stack)
 
@@ -44,13 +41,11 @@ function ErrorFallback({ error, resetErrorBoundary }) {
     attributes: { [ATTR_ERROR_TYPE]: 'exception', [ATTR_EXCEPTION_MESSAGE]: error.message, [ATTR_EXCEPTION_STACKTRACE]: error.stack.toString() },
   });
 
-  //const t = (key) => key
-  // const { t } = useTranslation();
 
   const resetSettings = () => {
     console.log("resetSettings")
     localStorage.setItem("SESSIONS", "");
-    window.location.reload();
+    globalThis.location.reload();
   }
 
   return (
@@ -80,7 +75,7 @@ export default function Chat() {
   const { t } = useTranslation();
   const chatStyle = is?.fullScreen ? styles.full : styles.normal
 
-  window.onerror = function (message, source, lineno, colno, error) {
+  globalThis.onerror = function (message, source, lineno, colno, error) {
     logger.emit({
       severityNumber: SeverityNumber.ERROR,
       severityText: "ERROR",
@@ -100,17 +95,11 @@ export default function Chat() {
    * @returns {boolean} true if the user is allowed to access the chat 
    */
   function checkUser() {
-    if (!(user?.affiliations && user.affiliations['fh-swf.de']))
-      return false
-    else
-      return true
+    return user?.affiliations?.['fh-swf.de']
   }
 
-  const userText = `
-  # Kein Zugriff
-
-Der Zugriff auf den Chat ist nur für Mitglieder der FH SWF möglich. Wenn du ein Mitglied bist, melde dich bitte mit Deiner Hochschulkennung an.
-`
+  const userText = t('user_not_allowed')
+  console.log("userText: %s", userText)
 
   if (!checkUser()) {
     return (
@@ -118,19 +107,17 @@ Der Zugriff auf den Chat ist nur für Mitglieder der FH SWF möglich. Wenn du ei
         <MessageHeader />
         <div className={styles.chat_inner}>
 
-          <div>
+          <div className={styles.no_access} data-testid="no-access-message">
             <Markdown
               remarkPlugins={[remarkGfm, smartypants]}
-            >
-              {userText}
-            </Markdown>
-            <div>
-              <p>Ihre Benutzerdaten lauten:</p>
+            >{userText}</Markdown>
 
-              <pre>
-                {JSON.stringify(user, null, 2)}
-              </pre>
-            </div>
+            <p>Ihre Benutzerdaten lauten:</p>
+
+            <pre>
+              {JSON.stringify(user, null, 2)}
+            </pre>
+
           </div>
         </div>
       </div>)
@@ -144,7 +131,9 @@ Der Zugriff auf den Chat ist nur für Mitglieder der FH SWF möglich. Wenn du ei
         gridTemplateRows={"max-content 1fr max-content"}
         className={classnames(styles.chat, chatStyle)}
       >
+
         <Toaster />
+
 
         <GridItem gridArea={"header"}>
           <MessageHeader />
@@ -161,15 +150,6 @@ Der Zugriff auf den Chat ist nur für Mitglieder der FH SWF möglich. Wenn du ei
             <GridItem as="main" gridArea={"main"} overflow="auto">
               <ErrorBoundary fallbackRender={ErrorFallback}>
                 <div className={styles.chat_content}>
-
-                  {
-
-                    is?.sidebar && <div className={styles.sider} data-testid="ConversationSideBar">
-                      <ScrollView>
-                        {is?.apps ? <Apps /> : <ChatList />}
-                      </ScrollView>
-                    </div>
-                  }
                   <ChatMessage />
                 </div>
               </ErrorBoundary>

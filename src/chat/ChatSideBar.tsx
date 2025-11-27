@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { Icon, Panel } from '../components'
 import { Tooltip } from "../components/ui/tooltip"
 
 import {
@@ -12,8 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog"
-import { Avatar, Box, Button, Heading, IconButton, Link, Spacer, Stack, Text, VStack } from "@chakra-ui/react"
-import { IoHelpCircleOutline } from "react-icons/io5";
+import { Button, IconButton, Link, Spacer, Text, VStack } from "@chakra-ui/react"
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoApps } from "react-icons/io5";
@@ -119,7 +117,7 @@ export function ChatSideBar() {
   const [open, setOpen] = useState(false)
   const [metadata, setMetadata] = useState({})
   const [newRelease, setNewRelease] = useState(false)
-  const { is, setIs, setState, options, user, version, release } = useGlobal()
+  const { is, setState, options, version, release } = useGlobal()
   const { setGeneral, setAccount } = useOptions()
 
 
@@ -129,29 +127,8 @@ export function ChatSideBar() {
   }
 
 
-
-  const toggleHistory = () => {
-    if (!is.apps) {
-      setIs({ sidebar: !is.sidebar })
-
-    }
-    else {
-      setIs({ apps: false, sidebar: true })
-    }
-  }
-
-  const toggleApps = () => {
-    if (is.apps) {
-      setIs({ sidebar: !is.sidebar })
-
-    }
-    else {
-      setIs({ apps: true, sidebar: true })
-    }
-  }
-
   useEffect(() => {
-    fetch("/metadata.json")
+    fetch("/metadata.json", { cache: "no-cache" })
       .then((response) => response.json())
       .then((data) => {
         console.log(data)

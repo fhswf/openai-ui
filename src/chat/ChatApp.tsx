@@ -1,5 +1,5 @@
-import React, { Suspense, useEffect } from 'react'
-import { ChatProvider, useGlobal } from "./context"
+import React, { Suspense } from 'react'
+import { ChatProvider } from "./context"
 import { AppsProvider } from './apps/context'
 import { useTheme } from '../components/hooks'
 import { Theme, ProgressCircle } from "@chakra-ui/react"

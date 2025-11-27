@@ -5,7 +5,7 @@ import { test, expect } from '../baseFixtures';
 test('No Affiliation Access Denied', async ({ browser }) => {
     const page = await browser.newPage({ storageState: undefined });
 
-    await page.goto('https://openai.ki.fh-swf.de');
+    await page.goto("");
     await expect(page.getByRole('button', { name: 'SSO Login mit der FH Kennung' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Cluster Login' })).toBeVisible();
     await page.getByRole('button', { name: 'Cluster Login' }).click();
@@ -16,5 +16,5 @@ test('No Affiliation Access Denied', async ({ browser }) => {
     await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).press('Tab');
     await page.getByRole('textbox', { name: 'Cluster Kennwort:' }).fill('test');
     await page.getByRole('button', { name: 'Login Cluster' }).click();
-    await expect(page.locator('h1')).toContainText('Kein Zugriff');
+    await expect(page.getByTestId('no-access-message')).toBeVisible();
 });
