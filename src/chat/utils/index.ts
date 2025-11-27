@@ -33,6 +33,7 @@ export function fetchAndGetUser(dispatch, options) {
     .then((res) => {
       console.log("getting user: ", res.status);
       if (res.status === 401) {
+        console.log("unauthorized, redirecting to login: %s", import.meta.env.VITE_LOGIN_URL);
         window.location.href = import.meta.env.VITE_LOGIN_URL;
         return Promise.resolve(Error("unauthorized"));
       }
@@ -44,7 +45,7 @@ export function fetchAndGetUser(dispatch, options) {
       user.avatar = null;
       console.log("updating user: ", user);
       dispatch({ type: "SET_STATE", payload: { user } });
-      
+
       if (options.general.gravatar) {
         console.log("user uses gravatar");
         sha256Digest(user.email).then(hash => {

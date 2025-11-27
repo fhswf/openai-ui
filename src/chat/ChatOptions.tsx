@@ -1,23 +1,20 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Radio, RadioGroup } from '../components/ui/radio'
 import { Switch } from '../components/ui/switch'
 
 import { useGlobal } from './context'
-import { themeOptions, languageOptions, sendCommandOptions, modeOptions, modelOptions, sizeOptions } from './utils/options'
-import { Button, Card, Field, FileUploadFileAcceptDetails, HStack, Heading, Input, Stack, createListCollection } from "@chakra-ui/react";
+import { themeOptions, languageOptions, sendCommandOptions, modelOptions } from './utils/options'
+import { Button, Card, Field, FileUploadFileAcceptDetails, Heading, Input, Stack, createListCollection } from "@chakra-ui/react";
 
-import { RadioCard } from "@chakra-ui/react"
 import { Select } from "@chakra-ui/react"
 import { FileUpload } from "@chakra-ui/react"
 import { Slider } from "@chakra-ui/react"
 
-import styles from './style/config.module.less'
-import { classnames } from '../components/utils'
+
 import { useOptions } from './hooks'
-import { t, use } from 'i18next'
+import { t } from 'i18next'
 import { initState } from './context/initState'
-import { getAssistants } from './service/openai_assistant'
-import { GlobalState, OptionActionType } from './context/types'
+import { GlobalState } from './context/types'
 import { Trans } from 'react-i18next'
 import { exportSettings, importSettings } from './utils/settings'
 import { HiUpload } from "react-icons/hi"
@@ -26,48 +23,13 @@ import { toaster } from "../components/ui/toaster";
 
 export function ChatOptions() {
   const { options } = useGlobal()
-  const { account, openai, general } = options
-  // const { avatar, name } = account
-  // const { max_tokens, apiKey, temperature, baseUrl, organizationId, top_p, model } = openai
-  const { setAccount, setGeneral, setAPIMode, setModel, setAssistant } = useOptions()
-  const [assistants, setAssistants] = React.useState([]);
+  const { openai, general } = options
+  const { setGeneral, setModel } = useOptions()
   const { setState, setIs, is } = useGlobal()
-
-
-  useEffect(() => {
-    if (openai.mode === 'assistant') {
-      getAssistants()
-        .then((assistants) => {
-          console.log(assistants);
-          let options = assistants.data
-            //.filter((item) => item.metadata["public"] === "True")
-            .map((item) => {
-              return { label: item.name || "", value: item.id }
-            });
-          console.log("options: %o", options);
-          setAssistants(options);
-          if (openai.assistant === "") {
-            setAssistant(options[0].value);
-          }
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-          if (error.message === "Unauthorized") {
-            return window.location.href = import.meta.env.VITE_LOGIN_URL;
-          }
-        })
-    }
-  }, [openai.mode]);
-
 
   const tempMarks = [...Array(11).keys()].map((i) => ({ value: 0.2 * i, label: (0.2 * i).toFixed(1) }));
   const topPMarks = [...Array(11).keys()].map((i) => ({ value: 0.1 * i, label: (0.1 * i).toFixed(1) }));
   const tokenMarks = [...Array(4).keys()].map((i) => ({ value: 1024 * 2 ** i, label: (1024 * 2 ** i).toString() }));
-
-  function getAssistantLabel(id) {
-    let assistant = assistants.find((item) => item.value === id);
-    return assistant ? assistant.label : "";
-  }
 
   return (
     <Card.Root w="100%">
@@ -219,70 +181,23 @@ export function ChatOptions() {
 
           <Heading size="md" paddingBlockStart="2em">{t("Global OpenAI Config")}</Heading>
 
-
           <Field.Root mt="4">
-
-            <RadioCard.Root defaultValue={openai.mode} onValueChange={(ev) => setAPIMode(ev.value)} data-testid="ChangeAIModeSelect">
-              <RadioCard.Label>{t("api_mode")}</RadioCard.Label>
-              <Stack direction={{ base: "column", md: "row" }} gap="10" align="stretch">
-                {modeOptions.map((item) => (
-                  <RadioCard.Item
-                    label={item.label}
-                    description={item.description}
-                    key={item.value}
-                    value={item.value}
-                    maxWidth="48em"
-                  />
+            <Select.Root collection={createListCollection({ items: modelOptions })} maxWidth="30em" onValueChange={val => setModel({ model: val.value[0] })}
+              data-testid="ChangeAIModelSelect">
+              <Select.Label>{t("openai_model_help")}</Select.Label>
+              <Select.Trigger>
+                <Select.ValueText placeholder={openai.model} />
+              </Select.Trigger>
+              <Select.Content>
+                {modelOptions.map((model) => (
+                  <Select.Item item={model} key={model.value}>
+                    {model.label}
+                  </Select.Item>
                 ))}
-              </Stack>
-            </RadioCard.Root>
-            <Field.HelperText>{t("api_mode_help")}</Field.HelperText>
+              </Select.Content>
+            </Select.Root>
+            <Field.HelperText>{t("openai_model_help")}</Field.HelperText>
           </Field.Root>
-
-          {
-            openai.mode === 'assistant' ?
-
-              (
-                <Field.Root mt="4">
-                  <Select.Root collection={createListCollection({ items: assistants })} maxWidth="30em" onValueChange={val => setAssistant(val.value[0])}
-                    data-testid="ChangeAIModelSelect">
-                    <Select.Label>{t("assistant")}</Select.Label>
-                    <Select.Trigger>
-                      <Select.ValueText placeholder={getAssistantLabel(openai.assistant)} />
-                    </Select.Trigger>
-                    <Select.Content>
-                      {assistants.map((assistant) => (
-                        <Select.Item item={assistant} key={assistant.value}>
-                          {assistant.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Root>
-                  <Field.HelperText>{t("assistent_help")}</Field.HelperText>
-                </Field.Root>
-              )
-
-              :
-              (
-                <Field.Root mt="4">
-                  <Select.Root collection={createListCollection({ items: modelOptions })} maxWidth="30em" onValueChange={val => setModel({ model: val.value[0] })}
-                    data-testid="ChangeAIModelSelect">
-                    <Select.Label>{t("openai_model_help")}</Select.Label>
-                    <Select.Trigger>
-                      <Select.ValueText placeholder={openai.model} />
-                    </Select.Trigger>
-                    <Select.Content>
-                      {modelOptions.map((model) => (
-                        <Select.Item item={model} key={model.value}>
-                          {model.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Root>
-                  <Field.HelperText>{t("openai_model_help")}</Field.HelperText>
-                </Field.Root>
-              )
-          }
 
           <Field.Root mt="4">
             <Slider.Root colorPalette="blue"

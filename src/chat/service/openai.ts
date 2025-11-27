@@ -1,20 +1,13 @@
-import { createParser } from "eventsource-parser";
-import { setAbortController } from "./abortController.mjs";
 import { Options, OpenAIOptions, Chat, Message, Messages, GlobalActions, GlobalState } from "../context/types";
 import * as MessagesAPI from "openai/resources/beta/threads/messages.mjs";
 import * as StepsAPI from "openai/resources/beta/threads/runs/steps.mjs";
 import { processLaTeX } from "../utils/latex";
-import { initChat, createMessage, createRun, getImageURL } from "./openai_assistant";
 import OpenAI, { APIError } from "openai";
 
 import { t } from "i18next";
-import { ResponseStream } from "openai/lib/responses/ResponseStream.mjs";
 import { Stream } from "openai/streaming.mjs";
 import { ResponseImageGenCallCompletedEvent, ResponseImageGenCallPartialImageEvent, ResponseIncludable, ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
-import { Tooltip } from "@chakra-ui/react";
-import React from "react";
 import { toaster } from "../../components/ui/toaster";
-import { url } from "inspector";
 
 export async function* streamAsyncIterable(stream) {
   const reader = stream.getReader();
@@ -33,114 +26,6 @@ export async function* streamAsyncIterable(stream) {
 
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.API_BASE_URL || "https://api.openai.com/v1";
 
-
-export const fetchBaseUrl = (baseUrl) =>
-  baseUrl || "https://api.openai.com/v1/chat/completions";
-
-export const fetchHeaders = (options: Partial<OpenAIOptions>) => {
-  const { organizationId, apiKey } = options;
-  return {
-    Authorization: "Bearer " + apiKey,
-    "Content-Type": "application/json",
-    ...(organizationId && { "OpenAI-Organization": organizationId }),
-  };
-};
-
-export const throwError = async (response) => {
-  if (!response.ok) {
-    let errorPayload = null;
-    try {
-      errorPayload = await response.json();
-      console.log(errorPayload);
-    } catch (e) {
-      // ignore
-    }
-  }
-};
-
-export const fetchBody = (options: OpenAIOptions, messages = []) => {
-  const { top_p, n, max_tokens, temperature, model, stream } = options;
-  return {
-    messages,
-    stream,
-    n: 1,
-    ...(model && { model }),
-    ...(temperature && { temperature }),
-    ...(max_tokens && { max_tokens }),
-    ...(top_p && { top_p }),
-    ...(n && { n }),
-  };
-};
-
-export const fetchAction = async (method: string,
-  messages = [], options: OpenAIOptions, signal) => {
-  const baseUrl = options.baseUrl;
-  console.log("fetchAction", options);
-  const url = fetchBaseUrl(baseUrl);
-  const headers = fetchHeaders(options);
-  const body = JSON.stringify(fetchBody(options, messages));
-  const response = await fetch(url, {
-    method,
-    headers,
-    body,
-    signal,
-    credentials: "include"
-  });
-  return response;
-};
-
-export const fetchStream = async (options: OpenAIOptions, messages, onMessage, onEnd, onError, onStar) => {
-  let answer = "";
-  const { controller, signal } = setAbortController();
-  console.log(signal, controller);
-  const result = await fetchAction("POST", messages, options, signal)
-    .catch((error) => {
-      onError && onError(error, controller);
-    });
-  if (!result) return;
-  if (!result.ok) {
-    if (result.status === 401) {
-      console.log("Unauthorized");
-      onError && onError({ code: result.status, message: "Unauthorized" }, controller);
-      return;
-    }
-    const error = await result.json();
-    onError && onError(error);
-    return;
-  }
-
-
-
-  const parser = createParser((event) => {
-    console.log(event);
-    if (event.type === "event") {
-      if (event.data === "[DONE]") {
-        return;
-      }
-      let data;
-      try {
-        data = JSON.parse(event.data);
-      } catch (error) {
-        return;
-      }
-      if ("content" in data.choices[0].delta) {
-        answer += data.choices[0].delta.content;
-        console.log(data);
-        onMessage && onMessage(answer, controller);
-      }
-    }
-  });
-  let hasStarted = false;
-  for await (const chunk of streamAsyncIterable(result.body)) {
-    const str = new TextDecoder().decode(chunk);
-    parser.feed(str);
-    if (!hasStarted) {
-      hasStarted = true;
-      onStar && onStar(str, controller);
-    }
-  }
-  await onEnd();
-};
 
 const client = new OpenAI({
   apiKey: "unused",
@@ -198,7 +83,7 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
   }
 
   client.responses.create(response_options)
-    .then((stream: Stream<ResponseStreamEvent>) => {
+    .then(async (stream: Stream<ResponseStreamEvent>) => {
       setIs({ ...is, thinking: true });
       console.log("stream: %o", stream);
 
@@ -271,7 +156,7 @@ class EventProcessor {
   setIs: (arg: any) => void;
   mainRef: any;
   stream: Stream<ResponseStreamEvent>;
-  opfs: FileSystemDirectoryHandle;
+  static opfs: FileSystemDirectoryHandle = null;
 
   constructor(stream: Stream<ResponseStreamEvent>, global: Partial<GlobalState> & Partial<GlobalActions>) {
     const { chat, currentChat, setState, setIs } = global;
@@ -280,23 +165,28 @@ class EventProcessor {
     this.currentChat = currentChat;
     this.setState = setState;
     this.setIs = setIs;
+  }
 
-    navigator.storage.getDirectory()
-      .then((dir) => {
-        console.log("Directory: %o", dir);
-        this.opfs = dir;
-      })
-      .catch((error) => {
-        console.warn("Origin Private File System not supported: ", error);
-        toaster.create({
-          title: t("opfs_not_supported"),
-          description: t("opfs_not_supported_description"),
-          duration: 5000,
-          type: "warning",
+  async initOPFS() {
+    console.log("Initializing EventProcessor OPFS");
+    if (!EventProcessor.opfs) {
+      await navigator.storage.getDirectory()
+        .then((dir) => {
+          console.log("Directory: %o", dir);
+          EventProcessor.opfs = dir;
+        })
+        .catch((error) => {
+          console.warn("Origin Private File System not supported: ", error);
+          toaster.create({
+            title: t("opfs_not_supported"),
+            description: t("opfs_not_supported_description"),
+            duration: 5000,
+            type: "warning",
+          });
+          EventProcessor.opfs = null;
         });
-        this.opfs = null;
-      });
-    console.log("EventProcessor initialized: %o", this);
+      console.log("EventProcessor initialized: %o", this);
+    }
   }
 
   appendMessage(delta) {
@@ -305,7 +195,7 @@ class EventProcessor {
     this.updateChat();
   }
 
-  appendImageToMessage(image_base64: string, message: Message, file_id: string) {
+  async appendImageToMessage(image_base64: string, message: Message, file_id: string) {
     const fileContent = atob(image_base64);
 
     let writable: FileSystemWritableFileStream;
@@ -313,18 +203,15 @@ class EventProcessor {
     let file: File;
 
     console.log("appendImageToMessage: %s %o", file_id, message);
-    if (!this.opfs) {
-      console.warn("OPFS not available, cannot append image to message");
-      toaster.create({
-        title: t("opfs_not_supported"),
-        description: t("opfs_not_supported_description"),
-        duration: 5000,
-        type: "warning",
-      });
-      return;
+    if (!EventProcessor.opfs) {
+      await this.initOPFS();
+      if (!EventProcessor.opfs) {
+        console.error("OPFS not initialized");
+        return;
+      }
     }
 
-    this.opfs.getFileHandle(`${file_id}.png`, { create: true })
+    EventProcessor.opfs.getFileHandle(`${file_id}.png`, { create: true })
       .then((_fileHandle) => {
         fileHandle = _fileHandle;
         console.log("File handle created: ", fileHandle);
@@ -392,7 +279,7 @@ class EventProcessor {
     this.setIs({ thinking: false });
   }
 
-  process(event) {
+  async process(event) {
     console.log("event: %s %o", event.type, event);
     let message = this.chat[this.currentChat].messages[this.chat[this.currentChat].messages.length - 1];;
 
@@ -430,7 +317,7 @@ class EventProcessor {
         if (event.item.output_format === "png") {
           // event.item.result is a base64-encoded PNG string, decode it
           const base64Data = event.item.result;
-          this.appendImageToMessage(base64Data, message, event.item.id);
+          await this.appendImageToMessage(base64Data, message, event.item.id);
         }
         this.updateChat();
         break;
@@ -507,196 +394,3 @@ class EventProcessor {
 
 
 }
-
-export async function executeAssistantRequest(setState, is, newChat: Chat[], messages: Messages, options: Options, currentChat: number, chat: Chat[], user) {
-
-  let currentMessage: Message = null;
-  let currentSnippet = "";
-  let snippets = [];
-
-  setState({
-    is: { ...is, thinking: true },
-    typeingMessage: {},
-    chat: newChat,
-  });
-  console.log("executeAssistantRequest, chat: %o, currentChat: %d ", newChat, currentChat);
-  let _chat = newChat[currentChat];
-  const controller = new AbortController();
-  console.log("executeAssistantRequest, chat: ", _chat, messages);
-
-  if (!_chat.thread) {
-    console.log("initChat: ", user);
-    try {
-      _chat = await initChat(_chat, user?.sub);
-    } catch (error) {
-      console.log(error);
-    }
-  }
-  console.log("executeAssistantRequest, chat: ", _chat);
-
-  _chat.messages?.map(async (message) => {
-    console.log("message: ", message);
-    if (!message.thread_id) {
-      let _message = await createMessage(_chat, message);
-      console.log("message: ", _message);
-      message.thread_id = _message.thread_id;
-    }
-    return message;
-  });
-
-  const newSnippet = () => {
-    snippets.push(currentSnippet);
-    currentSnippet = "";
-  };
-
-  const newMessage = (message: MessagesAPI.Message | StepsAPI.RunStep) => {
-    console.log("new message: %o", message);
-    let role = "assistant";
-    if (role in message) {
-      role = (<MessagesAPI.Message>(message)).role;
-    }
-    currentMessage = {
-      content: "",
-      role,
-      sentTime: message.created_at,
-      id: message.id,
-    };
-    postMessage("");
-  };
-
-  const postMessage = (content: string) => {
-    console.log("post message: %o %s", currentMessage, content);
-    currentSnippet = processLaTeX(content);
-    currentMessage.content = snippets.join("\n") + currentSnippet;
-    newChat.splice(currentChat, 1, {
-      ...chat[currentChat],
-      messages: [
-        ...messages,
-        currentMessage,
-      ],
-    });
-    setState({
-      is: { ...is, thinking: content.length },
-      chat: newChat,
-    });
-  };
-
-  const stream = createRun(_chat.thread, options.openai.assistant);
-  stream
-    .on('messageCreated', (message) => newMessage(message))
-    .on('runStepCreated', (runStep) => {
-      if (!currentMessage) {
-        newMessage(runStep);
-      }
-    })
-    .on('textCreated', (text) => {
-      newSnippet();
-      postMessage(text.value);
-    })
-    .on('textDelta', (textDelta, snapshot) => postMessage(snapshot.value))
-    .on('toolCallCreated', (toolCall) => {
-      console.log(`\nassistant > ${toolCall.type}\n\n`);
-      newSnippet();
-    })
-    .on('toolCallDelta', (toolCallDelta, snapshot) => {
-      if (toolCallDelta.type === 'code_interpreter') {
-        if (toolCallDelta.code_interpreter.input) {
-          console.log(toolCallDelta.code_interpreter.input);
-          postMessage("```Python\n" + toolCallDelta.code_interpreter.input + "\n```");
-        }
-        if (toolCallDelta.code_interpreter.outputs) {
-          console.log("\noutput >\n");
-          toolCallDelta.code_interpreter.outputs.forEach(output => {
-            if (output.type === "logs") {
-              console.log(`\n${output.logs}\n`);
-              postMessage("```Python\n" + output.logs + "\n```");
-            }
-          });
-        }
-      }
-    })
-    .on('imageFileDone', (imageFile) => {
-      console.log(`\nassistant > image file: ${imageFile.file_id}\n\n`);
-      newSnippet();
-      postMessage(`![Image](${getImageURL(_chat.thread, "", imageFile.file_id)})`);
-    })
-    .on('end', () => {
-      console.log('done');
-      setState({
-        is: { ...is, thinking: false },
-      });
-    });
-}
-
-export async function executeChatRequest(setState, is, newChat, messages: Messages, options: Options, currentChat, chat) {
-  setState({
-    is: { ...is, thinking: true },
-    typeingMessage: {},
-    chat: newChat,
-    currentChat
-  });
-  const controller = new AbortController();
-  try {
-    console.log("executeChatRequest, options: ", options.openai);
-    const res = await fetchStream(options.openai,
-      messages.map((item) => {
-        const { sentTime, id, ...rest } = item;
-        return { ...rest };
-      }),
-      (content) => {
-        newChat.splice(currentChat, 1, {
-          ...chat[currentChat],
-          messages: [
-            ...messages,
-            {
-              content,
-              role: "assistant",
-              sentTime: Math.floor(Date.now() / 1000),
-              id: Date.now(),
-            },
-          ],
-        });
-        setState({
-          is: { ...is, thinking: content.length },
-          chat: newChat,
-        });
-        document.getElementById("chat_list").scrollTo({
-          top: document.getElementById("chat_list").scrollHeight,
-          behavior: "smooth"
-        });
-      },
-      () => {
-        setState({
-          is: { ...is, thinking: false },
-        });
-      },
-      (res) => {
-        console.log(res);
-        const error = res || {};
-        if (error) {
-          if (error.message === "Unauthorized") {
-            console.log("Unauthorized");
-            window.location.href = import.meta.env.VITE_LOGIN_URL;
-          }
-          else {
-            newChat.splice(currentChat, 1, {
-              ...chat[currentChat],
-              messages,
-              error,
-            });
-          }
-
-
-          setState({
-            chat: newChat,
-            is: { ...is, thinking: false },
-          });
-        }
-      },
-      () => { });
-    console.log(res);
-  } catch (error) {
-    console.log(error);
-  }
-}
-

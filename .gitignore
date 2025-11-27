@@ -28,3 +28,4 @@ cypress/screenshots/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+.yarn/install-state.gz

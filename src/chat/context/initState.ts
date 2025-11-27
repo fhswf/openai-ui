@@ -44,7 +44,7 @@ export const initState: GlobalState = {
       gravatar: false,
     },
     openai: {
-      baseUrl: "https://openai.ki.fh-swf.de/api/v1/chat/completions",
+      baseUrl: "https://openai.ki.fh-swf.de/api",
       organizationId: "",
       temperature: 1,
       mode: "chat",
@@ -68,9 +68,9 @@ export const initState: GlobalState = {
     inputing: false,
     thinking: false,
     apps: true,
+    tool: "",
   },
   typeingMessage: {},
   user: null,
   version: "0.1.0",
-  content: "",
 };
