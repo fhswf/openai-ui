@@ -1,3 +1,11 @@
+## [0.28.2](https://github.com/fhswf/openai-ui/compare/v0.28.1...v0.28.2) (2025-11-27)
+
+
+### Bug Fixes
+
+* remove deprecated APIs ([41f7ffc](https://github.com/fhswf/openai-ui/commit/41f7ffc8dacd8eddd51a244076bc396f1d63f218))
+* remove deprecated APIs ([475f80d](https://github.com/fhswf/openai-ui/commit/475f80d456837da81c0a27f62e2e911cf7c6b7ab))
+
 ## [0.28.1](https://github.com/fhswf/openai-ui/compare/v0.28.0...v0.28.1) (2025-11-24)
 
 
