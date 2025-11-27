@@ -1,4 +1,4 @@
-import { Options, OpenAIOptions, Chat, Message, Messages, GlobalActions, GlobalState } from "../context/types";
+import { OpenAIOptions, Chat, Message, GlobalActions, GlobalState } from "../context/types";
 import * as MessagesAPI from "openai/resources/beta/threads/messages.mjs";
 import * as StepsAPI from "openai/resources/beta/threads/runs/steps.mjs";
 import { processLaTeX } from "../utils/latex";
@@ -9,20 +9,6 @@ import { Stream } from "openai/streaming.mjs";
 import { ResponseImageGenCallCompletedEvent, ResponseImageGenCallPartialImageEvent, ResponseIncludable, ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
 import { toaster } from "../../components/ui/toaster";
 
-export async function* streamAsyncIterable(stream) {
-  const reader = stream.getReader();
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        return;
-      }
-      yield value;
-    }
-  } finally {
-    reader.releaseLock();
-  }
-}
 
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.API_BASE_URL || "https://api.openai.com/v1";
 

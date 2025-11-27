@@ -142,7 +142,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     },
 
     newChat(app) {
-      const { currentApp, is, options, currentChat, chat } = state;
+      const { currentApp, currentChat, chat } = state;
       const newApp = app || currentApp;
       console.log("newChat: ", currentApp, newApp, chat, newApp?.title, newApp?.role)
       let messages: Messages = [
