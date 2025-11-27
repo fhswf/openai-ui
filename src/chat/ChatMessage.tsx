@@ -276,7 +276,7 @@ export function MessageContainer() {
         <Stack data-testid="ChatListContainer">
           {messages
             .filter(message => message.role !== "system")
-            .map((item, index) => <MessageItem key={item.id || item.sentTime} {...item} dataTestId="ChatMessage" />)}
+            .map((item, index) => <MessageItem key={item.id || item.sentTime} {...item} dataTestId={`ChatMessage-${index}`} />)}
         </Stack>
       }
     </React.Fragment>
