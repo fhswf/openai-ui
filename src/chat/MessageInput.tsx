@@ -10,6 +10,7 @@ import { useOptions, useSendKey } from "./hooks";
 import { useGlobal } from "./context";
 import {
   Button,
+  Box,
   HStack,
   IconButton,
   Kbd,
@@ -23,7 +24,7 @@ import {
 import { Switch } from "../components/ui/switch";
 import styles from "./style/message.module.less";
 import CodeEditor from "@uiw/react-textarea-code-editor";
-import { MdOutlineCancel } from "react-icons/md";
+import { MdOutlineCancel, MdOutlineFileUpload } from "react-icons/md";
 import { CiMicrophoneOff, CiMicrophoneOn } from "react-icons/ci";
 import { toaster } from "../components/ui/toaster";
 import classNames from "classnames";
@@ -104,6 +105,7 @@ export function MessageInput() {
   const { setGeneral } = useOptions();
   const { t } = useTranslation();
   const dropRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [recognition, setRecognition] = useState(null);
   const [recognitionActive, setRecognitionActive] = useState(false);
@@ -220,6 +222,21 @@ export function MessageInput() {
     });
   };
 
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      handleFileDrop(Array.from(event.target.files));
+    }
+    // Reset the input value so the same file can be selected again
+    event.target.value = "";
+  };
+
+  const handleDeleteImage = (index: number) => {
+    if (typeingMessage.images) {
+      typeingMessage.images.splice(index, 1);
+      setState({ typeingMessage: { ...typeingMessage } });
+    }
+  };
+
   const handleDrop = (
     event: React.DragEvent<HTMLElement>,
     isLink: boolean,
@@ -284,11 +301,28 @@ export function MessageInput() {
         className={styles.dropzone}
         ref={dropRef}
         data-name="dropzone"
-        onDragOver={dragHandler}
-        onDragEnter={dragHandler}
-        onDragLeave={dragHandler}
-        onDrop={dragHandler}
-      />
+        style={{ pointerEvents: "none" }}
+      >
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            opacity: 0,
+            pointerEvents: "auto",
+          }}
+          ref={fileInputRef}
+          onChange={handleFileInputChange}
+          onDragOver={dragHandler}
+          onDragEnter={dragHandler}
+          onDragLeave={dragHandler}
+          onDrop={dragHandler}
+          data-testid="file-input"
+        />
+      </div>
       <Stack
         className={styles.bar_inner}
         width="100%"
@@ -359,7 +393,23 @@ export function MessageInput() {
           >
             {typeingMessage?.images?.map((image, index) => {
               return (
-                <LazyImage key={index} name={image.name} url={image.url} />
+                <Box key={index} position="relative">
+                  <LazyImage name={image.name} url={image.url} />
+                  <IconButton
+                    aria-label="Delete image"
+                    size="xs"
+                    position="absolute"
+                    top={0}
+                    right={0}
+                    colorPalette="red"
+                    variant="solid"
+                    onClick={() => handleDeleteImage(index)}
+                    style={{ transform: "translate(50%, -50%)" }}
+                    rounded="full"
+                  >
+                    <MdOutlineCancel />
+                  </IconButton>
+                </Box>
               );
             })}
           </HStack>
@@ -379,6 +429,14 @@ export function MessageInput() {
           >
             {t("Code Editor")}
           </Switch>
+          <IconButton
+            variant="outline"
+            aria-label={t("upload_file") || "Upload file"}
+            onClick={() => fileInputRef.current?.click()}
+            data-testid="UploadFileBtn"
+          >
+            <MdOutlineFileUpload />
+          </IconButton>
           <Button
             variant="outline"
             onClick={() => {

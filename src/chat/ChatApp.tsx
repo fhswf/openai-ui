@@ -8,8 +8,6 @@ import "./style.less";
 const Chat = React.lazy(() => import("./Chat"));
 
 export default function ChatApp() {
-  useTheme();
-
   const loading = <ProgressCircle.Root size="lg" color="blue.400" />;
   return (
     <Suspense fallback={loading}>

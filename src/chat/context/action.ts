@@ -12,6 +12,52 @@ import {
 import React from "react";
 import { createResponse } from "../service/openai";
 
+
+async function processImages(images: any[], opfs: FileSystemDirectoryHandle | null) {
+  console.log("transform images: %o", images);
+  return await Promise.all(
+    images.map(async (image) => {
+      console.log("sendMessage: image: %o", image);
+      if (image.url) {
+        return { type: "input_image", image_url: image.url };
+      } else if (image.name && opfs) {
+        console.log("sendMessage: reading file: %o", image.name);
+
+        // get file from OPFS
+        const fileHandle = await opfs.getFileHandle(image.name);
+        if (!fileHandle) {
+          console.error("File not found in OPFS: %s", image.name);
+          throw new Error(`File not found: ${image.name}`);
+        }
+        const file = await fileHandle.getFile();
+
+        const promise = new Promise((resolve, reject) => {
+          // read file as data URL
+          const reader = new FileReader();
+          let result;
+          reader.onload = () => {
+            console.log("File read as data URL: %o", reader.result);
+            result = {
+              type: "input_image",
+              image_url: reader.result as string,
+              name: image.name,
+            };
+            resolve(result);
+          };
+          reader.onerror = () => {
+            console.error("Error reading file: %o", reader.error);
+            reject(reader.error || new Error("Unknown error reading file"));
+          };
+          reader.readAsDataURL(file);
+          console.log("FileReader started for image: %o", image.name);
+        });
+
+        return await promise;
+      }
+    })
+  );
+}
+
 export default function action(
   state: Partial<GlobalState>,
   dispatch: React.Dispatch<GlobalAction>
@@ -52,48 +98,7 @@ export default function action(
         newMessage.content = [];
         newMessage.content.push({ type: "input_text", text });
 
-        console.log("transform images: %o", typeingMessage.images);
-        const images = await Promise.all(
-          typeingMessage.images.map(async (image) => {
-            console.log("sendMessage: image: %o", image);
-            if (image.url) {
-              return { type: "input_image", image_url: image.url };
-            } else if (image.name && opfs) {
-              console.log("sendMessage: reading file: %o", image.name);
-
-              // get file from OPFS
-              const fileHandle = await opfs.getFileHandle(image.name);
-              if (!fileHandle) {
-                console.error("File not found in OPFS: %s", image.name);
-                throw new Error(`File not found: ${image.name}`);
-              }
-              const file = await fileHandle.getFile();
-
-              const promise = new Promise((resolve, reject) => {
-                // read file as data URL
-                const reader = new FileReader();
-                let result;
-                reader.onload = () => {
-                  console.log("File read as data URL: %o", reader.result);
-                  result = {
-                    type: "input_image",
-                    image_url: reader.result as string,
-                    name: image.name,
-                  };
-                  resolve(result);
-                };
-                reader.onerror = (error) => {
-                  console.error("Error reading file: %o", error);
-                  reject(error);
-                };
-                reader.readAsDataURL(file);
-                console.log("FileReader started for image: %o", image.name);
-              });
-
-              return await promise;
-            }
-          })
-        );
+        const images = await processImages(typeingMessage.images, opfs);
         console.log("sendMessage: images: %o", images);
 
         newMessage.content.push(...images);
@@ -122,7 +127,7 @@ export default function action(
     setIs,
     doLogin(): void {
       console.log("doLogin");
-      window.location.href = import.meta.env.VITE_LOGIN_URL;
+      globalThis.location.href = import.meta.env.VITE_LOGIN_URL;
     },
     clearTypeing() {
       console.log("clear");
