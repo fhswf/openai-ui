@@ -351,6 +351,9 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Origin Private File System (OPFS) wird von Ihrem Browser nicht unterstützt.",
           opfs_not_supported_desc:
             "OPFS wird von Ihrem Browser nicht unterstützt, Bilder können nicht gespeichert werden. Bitte aktualisieren Sie Ihren Browser, um diese Funktion zu nutzen.",
+          upload_file: "Datei hochladen",
+          upload_file_desc:
+            "Datei hochladen",
         },
       },
     },

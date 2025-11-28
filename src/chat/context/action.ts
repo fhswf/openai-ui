@@ -306,6 +306,7 @@ export default function action(
               size: 0,
               type: "image/png",
               lastModified: Date.now(),
+              id: Date.now() + Math.random(),
             });
           }
         }

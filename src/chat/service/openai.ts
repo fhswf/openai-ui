@@ -66,23 +66,21 @@ export async function createResponse(
                   const opfs = await navigator.storage.getDirectory();
                   const fileHandle = await opfs.getFileHandle(filename);
                   const file = await fileHandle.getFile();
-                  const arrayBuffer = await file.arrayBuffer();
-                  const bytes = new Uint8Array(arrayBuffer);
-                  let binary = "";
-                  for (let i = 0; i < bytes.byteLength; i++) {
-                    binary += String.fromCharCode(bytes[i]);
-                  }
-                  const base64 = btoa(binary);
-                  let mimeType = file.type;
-                  if (!mimeType) {
-                    if (filename.toLowerCase().endsWith(".png")) mimeType = "image/png";
-                    else if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) mimeType = "image/jpeg";
-                    else if (filename.toLowerCase().endsWith(".webp")) mimeType = "image/webp";
-                    else if (filename.toLowerCase().endsWith(".gif")) mimeType = "image/gif";
-                    else mimeType = "image/png"; // Fallback
-                  }
+
+                  // Use FileReader to get data URL directly from file
+                  const dataUrl = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                  });
+
+                  // Extract MIME type and base64 length for logging
+                  const mimeType = dataUrl.split(';')[0].split(':')[1];
+                  const base64 = dataUrl.split(',')[1];
+
                   console.log("Converted OPFS file to base64: %s (%s) (%d bytes)", filename, mimeType, base64.length);
-                  rest.image_url = `data:${mimeType};base64,${base64}`;
+                  rest.image_url = dataUrl;
                 } catch (error) {
                   console.error("Error reading OPFS file for OpenAI API:", error);
                   // Fallback or rethrow? For now, let's keep the original URL which will likely fail API validation but logs the error.

@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import { ChatProvider } from "./context";
 import { AppsProvider } from "./apps/context";
-import { useTheme } from "../components/hooks";
 import { ProgressCircle } from "@chakra-ui/react";
 
 import "./style.less";

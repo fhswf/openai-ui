@@ -1,10 +1,9 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
-import { Tool, ToolChoiceTypes } from "./context/types";
+import { Tool, OptionActionType } from "./context/types";
 
 import {
   Avatar,
-  Card,
   HStack,
   Stack,
   Text,
@@ -28,8 +27,6 @@ import { useTranslation } from "react-i18next";
 import {
   IoLogoMarkdown,
   IoSettingsOutline,
-  IoReloadOutline,
-  IoLogoGithub,
 } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
 import {
@@ -46,15 +43,12 @@ import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { MessageMenu } from "./MessageMenu";
 import { modelOptions, toolOptions } from "./utils/options";
-import { OptionActionType } from "./context/types";
 import { GitHubMenu } from "./GitHubMenu";
-import { RiChatNewFill, RiChatNewLine } from "react-icons/ri";
-import { FaChartBar } from "react-icons/fa";
-import DashboardChart from "./DashboardChart";
-import { AiOutlineBarChart } from "react-icons/ai";
+import { RiChatNewLine } from "react-icons/ri";
+
 
 import "../assets/icon/style.css";
-import { ErrorBoundary } from "react-error-boundary";
+import { UsageInformationDialog } from "./UsageInformationDialog";
 
 export function MessageHeader() {
   const {
@@ -66,8 +60,6 @@ export function MessageHeader() {
     showSettings,
     options,
     user,
-    chat,
-    currentChat,
   } = useGlobal();
   const { message } = useMessage();
   const { apps, category } = useApps();
@@ -97,7 +89,7 @@ export function MessageHeader() {
 
   const logout = () => {
     console.log("Logout");
-    window.location.href = import.meta.env.VITE_LOGOUT_URL || "/";
+    globalThis.location.href = import.meta.env.VITE_LOGOUT_URL || "/";
   };
 
   const editMCP = () => {
@@ -105,7 +97,7 @@ export function MessageHeader() {
     setEditMCPServices(true);
   };
 
-  if (!(typeof options.openai.tools === "object")) {
+  if (typeof options.openai.tools !== "object") {
     options.openai.tools = toolOptions;
   }
 
@@ -150,7 +142,7 @@ export function MessageHeader() {
       type: "mcp",
       server_label: mcpToolForm.label,
       server_url: mcpToolForm.server_url,
-      require_approval: mcpToolForm.require_approval,
+      require_approval: mcpToolForm.require_approval as "always" | "never",
     };
 
     if (mcpToolForm.allowed_tools && mcpToolForm.allowed_tools.length > 0) {
@@ -184,26 +176,26 @@ export function MessageHeader() {
     options.openai.toolsEnabled = new Set<string>();
   }
 
-  if (!(tools instanceof Map)) {
+  if (tools instanceof Map) {
+    // Check for new tools in toolOptions
+    for (const [key, value] of toolOptions) {
+      if (!tools.has(key)) {
+        tools.set(key, value);
+      }
+    }
+  } else {
     console.error("Tools is not a Map:", tools);
     tools = new Map(toolOptions.entries()); // Fallback to default tools if not a Map
     setOptions({
       type: OptionActionType.OPENAI,
       data: { ...options.openai, tools },
     });
-  } else {
-    // Check for new tools in toolOptions
-    toolOptions.forEach((value, key) => {
-      if (!tools.has(key)) {
-        tools.set(key, value);
-      }
-    });
   }
   const mcpTools: Record<string, Tool> = {}; // Filter MCP tools from tools
 
-  tools.forEach((value, key) => {
+  for (const [key, value] of tools) {
     if (value.type === "mcp") mcpTools[key] = value;
-  });
+  }
 
   return (
     <HStack
@@ -504,7 +496,7 @@ export function MessageHeader() {
         <Menu.Content>
           <Menu.ItemGroup title={t("new_chat")}>
             {apps.map((app, index) => {
-              const cat = category.filter((item) => item.id == app.category)[0];
+              const cat = category.find((item) => item.id == app.category);
               return (
                 <Menu.Item
                   key={app.id}
@@ -513,7 +505,7 @@ export function MessageHeader() {
                   aria-keyshortcuts={index}
                 >
                   <span
-                    className={classnames(styles.icon, `ico-${cat.icon}`)}
+                    className={classnames(styles.icon, `ico - ${cat.icon} `)}
                   ></span>{" "}
                   {app.title}
                 </Menu.Item>
@@ -555,31 +547,9 @@ export function MessageHeader() {
       </Menu.Root>
       <GitHubMenu />
 
-      <Dialog.Root lazyMount size="cover">
-        <Dialog.Trigger data-testid="UsageInformationBtn" asChild>
-          <IconButton variant="ghost" title={t("usage_information")}>
-            <AiOutlineBarChart aria-label={t("usage_information")} />
-          </IconButton>
-        </Dialog.Trigger>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content data-testid="UsageInformation">
-            <Dialog.Header>
-              <Dialog.Title fontWeight="bold" paddingBlockEnd={"15px"}>
-                {t("usage_information")}
-              </Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton size="sm" />
-              </Dialog.CloseTrigger>
-            </Dialog.Header>
-            <Dialog.Body className={styles.dashboard}>
-              <ErrorBoundary fallbackRender={() => <div>{t("error")}</div>}>
-                <DashboardChart />
-              </ErrorBoundary>
-            </Dialog.Body>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
+
+
+      <UsageInformationDialog />
 
       <Popover.Root lazyMount>
         <Popover.Trigger data-testid="UserInformationBtn">
@@ -598,7 +568,7 @@ export function MessageHeader() {
               <Stack gap={2}>
                 <Text>{user?.name}</Text>
                 <Text>{user?.email}</Text>
-                <Button type="primary" onClick={logout}>
+                <Button colorPalette="blue" onClick={logout}>
                   Logout
                 </Button>
               </Stack>

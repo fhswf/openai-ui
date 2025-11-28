@@ -8,7 +8,6 @@ import {
   Card,
   Heading,
   HStack,
-  Icon,
   IconButton,
   Popover,
   Skeleton,
@@ -20,17 +19,12 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip";
-import { GrDocumentDownload } from "react-icons/gr";
-import { AiOutlineOpenAI } from "react-icons/ai";
 import { AiOutlineDelete } from "react-icons/ai";
 import {
-  MdOutlineCancel,
   MdOutlineInput,
   MdOutlineOutput,
+  MdEdit
 } from "react-icons/md";
-import { MdOutlineSend } from "react-icons/md";
-import { RiSendPlane2Line } from "react-icons/ri";
-import { MdEdit } from "react-icons/md";
 import { classnames } from "../components/utils";
 
 import { useGlobal } from "./context";
@@ -41,12 +35,8 @@ import { dateFormat } from "./utils";
 import avatar_black from "../assets/images/OpenAI-black-monoblossom.svg";
 import avatar_white from "../assets/images/OpenAI-white-monoblossom.svg";
 import styles from "./style/message.module.less";
-
 import { useTranslation } from "react-i18next";
-
-import { MessageInput } from "./MessageInput";
 import { processLaTeX } from "./utils/latex";
-import { MessagesPage } from "openai/resources/beta/threads/messages.mjs";
 import { IoTimerOutline } from "react-icons/io5";
 
 type UsageProps = {

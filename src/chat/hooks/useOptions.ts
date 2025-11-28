@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useGlobal } from "../context";
 import {
-  GlobalActionType,
   OpenAIOptions,
   OptionActionType,
 } from "../context/types";
@@ -11,11 +10,11 @@ export function useOptions() {
   const { size, theme } = options.general;
   useEffect(() => {
     const body = document.querySelector("html");
-    body.classList = [];
-    body.setAttribute("data-theme", theme);
-    body.setAttribute("data-size", size);
-    body.classList.add(theme);
-    body.classList.add(size);
+    if (!body) return;
+    body.className = "";
+    body.dataset.theme = theme;
+    body.dataset.size = size;
+    body.classList.add(theme, size);
   }, [theme, size]);
 
   const setAccount = (data = {}) => {

@@ -114,7 +114,7 @@ export function MessageInput() {
     fetch(fetchUrl, { method: "GET" })
       .then((response) => {
         if (response.headers.get("content-type")?.startsWith("image")) {
-          typeingMessage.images.push({ url });
+          typeingMessage.images.push({ url, id: Date.now() + Math.random() });
           setState({ typeingMessage });
         } else {
           toaster.create({
@@ -171,6 +171,7 @@ export function MessageInput() {
           size: file.size,
           lastModified: file.lastModified,
           type: file.type,
+          id: Date.now() + Math.random(),
         });
         setState({ typeingMessage: newMessage });
       }
@@ -348,7 +349,7 @@ export function MessageInput() {
           >
             {typeingMessage?.images?.map((image, index) => {
               return (
-                <Box key={index} position="relative">
+                <Box key={image.id || index} position="relative">
                   <OPFSImage src={image.url} alt={image.name} />
                   <IconButton
                     aria-label="Delete image"
