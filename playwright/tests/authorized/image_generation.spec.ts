@@ -1,6 +1,8 @@
 import { test, expect } from '../baseFixtures';
 
-test('Image Generation', async ({ page }) => {
+test('Image Generation', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', "Skipping Webkit due to issues with OPFS");
+
     // Mock the OpenAI API response
     await page.route('**/v1/responses', async route => {
         const responseBody = [
