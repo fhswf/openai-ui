@@ -1,3 +1,18 @@
+# [0.29.0](https://github.com/fhswf/openai-ui/compare/v0.28.2...v0.29.0) (2025-11-28)
+
+
+### Bug Fixes
+
+* Skip image generation test on WebKit due to OPFS issues. ([c114e89](https://github.com/fhswf/openai-ui/commit/c114e89c8f67e64d8aa6b2230c36d991557347fc))
+
+
+### Features
+
+* enable image upload and deletion in chat input, supported by new tests. ([5f8e019](https://github.com/fhswf/openai-ui/commit/5f8e019f33e4ef8a9b0d9c27e799a18f5dc889c2))
+* extract and enhance message usage and tool details display with Accordion and Popover components. ([000e5c2](https://github.com/fhswf/openai-ui/commit/000e5c2d8a79e422aeccd42c341eec4fb8e214ce))
+* Extract usage information into a new dialog and improve file upload handling. ([757a82e](https://github.com/fhswf/openai-ui/commit/757a82e27812fd74882ef13a456f24da91650d34))
+* Implement image handling from OPFS for chat messages and API calls, including new components and tests. ([893a0d0](https://github.com/fhswf/openai-ui/commit/893a0d0c6980df85943506df6c53260f30107289))
+
 ## [0.28.2](https://github.com/fhswf/openai-ui/compare/v0.28.1...v0.28.2) (2025-11-27)
 
 ### Bug Fixes
@@ -48,4 +63,3 @@
 
 * use reviver function when loading state ([327631f](https://github.com/fhswf/openai-ui/commit/327631f2b32440293fca755ac6ba7b7c3dc7ab97))  
   JSON reviver restores complex types (dates, maps) when restoring persisted state.
-
