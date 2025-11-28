@@ -110,7 +110,7 @@ const Renderer = forwardRef<HTMLDivElement, RendererProps>(
 
 type LazyRendererProps = {
   children: any;
-  isVisible: boolean;
+  isVisible?: boolean;
 };
 
 export const LazyRenderer = (props: LazyRendererProps) => {
