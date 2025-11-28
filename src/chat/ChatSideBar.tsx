@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Icon, Panel } from '../components'
-import { Tooltip } from "../components/ui/tooltip"
+import React, { useEffect, useState } from "react";
+import { Tooltip } from "../components/ui/tooltip";
 
 import {
   DialogBody,
@@ -11,9 +10,15 @@ import {
   DialogRoot,
   DialogTitle,
   DialogTrigger,
-} from "../components/ui/dialog"
-import { Avatar, Box, Button, Heading, IconButton, Link, Spacer, Stack, Text, VStack } from "@chakra-ui/react"
-import { IoHelpCircleOutline } from "react-icons/io5";
+} from "../components/ui/dialog";
+import {
+  Button,
+  IconButton,
+  Link,
+  Spacer,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoApps } from "react-icons/io5";
@@ -22,46 +27,53 @@ import { MdOutlineDarkMode } from "react-icons/md";
 import { MdOutlineLightMode } from "react-icons/md";
 import { TbArrowsMinimize } from "react-icons/tb";
 import { TbArrowsMaximize } from "react-icons/tb";
-import { useGlobal } from './context'
-import { classnames } from '../components/utils'
-import { useOptions } from './hooks'
-import { t } from 'i18next'
-import Markdown from 'react-markdown'
-import remarkMath from 'remark-math'
-import smartypants from 'remark-smartypants'
-import remarkGfm from 'remark-gfm'
-import rehypeKatex from 'rehype-katex'
+import { useGlobal } from "./context";
+import { classnames } from "../components/utils";
+import { useOptions } from "./hooks";
+import { t } from "i18next";
+import Markdown from "react-markdown";
+import remarkMath from "remark-math";
+import smartypants from "remark-smartypants";
+import remarkGfm from "remark-gfm";
+import rehypeKatex from "rehype-katex";
 
-import styles from './style/sider.module.less'
-import 'katex/dist/katex.min.css'
-import semver from 'semver'
-
+import styles from "./style/sider.module.less";
+import "katex/dist/katex.min.css";
+import semver from "semver";
 
 const ICONS = {
-  "help": IoInformationCircleOutline,
-  "apps": IoApps,
-  "history": RiChatHistoryLine,
-  "config": IoSettingsOutline,
-  "dark": MdOutlineDarkMode,
-  "light": MdOutlineLightMode,
+  help: IoInformationCircleOutline,
+  apps: IoApps,
+  history: RiChatHistoryLine,
+  config: IoSettingsOutline,
+  dark: MdOutlineDarkMode,
+  light: MdOutlineLightMode,
   "min-screen": TbArrowsMinimize,
-  "full-screen": TbArrowsMaximize
-}
+  "full-screen": TbArrowsMaximize,
+};
 
 const Option = (props) => {
-
-  const { type, onClick, tooltip, dataTestId } = props
-  let testId = dataTestId ? { 'data-testid': dataTestId } : {}
+  const { type, onClick, tooltip, dataTestId } = props;
+  const testId = dataTestId ? { "data-testid": dataTestId } : {};
   if (!ICONS[type]) {
-    console.error(`Icon ${type} not found`)
-    return null
+    console.error(`Icon ${type} not found`);
+    return null;
   }
   return (
-    <Tooltip content={tooltip}><IconButton aria-label={tooltip} variant={props.variant || "ghost"} onClick={onClick} {...testId} >{ICONS[type]()}</IconButton></Tooltip>
-  )
-}
+    <Tooltip content={tooltip}>
+      <IconButton
+        aria-label={tooltip}
+        variant={props.variant || "ghost"}
+        onClick={onClick}
+        {...testId}
+      >
+        {ICONS[type]()}
+      </IconButton>
+    </Tooltip>
+  );
+};
 
-let text = `
+const text = `
 ## Datenschutzhinweise
 
 Diese Anwendung ermöglicht den Zugriff auf die Chat-Funktion von
@@ -111,119 +123,145 @@ Der Quellcode der Anwendung ist auf GitHub in folgenden Repositories verfügbar:
 
 - Chat-Client: [github.com/fhswf/openai-ui](https://github.com/fhswf/openai-ui)
 - Proxy-Server: [github.com/fhswf/openai-proxy](https://github.com/fhswf/openai-proxy)
-`
-
+`;
 
 export function ChatSideBar() {
-
-  const [open, setOpen] = useState(false)
-  const [metadata, setMetadata] = useState({})
-  const [newRelease, setNewRelease] = useState(false)
-  const { is, setIs, setState, options, user, version, release } = useGlobal()
-  const { setGeneral, setAccount } = useOptions()
-
+  const [open, setOpen] = useState(false);
+  const [metadata, setMetadata] = useState({});
+  const [newRelease, setNewRelease] = useState(false);
+  const { is, setState, options, version, release } = useGlobal();
+  const { setGeneral, setAccount } = useOptions();
 
   const acceptTerms = () => {
-    setAccount({ terms: true })
-    setOpen(false)
-  }
-
-
-
-  const toggleHistory = () => {
-    if (!is.apps) {
-      setIs({ sidebar: !is.sidebar })
-
-    }
-    else {
-      setIs({ apps: false, sidebar: true })
-    }
-  }
-
-  const toggleApps = () => {
-    if (is.apps) {
-      setIs({ sidebar: !is.sidebar })
-
-    }
-    else {
-      setIs({ apps: true, sidebar: true })
-    }
-  }
+    setAccount({ terms: true });
+    setOpen(false);
+  };
 
   useEffect(() => {
-    fetch("/metadata.json")
+    fetch("/metadata.json", { cache: "no-cache" })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data)
-        setMetadata(data)
+        console.log(data);
+        setMetadata(data);
         if (semver.gt(data.release, version) || !release) {
-          console.log('New release: %s', data.release)
-          setNewRelease(true)
-          setState({ version: data.release })
+          console.log("New release: %s", data.release);
+          setNewRelease(true);
+          setState({ version: data.release });
           fetch(`${data.repo_url}/releases/tags/v${data.release}`)
             .then((response) => response.json())
             .then((data) => {
-              console.log("release data: %j", data)
-              setState({ release: data })
+              console.log("release data: %j", data);
+              setState({ release: data });
             })
             .catch((error) => {
-              console.error("Error fetching release data: %s", error)
-            })
+              console.error("Error fetching release data: %s", error);
+            });
         }
       });
   }, [version]);
 
   return (
-    <VStack role="toolbar"
+    <VStack
+      role="toolbar"
       as="aside"
       hideBelow={is.toolbar ? "base" : "md"}
-      className={classnames(styles.sider, 'flex-c-sb flex-column')}
-      data-testid="LeftSideBar">
-
-      <div className={classnames(styles.tool, 'flex-c-sb flex-column')} data-testid="BottomLeftSideBar">
-        <Option type={options.general.theme}
-          onClick={() => setGeneral({ theme: options.general.theme === 'light' ? 'dark' : 'light' })}
+      className={classnames(styles.sider, "flex-c-sb flex-column")}
+      data-testid="LeftSideBar"
+    >
+      <div
+        className={classnames(styles.tool, "flex-c-sb flex-column")}
+        data-testid="BottomLeftSideBar"
+      >
+        <Option
+          type={options.general.theme}
+          onClick={() =>
+            setGeneral({
+              theme: options.general.theme === "light" ? "dark" : "light",
+            })
+          }
           tooltip={t("Theme")}
-          dataTestId="OptionDarkModeSelect" />
-        <Option dataTestId="OpenConfigBtn" type="config" onClick={() => setState({ is: { ...is, config: !is.config } })} tooltip={t("Config")} />
-        <Option type={`${is.fullScreen ? 'min' : 'full'}-screen`} onClick={() => setState({ is: { ...is, fullScreen: !is.fullScreen } })}
-          tooltip={`${is.fullScreen ? t('Minimize') : t('Maximize')}`} />
+          dataTestId="OptionDarkModeSelect"
+        />
+        <Option
+          dataTestId="OpenConfigBtn"
+          type="config"
+          onClick={() => setState({ is: { ...is, config: !is.config } })}
+          tooltip={t("Config")}
+        />
+        <Option
+          type={`${is.fullScreen ? "min" : "full"}-screen`}
+          onClick={() =>
+            setState({ is: { ...is, fullScreen: !is.fullScreen } })
+          }
+          tooltip={`${is.fullScreen ? t("Minimize") : t("Maximize")}`}
+        />
       </div>
       <Spacer />
-      <div className={classnames(styles.tool, 'flex-c-sb flex-column')}>
-        <DialogRoot open={!options.account.terms || open}
-          onOpenChange={(e) => setOpen(e.open)} size="lg">
+      <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
+        <DialogRoot
+          open={!options.account.terms || open}
+          onOpenChange={(e) => setOpen(e.open)}
+          size="lg"
+        >
           <DialogTrigger asChild>
-            <IconButton aria-label={t("about")} variant="ghost" data-testid="aboutBtn">
-              <Tooltip content={t("about")}>
-                {ICONS["help"]()}
-              </Tooltip>
+            <IconButton
+              aria-label={t("about")}
+              variant="ghost"
+              data-testid="aboutBtn"
+            >
+              <Tooltip content={t("about")}>{ICONS["help"]()}</Tooltip>
             </IconButton>
           </DialogTrigger>
           <DialogContent data-testid="InformationWindow">
             <DialogHeader>
-              <DialogTitle>{t('About')}</DialogTitle>
+              <DialogTitle>{t("About")}</DialogTitle>
               {options.account.terms ? <DialogCloseTrigger /> : null}
             </DialogHeader>
             <DialogBody className="z-ui-markdown">
-              {metadata.release ? (<Text>Version: <Link target="blank" href={"https://github.com/fhswf/openai-ui/releases/tag/v" + metadata?.release}>{metadata?.release}</Link> (
-                <Link target="blank" href={"https://github.com/fhswf/openai-ui/commit/" + metadata?.build_sha}>commit {String(metadata?.build_sha).substring(0, 7)}</Link>)</Text>) : null}
+              {metadata.release ? (
+                <Text>
+                  Version:{" "}
+                  <Link
+                    target="blank"
+                    href={
+                      "https://github.com/fhswf/openai-ui/releases/tag/v" +
+                      metadata?.release
+                    }
+                  >
+                    {metadata?.release}
+                  </Link>{" "}
+                  (
+                  <Link
+                    target="blank"
+                    href={
+                      "https://github.com/fhswf/openai-ui/commit/" +
+                      metadata?.build_sha
+                    }
+                  >
+                    commit {String(metadata?.build_sha).substring(0, 7)}
+                  </Link>
+                  )
+                </Text>
+              ) : null}
               <Markdown
                 remarkPlugins={[remarkGfm, remarkMath, smartypants]}
                 rehypePlugins={[rehypeKatex]}
               >
-                {(text)}
+                {text}
               </Markdown>
             </DialogBody>
             <DialogFooter>
-              <Button type="primary" onClick={acceptTerms} data-testid="accept-terms-btn">{t("Accept Terms")}</Button>
+              <Button
+                type="primary"
+                onClick={acceptTerms}
+                data-testid="accept-terms-btn"
+              >
+                {t("Accept Terms")}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </DialogRoot>
-
       </div>
     </VStack>
-  )
-
-
+  );
 }

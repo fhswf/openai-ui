@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 export function useCtrlEnterSend(callback) {
   const callbackRef = useRef(callback);
@@ -9,18 +9,18 @@ export function useCtrlEnterSend(callback) {
 
   useEffect(() => {
     function handleKeyDown(event) {
-      const isCtrlEnter = (event.ctrlKey || event.metaKey) && event.keyCode === 13;
+      const isCtrlEnter =
+        (event.ctrlKey || event.metaKey) && event.keyCode === 13;
       if (isCtrlEnter) {
         event.preventDefault();
         callbackRef.current();
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 }
-

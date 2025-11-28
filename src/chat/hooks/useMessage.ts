@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useGlobal } from "../context";
 import { Chat, Message } from "../context/types";
 
-
 export function useMessage() {
   type Messages = {
     messages: Message[];

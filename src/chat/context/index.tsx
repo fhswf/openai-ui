@@ -4,21 +4,33 @@ import React, {
   useReducer,
   useContext,
   createContext,
-  Dispatch
+  Dispatch,
 } from "react";
 import action from "./action";
 import reducer from "./reducer";
 import { initState } from "./initState";
 import { fetchAndGetUser } from "../utils";
-import { GlobalAction, GlobalActions, GlobalState, GlobalActionType, Chat, Message, App, Options } from "./types";
+import {
+  GlobalAction,
+  GlobalActions,
+  GlobalState,
+  GlobalActionType,
+  Chat,
+  Message,
+  App,
+  Options,
+} from "./types";
 import { getResponse } from "../service/openai";
-import { inflateState, loadState, reduceState, reviver, saveState } from "../utils/settings";
-
+import {
+  inflateState,
+  loadState,
+  reduceState,
+  reviver,
+  saveState,
+} from "../utils/settings";
 
 export const ChatContext = createContext(null);
 export const MessagesContext = createContext<Dispatch<GlobalAction>>(null);
-
-
 
 async function getState() {
   let state = initState;
@@ -36,13 +48,11 @@ export const ChatProvider = ({ children }) => {
   let init: GlobalState = initState;
 
   try {
-    let stored = JSON.parse(localStorage.getItem("SESSIONS"), reviver);
+    const stored = JSON.parse(localStorage.getItem("SESSIONS"), reviver);
     init = { ...init, ...stored };
   } catch (e) {
     console.error("error parsing state: %s", e);
   }
-
-
 
   const [state, dispatch] = useReducer(reducer, init);
   const actionList = action(state, dispatch);
@@ -67,16 +77,12 @@ export const ChatProvider = ({ children }) => {
   useEffect(() => {
     console.log("fetch user");
     fetchAndGetUser(dispatch, state.options);
-  }, [])
-
-
-
+  }, []);
 
   useEffect(() => {
     const stateToSave = { ...latestState.current };
     saveState(stateToSave);
   }, [latestState.current]);
-
 
   return (
     <ChatContext.Provider value={{ ...state, ...actionList }}>
@@ -87,9 +93,6 @@ export const ChatProvider = ({ children }) => {
   );
 };
 
-export const useGlobal = () => useContext<GlobalActions & GlobalState>(ChatContext);
+export const useGlobal = () =>
+  useContext<GlobalActions & GlobalState>(ChatContext);
 export const useMessages = () => useContext(MessagesContext);
-
-
-
-

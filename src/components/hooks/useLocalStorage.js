@@ -18,7 +18,9 @@ export function useLocalStorage(key, initialValue) {
 
   useEffect(() => {
     try {
-      const value = isVal(storedValue) ? storedValue : JSON.stringify(storedValue);
+      const value = isVal(storedValue)
+        ? storedValue
+        : JSON.stringify(storedValue);
       value && localStorage.setItem(key, value);
     } catch (error) {
       console.error(error);

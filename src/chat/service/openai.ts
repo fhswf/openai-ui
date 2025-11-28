@@ -1,4 +1,10 @@
-import { OpenAIOptions, Chat, Message, GlobalActions, GlobalState } from "../context/types";
+import {
+  OpenAIOptions,
+  Chat,
+  Message,
+  GlobalActions,
+  GlobalState,
+} from "../context/types";
 import * as MessagesAPI from "openai/resources/beta/threads/messages.mjs";
 import * as StepsAPI from "openai/resources/beta/threads/runs/steps.mjs";
 import { processLaTeX } from "../utils/latex";
@@ -6,20 +12,29 @@ import OpenAI, { APIError } from "openai";
 
 import { t } from "i18next";
 import { Stream } from "openai/streaming.mjs";
-import { ResponseImageGenCallCompletedEvent, ResponseImageGenCallPartialImageEvent, ResponseIncludable, ResponseInput, ResponseInputItem, ResponseStreamEvent, Tool } from "openai/resources/responses/responses.mjs";
+import {
+  ResponseImageGenCallCompletedEvent,
+  ResponseImageGenCallPartialImageEvent,
+  ResponseIncludable,
+  ResponseInput,
+  ResponseInputItem,
+  ResponseStreamEvent,
+  Tool,
+} from "openai/resources/responses/responses.mjs";
 import { toaster } from "../../components/ui/toaster";
 
-
-export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.API_BASE_URL || "https://api.openai.com/v1";
-
+export const apiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.API_BASE_URL ||
+  "https://api.openai.com/v1";
 
 const client = new OpenAI({
   apiKey: "unused",
   dangerouslyAllowBrowser: true,
   baseURL: apiBaseUrl,
   fetch: (input, init: any) => {
-    return fetch(input, { credentials: "include", ...init })
-  }
+    return fetch(input, { credentials: "include", ...init });
+  },
 });
 
 export async function getResponse(id: string) {
@@ -27,28 +42,60 @@ export async function getResponse(id: string) {
   return response;
 }
 
-export async function createResponse(global: Partial<GlobalState> & Partial<GlobalActions>, parent) {
-
+export async function createResponse(
+  global: Partial<GlobalState> & Partial<GlobalActions>,
+  parent
+) {
   const { options, chat, currentChat, is, setState, setIs } = global;
 
   console.log("messages: %o", chat[currentChat].messages);
   console.log("parent: %o", parent);
 
-  const input: ResponseInput = chat[currentChat].messages.map((item) => {
-    console.log("input item: %o", item);
-    const { role, content, ...rest } = item;
-    if (content && typeof content === "object" && Array.isArray(content)) {
-      const cleaned = content.map((item) => {
-        if (item.type === "input_image") {
-          const { name, ...rest } = item;
-          return { ...rest };
-        }
-        return item;
-      });
-      return { role, content: cleaned } as ResponseInputItem;
-    }
-    return { role, content } as ResponseInputItem;
-  });
+  const input: ResponseInput = await Promise.all(
+    chat[currentChat].messages.map(async (item) => {
+      console.log("input item: %o", item);
+      const { role, content, ...rest } = item;
+      if (content && typeof content === "object" && Array.isArray(content)) {
+        const cleaned = await Promise.all(
+          content.map(async (item) => {
+            if (item.type === "input_image") {
+              const { name, ...rest } = item;
+              if (rest.image_url?.startsWith("opfs://")) {
+                try {
+                  const filename = rest.image_url.replace("opfs://", "");
+                  const opfs = await navigator.storage.getDirectory();
+                  const fileHandle = await opfs.getFileHandle(filename);
+                  const file = await fileHandle.getFile();
+
+                  // Use FileReader to get data URL directly from file
+                  const dataUrl = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                  });
+
+                  // Extract MIME type and base64 length for logging
+                  const mimeType = dataUrl.split(';')[0].split(':')[1];
+                  const base64 = dataUrl.split(',')[1];
+
+                  console.log("Converted OPFS file to base64: %s (%s) (%d bytes)", filename, mimeType, base64.length);
+                  rest.image_url = dataUrl;
+                } catch (error) {
+                  console.error("Error reading OPFS file for OpenAI API:", error);
+                  // Fallback or rethrow? For now, let's keep the original URL which will likely fail API validation but logs the error.
+                }
+              }
+              return { ...rest };
+            }
+            return item;
+          })
+        );
+        return { role, content: cleaned } as ResponseInputItem;
+      }
+      return { role, content } as ResponseInputItem;
+    })
+  );
 
   const tools: Tool[] = [];
 
@@ -62,13 +109,17 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
     tools,
     input,
     stream: true,
-    include: ['web_search_call.action.sources', 'code_interpreter_call.outputs'] as ResponseIncludable[],
+    include: [
+      "web_search_call.action.sources",
+      "code_interpreter_call.outputs",
+    ] as ResponseIncludable[],
   };
   if (options.openai.model.startsWith("gpt-5")) {
-    response_options['reasoning'] = { effort: "medium", summary: "detailed" };
+    response_options["reasoning"] = { effort: "medium", summary: "detailed" };
   }
 
-  client.responses.create(response_options)
+  client.responses
+    .create(response_options)
     .then(async (stream: Stream<ResponseStreamEvent>) => {
       setIs({ ...is, thinking: true });
       console.log("stream: %o", stream);
@@ -120,7 +171,7 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
           type: "info",
         });
         window.location.href = import.meta.env.VITE_LOGIN_URL;
-        return
+        return;
       }
     }
 
@@ -133,8 +184,6 @@ export async function createResponse(global: Partial<GlobalState> & Partial<Glob
   }
 }
 
-
-
 class EventProcessor {
   chat: Chat[];
   currentChat: number;
@@ -144,7 +193,10 @@ class EventProcessor {
   stream: Stream<ResponseStreamEvent>;
   static opfs: FileSystemDirectoryHandle = null;
 
-  constructor(stream: Stream<ResponseStreamEvent>, global: Partial<GlobalState> & Partial<GlobalActions>) {
+  constructor(
+    stream: Stream<ResponseStreamEvent>,
+    global: Partial<GlobalState> & Partial<GlobalActions>
+  ) {
     const { chat, currentChat, setState, setIs } = global;
     this.stream = stream;
     this.chat = chat;
@@ -156,7 +208,8 @@ class EventProcessor {
   async initOPFS() {
     console.log("Initializing EventProcessor OPFS");
     if (!EventProcessor.opfs) {
-      await navigator.storage.getDirectory()
+      await navigator.storage
+        .getDirectory()
         .then((dir) => {
           console.log("Directory: %o", dir);
           EventProcessor.opfs = dir;
@@ -176,12 +229,19 @@ class EventProcessor {
   }
 
   appendMessage(delta) {
-    let message = this.chat[this.currentChat].messages[this.chat[this.currentChat].messages.length - 1];
+    const message =
+      this.chat[this.currentChat].messages[
+      this.chat[this.currentChat].messages.length - 1
+      ];
     message.content += delta;
     this.updateChat();
   }
 
-  async appendImageToMessage(image_base64: string, message: Message, file_id: string) {
+  async appendImageToMessage(
+    image_base64: string,
+    message: Message,
+    file_id: string
+  ) {
     const fileContent = atob(image_base64);
 
     let writable: FileSystemWritableFileStream;
@@ -197,7 +257,8 @@ class EventProcessor {
       }
     }
 
-    EventProcessor.opfs.getFileHandle(`${file_id}.png`, { create: true })
+    EventProcessor.opfs
+      .getFileHandle(`${file_id}.png`, { create: true })
       .then((_fileHandle) => {
         fileHandle = _fileHandle;
         console.log("File handle created: ", fileHandle);
@@ -219,24 +280,22 @@ class EventProcessor {
       })
       .then(() => {
         console.log("Writable closed successfully");
-        fileHandle.getFile()
-          .then((_file) => {
-            file = _file;
-            console.log("File retrieved: ", file);
-            if (!message.images) {
-              message.images = {};
-            }
-            message.images[file_id] = {
-              src: URL.createObjectURL(file),
-              name: file.name,
-              size: file.size,
-              lastModified: file.lastModified,
-              file_id,
-              type: "png",
-            };
-            this.updateChat();
-          });
-
+        fileHandle.getFile().then((_file) => {
+          file = _file;
+          console.log("File retrieved: ", file);
+          if (!message.images) {
+            message.images = {};
+          }
+          message.images[file_id] = {
+            src: URL.createObjectURL(file),
+            name: file.name,
+            size: file.size,
+            lastModified: file.lastModified,
+            file_id,
+            type: "png",
+          };
+          this.updateChat();
+        });
       })
       .catch((error) => {
         console.error("Error writing file: ", error);
@@ -247,12 +306,10 @@ class EventProcessor {
           type: "error",
         });
       });
-
-
   }
 
   updateChat() {
-    let newChat = [...this.chat];
+    const newChat = [...this.chat];
     console.log("updateChat: %o", newChat);
     this.setState({
       chat: newChat,
@@ -265,12 +322,43 @@ class EventProcessor {
     this.setIs({ thinking: false });
   }
 
+  updatePartialImage(image_base64: string, message: Message, file_id: string) {
+    const fileContent = atob(image_base64);
+    const byteCharacters = new Uint8Array(fileContent.length);
+    for (let i = 0; i < fileContent.length; i++) {
+      byteCharacters[i] = fileContent.charCodeAt(i);
+    }
+    const blob = new Blob([byteCharacters], { type: "image/png" });
+    const url = URL.createObjectURL(blob);
+
+    if (!message.images) {
+      message.images = {};
+    }
+
+    // Revoke previous URL if it exists to avoid memory leaks
+    if (message.images[file_id]?.src?.startsWith('blob:')) {
+      URL.revokeObjectURL(message.images[file_id].src);
+    }
+
+    message.images[file_id] = {
+      src: url,
+      name: `${file_id}.png`,
+      size: blob.size,
+      lastModified: Date.now(),
+      file_id,
+      type: "png",
+    };
+    this.updateChat();
+  }
+
   async process(event) {
     console.log("event: %s %o", event.type, event);
-    let message = this.chat[this.currentChat].messages[this.chat[this.currentChat].messages.length - 1];;
+    let message =
+      this.chat[this.currentChat].messages[
+      this.chat[this.currentChat].messages.length - 1
+      ];
 
     switch (event.type) {
-
       case "response.created":
         console.log(event.item);
         message = {
@@ -294,9 +382,11 @@ class EventProcessor {
         this.setIs({ thinking: false });
         break;
 
-      case "response.output_item.done":
+      case "response.output_item.done": {
         console.log(event.item);
-        let toolIndex = message.toolsUsed?.findIndex((tool) => tool.id === event.item.id);
+        const toolIndex = message.toolsUsed?.findIndex(
+          (tool) => tool.id === event.item.id
+        );
         if (toolIndex >= 0) {
           message.toolsUsed[toolIndex] = event.item;
         }
@@ -304,9 +394,12 @@ class EventProcessor {
           // event.item.result is a base64-encoded PNG string, decode it
           const base64Data = event.item.result;
           await this.appendImageToMessage(base64Data, message, event.item.id);
+          // Clear the base64 data from the item to avoid storing it in the state
+          event.item.result = "";
         }
         this.updateChat();
         break;
+      }
 
       case "response.output_item.added":
         switch (event.item.type) {
@@ -321,6 +414,8 @@ class EventProcessor {
             if (!message.toolsUsed) {
               message.toolsUsed = [];
             }
+            // We push the item here, but for image generation, we might want to be careful about what's inside.
+            // The 'result' field comes in 'output_item.done', so 'added' is usually safe.
             message.toolsUsed.push(event.item);
             this.updateChat();
             break;
@@ -333,7 +428,6 @@ class EventProcessor {
               type: "info",
             });
             break;
-
         }
         break;
 
@@ -346,14 +440,27 @@ class EventProcessor {
         this.appendMessage(event.delta);
         break;
 
-      case "response.image_generation_call.partial_image":
+      case "response.image_generation_call.partial_image": {
         console.log(event.call);
         const image_base64 = event.partial_image_b64;
         if (image_base64) {
-          this.appendImageToMessage(image_base64, message, event.item_id);
+          this.updatePartialImage(image_base64, message, event.item_id);
         }
         this.setIs({ tool: "image_generation", thinking: true });
         break;
+      }
+
+      case "response.image_generation_call.completed": {
+        console.log(event.call);
+        const image_base64 = event.image_b64;
+        if (image_base64) {
+          this.appendImageToMessage(image_base64, message, event.item_id);
+          // Clear the base64 data to avoid storing it in the state if event is stored somewhere
+          event.image_b64 = "";
+        }
+        this.setIs({ tool: null, thinking: true });
+        break;
+      }
 
       case "response.web_search_call.in_progress":
         console.log(event.call);
@@ -374,9 +481,7 @@ class EventProcessor {
           description: event.error.message || "",
           duration: 5000,
           type: "error",
-        })
+        });
     }
   }
-
-
 }

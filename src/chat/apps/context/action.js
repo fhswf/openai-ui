@@ -8,7 +8,6 @@ export default function action(state, dispatch) {
   return {
     setState,
     setCurrent(current) {
-
       console.log("setCurrent", current);
       setState({
         current,
@@ -19,6 +18,6 @@ export default function action(state, dispatch) {
       setState({
         currentApp,
       });
-    }
+    },
   };
 }

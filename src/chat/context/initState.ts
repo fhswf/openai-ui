@@ -23,9 +23,8 @@ export const initState: GlobalState = {
           id: Date.now(),
         },
       ],
-      app: 0
+      app: 0,
     },
-
   ],
   currentChat: 0,
   currentApp: initApps.apps[0],
@@ -56,7 +55,7 @@ export const initState: GlobalState = {
       toolsEnabled: new Set(),
       top_p: 1,
       stream: true,
-      assistant: ""
+      assistant: "",
     },
   },
   is: {
