@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Tool } from "openai/resources/responses/responses.mjs";
 
 import {
@@ -34,7 +34,7 @@ import { MdEdit } from "react-icons/md";
 import { classnames } from "../components/utils";
 
 import { useGlobal } from "./context";
-import { CopyIcon, ScrollView } from "./component";
+import { CopyIcon, ScrollView, OPFSImage } from "./component";
 import { LazyRenderer } from "./MessageRender";
 import { useMessage } from "./hooks/useMessage";
 import { dateFormat } from "./utils";
@@ -95,7 +95,7 @@ function renderToolDetails(tools: Tool[], key: string, t: any) {
         .map((tool, index) => {
           const info: any = { ...tool };
           console.log("Tool:", tool);
-          switch (tool.type) {
+          switch ((tool as any).type) {
             case "mcp_list_tools":
               info.title = "" + tool.server_label;
               info.items = (
@@ -276,6 +276,30 @@ function ToolUse(props) {
   );
 }
 
+function ImageBlobRenderer({ image, fileName }) {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (image.blob) {
+      image.blob.arrayBuffer().then((buffer) => {
+        const base64 = buffer.toString("base64");
+        setSrc(`data:${image.mime_type};base64,${base64}`);
+      });
+    }
+  }, [image]);
+
+  if (!src) return <Skeleton className={styles.image} />;
+
+  return (
+    <img
+      src={src}
+      alt={fileName}
+      className={styles.image}
+      data-testid={`generated-image-${fileName}`}
+    />
+  );
+}
+
 export function MessageItem(props) {
   const {
     content,
@@ -301,6 +325,7 @@ export function MessageItem(props) {
 
   let message = "";
   let image_url = null;
+  let image_name = null;
   if (typeof content == "string") {
     message = processLaTeX(content);
   } else {
@@ -309,6 +334,7 @@ export function MessageItem(props) {
         message += item.text;
       } else if (item.type === "input_image") {
         image_url = item.image_url;
+        image_name = item.name;
       }
     });
   }
@@ -334,7 +360,7 @@ export function MessageItem(props) {
       <Card.Body>
         <LazyRenderer isVisible={is.thinking}>{message}</LazyRenderer>
         {images &&
-          Object.entries(images)?.map(([fileName, image], index) => {
+          Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
             if (image.src) {
               // If image has a src, use it directly
               return (
@@ -346,33 +372,43 @@ export function MessageItem(props) {
                   data-testid={`generated-image-${fileName}`}
                 />
               );
-            } else if (image.url) {
-              // create data URL from blob
-              return image.blob.arrayBuffer().then((buffer) => {
-                const base64 = buffer.toString("base64");
-                const image_url = `data:${image.mime_type};base64,${base64}`;
-                console.log("Image URL:", image_url);
-                return (
-                  <img
-                    key={fileName}
-                    src={image_url}
-                    alt={fileName}
-                    className={styles.image}
-                    data-testid={`generated-image-${fileName}`}
-                  />
-                );
-              });
+            } else if (image.url?.startsWith("opfs://")) {
+              return (
+                <OPFSImage
+                  key={fileName}
+                  src={image.url}
+                  alt={fileName}
+                  className={styles.generated_image}
+                  data-testid={`generated-image-${fileName}`}
+                />
+              );
+            } else if (image.url && image.blob) {
+              return (
+                <ImageBlobRenderer
+                  key={fileName}
+                  image={image}
+                  fileName={fileName}
+                />
+              );
             }
             return <Skeleton key={fileName} className={styles.image} />;
           })}
-        {image_url && (
-          <img
-            src={image_url}
-            alt="included image"
-            className={styles.image}
-            data-testid="included-image"
-          />
-        )}
+        {image_url &&
+          (image_url.startsWith("opfs://") ? (
+            <OPFSImage
+              src={image_url}
+              alt={image_name || "User content"}
+              className={styles.image}
+              data-testid="included-image"
+            />
+          ) : (
+            <img
+              src={image_url}
+              alt={image_name || "User content"}
+              className={styles.image}
+              data-testid="included-image"
+            />
+          ))}
       </Card.Body>
       <Card.Footer>
         <HStack width={"100%"} justifyContent="space-between">
@@ -395,6 +431,7 @@ export function MessageItem(props) {
                 size="sm"
                 variant="ghost"
                 onClick={() => editMessage(id)}
+                data-testid="EditMessageBtn"
               >
                 <MdEdit />
               </IconButton>

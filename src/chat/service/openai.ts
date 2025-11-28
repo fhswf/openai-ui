@@ -51,21 +51,53 @@ export async function createResponse(
   console.log("messages: %o", chat[currentChat].messages);
   console.log("parent: %o", parent);
 
-  const input: ResponseInput = chat[currentChat].messages.map((item) => {
-    console.log("input item: %o", item);
-    const { role, content, ...rest } = item;
-    if (content && typeof content === "object" && Array.isArray(content)) {
-      const cleaned = content.map((item) => {
-        if (item.type === "input_image") {
-          const { name, ...rest } = item;
-          return { ...rest };
-        }
-        return item;
-      });
-      return { role, content: cleaned } as ResponseInputItem;
-    }
-    return { role, content } as ResponseInputItem;
-  });
+  const input: ResponseInput = await Promise.all(
+    chat[currentChat].messages.map(async (item) => {
+      console.log("input item: %o", item);
+      const { role, content, ...rest } = item;
+      if (content && typeof content === "object" && Array.isArray(content)) {
+        const cleaned = await Promise.all(
+          content.map(async (item) => {
+            if (item.type === "input_image") {
+              const { name, ...rest } = item;
+              if (rest.image_url?.startsWith("opfs://")) {
+                try {
+                  const filename = rest.image_url.replace("opfs://", "");
+                  const opfs = await navigator.storage.getDirectory();
+                  const fileHandle = await opfs.getFileHandle(filename);
+                  const file = await fileHandle.getFile();
+                  const arrayBuffer = await file.arrayBuffer();
+                  const bytes = new Uint8Array(arrayBuffer);
+                  let binary = "";
+                  for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                  }
+                  const base64 = btoa(binary);
+                  let mimeType = file.type;
+                  if (!mimeType) {
+                    if (filename.toLowerCase().endsWith(".png")) mimeType = "image/png";
+                    else if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) mimeType = "image/jpeg";
+                    else if (filename.toLowerCase().endsWith(".webp")) mimeType = "image/webp";
+                    else if (filename.toLowerCase().endsWith(".gif")) mimeType = "image/gif";
+                    else mimeType = "image/png"; // Fallback
+                  }
+                  console.log("Converted OPFS file to base64: %s (%s) (%d bytes)", filename, mimeType, base64.length);
+                  rest.image_url = `data:${mimeType};base64,${base64}`;
+                } catch (error) {
+                  console.error("Error reading OPFS file for OpenAI API:", error);
+                  // Fallback or rethrow? For now, let's keep the original URL which will likely fail API validation but logs the error.
+                }
+              }
+              return { ...rest };
+            }
+            return item;
+          })
+        );
+        return { role, content: cleaned } as ResponseInputItem;
+      }
+      return { role, content } as ResponseInputItem;
+    })
+  );
 
   const tools: Tool[] = [];
 
@@ -201,7 +233,7 @@ class EventProcessor {
   appendMessage(delta) {
     const message =
       this.chat[this.currentChat].messages[
-        this.chat[this.currentChat].messages.length - 1
+      this.chat[this.currentChat].messages.length - 1
       ];
     message.content += delta;
     this.updateChat();
@@ -292,11 +324,40 @@ class EventProcessor {
     this.setIs({ thinking: false });
   }
 
+  updatePartialImage(image_base64: string, message: Message, file_id: string) {
+    const fileContent = atob(image_base64);
+    const byteCharacters = new Uint8Array(fileContent.length);
+    for (let i = 0; i < fileContent.length; i++) {
+      byteCharacters[i] = fileContent.charCodeAt(i);
+    }
+    const blob = new Blob([byteCharacters], { type: "image/png" });
+    const url = URL.createObjectURL(blob);
+
+    if (!message.images) {
+      message.images = {};
+    }
+
+    // Revoke previous URL if it exists to avoid memory leaks
+    if (message.images[file_id]?.src?.startsWith('blob:')) {
+      URL.revokeObjectURL(message.images[file_id].src);
+    }
+
+    message.images[file_id] = {
+      src: url,
+      name: `${file_id}.png`,
+      size: blob.size,
+      lastModified: Date.now(),
+      file_id,
+      type: "png",
+    };
+    this.updateChat();
+  }
+
   async process(event) {
     console.log("event: %s %o", event.type, event);
     let message =
       this.chat[this.currentChat].messages[
-        this.chat[this.currentChat].messages.length - 1
+      this.chat[this.currentChat].messages.length - 1
       ];
 
     switch (event.type) {
@@ -335,6 +396,8 @@ class EventProcessor {
           // event.item.result is a base64-encoded PNG string, decode it
           const base64Data = event.item.result;
           await this.appendImageToMessage(base64Data, message, event.item.id);
+          // Clear the base64 data from the item to avoid storing it in the state
+          event.item.result = "";
         }
         this.updateChat();
         break;
@@ -353,6 +416,8 @@ class EventProcessor {
             if (!message.toolsUsed) {
               message.toolsUsed = [];
             }
+            // We push the item here, but for image generation, we might want to be careful about what's inside.
+            // The 'result' field comes in 'output_item.done', so 'added' is usually safe.
             message.toolsUsed.push(event.item);
             this.updateChat();
             break;
@@ -381,9 +446,21 @@ class EventProcessor {
         console.log(event.call);
         const image_base64 = event.partial_image_b64;
         if (image_base64) {
-          this.appendImageToMessage(image_base64, message, event.item_id);
+          this.updatePartialImage(image_base64, message, event.item_id);
         }
         this.setIs({ tool: "image_generation", thinking: true });
+        break;
+      }
+
+      case "response.image_generation_call.completed": {
+        console.log(event.call);
+        const image_base64 = event.image_b64;
+        if (image_base64) {
+          this.appendImageToMessage(image_base64, message, event.item_id);
+          // Clear the base64 data to avoid storing it in the state if event is stored somewhere
+          event.image_b64 = "";
+        }
+        this.setIs({ tool: null, thinking: true });
         break;
       }
 

@@ -15,7 +15,6 @@ import {
   IconButton,
   Kbd,
   Progress,
-  Skeleton,
   Stack,
   StepsStatus,
   Text,
@@ -28,55 +27,9 @@ import { MdOutlineCancel, MdOutlineFileUpload } from "react-icons/md";
 import { CiMicrophoneOff, CiMicrophoneOn } from "react-icons/ci";
 import { toaster } from "../components/ui/toaster";
 import classNames from "classnames";
+import { OPFSImage } from "./component";
 
-export function LazyImage(props: { name?: string; url?: string }) {
-  const { name, url } = props;
-  const [loaded, setLoaded] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    navigator.storage
-      .getDirectory()
-      .then(async (opfs) => {
-        if (name) {
-          const fileHandle = await opfs.getFileHandle(name);
-          if (fileHandle) {
-            const file = await fileHandle.getFile();
-            const imageUrl = URL.createObjectURL(file);
-            setImageUrl(imageUrl);
-            setLoaded(true);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("Error getting OPFS directory: %o", error);
-      });
-  }, [name, url]);
-
-  if (!url) {
-    if (imageUrl) {
-      return (
-        <img
-          src={imageUrl}
-          alt={name || "Image"}
-          className={classNames(styles.image, { [styles.loaded]: loaded })}
-          loading="lazy"
-          onLoad={() => setLoaded(true)}
-        />
-      );
-    }
-    return <Skeleton className={styles.image} />;
-  }
-  console.log("LazyImage: url: %s", url);
-  return (
-    <img
-      src={url}
-      alt={name || "Image"}
-      className={classNames(styles.image, { [styles.loaded]: loaded })}
-      loading="lazy"
-    />
-  );
-}
 
 function useDebounce(cb, delay) {
   const timeoutId = useRef(null);
@@ -120,7 +73,7 @@ export function MessageInput() {
 
   useEffect(() => {
     const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+      globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition;
     const _recognition = SpeechRecognition ? new SpeechRecognition() : null;
     if (!_recognition) {
       console.warn("SpeechRecognition is not supported in this browser.");
@@ -188,8 +141,9 @@ export function MessageInput() {
       console.warn("No files dropped");
       return;
     }
-    if (!typeingMessage.images) {
-      typeingMessage.images = [];
+    const newMessage = typeingMessage ? { ...typeingMessage } : {};
+    if (!newMessage.images) {
+      newMessage.images = [];
     }
     files.forEach(async (file) => {
       if (file.type.startsWith("image/")) {
@@ -211,13 +165,14 @@ export function MessageInput() {
             type: "error",
           });
         }
-        typeingMessage.images.push({
+        newMessage.images.push({
           name: file.name,
+          url: `opfs://${file.name}`,
           size: file.size,
           lastModified: file.lastModified,
           type: file.type,
         });
-        setState({ typeingMessage });
+        setState({ typeingMessage: newMessage });
       }
     });
   };
@@ -394,7 +349,7 @@ export function MessageInput() {
             {typeingMessage?.images?.map((image, index) => {
               return (
                 <Box key={index} position="relative">
-                  <LazyImage name={image.name} url={image.url} />
+                  <OPFSImage src={image.url} alt={image.name} />
                   <IconButton
                     aria-label="Delete image"
                     size="xs"

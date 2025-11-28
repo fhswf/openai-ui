@@ -19,7 +19,7 @@ async function processImages(images: any[], opfs: FileSystemDirectoryHandle | nu
     images.map(async (image) => {
       console.log("sendMessage: image: %o", image);
       if (image.url) {
-        return { type: "input_image", image_url: image.url };
+        return { type: "input_image", image_url: image.url, name: image.name };
       } else if (image.name && opfs) {
         console.log("sendMessage: reading file: %o", image.name);
 
@@ -285,6 +285,34 @@ export default function action(
       );
       console.log("editMessage: original", message);
       const newMessage = { ...message, id: Date.now() };
+
+      if (Array.isArray(message.content)) {
+        let textContent = "";
+        const images = [];
+
+        for (const item of message.content) {
+          if (item.type === "input_text") {
+            textContent += item.text;
+          } else if (item.type === "input_image") {
+            const imageUrl = item.image_url;
+            let name = "image.png";
+            if (imageUrl?.startsWith("opfs://")) {
+              name = imageUrl.replace("opfs://", "");
+            }
+            images.push({
+              name: name,
+              url: imageUrl,
+              // We don't have size/type/lastModified here, but MessageInput should handle it gracefully or we can mock it
+              size: 0,
+              type: "image/png",
+              lastModified: Date.now(),
+            });
+          }
+        }
+        newMessage.content = textContent;
+        newMessage.images = images;
+      }
+
       console.log("editMessage: new", newMessage);
       setState({
         typeingMessage: newMessage,
