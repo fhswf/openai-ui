@@ -35,12 +35,19 @@ import {
 import { logger, SeverityNumber } from "./utils/instrumentation";
 
 type ErrorFallbackProps = {
-  error: Error;
-  resetErrorBoundary: () => void;
+  readonly error: Error;
+  readonly resetErrorBoundary: () => void;
 };
 
 function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
   console.log("error: %o %s", error.stack, typeof error.stack);
+
+  const stackTrace = React.useMemo(() => {
+    return error.stack.split("\n").map((line, index) => ({
+      id: `trace-${index}`,
+      content: line,
+    }));
+  }, [error.stack]);
 
   logger.emit({
     severityNumber: SeverityNumber.ERROR,
@@ -73,8 +80,8 @@ function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
             <Heading paddingBlockStart="1ex" as="h3" fontSize="md">
               Stacktrace:
             </Heading>
-            {error.stack.split("\n").map((line, index) => (
-              <Text key={index}>{line}</Text>
+            {stackTrace.map((line) => (
+              <Text key={line.id}>{line.content}</Text>
             ))}
           </Alert.Description>
           <HStack justify="end" spacing="2">
@@ -97,27 +104,32 @@ export default function Chat() {
   const chatStyle = is?.fullScreen ? styles.full : styles.normal;
 
   globalThis.onerror = function (message, source, lineno, colno, error) {
+    const errorMessage =
+      typeof message === "string"
+        ? message
+        : (message as ErrorEvent)?.message || "Unknown Error";
+
     logger.emit({
       severityNumber: SeverityNumber.ERROR,
       severityText: "ERROR",
       body: {
-        message: typeof message === "string" ? message : message?.toString(),
+        message: errorMessage,
         source,
         lineno,
         colno,
-        stack: error.stack.toString(),
+        stack: error?.stack?.toString(),
       },
       attributes: {
         [ATTR_ERROR_TYPE]: "exception",
-        [ATTR_EXCEPTION_MESSAGE]: error.message.toString(),
-        [ATTR_EXCEPTION_STACKTRACE]: error.stack.toString(),
+        [ATTR_EXCEPTION_MESSAGE]: error?.message?.toString() || errorMessage,
+        [ATTR_EXCEPTION_STACKTRACE]: error?.stack?.toString(),
       },
     });
-    console.log("window.onerror: %o %o", error, error.stack);
+    console.log("window.onerror: %o %o", error, error?.stack);
     toaster.create({
       type: "error",
       title: "An Error Occurred",
-      description: `${message}, ${source}, ${lineno}, ${colno}`,
+      description: `${errorMessage}, ${source}, ${lineno}, ${colno}`,
     });
     return true;
   };
