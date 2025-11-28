@@ -148,6 +148,103 @@ export function MessageInput() {
     [styles.active]: recognitionActive,
   });
 
+  const handleLinkDrop = (url: string) => {
+    if (!typeingMessage.images) {
+      typeingMessage.images = [];
+    }
+    // check if the url is an image
+    const proxy =
+      import.meta.env.VITE_PROXY_URL || "https://poxy.gawron.cloud/api";
+    const fetchUrl = `${proxy}?url=${encodeURIComponent(url)}`;
+    fetch(fetchUrl, { method: "GET" })
+      .then((response) => {
+        if (response.headers.get("content-type")?.startsWith("image")) {
+          typeingMessage.images.push({ url });
+          setState({ typeingMessage });
+        } else {
+          toaster.create({
+            title: t("not_image"),
+            description: t("not_image_description"),
+            duration: 5000,
+            type: "warning",
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error: %o", error);
+        toaster.create({
+          title: t("error_occurred"),
+          description: "error.message",
+          duration: 5000,
+          type: "error",
+        });
+      });
+  };
+
+  const handleFileDrop = (files: File[]) => {
+    if (files.length === 0) {
+      console.warn("No files dropped");
+      return;
+    }
+    if (!typeingMessage.images) {
+      typeingMessage.images = [];
+    }
+    files.forEach(async (file) => {
+      if (file.type.startsWith("image/")) {
+        try {
+          const opfs = await navigator.storage.getDirectory();
+          const fileHandle = await opfs.getFileHandle(file.name, {
+            create: true,
+          });
+          const writable = await fileHandle.createWritable();
+          const buffer = await file.arrayBuffer();
+          await writable.write(buffer);
+          await writable.close();
+        } catch (error) {
+          console.error("Error writing file to OPFS: %o", error);
+          toaster.create({
+            title: t("error_occurred"),
+            description: error instanceof Error ? error.message : String(error),
+            duration: 5000,
+            type: "error",
+          });
+        }
+        typeingMessage.images.push({
+          name: file.name,
+          size: file.size,
+          lastModified: file.lastModified,
+          type: file.type,
+        });
+        setState({ typeingMessage });
+      }
+    });
+  };
+
+  const handleDrop = (
+    event: React.DragEvent<HTMLElement>,
+    isLink: boolean,
+    isImage: boolean
+  ) => {
+    event.preventDefault();
+    dropRef.current?.classList.remove(styles.dragover);
+
+    if (!isLink && !isImage) {
+      console.warn("Drop event does not contain a link or image");
+      return;
+    }
+
+    if (isLink) {
+      const url = event.dataTransfer.getData("text/uri-list");
+      handleLinkDrop(url);
+    } else {
+      // Handle image drop
+
+      // Upload file and store in OPFS
+      const files = Array.from(event.dataTransfer.files);
+      handleFileDrop(files);
+    }
+  };
+
   const dragHandler = (event: React.DragEvent<HTMLElement>) => {
     event.stopPropagation();
     const isLink = event.dataTransfer.types.includes("text/uri-list");
@@ -176,88 +273,7 @@ export function MessageInput() {
         break;
 
       case "drop":
-        event.preventDefault();
-        dropRef.current?.classList.remove(styles.dragover);
-
-        if (!isLink && !isImage) {
-          console.warn("Drop event does not contain a link or image");
-          return;
-        } else if (isLink) {
-          const url = event.dataTransfer.getData("text/uri-list");
-
-          if (!typeingMessage.images) {
-            typeingMessage.images = [];
-          }
-          // check if the url is an image
-          const proxy =
-            import.meta.env.VITE_PROXY_URL || "https://poxy.gawron.cloud/api";
-          const fetchUrl = `${proxy}?url=${encodeURIComponent(url)}`;
-          fetch(fetchUrl, { method: "GET" })
-            .then((response) => {
-              if (response.headers.get("content-type")?.startsWith("image")) {
-                typeingMessage.images.push({ url });
-                setState({ typeingMessage });
-              } else {
-                toaster.create({
-                  title: t("not_image"),
-                  description: t("not_image_description"),
-                  duration: 5000,
-                  type: "warning",
-                });
-              }
-            })
-            .catch((error) => {
-              console.error("Error: %o", error);
-              toaster.create({
-                title: t("error_occurred"),
-                description: "error.message",
-                duration: 5000,
-                type: "error",
-              });
-            });
-        } else {
-          // Handle image drop
-
-          // Upload file and store in OPFS
-          const files = Array.from(event.dataTransfer.files);
-          if (files.length === 0) {
-            console.warn("No files dropped");
-            return;
-          }
-          if (!typeingMessage.images) {
-            typeingMessage.images = [];
-          }
-          files.forEach(async (file) => {
-            if (file.type.startsWith("image/")) {
-              try {
-                const opfs = await navigator.storage.getDirectory();
-                const fileHandle = await opfs.getFileHandle(file.name, {
-                  create: true,
-                });
-                const writable = await fileHandle.createWritable();
-                const buffer = await file.arrayBuffer();
-                await writable.write(buffer);
-                await writable.close();
-              } catch (error) {
-                console.error("Error writing file to OPFS: %o", error);
-                toaster.create({
-                  title: t("error_occurred"),
-                  description:
-                    error instanceof Error ? error.message : String(error),
-                  duration: 5000,
-                  type: "error",
-                });
-              }
-              typeingMessage.images.push({
-                name: file.name,
-                size: file.size,
-                lastModified: file.lastModified,
-                type: file.type,
-              });
-              setState({ typeingMessage });
-            }
-          });
-        }
+        handleDrop(event, isLink, isImage);
         break;
     }
   };
