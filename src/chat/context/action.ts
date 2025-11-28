@@ -1,10 +1,21 @@
 import i18next, { t } from "i18next";
-import { Chat, GlobalState, OptionAction, GlobalActions, Messages, GlobalAction, GlobalActionType, OptionActionType } from "./types";
+import {
+  Chat,
+  GlobalState,
+  OptionAction,
+  GlobalActions,
+  Messages,
+  GlobalAction,
+  GlobalActionType,
+  OptionActionType,
+} from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
 
-
-export default function action(state: Partial<GlobalState>, dispatch: React.Dispatch<GlobalAction>): GlobalActions {
+export default function action(
+  state: Partial<GlobalState>,
+  dispatch: React.Dispatch<GlobalAction>
+): GlobalActions {
   const setState = (payload: Partial<GlobalState> = {}) =>
     dispatch({
       type: GlobalActionType.SET_STATE,
@@ -14,7 +25,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
   const setIs = (arg) => {
     const { is } = state;
     setState({ is: { ...is, ...arg } });
-  }
+  };
 
   const startChat = (chat: Chat[], currentChat: number) =>
     dispatch({
@@ -29,8 +40,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
 
     try {
       opfs = await navigator.storage.getDirectory();
-    }
-    catch (error) {
+    } catch (error) {
       console.error("Error getting OPFS directory: %o", error);
     }
 
@@ -43,48 +53,53 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         newMessage.content.push({ type: "input_text", text });
 
         console.log("transform images: %o", typeingMessage.images);
-        const images = await Promise.all(typeingMessage.images.map(async (image) => {
-          console.log("sendMessage: image: %o", image);
-          if (image.url) {
-            return { type: "input_image", image_url: image.url };
-          }
-          else if (image.name && opfs) {
-            console.log("sendMessage: reading file: %o", image.name);
+        const images = await Promise.all(
+          typeingMessage.images.map(async (image) => {
+            console.log("sendMessage: image: %o", image);
+            if (image.url) {
+              return { type: "input_image", image_url: image.url };
+            } else if (image.name && opfs) {
+              console.log("sendMessage: reading file: %o", image.name);
 
-            // get file from OPFS
-            const fileHandle = await opfs.getFileHandle(image.name);
-            const promise = new Promise(async (resolve, reject) => {
+              // get file from OPFS
+              const fileHandle = await opfs.getFileHandle(image.name);
               if (!fileHandle) {
                 console.error("File not found in OPFS: %s", image.name);
-                reject(new Error(`File not found: ${image.name}`));
-                return;
+                throw new Error(`File not found: ${image.name}`);
               }
-              // read file as data URL
-              const reader = new FileReader();
-              let result;
-              reader.onload = () => {
-                console.log("File read as data URL: %o", reader.result);
-                result = { type: "input_image", image_url: reader.result as string, name: image.name };
-                resolve(result);
-              }
-              reader.onerror = (error) => {
-                console.error("Error reading file: %o", error);
-                reject(error);
-              }
-              reader.readAsDataURL(await fileHandle.getFile());
-              console.log("FileReader started for image: %o", image.name);
-            })
+              const file = await fileHandle.getFile();
 
-            return await promise;
-          }
-        }));
+              const promise = new Promise((resolve, reject) => {
+                // read file as data URL
+                const reader = new FileReader();
+                let result;
+                reader.onload = () => {
+                  console.log("File read as data URL: %o", reader.result);
+                  result = {
+                    type: "input_image",
+                    image_url: reader.result as string,
+                    name: image.name,
+                  };
+                  resolve(result);
+                };
+                reader.onerror = (error) => {
+                  console.error("Error reading file: %o", error);
+                  reject(error);
+                };
+                reader.readAsDataURL(file);
+                console.log("FileReader started for image: %o", image.name);
+              });
+
+              return await promise;
+            }
+          })
+        );
         console.log("sendMessage: images: %o", images);
 
         newMessage.content.push(...images);
         newMessage.id = Date.now();
         console.log("sendMessage: %o", newMessage);
-      }
-      else {
+      } else {
         newMessage = {
           ...typeingMessage,
           sentTime: Math.floor(Date.now() / 1000),
@@ -96,11 +111,11 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         messages = [...chat[currentChat].messages];
       }
       messages.push(newMessage);
-      let newChat = [...chat];
+      const newChat = [...chat];
       newChat.splice(currentChat, 1, { ...chat[currentChat], messages });
       createResponse({ ...state, chat: newChat, setState, setIs }, this);
     }
-  }
+  };
 
   return {
     setState,
@@ -125,7 +140,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       const { mode, assistant } = state.options.openai;
       if (mode !== "assistant") {
         console.log("no settings for %s", mode);
-        return
+        return;
       }
       console.log("showSettings: %s", assistant);
 
@@ -137,22 +152,29 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         currentEditor: {
           assistant,
           type: "assistant",
-        }
+        },
       });
     },
 
     newChat(app) {
       const { currentApp, currentChat, chat } = state;
       const newApp = app || currentApp;
-      console.log("newChat: ", currentApp, newApp, chat, newApp?.title, newApp?.role)
-      let messages: Messages = [
+      console.log(
+        "newChat: ",
+        currentApp,
+        newApp,
+        chat,
+        newApp?.title,
+        newApp?.role
+      );
+      const messages: Messages = [
         {
           content: newApp?.content || t("system_welcome"),
           sentTime: Math.floor(Date.now() / 1000),
           role: newApp.role,
           id: Date.now(),
-        }
-      ]
+        },
+      ];
 
       const chatList = [
         {
@@ -165,14 +187,13 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
         },
         ...chat,
       ];
-      let _chat: Chat[] = chatList;
+      const _chat: Chat[] = chatList;
       if (newApp.botStarts) {
         console.log("botStarts");
         createResponse({ ...state, chat: _chat, setState, setIs }, this);
-      }
-      else {
+      } else {
         console.debug("starting chat: %o", _chat);
-        startChat(_chat, 0)
+        startChat(_chat, 0);
       }
     },
 
@@ -203,7 +224,7 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     },
 
     setMessage(content) {
-      let typeingMessage = {
+      const typeingMessage = {
         ...state.typeingMessage,
         role: "user",
         id: Date.now(),
@@ -219,7 +240,8 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
       if (format === "markdown") {
         const content = messages
           .map((m) => {
-            return `${m.role === "assistant" ? "## Assistant\n" : "## User\n"}${m.content}\n\n`;
+            return `${m.role === "assistant" ? "## Assistant\n" : "## User\n"}${m.content
+              }\n\n`;
           })
           .join("\n");
         const blob = new Blob([content], { type: "text/markdown" });
@@ -241,7 +263,9 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
 
     removeMessage(id) {
       console.log("removeMessage", id);
-      const messages = state.chat[state.currentChat].messages.filter((m) => m.id !== id);
+      const messages = state.chat[state.currentChat].messages.filter(
+        (m) => m.id !== id
+      );
       const chat = [...state.chat];
       chat[state.currentChat].messages = messages;
       setState({
@@ -251,31 +275,31 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
 
     editMessage(id) {
       console.log("editMessage", id);
-      const message = state.chat[state.currentChat].messages.find((m) => m.id == id);
+      const message = state.chat[state.currentChat].messages.find(
+        (m) => m.id == id
+      );
       console.log("editMessage: original", message);
       const newMessage = { ...message, id: Date.now() };
       console.log("editMessage: new", newMessage);
       setState({
         typeingMessage: newMessage,
-      })
+      });
     },
 
     setOptions({ type, data }: OptionAction) {
-      console.log('set options: ', type, data);
-      let options = { ...state.options };
+      console.log("set options: ", type, data);
+      const options = { ...state.options };
       if (type === OptionActionType.OPENAI) {
         options[type] = { ...options[type], ...data };
-      }
-      else if (type === OptionActionType.GENERAL) {
+      } else if (type === OptionActionType.GENERAL) {
         options[type] = { ...options[type], ...data };
         if (data.language) {
           i18next.changeLanguage(data.language);
         }
-      }
-      else if (type === OptionActionType.ACCOUNT) {
+      } else if (type === OptionActionType.ACCOUNT) {
         options[type] = { ...options[type], ...data };
       }
-      console.log('set options: ', options);
+      console.log("set options: ", options);
       setState({ options });
     },
 
@@ -290,5 +314,3 @@ export default function action(state: Partial<GlobalState>, dispatch: React.Disp
     },
   };
 }
-
-

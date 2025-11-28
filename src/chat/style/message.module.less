@@ -21,6 +21,8 @@
     max-height: 96px;
     width: auto;
     height: auto;
+    max-height: 96px;
+    max-width: 96px;
     border-radius: var(--border-radius);
     object-fit: contain;
   }
@@ -132,15 +134,18 @@
 }
 
 .bar {
+  position: relative;
+  z-index: 10;
   padding: 4px;
   border-top: 1px solid var(--border-color);
-  background-color: var(--background-color-gray);
 
   &_tool {
     padding: var(--spacing) 0;
   }
 
   &_inner {
+    position: relative;
+    z-index: 0;
     background-color: var(--background-color);
     color: var(--text-color);
     border-radius: var(--border-radius);
@@ -172,8 +177,8 @@
   }
 
   img {
-    max-height: 64px;
-    //max-width: 64px;
+    max-height: 256px;
+    max-width: 256px;
     width: auto;
     height: auto;
     border-radius: var(--border-radius);
@@ -181,6 +186,8 @@
 }
 
 .textarea {
+  position: relative;
+  z-index: 20;
   color: var(--text-color);
   background: transparent;
 }
@@ -233,9 +240,21 @@
 
 .info {}
 
+.dropzone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  border: 2px dashed transparent;
+  border-radius: var(--border-radius);
+}
+
 .dragover {
   &[data-name="dropzone"] {
-    background-color: var(--background-color-gray);
+    z-index: 100;
+    background-color: hsla(210, 100%, 50%, 0.1);
     border-color: var(--primary);
     border-width: 2px;
     border-style: dashed;

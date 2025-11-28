@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 
-export function useTheme(initTheme) {
+export function useTheme() {
   const [themes, setThemes] = useState("light");
   const [theme, setTheme] = useLocalStorage("THEME", "light");
   function toggleTheme() {

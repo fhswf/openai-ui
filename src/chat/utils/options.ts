@@ -44,15 +44,14 @@ export const modeOptions = [
   {
     label: "Chat",
     value: "chat",
-    description: t('chat_mode_desc'),
+    description: t("chat_mode_desc"),
   },
   {
     label: "Assistant",
     value: "assistant",
-    description: t('assistant_mode_desc'),
-  }
-]
-
+    description: t("assistant_mode_desc"),
+  },
+];
 
 export const modelOptions = [
   { label: "gpt-5-mini", value: "gpt-5-mini" },
@@ -61,13 +60,16 @@ export const modelOptions = [
   { label: "gpt-4.1-nano", value: "gpt-4.1-nano" },
   { label: "gpt-4o-mini", value: "gpt-4o-mini" },
   {
-    label: "gpt-4-turbo", value: "gpt-4-turbo",
+    label: "gpt-4-turbo",
+    value: "gpt-4-turbo",
   },
   {
-    label: "gpt-4", value: "gpt-4",
+    label: "gpt-4",
+    value: "gpt-4",
   },
   {
-    label: "gpt-3.5-turbo", value: "gpt-3.5-turbo",
+    label: "gpt-3.5-turbo",
+    value: "gpt-3.5-turbo",
   },
 ];
 
@@ -75,32 +77,32 @@ export const toolOptions: Map<string, Tool> = new Map([
   [
     "Web Search",
     {
-      type: "web_search_preview"
-    }
+      type: "web_search_preview",
+    },
   ],
   [
     "Image Generation",
     {
       type: "image_generation",
-      partial_images: 2
-    }
+      partial_images: 2,
+    },
   ],
   [
     "Code Interpreter",
     {
-      "type": "code_interpreter",
-      "container": { "type": "auto" }
-    }
+      type: "code_interpreter",
+      container: { type: "auto" },
+    },
   ],
   [
     "FH SWF (beta)",
     {
-      "type": "mcp",
-      "server_label": "FH_SWF",
-      "server_url": "https://mcp.fh-swf.cloud/mcp",
-      "require_approval": "never",
+      type: "mcp",
+      server_label: "FH_SWF",
+      server_url: "https://mcp.fh-swf.cloud/mcp",
+      require_approval: "never",
     },
-  ]
+  ],
 ]);
 
 export const languageOptions = [

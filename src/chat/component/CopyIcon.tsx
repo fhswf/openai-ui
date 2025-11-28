@@ -1,13 +1,13 @@
-import React, { useState } from 'react'
+import React, { useState } from "react";
 import { IconButton } from "@chakra-ui/react";
-import { Tooltip } from "../../components/ui/tooltip"
+import { Tooltip } from "../../components/ui/tooltip";
 import { LuClipboardCheck } from "react-icons/lu";
 import { LuClipboardCopy } from "react-icons/lu";
-import { useTranslation } from 'react-i18next';
-import { t } from 'i18next';
+import { useTranslation } from "react-i18next";
+import { t } from "i18next";
 
 export function CopyIcon(props) {
-  const { text = "copy", value, className } = props
+  const { text = "copy", value, className } = props;
   const [icon, setIcon] = useState<React.ReactNode>(<LuClipboardCopy />);
   const { t } = useTranslation();
 
@@ -19,15 +19,20 @@ export function CopyIcon(props) {
         setIcon(<LuClipboardCopy />);
       }, 1500);
     } catch (err) {
-      console.error('Failed to copy: ', err);
+      console.error("Failed to copy: ", err);
     }
   }
 
   return (
     <Tooltip content={text}>
-      <IconButton minWidth="24px" size="sm" variant="ghost" onClick={handleCopy} >
+      <IconButton
+        minWidth="24px"
+        size="sm"
+        variant="ghost"
+        onClick={handleCopy}
+      >
         {icon}
       </IconButton>
     </Tooltip>
-  )
+  );
 }

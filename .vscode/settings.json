@@ -1,10 +1,10 @@
 {
-    "sonarlint.connectedMode.project": {
-        "connectionId": "hopper",
-        "projectKey": "fhswf_openai-ui_AY5mLbV1WNlYFiIpzZdP"
-    },
     "i18n-ally.localesPaths": [
         "src/i18n"
     ],
-    "react-i18n.i18nPaths": "src\\i18n"
+    "react-i18n.i18nPaths": "src\\i18n",
+    "sonarlint.connectedMode.project": {
+        "connectionId": "sonarqube-fh-swf-cloud",
+        "projectKey": "fhswf_openai-ui_3d78bdaa-d0c9-4d19-a2c6-65fa429b1112"
+    }
 }

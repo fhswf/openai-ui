@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 
 export function useSendKey(callback, key) {
-
   const handleCtrlEnter = (event) => {
     if (event.ctrlKey && event.keyCode === 13) {
       event.preventDefault();

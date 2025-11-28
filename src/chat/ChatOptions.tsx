@@ -1,41 +1,62 @@
-import React from 'react'
-import { Radio, RadioGroup } from '../components/ui/radio'
-import { Switch } from '../components/ui/switch'
+import React from "react";
+import { Radio, RadioGroup } from "../components/ui/radio";
+import { Switch } from "../components/ui/switch";
 
-import { useGlobal } from './context'
-import { themeOptions, languageOptions, sendCommandOptions, modelOptions } from './utils/options'
-import { Button, Card, Field, FileUploadFileAcceptDetails, Heading, Input, Stack, createListCollection } from "@chakra-ui/react";
+import { useGlobal } from "./context";
+import {
+  themeOptions,
+  languageOptions,
+  sendCommandOptions,
+  modelOptions,
+} from "./utils/options";
+import {
+  Button,
+  Card,
+  Field,
+  FileUploadFileAcceptDetails,
+  Heading,
+  Input,
+  Stack,
+  createListCollection,
+} from "@chakra-ui/react";
 
-import { Select } from "@chakra-ui/react"
-import { FileUpload } from "@chakra-ui/react"
-import { Slider } from "@chakra-ui/react"
+import { Select } from "@chakra-ui/react";
+import { FileUpload } from "@chakra-ui/react";
+import { Slider } from "@chakra-ui/react";
 
-
-import { useOptions } from './hooks'
-import { t } from 'i18next'
-import { initState } from './context/initState'
-import { GlobalState } from './context/types'
-import { Trans } from 'react-i18next'
-import { exportSettings, importSettings } from './utils/settings'
-import { HiUpload } from "react-icons/hi"
+import { useOptions } from "./hooks";
+import { t } from "i18next";
+import { initState } from "./context/initState";
+import { GlobalState } from "./context/types";
+import { Trans } from "react-i18next";
+import { exportSettings, importSettings } from "./utils/settings";
+import { HiUpload } from "react-icons/hi";
 import { toaster } from "../components/ui/toaster";
 
-
 export function ChatOptions() {
-  const { options } = useGlobal()
-  const { openai, general } = options
-  const { setGeneral, setModel } = useOptions()
-  const { setState, setIs, is } = useGlobal()
+  const { options } = useGlobal();
+  const { openai, general } = options;
+  const { setGeneral, setModel } = useOptions();
+  const { setState, setIs, is } = useGlobal();
 
-  const tempMarks = [...Array(11).keys()].map((i) => ({ value: 0.2 * i, label: (0.2 * i).toFixed(1) }));
-  const topPMarks = [...Array(11).keys()].map((i) => ({ value: 0.1 * i, label: (0.1 * i).toFixed(1) }));
-  const tokenMarks = [...Array(4).keys()].map((i) => ({ value: 1024 * 2 ** i, label: (1024 * 2 ** i).toString() }));
+  const tempMarks = [...new Array(11).keys()].map((i) => ({
+    value: 0.2 * i,
+    label: (0.2 * i).toFixed(1),
+  }));
+  const topPMarks = [...new Array(11).keys()].map((i) => ({
+    value: 0.1 * i,
+    label: (0.1 * i).toFixed(1),
+  }));
+  const tokenMarks = [...new Array(4).keys()].map((i) => ({
+    value: 1024 * 2 ** i,
+    label: (1024 * 2 ** i).toString(),
+  }));
 
   return (
     <Card.Root w="100%">
       <Card.Header paddingBlockEnd={2} data-testid="SettingsHeader">
         <Card.Title>{t("chat_settings")}</Card.Title>
-      </Card.Header >
+      </Card.Header>
       <Card.Body overflowY={"auto"}>
         <Stack gap="4">
           <Heading size="md">{t("import_export")}</Heading>
@@ -44,15 +65,21 @@ export function ChatOptions() {
           <Stack direction={{ base: "column", md: "row" }}>
             <Field.Root>
               <Field.Label>{t("export_settings")}</Field.Label>
-              <Button variant="outline" colorPalette="blue" onClick={exportSettings}>{t("export")}</Button>
+              <Button
+                variant="outline"
+                colorPalette="blue"
+                onClick={exportSettings}
+              >
+                {t("export")}
+              </Button>
               <Field.HelperText>{t("export_settings_help")}</Field.HelperText>
             </Field.Root>
 
             <Field.Root>
               <Field.Label>{t("import_settings")}</Field.Label>
 
-
-              <FileUpload.Root accept={["application/json"]}
+              <FileUpload.Root
+                accept={["application/json"]}
                 onFileAccept={(details: FileUploadFileAcceptDetails) => {
                   if (details.files.length > 0) {
                     const file = details.files[0];
@@ -65,19 +92,21 @@ export function ChatOptions() {
                           description: t("import_settings_success_desc"),
                           duration: 5000,
                           type: "success",
-                        })
+                        });
                       })
                       .catch((error) => {
-                        console.error('Error importing settings:', error);
+                        console.error("Error importing settings:", error);
                         toaster.create({
                           title: t("import_settings_error"),
-                          description: error.message || t("import_settings_error_desc"),
+                          description:
+                            error.message || t("import_settings_error_desc"),
                           duration: 5000,
                           type: "error",
-                        })
-                      })
+                        });
+                      });
                   }
-                }}>
+                }}
+              >
                 <FileUpload.HiddenInput />
                 <FileUpload.Trigger asChild>
                   <Button variant="outline" size="sm">
@@ -104,16 +133,20 @@ export function ChatOptions() {
             </Field.Root>
           </Stack>
 
-
           <Heading size="md">{t("general")}</Heading>
 
           <Field.Root mt="4">
             <Field.Label>{t("theme_style")}</Field.Label>
-            <RadioGroup data-testid="OptionDarkModeSelect" value={general.theme}
-              onValueChange={(ev) => setGeneral({ theme: ev.value })}>
+            <RadioGroup
+              data-testid="OptionDarkModeSelect"
+              value={general.theme}
+              onValueChange={(ev) => setGeneral({ theme: ev.value })}
+            >
               <Stack direction="row">
                 {themeOptions.map((item) => (
-                  <Radio key={item.value} value={item.value}>{item.label}</Radio>
+                  <Radio key={item.value} value={item.value}>
+                    {item.label}
+                  </Radio>
                 ))}
               </Stack>
             </RadioGroup>
@@ -122,10 +155,15 @@ export function ChatOptions() {
 
           <Field.Root mt="4">
             <Field.Label>{t("send")}</Field.Label>
-            <RadioGroup value={general.sendCommand} onValueChange={(ev) => setGeneral({ sendCommand: ev.value })}>
+            <RadioGroup
+              value={general.sendCommand}
+              onValueChange={(ev) => setGeneral({ sendCommand: ev.value })}
+            >
               <Stack direction="row">
                 {sendCommandOptions.map((item) => (
-                  <Radio key={item.value} value={item.value}>{item.label}</Radio>
+                  <Radio key={item.value} value={item.value}>
+                    {item.label}
+                  </Radio>
                 ))}
               </Stack>
             </RadioGroup>
@@ -133,8 +171,12 @@ export function ChatOptions() {
           </Field.Root>
 
           <Field.Root mt="4">
-
-            <Select.Root collection={createListCollection({ items: languageOptions })} maxWidth="30em" onValueChange={val => setGeneral({ language: val.value })} data-testid="SetLanguageSelect">
+            <Select.Root
+              collection={createListCollection({ items: languageOptions })}
+              maxWidth="30em"
+              onValueChange={(val) => setGeneral({ language: val.value })}
+              data-testid="SetLanguageSelect"
+            >
               <Select.Label>{t("language")}</Select.Label>
               <Select.Trigger>
                 <Select.ValueText placeholder={general.language} />
@@ -166,24 +208,39 @@ export function ChatOptions() {
             </SelectRoot>
 
             <Field.HelperText>{t("fontsize_help")}</Field.HelperText>
-          </Field.Root> */ }
+          </Field.Root> */}
 
           <Field.Root mt="4">
+            <Switch
+              id="gravatar"
+              checked={general.gravatar}
+              onChange={(value) => {
+                console.log("onChange: ", value.target.checked);
+                setGeneral({
+                  ...options.general,
+                  gravatar: value.target.checked,
+                });
+              }}
+            >
+              {t("gravatar")}
+            </Switch>
 
-            <Switch id="gravatar" checked={general.gravatar} onChange={(value) => {
-              console.log("onChange: ", value.target.checked);
-              setGeneral({ ...options.general, gravatar: value.target.checked });
-            }}>{t("gravatar")}</Switch>
-
-            <Field.HelperText><Trans t={t}>help_gravatar</Trans></Field.HelperText>
+            <Field.HelperText>
+              <Trans t={t}>help_gravatar</Trans>
+            </Field.HelperText>
           </Field.Root>
 
-
-          <Heading size="md" paddingBlockStart="2em">{t("Global OpenAI Config")}</Heading>
+          <Heading size="md" paddingBlockStart="2em">
+            {t("Global OpenAI Config")}
+          </Heading>
 
           <Field.Root mt="4">
-            <Select.Root collection={createListCollection({ items: modelOptions })} maxWidth="30em" onValueChange={val => setModel({ model: val.value[0] })}
-              data-testid="ChangeAIModelSelect">
+            <Select.Root
+              collection={createListCollection({ items: modelOptions })}
+              maxWidth="30em"
+              onValueChange={(val) => setModel({ model: val.value[0] })}
+              data-testid="ChangeAIModelSelect"
+            >
               <Select.Label>{t("openai_model_help")}</Select.Label>
               <Select.Trigger>
                 <Select.ValueText placeholder={openai.model} />
@@ -200,9 +257,17 @@ export function ChatOptions() {
           </Field.Root>
 
           <Field.Root mt="4">
-            <Slider.Root colorPalette="blue"
-              size="md" width="60ex" min={0} max={8192} step={256} value={[openai.max_tokens]}
-              onValueChange={ev => setModel({ max_tokens: ev.value[0] })} data-testid="MaxTokensInput">
+            <Slider.Root
+              colorPalette="blue"
+              size="md"
+              width="60ex"
+              min={0}
+              max={8192}
+              step={256}
+              value={[openai.max_tokens]}
+              onValueChange={(ev) => setModel({ max_tokens: ev.value[0] })}
+              data-testid="MaxTokensInput"
+            >
               <Slider.Label>{t("max_tokens")}</Slider.Label>
               <Slider.Control>
                 <Slider.Track>
@@ -219,7 +284,17 @@ export function ChatOptions() {
           </Field.Root>
 
           <Field.Root mt="4">
-            <Slider.Root colorPalette="blue" size="md" width="60ex" min={0} max={2} step={0.01} value={[openai.temperature]} onValueChange={ev => setModel({ temperature: ev.value[0] })} data-testid="SetTemperatureInput">
+            <Slider.Root
+              colorPalette="blue"
+              size="md"
+              width="60ex"
+              min={0}
+              max={2}
+              step={0.01}
+              value={[openai.temperature]}
+              onValueChange={(ev) => setModel({ temperature: ev.value[0] })}
+              data-testid="SetTemperatureInput"
+            >
               <Slider.Label>{t("temperature")}</Slider.Label>
               <Slider.Control>
                 <Slider.Track>
@@ -236,7 +311,17 @@ export function ChatOptions() {
           </Field.Root>
 
           <Field.Root mt="4">
-            <Slider.Root colorPalette="blue" size="md" width="60ex" min={0} max={1} step={0.01} value={[openai.top_p]} onValueChange={ev => setModel({ top_p: ev.value[0] })} data-testid="SetTopPInput">
+            <Slider.Root
+              colorPalette="blue"
+              size="md"
+              width="60ex"
+              min={0}
+              max={1}
+              step={0.01}
+              value={[openai.top_p]}
+              onValueChange={(ev) => setModel({ top_p: ev.value[0] })}
+              data-testid="SetTopPInput"
+            >
               <Slider.Label>{t("top_p")}</Slider.Label>
               <Slider.Control>
                 <Slider.Track>
@@ -252,33 +337,69 @@ export function ChatOptions() {
             <Field.HelperText>{t("top_p_help")}</Field.HelperText>
           </Field.Root>
 
-          <Heading size="md" desc={t("custom_endpoint_desc")} paddingBlockStart="2em">{t("Custom API Endpoint")}</Heading>
+          <Heading
+            size="md"
+            desc={t("custom_endpoint_desc")}
+            paddingBlockStart="2em"
+          >
+            {t("Custom API Endpoint")}
+          </Heading>
 
           <Field.Root mt="4">
             <Field.Label>{t("api_base_url")}</Field.Label>
-            <Input width="60ex" value={openai.baseUrl} placeholder="Api Base Url" onChange={ev => setModel({ baseUrl: ev.target.value })} data-testid="ApiBaseURLInput" />
+            <Input
+              width="60ex"
+              value={openai.baseUrl}
+              placeholder="Api Base Url"
+              onChange={(ev) => setModel({ baseUrl: ev.target.value })}
+              data-testid="ApiBaseURLInput"
+            />
             <Field.HelperText>{t("api_base_url_help")}</Field.HelperText>
           </Field.Root>
 
           <Field.Root mt="4">
             <Field.Label>{t("api_key")}</Field.Label>
-            <Input width="60ex" value={openai.apiKey} onChange={ev => setModel({ apiKey: ev.target.value })} type="password" data-testid="APIKeyInput" />
+            <Input
+              width="60ex"
+              value={openai.apiKey}
+              onChange={(ev) => setModel({ apiKey: ev.target.value })}
+              type="password"
+              data-testid="APIKeyInput"
+            />
             <Field.HelperText>{t("api_key_help")}</Field.HelperText>
           </Field.Root>
 
           <Field.Root mt="4">
             <Field.Label>{t("organization_id")}</Field.Label>
-            <Input width="60ex" value={openai.organizationId} placeholder="OpenAI Organization ID" onChange={ev => setModel({ organizationId: ev.target.value })} data-testid="APIOrganisationIDInput" />
+            <Input
+              width="60ex"
+              value={openai.organizationId}
+              placeholder="OpenAI Organization ID"
+              onChange={(ev) => setModel({ organizationId: ev.target.value })}
+              data-testid="APIOrganisationIDInput"
+            />
             <Field.HelperText>{t("organization_id_help")}</Field.HelperText>
           </Field.Root>
-
         </Stack>
       </Card.Body>
 
       <Card.Footer paddingBlockStart={2}>
-        <Button variant="outline" colorPalette="red" onClick={() => setState(initState)} data-testid="SettingsRefreshBtn">{t("Reset")}</Button>
-        <Button type="primary" onClick={() => setIs({ config: !is.config })} data-testid="SettingsCloseBtn">{t("Close")}</Button>
+        <Button
+          variant="outline"
+          colorPalette="red"
+          onClick={() => setState(initState)}
+          data-testid="SettingsRefreshBtn"
+        >
+          {t("Reset")}
+        </Button>
+        <Button
+          type="primary"
+          onClick={() => setIs({ config: !is.config })}
+          data-testid="SettingsCloseBtn"
+        >
+          {t("Close")}
+        </Button>
       </Card.Footer>
-    </Card.Root >
-  )
+    </Card.Root>
+  );
 }

@@ -1,17 +1,15 @@
-import React from "react";
-import * as ReactDOMClient from "react-dom/client";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import ChatApp from "./chat/ChatApp";
-import { Provider } from "./components/ui/provider"
-import { defaultSystem } from "@chakra-ui/react"
+import { Provider } from "./components/ui/provider";
 import "./i18n/config.ts";
 
-const root = ReactDOMClient.createRoot(document.getElementById("app"));
-
+const root = createRoot(document.getElementById("app"));
 
 root.render(
-  <React.StrictMode>
+  <StrictMode>
     <Provider>
       <ChatApp />
     </Provider>
-  </React.StrictMode>
+  </StrictMode>
 );
