@@ -1,3 +1,9 @@
+# [0.30.0](https://github.com/fhswf/openai-ui/compare/v0.29.0...v0.30.0) (2025-11-29)
+
+
+### Features
+
+* add tool usage popup to display detailed agent actions and tool calls ([5014aa5](https://github.com/fhswf/openai-ui/commit/5014aa5bebdc2b849daa66c393094aff1cf18b14))
 
 # [0.29.0](https://github.com/fhswf/openai-ui/compare/v0.28.2...v0.29.0) (2025-11-28)
 
