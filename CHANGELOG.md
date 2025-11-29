@@ -1,3 +1,10 @@
+## [Unreleased]
+
+### Features
+
+* single popup for tool details
+  Replaced individual tool usage details with a single popup window that displays all tool information when any tool badge is clicked.
+
 ## [0.28.2](https://github.com/fhswf/openai-ui/compare/v0.28.1...v0.28.2) (2025-11-27)
 
 ### Bug Fixes
