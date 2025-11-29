@@ -120,6 +120,11 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "In chat mode, you can chat with the chatbot. In this mode, you can select the language model used. The chatbot can help you answer questions and solve problems, but it cannot access tools or external APIs.",
           assistant_mode_desc:
             "In assistant mode, you can use the chatbot as an assistant. Currently, only a limited number of pre-configured assistants are available.",
+          function_call: "Function Call",
+          function_call_description: "A function call was executed.",
+          function_call_title: "Function Call",
+          "Tool Usage Details": "Tool Usage Details",
+          image_generation_call_title: "Image Generation",
         },
       }, // German
       de: {
@@ -346,6 +351,7 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           image_generation_call: "Bildgenerierung",
           image_generation_call_description:
             "Bei dieser Antwort wurde eine Bildgenerierung durchgeführt.",
+          image_generation_call_title: "Bildgenerierung",
 
           opfs_not_supported:
             "Origin Private File System (OPFS) wird von Ihrem Browser nicht unterstützt.",
@@ -354,6 +360,10 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           upload_file: "Datei hochladen",
           upload_file_desc:
             "Datei hochladen",
+          function_call: "Funktionsaufruf",
+          function_call_description: "Ein Funktionsaufruf wurde ausgeführt.",
+          function_call_title: "Funktionsaufruf",
+          "Tool Usage Details": "Details zur Werkzeugnutzung",
         },
       },
     },

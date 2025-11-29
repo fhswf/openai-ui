@@ -388,7 +388,7 @@ class EventProcessor {
           (tool) => tool.id === event.item.id
         );
         if (toolIndex >= 0) {
-          message.toolsUsed[toolIndex] = event.item;
+          message.toolsUsed[toolIndex] = { ...message.toolsUsed[toolIndex], ...event.item };
         }
         if (event.item.output_format === "png") {
           // event.item.result is a base64-encoded PNG string, decode it

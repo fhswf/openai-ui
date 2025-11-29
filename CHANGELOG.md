@@ -1,3 +1,4 @@
+
 # [0.29.0](https://github.com/fhswf/openai-ui/compare/v0.28.2...v0.29.0) (2025-11-28)
 
 
@@ -8,6 +9,8 @@
 
 ### Features
 
+* single popup for tool details
+  Replaced individual tool usage details with a single popup window that displays all tool information when any tool badge is clicked.
 * enable image upload and deletion in chat input, supported by new tests. ([5f8e019](https://github.com/fhswf/openai-ui/commit/5f8e019f33e4ef8a9b0d9c27e799a18f5dc889c2))
 * extract and enhance message usage and tool details display with Accordion and Popover components. ([000e5c2](https://github.com/fhswf/openai-ui/commit/000e5c2d8a79e422aeccd42c341eec4fb8e214ce))
 * Extract usage information into a new dialog and improve file upload handling. ([757a82e](https://github.com/fhswf/openai-ui/commit/757a82e27812fd74882ef13a456f24da91650d34))
