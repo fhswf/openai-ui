@@ -58,6 +58,30 @@ async function processImages(images: any[], opfs: FileSystemDirectoryHandle | nu
   );
 }
 
+async function processImageForExport(c: any, opfs: FileSystemDirectoryHandle | null): Promise<string> {
+  if (c.type === "input_text") return c.text;
+  if (c.type === "input_image") {
+    let imageUrl = c.image_url;
+    if (imageUrl?.startsWith("opfs://") && opfs) {
+      try {
+        const filename = imageUrl.replace("opfs://", "");
+        const fileHandle = await opfs.getFileHandle(filename);
+        const file = await fileHandle.getFile();
+        const reader = new FileReader();
+        imageUrl = await new Promise((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+      } catch (e) {
+        console.error("Failed to read OPFS file for export:", e);
+      }
+    }
+    return `![Image](${imageUrl})`;
+  }
+  return "";
+}
+
 export default function action(
   state: Partial<GlobalState>,
   dispatch: React.Dispatch<GlobalAction>
@@ -159,7 +183,7 @@ export default function action(
     },
 
     newChat(app) {
-      const { currentApp, currentChat, chat } = state;
+      const { currentApp, chat } = state;
       const newApp = app || currentApp;
       console.log(
         "newChat: ",
@@ -235,17 +259,59 @@ export default function action(
       setState({ is: { ...state.is, typeing: true }, typeingMessage });
     },
 
-    downloadThread(format = "json") {
+    async downloadThread(format = "json") {
       const chat = state.chat[state.currentChat];
       const messages = chat.messages;
 
-      if (format === "markdown") {
-        const content = messages
-          .map((m) => {
-            return `${m.role === "assistant" ? "## Assistant\n" : "## User\n"}${m.content
-              }\n\n`;
+      let opfs: FileSystemDirectoryHandle | null = null;
+      try {
+        opfs = await navigator.storage.getDirectory();
+      } catch (error) {
+        console.error("Error getting OPFS directory: %o", error);
+      }
+
+      const getMarkdown = async () => {
+        const processedMessages = await Promise.all(
+          messages.map(async (m) => {
+            let content = m.content;
+            if (Array.isArray(content)) {
+              const processedContent = await Promise.all(
+                content.map((c) => processImageForExport(c, opfs))
+              );
+              content = processedContent.join("\n");
+            }
+
+            if (m.images) {
+              const images = await Promise.all(
+                Object.values(m.images).map(async (image: any) => {
+                  if (image.name && opfs) {
+                    try {
+                      const fileHandle = await opfs.getFileHandle(image.name);
+                      const file = await fileHandle.getFile();
+                      const reader = new FileReader();
+                      const imageUrl = await new Promise<string>((resolve, reject) => {
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = () => reject(reader.error);
+                        reader.readAsDataURL(file);
+                      });
+                      return `![Generated Image](${imageUrl})`;
+                    } catch (e) {
+                      console.error("Failed to read OPFS file for export:", e);
+                    }
+                  }
+                  return "";
+                })
+              );
+              content += "\n" + images.join("\n");
+            }
+            return `${m.role === "assistant" ? "## Assistant\n" : "## User\n"}${content}\n\n`;
           })
-          .join("\n");
+        );
+        return processedMessages.join("\n");
+      };
+
+      if (format === "markdown") {
+        const content = await getMarkdown();
         const blob = new Blob([content], { type: "text/markdown" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -260,6 +326,45 @@ export default function action(
         a.href = url;
         a.download = `chat_${chat.id}.json`;
         a.click();
+      } else if (format === "obsidian") {
+        const content = await getMarkdown();
+        try {
+          // @ts-ignore
+          if (globalThis.showSaveFilePicker) {
+            // @ts-ignore
+            const handle = await globalThis.showSaveFilePicker({
+              suggestedName: `chat_${chat.title || chat.id}.md`,
+              types: [
+                {
+                  description: "Markdown File",
+                  accept: { "text/markdown": [".md"] },
+                },
+              ],
+            });
+            const writable = await handle.createWritable();
+            await writable.write(content);
+            await writable.close();
+            return;
+          }
+        } catch (e) {
+          console.error("File picker failed, falling back to download", e);
+        }
+        // Fallback
+        const blob = new Blob([content], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `chat_${chat.title || chat.id}.md`;
+        a.click();
+      } else if (format === "obsidian-uri") {
+        const content = await getMarkdown();
+        await navigator.clipboard.writeText(content);
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const encodedTitle = encodeURIComponent(
+          `${chat.title || `chat_${chat.id}`} ${timestamp}`
+        );
+        globalThis.open(`obsidian://new?name=${encodedTitle}&clipboard=true`);
       }
     },
 

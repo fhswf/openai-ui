@@ -29,6 +29,7 @@ import {
   IoSettingsOutline,
 } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
+import { SiObsidian } from "react-icons/si";
 import {
   LuChevronRight,
   LuPanelLeftClose,
@@ -489,7 +490,7 @@ export function MessageHeader() {
 
       <Menu.Root>
         <Menu.Trigger asChild>
-          <IconButton variant="ghost" title={t("new_chat")}>
+          <IconButton variant="ghost" title={t("new_chat")} data-testid="new-chat-button">
             <RiChatNewLine aria-label={t("new_chat")} />
           </IconButton>
         </Menu.Trigger>
@@ -529,7 +530,7 @@ export function MessageHeader() {
 
       <Menu.Root>
         <Menu.Trigger asChild>
-          <IconButton variant="ghost" title={t("download_thread")}>
+          <IconButton variant="ghost" title={t("download_thread")} data-testid="download-thread-button">
             <MdOutlineSimCardDownload aria-label={t("download_thread")} />
           </IconButton>
         </Menu.Trigger>
@@ -542,6 +543,14 @@ export function MessageHeader() {
             onClick={() => downloadThread("markdown")}
           >
             <IoLogoMarkdown /> {t("download_markdown")}
+          </Menu.Item>
+
+          <Menu.Item
+            value="obsidian-uri"
+            onClick={() => downloadThread("obsidian-uri")}
+            data-testid="open-obsidian-menu-item"
+          >
+            <SiObsidian /> {t("open_obsidian")}
           </Menu.Item>
         </Menu.Content>
       </Menu.Root>
