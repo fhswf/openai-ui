@@ -1,3 +1,10 @@
+# [0.31.0](https://github.com/fhswf/openai-ui/compare/v0.30.1...v0.31.0) (2025-12-01)
+
+
+### Features
+
+* split settings and chat history ([2ccb424](https://github.com/fhswf/openai-ui/commit/2ccb42422501e942d6105b14672438228e718c80))
+
 ## [0.30.1](https://github.com/fhswf/openai-ui/compare/v0.30.0...v0.30.1) (2025-12-01)
 
 
