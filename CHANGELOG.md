@@ -1,3 +1,10 @@
+## [0.30.1](https://github.com/fhswf/openai-ui/compare/v0.30.0...v0.30.1) (2025-12-01)
+
+
+### Bug Fixes
+
+* issue sending message via keyboard shortcut ([0147016](https://github.com/fhswf/openai-ui/commit/0147016b91b58f754e1a69fc73bf0fb5df15d547))
+
 # [0.30.0](https://github.com/fhswf/openai-ui/compare/v0.29.0...v0.30.0) (2025-11-29)
 
 
