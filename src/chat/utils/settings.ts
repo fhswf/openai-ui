@@ -1,6 +1,9 @@
 import { initState } from "../context/initState";
 import { App, Chat, GlobalState, Message, Options } from "../context/types";
 
+export const SESSION_KEY = "SESSIONS";
+export const CHAT_HISTORY_KEY = "CHAT_HISTORY";
+
 function replacer(key, value) {
   if (value instanceof Map) {
     return {
@@ -52,27 +55,47 @@ export function saveState(stateToSave: {
   version: string;
   release?: any;
 }) {
-  localStorage.setItem(
-    "SESSIONS",
-    JSON.stringify(reduceState(stateToSave), replacer)
-  );
+  const reducedState = reduceState(stateToSave);
+  const { chat, ...settings } = reducedState;
+
+  localStorage.setItem(SESSION_KEY, JSON.stringify(settings, replacer));
+  localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chat, replacer));
 }
 
-export function loadState(): Promise<GlobalState> {
-  return new Promise((resolve, reject) => {
-    const data = localStorage.getItem("SESSIONS");
-    if (!data) {
-      resolve(initState);
-      return;
+export async function loadState(): Promise<GlobalState> {
+  const sessionData = localStorage.getItem(SESSION_KEY);
+  const chatData = localStorage.getItem(CHAT_HISTORY_KEY);
+
+  if (!sessionData && !chatData) {
+    return initState;
+  }
+
+  try {
+    const parsedSession = sessionData
+      ? JSON.parse(sessionData, reviver)
+      : {};
+    const parsedChat = chatData ? JSON.parse(chatData, reviver) : null;
+
+    // Migration: if no new chat history, check if it exists in session
+    if (!parsedChat && parsedSession.chat) {
+      console.log("Migrating chat history from session to separate key");
+      // We don't save here, it will be saved on next update
     }
-    try {
-      const parsedData = JSON.parse(data, reviver);
-      resolve(inflateState(parsedData));
-    } catch (error) {
-      console.error("Error parsing state from localStorage:", error);
-      reject(error);
+
+    const combinedState = {
+      ...parsedSession,
+    };
+
+    if (parsedChat) {
+      combinedState.chat = parsedChat;
     }
-  });
+
+    const inflated = await inflateState(combinedState);
+    return inflated;
+  } catch (error) {
+    console.error("Error parsing state from localStorage:", error);
+    throw error;
+  }
 }
 
 // save state to localStorage
@@ -120,34 +143,37 @@ export async function inflateState(state: GlobalState) {
 
   // Inflate the state by adding back any properties that were removed
   const inflatedState = { ...state };
-  inflatedState.chat = await Promise.all(
-    inflatedState.chat.map(async (chat: Chat) => {
-      chat.messages = await Promise.all(
-        chat.messages.map(async (message) => {
-          // If message has images (now an object), add back the src property for each image
-          if (opfs && message.images && typeof message.images === "object") {
-            const updatedImages = { ...message.images };
-            await Promise.all(
-              Object.entries(updatedImages).map(async ([file_id, image]) => {
-                const file = await opfs.getFileHandle(image.name);
-                image.src = URL.createObjectURL(await file.getFile());
-                updatedImages[file_id] = image;
-              })
-            );
-            message.images = updatedImages;
-          }
-          return message;
-        })
-      );
-      return chat;
-    })
-  );
+  if (inflatedState.chat) {
+    inflatedState.chat = await Promise.all(
+      inflatedState.chat.map(async (chat: Chat) => {
+        chat.messages = await Promise.all(
+          chat.messages.map(async (message) => {
+            // If message has images (now an object), add back the src property for each image
+            if (opfs && message.images && typeof message.images === "object") {
+              const updatedImages = { ...message.images };
+              await Promise.all(
+                Object.entries(updatedImages).map(async ([file_id, image]) => {
+                  const file = await opfs.getFileHandle(image.name);
+                  image.src = URL.createObjectURL(await file.getFile());
+                  updatedImages[file_id] = image;
+                })
+              );
+              message.images = updatedImages;
+            }
+            return message;
+          })
+        );
+        return chat;
+      })
+    );
+  }
   return inflatedState;
 }
 
 export const exportSettings = () => {
   console.log("Export settings");
-  const data = localStorage.getItem("SESSIONS");
+  const data = localStorage.getItem(SESSION_KEY);
+  if (!data) return;
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -166,7 +192,7 @@ export const importSettings = (file: File): Promise<GlobalState> => {
       const data = event.target?.result as string;
       try {
         const settings = JSON.parse(data);
-        localStorage.setItem("SESSIONS", JSON.stringify(settings));
+        localStorage.setItem(SESSION_KEY, JSON.stringify(settings));
         console.log("Settings imported successfully");
         resolve(settings);
       } catch (error) {

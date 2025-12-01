@@ -27,6 +27,8 @@ import {
   reduceState,
   reviver,
   saveState,
+  SESSION_KEY,
+  CHAT_HISTORY_KEY,
 } from "../utils/settings";
 
 export const ChatContext = createContext(null);
@@ -48,8 +50,12 @@ export const ChatProvider = ({ children }) => {
   let init: GlobalState = initState;
 
   try {
-    const stored = JSON.parse(localStorage.getItem("SESSIONS"), reviver);
+    const stored = JSON.parse(localStorage.getItem(SESSION_KEY), reviver);
+    const chatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY), reviver);
     init = { ...init, ...stored };
+    if (chatHistory) {
+      init.chat = chatHistory;
+    }
   } catch (e) {
     console.error("error parsing state: %s", e);
   }
