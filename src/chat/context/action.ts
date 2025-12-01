@@ -91,24 +91,21 @@ export default function action(
     }
 
     if (typeingMessage?.content) {
-      let newMessage = null;
-      if (typeingMessage.images) {
-        const text = typeingMessage.content;
-        newMessage = { sentTime: Math.floor(Date.now() / 1000), role: "user" };
-        newMessage.content = [];
-        newMessage.content.push({ type: "input_text", text });
+      let newMessage = {
+        ...typeingMessage,
+        role: "user",
+        sentTime: Math.floor(Date.now() / 1000),
+        id: Date.now(),
+      };
 
+      if (typeingMessage.images && typeingMessage.images.length > 0) {
         const images = await processImages(typeingMessage.images, opfs);
         console.log("sendMessage: images: %o", images);
 
-        newMessage.content.push(...images);
-        newMessage.id = Date.now();
-        console.log("sendMessage: %o", newMessage);
-      } else {
-        newMessage = {
-          ...typeingMessage,
-          sentTime: Math.floor(Date.now() / 1000),
-        };
+        newMessage.content = [
+          { type: "input_text", text: typeingMessage.content },
+          ...images,
+        ];
       }
       let messages: Messages = [];
       console.log("sendMessage", chat);
