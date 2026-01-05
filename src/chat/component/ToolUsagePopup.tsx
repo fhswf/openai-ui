@@ -215,6 +215,46 @@ function getToolInfo(tool: Tool, key: string, index: number, t: any) {
                 </VStack>
             );
             break;
+        case "mcp_approval_request":
+            info.title = t("mcp_approval_request_title");
+            info.items = (
+                <VStack alignItems="flex-start">
+                    {(tool as any).server_label && (
+                        <>
+                            <Text fontWeight="bold">{t("Server")}:</Text>
+                            <Text>{(tool as any).server_label}</Text>
+                        </>
+                    )}
+                    {(tool as any).name && (
+                        <>
+                            <Text fontWeight="bold">{t("Tool")}:</Text>
+                            <Text>{(tool as any).name}</Text>
+                        </>
+                    )}
+                    {((tool as any).params || (tool as any).arguments) && (
+                        <>
+                            <Text fontWeight="bold">{t("Parameters")}:</Text>
+                            <LazyRenderer>
+                                {"```json\n" + JSON.stringify((tool as any).params || (tool as any).arguments, null, 2) + "\n```"}
+                            </LazyRenderer>
+                        </>
+                    )}
+
+                    {(tool as any).message && (
+                        <>
+                            <Text fontWeight="bold">{t("Message")}:</Text>
+                            <Text>{(tool as any).message}</Text>
+                        </>
+                    )}
+
+                    {(tool as any).approval_decision !== undefined && (
+                        <Text fontWeight="bold" color={(tool as any).approval_decision ? "green.500" : "red.500"}>
+                            {t("Status")}: {(tool as any).approval_decision ? t("Approved") : t("Denied")}
+                        </Text>
+                    )}
+                </VStack>
+            );
+            break;
         case "image_generation_call": {
             let prompt = "";
             try {
