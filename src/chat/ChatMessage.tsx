@@ -171,6 +171,8 @@ export function MessageItem(props) {
       } else if (item.type === "input_image") {
         image_url = item.image_url;
         image_name = item.name;
+      } else if (item.type === "mcp_approval_response") {
+        message += item.approve ? "Approved" : "Denied";
       }
     });
   }
@@ -291,7 +293,44 @@ export function MessageContainer() {
       {
         <Stack data-testid="ChatListContainer">
           {messages
-            .filter((message) => message.role !== "system")
+            .filter((message) => {
+              if (message.role === "system") return false;
+              // Hide explicit approval response messages as they are technical
+              if (Array.isArray(message.content) &&
+                message.content.length > 0 &&
+                (message.content[0] as any).type === 'mcp_approval_response') {
+                return false;
+              }
+              return true;
+            })
+            .reduce((acc: Message[], message) => {
+              if (acc.length === 0) return [message];
+              const last = acc[acc.length - 1];
+              if (last.role === 'assistant' && message.role === 'assistant') {
+                // Merge logic
+                const merged = { ...last };
+                // Content merge
+                if (Array.isArray(last.content) || Array.isArray(message.content)) {
+                  const c1 = Array.isArray(last.content) ? last.content : (last.content ? [{ type: 'input_text', text: last.content }] : []);
+                  const c2 = Array.isArray(message.content) ? message.content : (message.content ? [{ type: 'input_text', text: message.content }] : []);
+                  merged.content = [...c1, ...c2];
+                } else {
+                  merged.content = (last.content || "") + (message.content || "");
+                }
+                // Tools merge
+                if (message.toolsUsed) {
+                  merged.toolsUsed = [...(last.toolsUsed || []), ...message.toolsUsed];
+                }
+                // Images merge
+                if (message.images) {
+                  merged.images = { ...(last.images || {}), ...message.images };
+                }
+
+                acc[acc.length - 1] = merged;
+                return acc;
+              }
+              return [...acc, message];
+            }, [])
             .map((item, index) => (
               <MessageItem
                 key={item.id || item.sentTime}

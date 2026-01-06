@@ -1,20 +1,14 @@
 import {
-  OpenAIOptions,
   Chat,
   Message,
   GlobalActions,
   GlobalState,
 } from "../context/types";
-import * as MessagesAPI from "openai/resources/beta/threads/messages.mjs";
-import * as StepsAPI from "openai/resources/beta/threads/runs/steps.mjs";
-import { processLaTeX } from "../utils/latex";
 import OpenAI, { APIError } from "openai";
 
 import { t } from "i18next";
 import { Stream } from "openai/streaming.mjs";
 import {
-  ResponseImageGenCallCompletedEvent,
-  ResponseImageGenCallPartialImageEvent,
   ResponseIncludable,
   ResponseInput,
   ResponseInputItem,
@@ -22,6 +16,7 @@ import {
   Tool,
 } from "openai/resources/responses/responses.mjs";
 import { toaster } from "../../components/ui/toaster";
+import { showMcpApprovalToast } from "../component/McpToast";
 
 export const apiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
@@ -44,58 +39,70 @@ export async function getResponse(id: string) {
 
 export async function createResponse(
   global: Partial<GlobalState> & Partial<GlobalActions>,
-  parent
+  parent,
+  explicitInput?: ResponseInput
 ) {
   const { options, chat, currentChat, is, setState, setIs } = global;
 
   console.log("messages: %o", chat[currentChat].messages);
   console.log("parent: %o", parent);
 
-  const input: ResponseInput = await Promise.all(
-    chat[currentChat].messages.map(async (item) => {
-      console.log("input item: %o", item);
-      const { role, content, ...rest } = item;
-      if (content && typeof content === "object" && Array.isArray(content)) {
-        const cleaned = await Promise.all(
-          content.map(async (item) => {
-            if (item.type === "input_image") {
-              const { name, ...rest } = item;
-              if (rest.image_url?.startsWith("opfs://")) {
-                try {
-                  const filename = rest.image_url.replace("opfs://", "");
-                  const opfs = await navigator.storage.getDirectory();
-                  const fileHandle = await opfs.getFileHandle(filename);
-                  const file = await fileHandle.getFile();
+  let input: ResponseInput;
+  if (explicitInput) {
+    input = explicitInput;
+  } else {
+    input = await Promise.all(
+      chat[currentChat].messages.map(async (item) => {
+        console.log("input item: %o", item);
+        const { role, content, ...rest } = item;
 
-                  // Use FileReader to get data URL directly from file
-                  const dataUrl = await new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                  });
+        // Check if content acts as a container for special items (like mcp_approval_response)
+        if (Array.isArray(content) && content.length === 1 && (content[0] as any).type === 'mcp_approval_response') {
+          return content[0] as any;
+        }
 
-                  // Extract MIME type and base64 length for logging
-                  const mimeType = dataUrl.split(';')[0].split(':')[1];
-                  const base64 = dataUrl.split(',')[1];
+        if (content && typeof content === "object" && Array.isArray(content)) {
+          const cleaned = await Promise.all(
+            (content as any[]).map(async (item) => {
+              if (item.type === "input_image") {
+                const { name, ...rest } = item;
+                if (rest.image_url?.startsWith("opfs://")) {
+                  try {
+                    const filename = rest.image_url.replace("opfs://", "");
+                    const opfs = await navigator.storage.getDirectory();
+                    const fileHandle = await opfs.getFileHandle(filename);
+                    const file = await fileHandle.getFile();
 
-                  console.log("Converted OPFS file to base64: %s (%s) (%d bytes)", filename, mimeType, base64.length);
-                  rest.image_url = dataUrl;
-                } catch (error) {
-                  console.error("Error reading OPFS file for OpenAI API:", error);
-                  // Fallback or rethrow? For now, let's keep the original URL which will likely fail API validation but logs the error.
+                    // Use FileReader to get data URL directly from file
+                    const dataUrl = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve(reader.result as string);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(file);
+                    });
+
+                    // Extract MIME type and base64 length for logging
+                    const mimeType = dataUrl.split(';')[0].split(':')[1];
+                    const base64 = dataUrl.split(',')[1];
+
+                    console.log("Converted OPFS file to base64: %s (%s) (%d bytes)", filename, mimeType, base64.length);
+                    rest.image_url = dataUrl;
+                  } catch (error) {
+                    console.error("Error reading OPFS file for OpenAI API:", error);
+                    // Fallback or rethrow? For now, let's keep the original URL which will likely fail API validation but logs the error.
+                  }
                 }
+                return { ...rest };
               }
-              return { ...rest };
-            }
-            return item;
-          })
-        );
-        return { role, content: cleaned } as ResponseInputItem;
-      }
-      return { role, content } as ResponseInputItem;
-    })
-  );
+              return item;
+            })
+          );
+          return { role, content: cleaned } as ResponseInputItem;
+        }
+        return { role, content } as ResponseInputItem;
+      })
+    );
+  }
 
   const tools: Tool[] = [];
 
@@ -114,6 +121,26 @@ export async function createResponse(
       "code_interpreter_call.outputs",
     ] as ResponseIncludable[],
   };
+
+  /*
+   * Filter input to only include new items if we are chaining.
+   * Currently we don't track "new" items robustly, but for approval flow:
+   * If input contains mcp_approval_response, it should be the only input if we are chaining.
+   */
+  if (parent) {
+    if (typeof parent === 'string') {
+      (response_options as any).previous_response_id = parent;
+    } else if (parent && parent.id) {
+      (response_options as any).previous_response_id = parent.id;
+    }
+
+    // If we found approval responses, send ONLY them.
+    // const approvalItems = input.filter((item: any) => item.type === 'mcp_approval_response');
+    // if (approvalItems.length > 0) {
+    //  response_options.input = approvalItems;
+    // }
+    // TODO: Handle general case of new messages + parent.
+  }
   if (options.openai.model.startsWith("gpt-5")) {
     response_options["reasoning"] = { effort: "medium", summary: "detailed" };
   }
@@ -191,6 +218,9 @@ class EventProcessor {
   setIs: (arg: any) => void;
   mainRef: any;
   stream: Stream<ResponseStreamEvent>;
+  global: Partial<GlobalState> & Partial<GlobalActions>;
+  responseId?: string;
+  approvalRequests: Map<string, { item: any; decision?: boolean }> = new Map();
   static opfs: FileSystemDirectoryHandle = null;
 
   constructor(
@@ -203,6 +233,7 @@ class EventProcessor {
     this.currentChat = currentChat;
     this.setState = setState;
     this.setIs = setIs;
+    this.global = global;
   }
 
   async initOPFS() {
@@ -368,6 +399,8 @@ class EventProcessor {
           startTime: Date.now(),
           id: event.response.id,
         };
+        this.responseId = event.response.id;
+        this.approvalRequests.clear();
         this.setState({ typeingMessage: {} });
         this.chat[this.currentChat].messages.push(message);
         this.updateChat();
@@ -419,15 +452,84 @@ class EventProcessor {
             message.toolsUsed.push(event.item);
             this.updateChat();
             break;
-          case "mcp_approval_request":
+          case "mcp_approval_request": {
             console.log("MCP Approval Request: %o", event.item);
-            toaster.create({
-              title: t("mcp_approval_request"),
-              description: t("mcp_approval_request_description"),
-              duration: 10000,
-              type: "info",
-            });
+            if (!message.toolsUsed) {
+              message.toolsUsed = [];
+            }
+            message.toolsUsed.push(event.item);
+            this.updateChat();
+
+            this.approvalRequests.set(event.item.id, { item: event.item });
+            const handleApproval = (approve: boolean) => {
+              const req = this.approvalRequests.get(event.item.id);
+              if (req) {
+                req.decision = approve;
+              }
+              // Update the item in the message toolsUsed list with the decision
+              // We must search for it because 'event.item' might be stale if 'done' event replaced it.
+              const chatMessages = this.chat[this.currentChat].messages;
+              // We can search backwards as it's likely recent
+              for (let i = chatMessages.length - 1; i >= 0; i--) {
+                const msg = chatMessages[i];
+                if (msg.toolsUsed) {
+                  const tool = msg.toolsUsed.find(t => t.id === event.item.id);
+                  if (tool) {
+                    (tool as any).approval_decision = approve;
+                    break;
+                  }
+                }
+              }
+              this.updateChat();
+
+              const responseItem = {
+                type: 'mcp_approval_response',
+                approval_request_id: event.item.id,
+                approve: approve,
+              };
+
+              const approvalMessage: Message = {
+                role: 'user',
+                sentTime: Math.floor(Date.now() / 1000),
+                startTime: Date.now(),
+                id: Date.now(), // temporary ID
+                content: [responseItem] as any
+              };
+
+              this.chat[this.currentChat].messages.push(approvalMessage);
+              this.updateChat();
+
+              // Check if all requests are decided
+              const allDecided = Array.from(this.approvalRequests.values()).every(
+                (r) => r.decision !== undefined
+              );
+
+              if (allDecided) {
+                const approvalResponses = Array.from(this.approvalRequests.values()).map(r => ({
+                  type: 'mcp_approval_response',
+                  approval_request_id: r.item.id,
+                  approve: r.decision
+                }));
+                // Trigger response generation
+                createResponse(
+                  this.global,
+                  this.responseId,
+                  approvalResponses as any
+                );
+              }
+            };
+
+            showMcpApprovalToast(
+              event.item,
+              () => { // Approve
+                handleApproval(true);
+              },
+              () => { // Deny
+                handleApproval(false);
+              }
+            );
             break;
+          }
         }
         break;
 
