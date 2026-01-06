@@ -1,3 +1,10 @@
+# [0.32.0](https://github.com/fhswf/openai-ui/compare/v0.31.0...v0.32.0) (2026-01-06)
+
+
+### Features
+
+* Implement MCP approval flow by adding a dedicated toast component, enhancing tool usage popup display, and integrating approval response handling in the service. ([b18bde2](https://github.com/fhswf/openai-ui/commit/b18bde27f3172c1c990b77e02bd5a145db6d3e9b))
+
 # [0.31.0](https://github.com/fhswf/openai-ui/compare/v0.30.1...v0.31.0) (2025-12-01)
 
 
