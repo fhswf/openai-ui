@@ -41,36 +41,45 @@ export default function Chat() {
   const { t } = useTranslation();
   const chatStyle = is?.fullScreen ? styles.full : styles.normal;
 
-  globalThis.onerror = function (message, source, lineno, colno, error) {
-    const errorMessage =
-      typeof message === "string"
-        ? message
-        : (message as ErrorEvent)?.message || "Unknown Error";
+  React.useEffect(() => {
+    const originalOnError = globalThis.onerror;
 
-    logger.emit({
-      severityNumber: SeverityNumber.ERROR,
-      severityText: "ERROR",
-      body: {
-        message: errorMessage,
-        source,
-        lineno,
-        colno,
-        stack: error?.stack?.toString(),
-      },
-      attributes: {
-        [ATTR_ERROR_TYPE]: "exception",
-        [ATTR_EXCEPTION_MESSAGE]: error?.message?.toString() || errorMessage,
-        [ATTR_EXCEPTION_STACKTRACE]: error?.stack?.toString(),
-      },
-    });
-    console.log("window.onerror: %o %o", error, error?.stack);
-    toaster.create({
-      type: "error",
-      title: "An Error Occurred",
-      description: `${errorMessage}, ${source}, ${lineno}, ${colno}`,
-    });
-    return true;
-  };
+    globalThis.onerror = function (message, source, lineno, colno, error) {
+      const errorMessage =
+        typeof message === "string"
+          ? message
+          : (message as ErrorEvent)?.message || "Unknown Error";
+
+      logger.emit({
+        severityNumber: SeverityNumber.ERROR,
+        severityText: "ERROR",
+        body: {
+          message: errorMessage,
+          source,
+          lineno,
+          colno,
+          stack: error?.stack?.toString(),
+        },
+        attributes: {
+          [ATTR_ERROR_TYPE]: "exception",
+          [ATTR_EXCEPTION_MESSAGE]: error?.message?.toString() || errorMessage,
+          [ATTR_EXCEPTION_STACKTRACE]: error?.stack?.toString(),
+        },
+      });
+      console.log("window.onerror: %o %o", error, error?.stack);
+      toaster.create({
+        type: "error",
+        title: "An Error Occurred",
+        description: `${errorMessage}, ${source}, ${lineno}, ${colno}`,
+      });
+      // Returning false to allow default error handling and propagation to Error Boundaries
+      return false;
+    };
+
+    return () => {
+      globalThis.onerror = originalOnError;
+    };
+  }, []);
 
   /**
    * Check if the user is allowed to access the chat

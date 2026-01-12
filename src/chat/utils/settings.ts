@@ -121,6 +121,7 @@ export function reduceState(state: GlobalState): GlobalState {
   // Remove any properties that are not needed in the localStorage state
   const cleanState = { ...state };
   delete cleanState.is;
+  delete cleanState.eventProcessor;
   cleanState.chat = cleanState.chat.map((chat: Chat) => {
     chat.messages = chat.messages.map((message: Message) => {
       if (message.content && Array.isArray(message.content)) {
