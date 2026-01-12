@@ -1,4 +1,5 @@
 import { GlobalState } from "./types";
+import { v7 as uuidv7 } from "uuid";
 import { initApps } from "../apps/context/initState";
 
 import i18n from "../../i18n/config";
@@ -20,7 +21,7 @@ export const initState: GlobalState = {
           // use only seconds here
           sentTime: Math.floor(Date.now() / 1000),
           role: "assistant",
-          id: Date.now(),
+          id: uuidv7(),
         },
       ],
       app: 0,

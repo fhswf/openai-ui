@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { v7 as uuidv7 } from "uuid";
 import { useTranslation } from "react-i18next";
 import { useOptions, useSendKey } from "./hooks";
 import { useGlobal } from "./context";
@@ -114,7 +115,7 @@ export function MessageInput() {
     fetch(fetchUrl, { method: "GET" })
       .then((response) => {
         if (response.headers.get("content-type")?.startsWith("image")) {
-          typeingMessage.images.push({ url, id: Date.now() + Math.random() });
+          typeingMessage.images.push({ url, id: uuidv7() });
           setState({ typeingMessage });
         } else {
           toaster.create({
@@ -171,7 +172,7 @@ export function MessageInput() {
           size: file.size,
           lastModified: file.lastModified,
           type: file.type,
-          id: Date.now() + Math.random(),
+          id: uuidv7(),
         });
         setState({ typeingMessage: newMessage });
       }

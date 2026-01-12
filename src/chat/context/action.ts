@@ -11,6 +11,7 @@ import {
 } from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
+import { v7 as uuidv7 } from "uuid";
 
 
 async function processImages(images: any[], opfs: FileSystemDirectoryHandle | null) {
@@ -95,7 +96,7 @@ export default function action(
         ...typeingMessage,
         role: "user",
         sentTime: Math.floor(Date.now() / 1000),
-        id: Date.now(),
+        id: uuidv7(),
       };
 
       if (typeingMessage.images && typeingMessage.images.length > 0) {
@@ -174,14 +175,14 @@ export default function action(
           content: newApp?.content || t("system_welcome"),
           sentTime: Math.floor(Date.now() / 1000),
           role: newApp.role,
-          id: Date.now(),
+          id: uuidv7(),
         },
       ];
 
       const chatList = [
         {
           title: newApp?.title || t("new_conversation"),
-          id: Date.now(),
+          id: uuidv7(),
           app: newApp.id,
           messages,
           ct: Date.now(),
@@ -229,7 +230,7 @@ export default function action(
       const typeingMessage = {
         ...state.typeingMessage,
         role: "user",
-        id: Date.now(),
+        id: uuidv7(),
       };
       typeingMessage.content = content;
       setState({ is: { ...state.is, typeing: true }, typeingMessage });
@@ -281,7 +282,7 @@ export default function action(
         (m) => m.id == id
       );
       console.log("editMessage: original", message);
-      const newMessage = { ...message, id: Date.now() };
+      const newMessage = { ...message, id: uuidv7() };
 
       if (Array.isArray(message.content)) {
         let textContent = "";
@@ -303,7 +304,7 @@ export default function action(
               size: 0,
               type: "image/png",
               lastModified: Date.now(),
-              id: Date.now() + Math.random(),
+              id: uuidv7(),
             });
           }
         }
