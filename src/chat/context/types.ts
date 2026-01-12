@@ -134,7 +134,7 @@ export type Messages = Message[];
 export type Chat = {
   title: string;
   app: number;
-  id: number;
+  id: number | string;
   thread?: string;
   ct: number;
   messages: Messages;

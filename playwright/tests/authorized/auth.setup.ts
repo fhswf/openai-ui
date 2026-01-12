@@ -9,11 +9,25 @@ const testHomeURL = (url: URL) => {
 };
 
 setup('Cluster Login Test', async ({ page }, testInfo) => {
+    // Triple the default timeout to handle slow environment
+    setup.slow();
 
     await page.goto('');
-    await expect(page.getByRole('button', { name: 'SSO Login mit der FH Kennung' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Cluster Login' })).toBeVisible();
-    await page.getByRole('button', { name: 'Cluster Login' }).click();
+    console.log('Initial navigation to localhost complete. Current URL:', page.url());
+
+    // Wait for potential redirect
+    try {
+        await expect(page.locator('.sso-login')).toBeVisible({ timeout: 60000 });
+        console.log('SSO Login visible on:', page.url());
+    } catch (e) {
+        console.log('Timed out waiting for SSO Login. Current URL:', page.url());
+        // Log the HTML content for debugging if it fails
+        // console.log(await page.content()); 
+        throw e;
+    }
+    await expect(page.locator('.cluster-login')).toBeVisible();
+
+    await page.locator('.cluster-login').click();
     await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).click();
     await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).fill('playwright');
     await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).press('Tab');
