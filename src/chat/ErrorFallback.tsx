@@ -15,12 +15,12 @@ import {
     ATTR_EXCEPTION_STACKTRACE,
 } from "@opentelemetry/semantic-conventions";
 
-export type ErrorFallbackProps = {
-    readonly error: Error;
-    readonly resetErrorBoundary: () => void;
-};
+export interface ErrorFallbackProps {
+    error: Error;
+    resetErrorBoundary: () => void;
+}
 
-export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
+export function ErrorFallback({ error, resetErrorBoundary }: Readonly<ErrorFallbackProps>) {
     console.log("error: %o %s", error.stack, typeof error.stack);
 
     const stackTrace = React.useMemo(() => {

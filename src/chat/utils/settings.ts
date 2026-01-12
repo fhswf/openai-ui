@@ -67,8 +67,8 @@ export function saveState(stateToSave: {
       const settingsStr = JSON.stringify(settings, replacer);
       console.log("Total settings size:", settingsStr.length);
       for (const key in settings) {
-        if (Object.prototype.hasOwnProperty.call(settings, key)) {
-          const val = (settings as any)[key];
+        if (Object.hasOwn(settings, key)) {
+          const val = (settings as unknown as Record<string, unknown>)[key];
           const s = JSON.stringify(val, replacer);
           console.log(`Key: ${key}, Size: ${s ? s.length : 0}`);
         }
