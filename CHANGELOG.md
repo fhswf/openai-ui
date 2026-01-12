@@ -1,3 +1,10 @@
+## [0.32.1](https://github.com/fhswf/openai-ui/compare/v0.32.0...v0.32.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* typo in default image proxy ([f101f02](https://github.com/fhswf/openai-ui/commit/f101f02ebe322238fcd79aea4676c50ad9c71b65))
+
 # [0.32.0](https://github.com/fhswf/openai-ui/compare/v0.31.0...v0.32.0) (2026-01-06)
 
 
