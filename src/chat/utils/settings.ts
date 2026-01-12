@@ -58,8 +58,26 @@ export function saveState(stateToSave: {
   const reducedState = reduceState(stateToSave);
   const { chat, ...settings } = reducedState;
 
-  localStorage.setItem(SESSION_KEY, JSON.stringify(settings, replacer));
-  localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chat, replacer));
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(settings, replacer));
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chat, replacer));
+  } catch (error) {
+    if (error instanceof Error && error.name === "QuotaExceededError") {
+      console.error("Quota exceeded! Analyzing sizes...");
+      const settingsStr = JSON.stringify(settings, replacer);
+      console.log("Total settings size:", settingsStr.length);
+      for (const key in settings) {
+        if (Object.prototype.hasOwnProperty.call(settings, key)) {
+          const val = (settings as any)[key];
+          const s = JSON.stringify(val, replacer);
+          console.log(`Key: ${key}, Size: ${s ? s.length : 0}`);
+        }
+      }
+      const chatStr = JSON.stringify(chat, replacer);
+      console.log("Total chat history size:", chatStr ? chatStr.length : 0);
+    }
+    throw error;
+  }
 }
 
 export async function loadState(): Promise<GlobalState> {
