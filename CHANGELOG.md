@@ -1,3 +1,14 @@
+## [0.32.2](https://github.com/fhswf/openai-ui/compare/v0.32.1...v0.32.2) (2026-01-12)
+
+
+### Bug Fixes
+
+* add missing translations ([ec05d95](https://github.com/fhswf/openai-ui/commit/ec05d952b67d4d4aaf1bc82bb76bf9d071648ded))
+* improve error handling ([715dbfa](https://github.com/fhswf/openai-ui/commit/715dbfae0fe645d98fe0dd0805a73c3e739c353a))
+* improve session storage ([41bad49](https://github.com/fhswf/openai-ui/commit/41bad4985fa2fab3964441ffb92ba859c2dc5297))
+* linting issues ([828a253](https://github.com/fhswf/openai-ui/commit/828a253db40004bce199c50c5e9c55b2bc40de9b))
+* linting issues related to id generation ([6de5789](https://github.com/fhswf/openai-ui/commit/6de57892ef05722e599467aa891576b6c58eb224))
+
 ## [0.32.1](https://github.com/fhswf/openai-ui/compare/v0.32.0...v0.32.1) (2026-01-12)
 
 
