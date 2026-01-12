@@ -138,13 +138,12 @@ export function ChatOptions() {
           <Field.Root mt="4">
             <Field.Label>{t("theme_style")}</Field.Label>
             <RadioGroup
-              data-testid="OptionDarkModeSelect"
               value={general.theme}
               onValueChange={(ev) => setGeneral({ theme: ev.value })}
             >
               <Stack direction="row">
                 {themeOptions.map((item) => (
-                  <Radio key={item.value} value={item.value}>
+                  <Radio key={item.value} value={item.value} data-testid={"themeSelect" + item.value}>
                     {item.label}
                   </Radio>
                 ))}

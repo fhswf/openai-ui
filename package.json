@@ -11,9 +11,9 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "test": "cypress run --headless --env TESTENV=CI --spec cypress/e2e/uiTest.cy.js",
-    "test:e2e:ci": "cypress run --headless --env TESTENV=CI --spec cypress/e2e/uiTest.cy.js",
-    "test:e2e:prod": "cypress run --headless --env TESTENV=PROD --spec cypress/e2e/uiTest.cy.js",
+    "test": "npx playwright test",
+    "test:e2e:ci": "npx playwright test",
+    "test:e2e:prod": "npx playwright test",
     "build-storybook": "storybook build"
   },
   "dependencies": {
