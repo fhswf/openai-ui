@@ -73,6 +73,26 @@ export const modelOptions = [
   },
 ];
 
+export const mcpPayloadOptions = {
+  Raumbuchung: {
+    allowManualInput: true,
+    Name: {
+      value: "ddddddddddd",
+      description: t(
+        "Dein Name wird an die VPIS Seite zur Raumbuchung weitergeleitet"
+      ),
+      limit: "256",
+    },
+    Email: {
+      value: "ddddddddd",
+      description: t(
+        "Deine Email wird an die VPIS Seite zur Raumbuchung weitergeleitet"
+      ),
+      limit: "256",
+    },
+  },
+};
+
 export const toolOptions: Map<string, Tool> = new Map([
   [
     "Web Search",
@@ -95,12 +115,15 @@ export const toolOptions: Map<string, Tool> = new Map([
     },
   ],
   [
-    "FH SWF (beta)",
+    "FH_SWFdddcfd",
     {
       type: "mcp",
       server_label: "FH_SWF",
       server_url: "https://mcp.fh-swf.cloud/mcp",
       require_approval: "never",
+      headers: {
+        "MCP-Payload": JSON.stringify(mcpPayloadOptions),
+      },
     },
   ],
 ]);

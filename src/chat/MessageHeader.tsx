@@ -1,7 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { Fragment, useRef, useState } from "react";
 
 import { Tool, OptionActionType } from "./context/types";
-
+import { set } from "lodash-es";
 import {
   Avatar,
   HStack,
@@ -24,10 +24,7 @@ import {
 } from "@chakra-ui/react";
 
 import { useTranslation } from "react-i18next";
-import {
-  IoLogoMarkdown,
-  IoSettingsOutline,
-} from "react-icons/io5";
+import { IoLogoMarkdown, IoSettingsOutline } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
 import {
   LuChevronRight,
@@ -42,14 +39,105 @@ import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { MessageMenu } from "./MessageMenu";
-import { modelOptions, toolOptions } from "./utils/options";
+import { mcpPayloadOptions, modelOptions, toolOptions } from "./utils/options";
+import { isValidByteLength } from "./utils/string";
 import { GitHubMenu } from "./GitHubMenu";
 import { RiChatNewLine } from "react-icons/ri";
 
-
 import "../assets/icon/style.css";
 import { UsageInformationDialog } from "./UsageInformationDialog";
+import { encryptPayload } from "./service/encryption";
 
+function renderPayloadFields(
+  payload: Record<string, Record<string, unknown>>,
+  onChange: (path: string[], value: string) => void
+): React.ReactNode {
+  return (
+    <>
+      {Object.entries(payload).map(([categoryKey, category]) => {
+        const allowManualInput = category.allowManualInput !== false;
+
+        return (
+          <Fragment key={categoryKey}>
+            <Field.Label fontWeight="bold">{categoryKey}</Field.Label>
+            {Object.entries(category)
+              .filter(
+                ([key, value]) =>
+                  key !== "allowManualInput" &&
+                  typeof value === "object" &&
+                  value !== null
+              )
+              .map(([fieldKey, config]) => {
+                const fieldConfig = config as {
+                  value: string;
+                  data?: string;
+                  description: string;
+                  limit: string;
+                };
+
+                return (
+                  <Field.Root key={fieldKey} orientation="horizontal">
+                    {allowManualInput ? (
+                      <>
+                        <Field.Label>{fieldKey}</Field.Label>
+                        <Input
+                          className={styles.input}
+                          value={fieldConfig.value}
+                          placeholder={fieldConfig.description}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            const maxBytes = parseInt(fieldConfig.limit, 10);
+
+                            if (isValidByteLength(newValue, maxBytes)) {
+                              onChange(
+                                [categoryKey, fieldKey, "value"],
+                                newValue
+                              );
+                            } else {
+                              console.warn("Byte-Limit erreicht");
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            onChange([categoryKey, fieldKey, "value"], "")
+                          }
+                        >
+                          <MdDelete />
+                        </Button>
+                      </>
+                    ) : (
+                      <Checkbox.Root
+                        checked={fieldConfig.value !== ""}
+                        onCheckedChange={(details) => {
+                          onChange(
+                            [categoryKey, fieldKey, "value"],
+                            details.checked ? fieldConfig.data ?? "" : ""
+                          );
+                        }}
+                        cursor="pointer"
+                      >
+                        <Checkbox.HiddenInput />
+                        <Checkbox.Control />
+                        <Checkbox.Label>
+                          <Text fontWeight="medium">{fieldKey}</Text>
+                          <Text fontSize="sm" color="fg.muted">
+                            {fieldConfig.description}
+                          </Text>
+                        </Checkbox.Label>
+                      </Checkbox.Root>
+                    )}
+                  </Field.Root>
+                );
+              })}
+          </Fragment>
+        );
+      })}
+    </>
+  );
+}
 export function MessageHeader() {
   const {
     is,
@@ -78,6 +166,7 @@ export function MessageHeader() {
     server_url: "",
     require_approval: "never",
     allowed_tools: [],
+    headers: {} as { [key: string]: string } | null,
   });
 
   const approval_options = createListCollection({
@@ -122,27 +211,60 @@ export function MessageHeader() {
 
   function editTool(key: string, tool: Tool.Mcp): void {
     console.log("Edit tool: %s %o", key, tool);
+
+    const mcpPayload = tool.headers?.["MCP-Payload"];
+    let payloadString = "";
+
+    if (mcpPayload) {
+      if (typeof mcpPayload === "string") {
+        try {
+          // Versuchen als JSON zu parsen
+          JSON.parse(mcpPayload);
+          payloadString = mcpPayload;
+        } catch {
+          // Verschlüsselter String - leere Vorlage anzeigen
+          console.log("Payload is encrypted, using empty template");
+          payloadString = JSON.stringify(mcpPayloadOptions);
+        }
+      } else if (typeof mcpPayload === "object") {
+        // Direktes Objekt (unverschlüsselt)
+        payloadString = JSON.stringify(mcpPayload);
+      }
+    } else {
+      // Kein Payload vorhanden
+      payloadString = JSON.stringify(mcpPayloadOptions);
+    }
+
     setMcpToolForm({
       label: tool.server_label || "",
       server_url: tool.server_url || "",
       require_approval: (tool.require_approval as string) || "never",
       allowed_tools: (tool.allowed_tools as string[]) || [],
+      headers: {
+        payload: payloadString,
+      },
     });
     setEditMCPServices(true);
   }
 
-  function handleAddService() {
+  async function handleAddService() {
     console.log("Add/Save MCP Service", mcpToolForm);
     if (!mcpToolForm.label || !mcpToolForm.server_url) {
       alert(t("Please fill in all required fields"));
       return;
     }
 
+    const payload = JSON.parse(mcpToolForm.headers?.payload || "{}");
+    const encryptedPayload = await encryptPayload(payload);
+
     const newTool: Tool.Mcp = {
       type: "mcp",
       server_label: mcpToolForm.label,
       server_url: mcpToolForm.server_url,
       require_approval: mcpToolForm.require_approval as "always" | "never",
+      headers: {
+        "MCP-Payload": JSON.stringify(encryptedPayload),
+      },
     };
 
     if (mcpToolForm.allowed_tools && mcpToolForm.allowed_tools.length > 0) {
@@ -415,7 +537,38 @@ export function MessageHeader() {
                         }
                       />
                     </Field.Root>
+
+                    {mcpToolForm.headers?.payload && (
+                      <Field.Root>
+                        <Field.Label fontWeight="bold">
+                          {t("Geschützte Daten")}
+                        </Field.Label>
+                        <Field.HelperText mb={2}>
+                          {t(
+                            "Werden an FH SWF MCP-Server weitergeleitet und werden verschlüsselt versendet, sind aber löschbar."
+                          )}
+                        </Field.HelperText>
+
+                        {renderPayloadFields(
+                          JSON.parse(mcpToolForm.headers.payload),
+                          (path, newValue) => {
+                            const parsed = JSON.parse(
+                              mcpToolForm.headers?.payload || "{}"
+                            );
+                            set(parsed, path, newValue);
+                            setMcpToolForm((f) => ({
+                              ...f,
+                              headers: {
+                                ...f.headers,
+                                payload: JSON.stringify(parsed),
+                              },
+                            }));
+                          }
+                        )}
+                      </Field.Root>
+                    )}
                   </Stack>
+
                   <Button onClick={handleAddService} colorPalette="blue">
                     {t("Add/Save Service")}
                   </Button>
@@ -546,8 +699,6 @@ export function MessageHeader() {
         </Menu.Content>
       </Menu.Root>
       <GitHubMenu />
-
-
 
       <UsageInformationDialog />
 
