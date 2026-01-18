@@ -72,27 +72,6 @@ export const modelOptions = [
     value: "gpt-3.5-turbo",
   },
 ];
-
-export const mcpPayloadOptions = {
-  Raumbuchung: {
-    allowManualInput: true,
-    Name: {
-      value: "ddddddddddd",
-      description: t(
-        "Dein Name wird an die VPIS Seite zur Raumbuchung weitergeleitet"
-      ),
-      limit: "256",
-    },
-    Email: {
-      value: "ddddddddd",
-      description: t(
-        "Deine Email wird an die VPIS Seite zur Raumbuchung weitergeleitet"
-      ),
-      limit: "256",
-    },
-  },
-};
-
 export const toolOptions: Map<string, Tool> = new Map([
   [
     "Web Search",
@@ -115,15 +94,12 @@ export const toolOptions: Map<string, Tool> = new Map([
     },
   ],
   [
-    "FH_SWFdddcfd",
+    "FH_SWF",
     {
       type: "mcp",
       server_label: "FH_SWF",
       server_url: "https://mcp.fh-swf.cloud/mcp",
       require_approval: "never",
-      headers: {
-        "MCP-Payload": JSON.stringify(mcpPayloadOptions),
-      },
     },
   ],
 ]);

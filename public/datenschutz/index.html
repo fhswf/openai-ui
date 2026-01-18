@@ -2,57 +2,100 @@
 <html lang="de">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Datenschutz</title>
-    <link rel="stylesheet" href="/css/style.css">
+ <meta charset="UTF-8">
+ <title>Datenschutz</title>
+ <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body>
-    <h1>Datenschutzhinweise</h1>
+<h1>Datenschutzhinweise</h1>
 
-       <p>Diese Anwendung ermöglicht den Zugriff auf die Chat-Funktion von
-        <a href="https://openai.com">OpenAI</a> (inklusive <em>gpt-4o-mini</em>) <strong>ohne Übertragung von personenbezogenen Daten des Benutzers
-        an OpenAI</strong>.</p>
-        <p>Technisch wird dies durch die Verwendung eines API-Schlüssels erreicht, der in der Anwendung hinterlegt ist.
-        Aus Sicht von OpenAI lassen sich die Anfragen an die API lediglich auf den API-Schlüssel der
-        Fachhochschule Südwestfalen zurückführen, sodass die Anfragen nicht auf
-        eine einzelne Benutzer*in zurückgeführt werden können.</p>
-        <p>Die Nutzung der Anwendung unterliegt der
-        <strong><a href="https://publikationen.fhb.fh-swf.de/servlets/MCRFileNodeServlet/fhswf_derivate_00002553/Nr.%201328%20vom%2013.02.2025%20-%20Nutzungsordnung%20der%20FH%20SWF%20f%C3%BCr%20den%20OpenAI-Proxy%20KImpuls-Chatb.pdf">Nutzungsordnung</a></strong>.
-        Diese regelt unter anderem, dass <strong>keine sensiblen Daten in den Chat eingegeben werden dürfen</strong>, da OpenAI die Inhalte der Nachrichten “sieht” und für eine gewisse Zeir speichert (s.u.).</p>
-      
-        <h2>Verarbeitung personenbezogener Daten</h2>
-        <p>Die Anwendung leitet keine personenbezogenen Daten (etwa den Benutzername oder die IP-Adresse) an OpenAI
-        oder andere Dritte weiter.</p>
-        <p>Bei der Nutzung des OpenAI-Proxy werden gemäß <a href="https://publikationen.fhb.fh-swf.de/servlets/MCRFileNodeServlet/fhswf_derivate_00002553/Nr.%201328%20vom%2013.02.2025%20-%20Nutzungsordnung%20der%20FH%20SWF%20f%C3%BCr%20den%20OpenAI-Proxy%20KImpuls-Chatb.pdf">Nutzungsordnung</a>
-        folgende personenbezogene Daten verarbeitet:</p>
-        <ol>
-        <li>Vor- und Nachname,</li>
-        <li>Benutzerkennung,</li>
-        <li>E-Mail-Adresse,</li>
-        <li>Scoped Affiliation (Statusgruppe innerhalb der Hochschule),</li>
-        <li>verwendetes KI-Modell,</li>
-        <li>Anzahl und Datum der API-Aufrufe,</li>
-        <li>IP-Adresse</li>
-        </ol>
-        <p>Die Chat-Verläufe werden lokal auf Ihrem Gerät (im <code>LocalStorage</code> des Browsers) gespeichert.
-        Die Anwendung der FH speichert lediglich statistische
-        Informationen wie die Zahl und der von einer Benutzer*in versendeten Nachrichten.</p>
-        <p>Laut den <a href="https://openai.com/api-data-privacy">Nutzungsbedingungen von OpenAI</a> werden eingegebene Texte von
-        OpenAI nicht für Trainingszwecke verwendet.
-        Seitens OpenAI wird der Zugriff auf die API protokolliert, um die Nutzung zu überwachen und die Einhaltung der
-        Nutzungsbedingungen sicherzustellen.</p>
+<p>Diese Anwendung ermöglicht den Zugriff auf die Chat-Funktion von
+ <a href="https://openai.com">OpenAI</a> (inklusive <em>gpt-4o-mini</em>) <strong>ohne Übertragung von
+  personenbezogenen Daten des Benutzers
+  an OpenAI</strong>.</p>
+<p>Technisch wird dies durch die Verwendung eines API-Schlüssels erreicht, der in der Anwendung hinterlegt ist.
+ Aus Sicht von OpenAI lassen sich die Anfragen an die API lediglich auf den API-Schlüssel der
+ Fachhochschule Südwestfalen zurückführen, sodass die Anfragen nicht auf
+ eine einzelne Benutzer*in zurückgeführt werden können.</p>
+<p>Die Nutzung der Anwendung unterliegt der
+ <strong><a
+         href="https://publikationen.fhb.fh-swf.de/servlets/MCRFileNodeServlet/fhswf_derivate_00002553/Nr.%201328%20vom%2013.02.2025%20-%20Nutzungsordnung%20der%20FH%20SWF%20f%C3%BCr%20den%20OpenAI-Proxy%20KImpuls-Chatb.pdf">Nutzungsordnung</a></strong>.
+ Diese regelt unter anderem, dass <strong>keine sensiblen Daten in den Chat eingegeben werden dürfen</strong>,
+ da OpenAI die Inhalte der Nachrichten "sieht" und für eine gewisse Zeit speichert (s.u.).</p>
 
-        <h2>Cookies</h2>
-        <p>Die Anwendung verwendet lediglich technisch notwendige Session-Cookies, um die Funktionalität der
-        Anwendung zu gewährleisten (Anmeldung an der Anwendung).</p>
-        
-        <h2>Quellcode</h2>
-        <p>Der Quellcode der Anwendung ist auf GitHub in folgenden Repositories verfügbar:</p>
-        <ul>
-        <li>Chat-Client: <a href="https://github.com/fhswf/openai-ui">github.com/fhswf/openai-ui</a></li>
-        <li>Proxy-Server: <a href="https://github.com/fhswf/openai-proxy">github.com/fhswf/openai-proxy</a></li>
-        </ul>
+<h2>Verarbeitung personenbezogener Daten</h2>
+<p>Die Anwendung leitet keine personenbezogenen Daten (etwa den Benutzername oder die IP-Adresse) an OpenAI
+ oder andere Dritte weiter.</p>
+<p>Bei der Nutzung des OpenAI-Proxy werden gemäß <a
+        href="https://publikationen.fhb.fh-swf.de/servlets/MCRFileNodeServlet/fhswf_derivate_00002553/Nr.%201328%20vom%2013.02.2025%20-%20Nutzungsordnung%20der%20FH%20SWF%20f%C3%BCr%20den%20OpenAI-Proxy%20KImpuls-Chatb.pdf">Nutzungsordnung</a>
+ folgende personenbezogene Daten verarbeitet:</p>
+<ol>
+ <li>Vor- und Nachname,</li>
+ <li>Benutzerkennung,</li>
+ <li>E-Mail-Adresse,</li>
+ <li>Scoped Affiliation (Statusgruppe innerhalb der Hochschule),</li>
+ <li>verwendetes KI-Modell,</li>
+ <li>Anzahl und Datum der API-Aufrufe,</li>
+ <li>IP-Adresse</li>
+</ol>
+<p>Die Chat-Verläufe werden lokal auf Ihrem Gerät (im <code>LocalStorage</code> des Browsers) gespeichert.
+ Die Anwendung der FH speichert lediglich statistische
+ Informationen wie die Zahl und der von einer Benutzer*in versendeten Nachrichten.</p>
+<p>Laut den <a href="https://openai.com/api-data-privacy">Nutzungsbedingungen von OpenAI</a> werden eingegebene
+ Texte von
+ OpenAI nicht für Trainingszwecke verwendet.
+ Seitens OpenAI wird der Zugriff auf die API protokolliert, um die Nutzung zu überwachen und die Einhaltung der
+ Nutzungsbedingungen sicherzustellen.</p>
+
+<h2>MCP-Dienste und Benutzerdatenübertragung</h2>
+<p>Die Anwendung unterstützt die Anbindung von <strong>MCP-Servern</strong> (Model Context Protocol), die erweiterte
+ Funktionen wie Raumbuchungen, Terminvereinbarungen oder personalisierte Informationsabfragen ermöglichen.</p>
+
+<h3>Optionale Datenübertragung</h3>
+<p>Die Übertragung von Benutzerdaten an MCP-Server ist <strong>freiwillig</strong> und erfolgt nur nach
+ <strong>ausdrücklicher Einwilligung</strong> des Nutzers. Ohne Ihre Zustimmung werden keine personenbezogenen
+ Daten an MCP-Server übertragen.</p>
+<p>Sie können individuell auswählen, welche der folgenden Daten übertragen werden sollen:</p>
+<ul>
+ <li>Ihr vollständiger Name</li>
+ <li>Ihre Hochschul-E-Mail-Adresse</li>
+ <li>Ihre Benutzerkennung</li>
+ <li>Ihre eindeutige Benutzer-ID</li>
+ <li>Ihre Zugehörigkeiten und Rollen an der Hochschule</li>
+</ul>
+
+<h3>Ende-zu-Ende-Verschlüsselung</h3>
+<p>Übertragene Benutzerdaten werden <strong>Ende-zu-Ende verschlüsselt</strong>. Dies bedeutet:</p>
+<ul>
+ <li>Die Daten werden vor der Übertragung verschlüsselt</li>
+ <li><strong>Nur autorisierte MCP-Server der FH Südwestfalen</strong> können die Daten entschlüsseln</li>
+ <li>OpenAI, andere LLM-Anbieter oder unbefugte Dritte können die verschlüsselten Daten <strong>nicht</strong>
+  lesen</li>
+ <li>Die Verschlüsselung erfolgt mit einem öffentlichen Schlüssel, der nur den autorisierten MCP-Servern der FH
+  bekannt ist</li>
+</ul>
+
+<h3>Widerruf der Einwilligung</h3>
+<p>Sie können Ihre Einwilligung zur Datenübertragung <strong>jederzeit widerrufen</strong>, indem Sie:</p>
+<ol>
+ <li>Die Autorisierungseinstellungen des jeweiligen MCP-Dienstes aufrufen</li>
+ <li>Die Option "Keine" auswählen oder die gewünschten Felder abwählen</li>
+ <li>Die Änderungen speichern</li>
+</ol>
+<p>Nach dem Widerruf werden bei zukünftigen Anfragen keine personenbezogenen Daten mehr an den
+ betreffenden MCP-Server übertragen.</p>
+
+<h2>Cookies</h2>
+<p>Die Anwendung verwendet lediglich technisch notwendige Session-Cookies, um die Funktionalität der
+ Anwendung zu gewährleisten (Anmeldung an der Anwendung).</p>
+
+<h2>Quellcode</h2>
+<p>Der Quellcode der Anwendung ist auf GitHub in folgenden Repositories verfügbar:</p>
+<ul>
+ <li>Chat-Client: <a href="https://github.com/fhswf/openai-ui">github.com/fhswf/openai-ui</a></li>
+ <li>Proxy-Server: <a href="https://github.com/fhswf/openai-proxy">github.com/fhswf/openai-proxy</a></li>
+</ul>
 
 </body>
 

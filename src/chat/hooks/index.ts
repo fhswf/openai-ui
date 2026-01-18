@@ -5,3 +5,4 @@ export * from "./useWindowTheme";
 export * from "./useSendKey";
 export * from "./useOptions";
 export * from "./useHistory";
+export * from "./useMcpAuth";

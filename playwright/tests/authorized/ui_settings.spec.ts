@@ -209,3 +209,189 @@ test.describe("Config Menu", () => {
     });
 
 });
+test.describe("MCP Services", () => {
+    const mockUser = {
+        name: "Christian Gawron",
+        email: "gawron.christian@fh-swf.de",
+        sub: "8414053a-25d6-482b-901f-b676d810ebca",
+        preferred_username: "chgaw002",
+        affiliations: {
+            "fh-swf.de": ["affiliate", "faculty", "employee", "member"]
+        }
+    };
+
+    test.beforeEach(async ({ page }) => {
+        await page.route("**/api/user", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify(mockUser),
+            });
+        });
+
+        await page.route("**/api/user/encrypted-token", async (route) => {
+            const request = route.request();
+            const postData = JSON.parse(request.postData() || '{}');
+            await route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify({
+                    token: `encrypted-token-${postData.fields?.join('-') || 'empty'}`
+                }),
+            });
+        });
+        await page.goto("/");
+        await expect(page.getByTestId("LeftSideBar")).toBeVisible({ timeout: 10000 });
+
+        const termsBtn = page.getByTestId("accept-terms-btn");
+        if (await termsBtn.isVisible()) {
+            await termsBtn.click();
+        }
+    });
+    async function openMcpDialog(page) {
+        await page.getByTestId("chat-options-btn").click();
+        await page.getByTestId("mcp-services-menu-trigger").click();
+        await page.getByTestId("mcp-add-remove-services").click();
+    }
+
+    test("should display MCP dialog with all form fields", async ({ page }) => {
+        await openMcpDialog(page);
+
+        await expect(page.locator('input[name="label"]')).toBeVisible();
+        await expect(page.locator('input[name="server_url"]')).toBeVisible();
+        await expect(page.getByTestId("mcp-require-approval-trigger")).toBeVisible();
+        await expect(page.locator('input[name="allowed_tools"]')).toBeVisible();
+        await expect(page.getByTestId("mcp-auth-mode-group")).toBeVisible();
+    });
+
+    test("should handle all authorization mode transitions", async ({ page }) => {
+        await openMcpDialog(page);
+
+        await page.getByTestId("mcp-auth-mode-static").click();
+        await expect(page.getByTestId("mcp-auth-static-token-input")).toBeVisible();
+        await page.getByTestId("mcp-auth-static-token-input").fill("test-token");
+
+        await page.getByTestId("mcp-auth-mode-user-data").click();
+        await expect(page.getByTestId("mcp-auth-static-token-input")).not.toBeVisible();
+        await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
+
+        await expect(page.getByTestId("mcp-auth-field-name")).toBeVisible();
+        await expect(page.getByTestId("mcp-auth-field-email")).toBeVisible();
+
+        const emailControl = page.getByTestId("mcp-auth-field-email-control");
+        await page.getByTestId("mcp-auth-field-email").click();
+        await expect(emailControl).toBeChecked();
+        await page.getByTestId("mcp-auth-field-email").click();
+        await expect(emailControl).not.toBeChecked();
+
+        await page.getByTestId("mcp-auth-mode-none").click();
+        await expect(page.getByTestId("mcp-auth-fields-container")).not.toBeVisible();
+    });
+    test("should validate required fields before adding service", async ({ page }) => {
+        let alertCount = 0;
+        page.on('dialog', async dialog => {
+            expect(dialog.message()).toContain('required');
+            alertCount++;
+            await dialog.accept();
+        });
+
+        await openMcpDialog(page);
+
+        await page.getByTestId("mcp-add-service-btn").click();
+
+        await page.locator('input[name="server_url"]').fill("https://example.com");
+        await page.getByTestId("mcp-add-service-btn").click();
+
+        await page.locator('input[name="server_url"]').clear();
+        await page.locator('input[name="label"]').fill("Test");
+        await page.getByTestId("mcp-add-service-btn").click();
+
+        expect(alertCount).toBeGreaterThanOrEqual(2);
+    });
+
+    test("should edit, update, and delete MCP service", async ({ page }) => {
+        await openMcpDialog(page);
+
+        await page.locator('input[name="label"]').fill("Original Service");
+        await page.locator('input[name="server_url"]').fill("https://original.example.com");
+        await page.locator('input[name="allowed_tools"]').fill("read, write");
+        await page.getByTestId("mcp-add-service-btn").click();
+        await expect(page.getByText("Original Service")).toBeVisible();
+
+        await page.getByTestId("mcp-edit-Original Service").click();
+        await expect(page.locator('input[name="label"]')).toHaveValue("Original Service");
+        await expect(page.locator('input[name="server_url"]')).toHaveValue("https://original.example.com");
+        await expect(page.locator('input[name="allowed_tools"]')).toHaveValue("read,write");
+
+        await page.locator('input[name="label"]').clear();
+        await page.locator('input[name="label"]').fill("Updated Service");
+        await page.locator('input[name="server_url"]').clear();
+        await page.locator('input[name="server_url"]').fill("https://updated.example.com");
+        await page.getByTestId("mcp-auth-mode-static").click();
+        await page.getByTestId("mcp-auth-static-token-input").fill("new-token");
+
+        await page.getByTestId("mcp-add-service-btn").click();
+        await expect(page.getByText("Updated Service")).toBeVisible();
+
+        await page.getByTestId("mcp-delete-Updated Service").click();
+        await expect(page.getByText("Updated Service")).not.toBeVisible();
+    });
+
+    test("should handle edge cases gracefully", async ({ page }) => {
+        await openMcpDialog(page);
+
+        await page.locator('input[name="label"]').fill("Edge Case Service");
+        await page.locator('input[name="server_url"]').fill("https://edge.example.com");
+        await page.getByTestId("mcp-auth-mode-static").click();
+        await page.getByTestId("mcp-auth-static-token-input").fill("   ");
+        await page.getByTestId("mcp-add-service-btn").click();
+        await expect(page.getByText("Edge Case Service")).toBeVisible();
+
+        await page.locator('input[name="label"]').fill("No Fields Service");
+        await page.locator('input[name="server_url"]').fill("https://nofields.example.com");
+        await page.getByTestId("mcp-auth-mode-user-data").click();
+        await page.getByTestId("mcp-add-service-btn").click();
+        await expect(page.getByText("No Fields Service")).toBeVisible();
+
+        const serviceRow = page.locator('text=Edge Case Service').locator('..');
+        const checkbox = serviceRow.locator('[data-part="control"]').first();
+        await checkbox.click();
+        await expect(checkbox).toHaveAttribute('data-state', 'checked');
+        await checkbox.click();
+        await expect(checkbox).toHaveAttribute('data-state', 'unchecked');
+    });
+
+    test("should handle API errors when fetching encrypted token", async ({ page }) => {
+        await page.route("**/api/user/encrypted-token", async (route) => {
+            await route.fulfill({
+                status: 500,
+                contentType: "application/json",
+                body: JSON.stringify({ error: "Server error" }),
+            });
+        });
+
+        await openMcpDialog(page);
+
+        await page.locator('input[name="label"]').fill("Error Service");
+        await page.locator('input[name="server_url"]').fill("https://error.example.com");
+        await page.getByTestId("mcp-auth-mode-user-data").click();
+        await page.getByTestId("mcp-auth-field-email").click();
+        await page.getByTestId("mcp-add-service-btn").click();
+
+        await expect(page.locator('input[name="label"]')).toBeVisible();
+    });
+
+    test("should edit service with user-data auth and preserve config", async ({ page }) => {
+        await openMcpDialog(page);
+
+        await page.locator('input[name="label"]').fill("Preserved Auth Service");
+        await page.locator('input[name="server_url"]').fill("https://preserved.example.com");
+        await page.getByTestId("mcp-auth-mode-user-data").click();
+        await page.getByTestId("mcp-auth-field-email").click();
+        await page.getByTestId("mcp-add-service-btn").click();
+
+        await page.getByTestId("mcp-edit-Preserved Auth Service").click();
+        await expect(page.locator('input[name="label"]')).toHaveValue("Preserved Auth Service");
+        await expect(page.locator('input[name="server_url"]')).toHaveValue("https://preserved.example.com");
+    });
+});
