@@ -72,6 +72,7 @@ export const modelOptions = [
     value: "gpt-3.5-turbo",
   },
 ];
+
 export const toolOptions: Map<string, Tool> = new Map([
   [
     "Web Search",
@@ -94,7 +95,7 @@ export const toolOptions: Map<string, Tool> = new Map([
     },
   ],
   [
-    "FH_SWF",
+    "FH SWF (beta)",
     {
       type: "mcp",
       server_label: "FH_SWF",
