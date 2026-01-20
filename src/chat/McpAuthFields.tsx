@@ -18,7 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { McpAuthConfig, McpAuthMode } from "@/chat/context/types";
 import React, { useState } from "react";
-import { t } from "i18next";
+import { useTranslation } from "react-i18next";
 import { LuLock, LuShieldCheck } from "react-icons/lu";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -51,6 +51,7 @@ export function McpAuthFields({
   userFields,
   user,
 }: McpAuthFieldsProps) {
+  const { t } = useTranslation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
   const handleModeChange = (details: { value: string }) => {
@@ -108,7 +109,7 @@ export function McpAuthFields({
     <>
       <Fieldset.Root size="sm">
         <Fieldset.Legend fontSize="sm" fontWeight="semibold">
-          {t("Autorisierung")}
+          {t("authorization")}
         </Fieldset.Legend>
 
         <Fieldset.Content mt={2}>
@@ -124,7 +125,7 @@ export function McpAuthFields({
                   <RadioGroup.ItemHiddenInput />
                   <RadioGroup.ItemControl />
                   <RadioGroup.ItemText fontSize="sm">
-                    {t("Keine")}
+                    {t("None")}
                   </RadioGroup.ItemText>
                 </HStack>
               </RadioGroup.Item>
@@ -137,7 +138,7 @@ export function McpAuthFields({
                   <RadioGroup.ItemHiddenInput />
                   <RadioGroup.ItemControl />
                   <RadioGroup.ItemText fontSize="sm">
-                    {t("Statisches Token")}
+                    {t("static_token")}
                   </RadioGroup.ItemText>
                 </HStack>
               </RadioGroup.Item>
@@ -148,7 +149,7 @@ export function McpAuthFields({
                     data-testid="mcp-auth-static-token-input"
                     value={config.staticToken || ""}
                     onChange={handleTokenChange}
-                    placeholder={t("Token eingeben...")}
+                    placeholder={t("enter_token")}
                     size="sm"
                   />
                 </Box>
@@ -162,11 +163,11 @@ export function McpAuthFields({
                   <RadioGroup.ItemHiddenInput />
                   <RadioGroup.ItemControl />
                   <RadioGroup.ItemText fontSize="sm">
-                    {t("Benutzerdaten")}
+                    {t("user_data")}
                   </RadioGroup.ItemText>
                   <Badge colorPalette="green" size="sm" variant="subtle">
                     <Icon as={LuLock} boxSize={3} />
-                    {t("verschlüsselt")}
+                    {t("encrypted")}
                   </Badge>
                 </HStack>
               </RadioGroup.Item>
@@ -184,14 +185,14 @@ export function McpAuthFields({
                     >
                       <Icon as={LuShieldCheck} flexShrink={0} />
                       <Text>
-                        {t("Nur autorisierte FH-Server können entschlüsseln.")}{" "}
+                        {t("only_authorized_servers_can_decrypt")}{" "}
                         <Link
                           color="blue.600"
                           onClick={() => setPrivacyOpen(true)}
                           cursor="pointer"
                           textDecoration="underline"
                         >
-                          {t("Mehr erfahren")}
+                          {t("learn_more")}
                         </Link>
                       </Text>
                     </HStack>
@@ -245,7 +246,7 @@ export function McpAuthFields({
 
                     <Text fontSize="xs" color="gray.500">
                       {config.selectedFields.length}/{userFields.length}{" "}
-                      {t("ausgewählt")}
+                      {t("selected")}
                     </Text>
                   </Stack>
                 </Box>
@@ -265,7 +266,7 @@ export function McpAuthFields({
           <Dialog.Positioner>
             <Dialog.Content>
               <Dialog.Header>
-                <Dialog.Title>{t("Datenschutzhinweise")}</Dialog.Title>
+                <Dialog.Title>{t("privacy_notice")}</Dialog.Title>
               </Dialog.Header>
               <Dialog.Body className="z-ui-markdown">
                 <Markdown remarkPlugins={[remarkGfm]}>
@@ -277,7 +278,7 @@ export function McpAuthFields({
                   colorPalette="blue"
                   onClick={() => setPrivacyOpen(false)}
                 >
-                  {t("Verstanden")}
+                  {t("Understood")}
                 </Button>
               </Dialog.Footer>
               <Dialog.CloseTrigger asChild>

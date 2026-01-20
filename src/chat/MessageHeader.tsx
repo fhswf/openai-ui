@@ -71,14 +71,14 @@ export function MessageHeader() {
 
   const [editMCPServices, setEditMCPServices] = useState(false);
 
-  const { getAuthorization, userFields } = useMcpAuth();
+  const { getAuthorization, userFields } = useMcpAuth(user);
 
   const [mcpToolForm, setMcpToolForm] = useState({
     label: "",
     server_url: "",
     require_approval: "never",
     allowed_tools: [],
-    authConfig: { mode: "none", selectedFields: [] } as McpAuthConfig,  // ← Fix property name
+    authConfig: { mode: "none", selectedFields: [] } as McpAuthConfig,
   });
 
   const approval_options = createListCollection({
@@ -155,7 +155,8 @@ export function MessageHeader() {
 
     console.log("newTool:", newTool);
     tools.set(mcpToolForm.label, newTool);
-    const authConfigs = options.openai.mcpAuthConfigs || new Map<string, McpAuthConfig>();
+    const authConfigs =
+      options.openai.mcpAuthConfigs || new Map<string, McpAuthConfig>();
     authConfigs.set(mcpToolForm.label, mcpToolForm.authConfig);
     setOptions({
       type: OptionActionType.OPENAI,
@@ -238,7 +239,11 @@ export function MessageHeader() {
 
       <Menu.Root>
         <Menu.Trigger asChild>
-          <IconButton variant="ghost" title={t("chat_options")} data-testid="chat-options-btn">
+          <IconButton
+            variant="ghost"
+            title={t("chat_options")}
+            data-testid="chat-options-btn"
+          >
             <CgOptions aria-label={t("chat_options")} />
           </IconButton>
         </Menu.Trigger>
@@ -297,8 +302,11 @@ export function MessageHeader() {
                         </Menu.CheckboxItem>
                       ))}
 
-                      <Menu.Item onClick={editMCP} value="edit_mcp_services"
-                                 data-testid="mcp-add-remove-services">
+                      <Menu.Item
+                        onClick={editMCP}
+                        value="edit_mcp_services"
+                        data-testid="mcp-add-remove-services"
+                      >
                         {t("Add/Remove MCP Services")}
                       </Menu.Item>
                     </Menu.Content>
@@ -311,7 +319,7 @@ export function MessageHeader() {
       </Menu.Root>
 
       <Dialog.Root
-          data-testid="mcp-services-dialog"
+        data-testid="mcp-services-dialog"
         open={editMCPServices}
         onOpenChange={(e) => setEditMCPServices(e.open)}
         lazyMount
@@ -364,7 +372,7 @@ export function MessageHeader() {
                     </Field.Root>
                     <Field.Root>
                       <Select.Root
-                          data-testid="mcp-require-approval-select"
+                        data-testid="mcp-require-approval-select"
                         collection={approval_options}
                         size="sm"
                         width="320px"
@@ -427,15 +435,18 @@ export function MessageHeader() {
                     </Field.Root>
                   </Stack>
                   <McpAuthFields
-                      config={mcpToolForm.authConfig}
-                      onChange={(authConfig) =>
-                          setMcpToolForm((f) => ({ ...f, authConfig }))
-                      }
-                      userFields={userFields}
-                      user={user}
+                    config={mcpToolForm.authConfig}
+                    onChange={(authConfig) =>
+                      setMcpToolForm((f) => ({ ...f, authConfig }))
+                    }
+                    userFields={userFields}
+                    user={user}
                   />
-                  <Button data-testid="mcp-add-service-btn"
-                          onClick={handleAddService} colorPalette="blue">
+                  <Button
+                    data-testid="mcp-add-service-btn"
+                    onClick={handleAddService}
+                    colorPalette="blue"
+                  >
                     {t("Add/Save Service")}
                   </Button>
                 </Stack>
@@ -476,7 +487,7 @@ export function MessageHeader() {
                         </HStack>
                         <HStack gap={1} alignItems="center">
                           <Button
-                              data-testid={`mcp-edit-${key}`}
+                            data-testid={`mcp-edit-${key}`}
                             variant="ghost"
                             size="sm"
                             onClick={() => {
@@ -486,7 +497,7 @@ export function MessageHeader() {
                             <MdEdit />
                           </Button>
                           <Button
-                              data-testid={`mcp-delete-${key}`}
+                            data-testid={`mcp-delete-${key}`}
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteService(key)}

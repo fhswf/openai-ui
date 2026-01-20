@@ -1,10 +1,15 @@
 import { McpAuthConfig } from "../context/types";
+import { useGlobal } from "../context";
 
 export interface UseMcpAuthReturn {
   getAuthorization: (config: McpAuthConfig) => Promise<string | undefined>;
+
+  userFields: string[];
 }
 
 export function useMcpAuth(): UseMcpAuthReturn {
+  const { user } = useGlobal();
+
   const getAuthorization = async (
     config: McpAuthConfig
   ): Promise<string | undefined> => {
@@ -21,11 +26,14 @@ export function useMcpAuth(): UseMcpAuthReturn {
         }
 
         try {
-          const res = await fetch("/api/user/encrypted-token", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fields: config.selectedFields }),
-          });
+          const res = await fetch(
+            `${import.meta.env.VITE_USER_URL}/encrypted-token`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ fields: config.selectedFields }),
+            }
+          );
 
           if (!res.ok) {
             console.error(
@@ -47,6 +55,7 @@ export function useMcpAuth(): UseMcpAuthReturn {
         return undefined;
     }
   };
+  const userFields = user ? Object.keys(user) : [];
 
-  return { getAuthorization };
+  return { getAuthorization, userFields };
 }
