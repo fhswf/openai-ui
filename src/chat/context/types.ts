@@ -49,6 +49,7 @@ export type OpenAIOptions = {
   stream: boolean;
   tools: Map<string, Tool>;
   toolsEnabled: Set<string>;
+  mcpAuthConfigs: Map<string, McpAuthConfig>;
 };
 
 export type Options = {
@@ -150,3 +151,13 @@ export type App = {
   content: string;
   botStarts: boolean;
 };
+
+
+export type McpAuthMode = "none" | "static" | "user-data";
+
+
+export interface McpAuthConfig {
+  mode: McpAuthMode;
+  staticToken?: string;
+  selectedFields: string[];
+}
