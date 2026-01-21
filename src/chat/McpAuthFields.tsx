@@ -31,7 +31,7 @@ Wenn Sie der Übertragung von Benutzerdaten zustimmen, werden die ausgewählten 
 
 **Wichtig:**
 - Die Daten werden **Ende-zu-Ende verschlüsselt** – nur autorisierte MCP-Server können sie entschlüsseln
-- OpenAI oder andere LLM-Anbieter können diese Daten **nicht** lesen
+- OpenAI  oder unbefugte Dritte können diese Daten **nicht** lesen
 - Die Übertragung ist **freiwillig** und kann jederzeit widerrufen werden
 - Ohne Ihre Einwilligung werden **keine** personenbezogenen Daten übertragen
 
@@ -125,7 +125,7 @@ export function McpAuthFields({
                   <RadioGroup.ItemHiddenInput />
                   <RadioGroup.ItemControl />
                   <RadioGroup.ItemText fontSize="sm">
-                    {t("None")}
+                    {t("none")}
                   </RadioGroup.ItemText>
                 </HStack>
               </RadioGroup.Item>
@@ -278,7 +278,7 @@ export function McpAuthFields({
                   colorPalette="blue"
                   onClick={() => setPrivacyOpen(false)}
                 >
-                  {t("Understood")}
+                  {t("understood")}
                 </Button>
               </Dialog.Footer>
               <Dialog.CloseTrigger asChild>

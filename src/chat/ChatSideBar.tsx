@@ -139,8 +139,8 @@ Sie können individuell auswählen, welche der folgenden Daten übertragen werde
 
 - Die Daten werden vor der Übertragung verschlüsselt
 - **Nur autorisierte MCP-Server der FH Südwestfalen** können die Daten entschlüsseln
-- OpenAI, andere LLM-Anbieter oder unbefugte Dritte können die verschlüsselten Daten **nicht** lesen
-- Die Verschlüsselung erfolgt mit einem öffentlichen Schlüssel, der nur den autorisierten MCP-Servern der FH bekannt ist
+- OpenAI oder unbefugte Dritte können die verschlüsselten Daten **nicht** lesen
+- Die Verschlüsselung erfolgt mit einem öffentlichen Schlüssel, der nur den autorisierten Servern der FH bekannt ist
 
 #### Widerruf der Einwilligung
 
