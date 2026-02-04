@@ -40,7 +40,7 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
 
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
-  onChange: (_config: McpAuthConfig) => void;
+  onChange: () => void;
   userFields: string[];
   user?: Record<string, unknown>;
 }
@@ -203,7 +203,11 @@ export function McpAuthFields({
                       {userFields.map((field) => {
                         const isChecked = config.selectedFields.includes(field);
                         const value =
-                          user && Object.hasOwn(user, field)
+                          user &&
+                          field !== "__proto__" &&
+                          field !== "constructor" &&
+                          field !== "prototype" &&
+                          Object.hasOwn(user, field)
                             ? user[field]
                             : undefined;
                         return (

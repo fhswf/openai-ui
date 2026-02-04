@@ -39,14 +39,14 @@ import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { MessageMenu } from "./MessageMenu";
-import { modelOptions, toolOptions } from "@/chat/utils";
+import { modelOptions, toolOptions } from "./utils/options";
 import { GitHubMenu } from "./GitHubMenu";
 import { RiChatNewLine } from "react-icons/ri";
 
 import "../assets/icon/style.css";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { McpAuthFields } from "./McpAuthFields";
-import { useMcpAuth } from "@/chat/hooks";
+import { useMcpAuth } from "./hooks/useMcpAuth";
 
 export function MessageHeader() {
   const {
