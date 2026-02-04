@@ -22,7 +22,14 @@ import { useTranslation } from "react-i18next";
 import { LuLock, LuShieldCheck } from "react-icons/lu";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
+const ALLOWED_USER_FIELDS = [
+  "name",
+  "email",
+  "sub",
+  "preferred_username",
+  "avatar",
+  "affiliations",
+];
 const PRIVACY_NOTICE = `
 ### Datenübertragung an MCP-Server
 
@@ -40,7 +47,7 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
 
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
-  onChange: () => void;
+  onChange(_: McpAuthConfig): void;
   userFields: string[];
   user?: Record<string, unknown>;
 }
@@ -204,9 +211,7 @@ export function McpAuthFields({
                         const isChecked = config.selectedFields.includes(field);
                         const value =
                           user &&
-                          field !== "__proto__" &&
-                          field !== "constructor" &&
-                          field !== "prototype" &&
+                          ALLOWED_USER_FIELDS.includes(field) &&
                           Object.hasOwn(user, field)
                             ? user[field]
                             : undefined;
