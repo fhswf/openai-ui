@@ -38,9 +38,11 @@ Wenn Sie der Übertragung von Benutzerdaten zustimmen, werden die ausgewählten 
 Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendung.
 `;
 
+type McpAuthChangeHandler = (config: McpAuthConfig) => void;
+
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
-  onChange: (newConfig: McpAuthConfig) => void;
+  onChange: McpAuthChangeHandler;
   userFields: string[];
   user?: Record<string, unknown>;
 }
