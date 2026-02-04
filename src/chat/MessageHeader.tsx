@@ -39,14 +39,14 @@ import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { MessageMenu } from "./MessageMenu";
-import { modelOptions, toolOptions } from "./utils/options";
+import { modelOptions, toolOptions } from "@/chat/utils";
 import { GitHubMenu } from "./GitHubMenu";
 import { RiChatNewLine } from "react-icons/ri";
 
 import "../assets/icon/style.css";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { McpAuthFields } from "./McpAuthFields";
-import { useMcpAuth } from "./hooks/useMcpAuth";
+import { useMcpAuth } from "@/chat/hooks";
 
 export function MessageHeader() {
   const {
@@ -122,13 +122,13 @@ export function MessageHeader() {
   }
 
   function editTool(key: string, tool: Tool.Mcp): void {
-    const savedAuthConfig = options.openai.mcpAuthConfigs?.get(key);
+    const savedAuthConfig = options.openai.mcpAuthConfigs.get(key);
     setMcpToolForm({
       label: tool.server_label || "",
       server_url: tool.server_url || "",
       require_approval: (tool.require_approval as string) || "never",
       allowed_tools: (tool.allowed_tools as string[]) || [],
-      authConfig: savedAuthConfig || { mode: "none", selectedFields: [] },
+      authConfig: savedAuthConfig ?? { mode: "none", selectedFields: [] },
     });
     setEditMCPServices(true);
   }
@@ -158,8 +158,7 @@ export function MessageHeader() {
 
     console.log("newTool:", newTool);
     tools.set(mcpToolForm.label, newTool);
-    const authConfigs =
-      options.openai.mcpAuthConfigs || new Map<string, McpAuthConfig>();
+    const authConfigs = options.openai.mcpAuthConfigs;
     authConfigs.set(mcpToolForm.label, mcpToolForm.authConfig);
     setOptions({
       type: OptionActionType.OPENAI,
@@ -175,7 +174,7 @@ export function MessageHeader() {
     }
     tools.delete(key);
     options.openai.toolsEnabled.delete(key);
-    options.openai.mcpAuthConfigs?.delete(key);
+    options.openai.mcpAuthConfigs.delete(key);
     setOptions({
       type: OptionActionType.OPENAI,
       data: { ...options.openai, tools },
@@ -439,9 +438,9 @@ export function MessageHeader() {
                   </Stack>
                   <McpAuthFields
                     config={mcpToolForm.authConfig}
-                    onChange={(authConfig) =>
-                      setMcpToolForm((f) => ({ ...f, authConfig }))
-                    }
+                    onChange={(authConfig) => {
+                      setMcpToolForm((f) => ({ ...f, authConfig }));
+                    }}
                     userFields={userFields}
                     user={user}
                   />

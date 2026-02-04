@@ -40,7 +40,7 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
 
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
-  onChange: (config: McpAuthConfig) => void;
+  onChange: (_config: McpAuthConfig) => void;
   userFields: string[];
   user?: Record<string, unknown>;
 }
@@ -188,7 +188,9 @@ export function McpAuthFields({
                         {t("only_authorized_servers_can_decrypt")}{" "}
                         <Link
                           color="blue.600"
-                          onClick={() => setPrivacyOpen(true)}
+                          onClick={() => {
+                            setPrivacyOpen(true);
+                          }}
                           cursor="pointer"
                           textDecoration="underline"
                         >
@@ -200,15 +202,18 @@ export function McpAuthFields({
                     <Stack gap={1}>
                       {userFields.map((field) => {
                         const isChecked = config.selectedFields.includes(field);
-                        const value = user?.[field];
+                        const value =
+                          user && Object.hasOwn(user, field)
+                            ? user[field]
+                            : undefined;
                         return (
                           <Checkbox.Root
                             key={field}
                             data-testid={`mcp-auth-field-${field}`}
                             checked={isChecked}
-                            onCheckedChange={(e) =>
-                              handleFieldToggle(field, !!e.checked)
-                            }
+                            onCheckedChange={(e) => {
+                              handleFieldToggle(field, !!e.checked);
+                            }}
                             size="sm"
                             p={2}
                             borderRadius="sm"
@@ -258,7 +263,9 @@ export function McpAuthFields({
 
       <Dialog.Root
         open={privacyOpen}
-        onOpenChange={(e) => setPrivacyOpen(e.open)}
+        onOpenChange={(e) => {
+          setPrivacyOpen(e.open);
+        }}
         size="md"
       >
         <Portal>
@@ -276,7 +283,9 @@ export function McpAuthFields({
               <Dialog.Footer>
                 <Button
                   colorPalette="blue"
-                  onClick={() => setPrivacyOpen(false)}
+                  onClick={() => {
+                    setPrivacyOpen(false);
+                  }}
                 >
                   {t("understood")}
                 </Button>

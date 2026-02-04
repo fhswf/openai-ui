@@ -1,16 +1,6 @@
 import { McpAuthConfig } from "../context/types";
 
-export interface UseMcpAuthReturn {
-  getAuthorization: (
-    config: McpAuthConfig,
-    serverUrl: string
-  ) => Promise<string | undefined>;
-  userFields: string[];
-}
-
-export function useMcpAuth(
-  user: Record<string, unknown> | null
-): UseMcpAuthReturn {
+export function useMcpAuth(user: Record<string, unknown> | null) {
   const getAuthorization = async (
     config: McpAuthConfig,
     serverUrl: string
@@ -20,7 +10,7 @@ export function useMcpAuth(
         return undefined;
 
       case "static":
-        return config.staticToken?.trim() || undefined;
+        return config.staticToken?.trim() ?? undefined;
 
       case "user-data":
         if (!config.selectedFields.length || !serverUrl) {
