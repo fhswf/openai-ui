@@ -1,17 +1,19 @@
 import { McpAuthConfig } from "../context/types";
-import { useGlobal } from "../context";
 
 export interface UseMcpAuthReturn {
-  getAuthorization: (config: McpAuthConfig) => Promise<string | undefined>;
-
+  getAuthorization: (
+    config: McpAuthConfig,
+    serverUrl: string
+  ) => Promise<string | undefined>;
   userFields: string[];
 }
 
-export function useMcpAuth(): UseMcpAuthReturn {
-  const { user } = useGlobal();
-
+export function useMcpAuth(
+  user: Record<string, unknown> | null
+): UseMcpAuthReturn {
   const getAuthorization = async (
-    config: McpAuthConfig
+    config: McpAuthConfig,
+    serverUrl: string
   ): Promise<string | undefined> => {
     switch (config.mode) {
       case "none":
@@ -21,7 +23,7 @@ export function useMcpAuth(): UseMcpAuthReturn {
         return config.staticToken?.trim() || undefined;
 
       case "user-data":
-        if (!config.selectedFields.length) {
+        if (!config.selectedFields.length || !serverUrl) {
           return undefined;
         }
 
@@ -31,7 +33,11 @@ export function useMcpAuth(): UseMcpAuthReturn {
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ fields: config.selectedFields }),
+              credentials: "include",
+              body: JSON.stringify({
+                fields: config.selectedFields,
+                server_url: serverUrl,
+              }),
             }
           );
 
@@ -55,6 +61,7 @@ export function useMcpAuth(): UseMcpAuthReturn {
         return undefined;
     }
   };
+
   const userFields = user ? Object.keys(user) : [];
 
   return { getAuthorization, userFields };

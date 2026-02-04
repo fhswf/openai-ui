@@ -140,7 +140,10 @@ export function MessageHeader() {
       return;
     }
 
-    const authorization = await getAuthorization(mcpToolForm.authConfig);
+    const authorization = await getAuthorization(
+      mcpToolForm.authConfig,
+      mcpToolForm.server_url
+    );
     const newTool: Tool.Mcp = {
       type: "mcp",
       server_label: mcpToolForm.label,
