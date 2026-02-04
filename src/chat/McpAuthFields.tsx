@@ -38,11 +38,10 @@ Wenn Sie der Übertragung von Benutzerdaten zustimmen, werden die ausgewählten 
 Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendung.
 `;
 
-type McpAuthChangeHandler = (config: McpAuthConfig) => void;
-
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
-  onChange: McpAuthChangeHandler;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onChange: (config: McpAuthConfig) => void;
   userFields: string[];
   user?: Record<string, unknown>;
 }
