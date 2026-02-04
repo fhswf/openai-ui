@@ -40,17 +40,17 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
 
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
-  onChange(config: McpAuthConfig): void; // codacy:ignore
+  onChange: (newConfig: McpAuthConfig) => void;
   userFields: string[];
   user?: Record<string, unknown>;
 }
 
-export function McpAuthFields({
+export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
   config,
   onChange,
   userFields,
   user,
-}: McpAuthFieldsProps) {
+}) => {
   const { t } = useTranslation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
@@ -74,6 +74,20 @@ export function McpAuthFields({
   const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({ ...config, staticToken: e.target.value });
   };
+
+  const getFieldValue = (fieldName: string): unknown => {
+    if (!user) return undefined;
+    if (
+      fieldName === "__proto__" ||
+      fieldName === "constructor" ||
+      fieldName === "prototype"
+    ) {
+      return undefined;
+    }
+    if (!Object.hasOwn(user, fieldName)) return undefined;
+    return Object.getOwnPropertyDescriptor(user, fieldName)?.value;
+  };
+
   const formatFieldValue = (value: unknown): React.ReactNode => {
     if (value === null || value === undefined) {
       return (
@@ -202,14 +216,7 @@ export function McpAuthFields({
                     <Stack gap={1}>
                       {userFields.map((field) => {
                         const isChecked = config.selectedFields.includes(field);
-                        const value =
-                          user &&
-                          field !== "__proto__" &&
-                          field !== "constructor" &&
-                          field !== "prototype" &&
-                          Object.hasOwn(user, field)
-                            ? user[field] // codacy:ignore
-                            : undefined;
+                        const value = getFieldValue(field);
                         return (
                           <Checkbox.Root
                             key={field}
@@ -303,4 +310,4 @@ export function McpAuthFields({
       </Dialog.Root>
     </>
   );
-}
+};
