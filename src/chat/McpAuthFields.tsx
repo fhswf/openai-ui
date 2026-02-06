@@ -40,8 +40,7 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
 
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onChange: (config: McpAuthConfig) => void;
+  onChange: (newConfig: McpAuthConfig) => void;
   userFields: string[];
   user?: Record<string, unknown>;
 }
