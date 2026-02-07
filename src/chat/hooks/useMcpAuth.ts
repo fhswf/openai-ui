@@ -34,7 +34,7 @@ async function fetchMcpPublicKey(serverUrl: string): Promise<CryptoKey> {
   return jose.importJWK(jwks.keys[0], "RSA-OAEP-256") as Promise<CryptoKey>;
 }
 
-async function encryptPayload(
+function encryptPayload(
   data: Record<string, unknown>,
   publicKey: CryptoKey
 ): Promise<string> {
@@ -48,33 +48,49 @@ async function encryptPayload(
     .encrypt(publicKey);
 }
 
+function getStaticAuthorization(
+  staticToken: string | undefined
+): string | undefined {
+  return staticToken?.trim() ?? undefined;
+}
+
+async function getUserDataAuthorization(
+  config: McpAuthConfig,
+  serverUrl: string,
+  user: Record<string, unknown> | null
+): Promise<string | undefined> {
+  if (!config.selectedFields.length || !serverUrl || !user) return undefined;
+
+  const filteredData = buildFilteredData(config.selectedFields, user);
+  if (!filteredData) return undefined;
+
+  try {
+    const publicKey = await fetchMcpPublicKey(serverUrl);
+    return await encryptPayload(filteredData, publicKey);
+  } catch (error) {
+    console.error("Error encrypting user data:", error);
+    throw new Error(
+      `Verschlüsselung fehlgeschlagen: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
 export function useMcpAuth(user: Record<string, unknown> | null) {
   const getAuthorization = async (
     config: McpAuthConfig,
     serverUrl: string
   ): Promise<string | undefined> => {
-    if (config.mode === "none") return undefined;
-
-    if (config.mode === "static") {
-      return config.staticToken?.trim() || undefined;
-    }
-
-    if (config.mode !== "user-data") return undefined;
-    if (!config.selectedFields.length || !serverUrl || !user) return undefined;
-
-    const filteredData = buildFilteredData(config.selectedFields, user);
-    if (!filteredData) return undefined;
-
-    try {
-      const publicKey = await fetchMcpPublicKey(serverUrl);
-      return await encryptPayload(filteredData, publicKey);
-    } catch (error) {
-      console.error("Error encrypting user data:", error);
-      throw new Error(
-        `Verschlüsselung fehlgeschlagen: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+    switch (config.mode) {
+      case "none":
+        return undefined;
+      case "static":
+        return getStaticAuthorization(config.staticToken);
+      case "user-data":
+        return getUserDataAuthorization(config, serverUrl, user);
+      default:
+        return undefined;
     }
   };
 

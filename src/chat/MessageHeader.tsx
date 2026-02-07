@@ -185,7 +185,7 @@ export function MessageHeader() {
       authorization: authorization,
     };
 
-    if (mcpToolForm.allowed_tools?.length > 0) {
+    if (mcpToolForm.allowed_tools.length > 0) {
       newTool.allowed_tools = mcpToolForm.allowed_tools;
     }
 
