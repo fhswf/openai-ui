@@ -70,6 +70,7 @@ export function MessageHeader() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const [editMCPServices, setEditMCPServices] = useState(false);
+  const [editingMcpKey, setEditingMcpKey] = useState<string | null>(null);
 
   const { getAuthorization, userFields } = useMcpAuth(user);
 
@@ -95,6 +96,14 @@ export function MessageHeader() {
 
   const editMCP = () => {
     console.log("Edit MCP Services");
+    setEditingMcpKey(null);
+    setMcpToolForm({
+      label: "",
+      server_url: "",
+      require_approval: "never",
+      allowed_tools: [],
+      authConfig: { mode: "none", selectedFields: [] },
+    });
     setEditMCPServices(true);
   };
 
@@ -123,6 +132,7 @@ export function MessageHeader() {
 
   function editTool(key: string, tool: Tool.Mcp): void {
     const savedAuthConfig = options.openai.mcpAuthConfigs.get(key);
+    setEditingMcpKey(key);
     setMcpToolForm({
       label: tool.server_label || "",
       server_url: tool.server_url || "",
@@ -140,10 +150,21 @@ export function MessageHeader() {
       return;
     }
 
-    const authorization = await getAuthorization(
-      mcpToolForm.authConfig,
-      mcpToolForm.server_url
-    );
+    let authorization: string | undefined;
+    try {
+      authorization = await getAuthorization(
+        mcpToolForm.authConfig,
+        mcpToolForm.server_url
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Autorisierung konnte nicht erstellt werden"
+      );
+      return;
+    }
+
     const newTool: Tool.Mcp = {
       type: "mcp",
       server_label: mcpToolForm.label,
@@ -157,12 +178,20 @@ export function MessageHeader() {
     }
 
     console.log("newTool:", newTool);
+
+    if (editingMcpKey && editingMcpKey !== mcpToolForm.label) {
+      tools.delete(editingMcpKey);
+      options.openai.toolsEnabled.delete(editingMcpKey);
+      options.openai.mcpAuthConfigs.delete(editingMcpKey);
+    }
+    setEditingMcpKey(null);
+
     tools.set(mcpToolForm.label, newTool);
     const authConfigs = options.openai.mcpAuthConfigs;
     authConfigs.set(mcpToolForm.label, mcpToolForm.authConfig);
     setOptions({
       type: OptionActionType.OPENAI,
-      data: { ...options.openai, tools, mcpAuthConfigs: authConfigs }, // added , mcpAuthConfigs: authConfigs
+      data: { ...options.openai, tools, mcpAuthConfigs: authConfigs },
     });
   }
 
@@ -186,8 +215,14 @@ export function MessageHeader() {
     options.openai.toolsEnabled = new Set<string>();
   }
 
+  if (
+    !options.openai.mcpAuthConfigs ||
+    !(options.openai.mcpAuthConfigs instanceof Map)
+  ) {
+    options.openai.mcpAuthConfigs = new Map();
+  }
+
   if (tools instanceof Map) {
-    // Check for new tools in toolOptions
     for (const [key, value] of toolOptions) {
       if (!tools.has(key)) {
         tools.set(key, value);
@@ -195,13 +230,13 @@ export function MessageHeader() {
     }
   } else {
     console.error("Tools is not a Map:", tools);
-    tools = new Map(toolOptions.entries()); // Fallback to default tools if not a Map
+    tools = new Map(toolOptions.entries());
     setOptions({
       type: OptionActionType.OPENAI,
       data: { ...options.openai, tools },
     });
   }
-  const mcpTools: Record<string, Tool> = {}; // Filter MCP tools from tools
+  const mcpTools: Record<string, Tool> = {};
 
   for (const [key, value] of tools) {
     if (value.type === "mcp") mcpTools[key] = value;
@@ -460,7 +495,7 @@ export function MessageHeader() {
                   gap={2}
                   as="form"
                   onSubmit={(e) => {
-                    e.preventDefault(); /* handle submit here */
+                    e.preventDefault();
                   }}
                 >
                   <Text fontWeight="bold">{t("MCP Services")}</Text>
