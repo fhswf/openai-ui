@@ -1,4 +1,4 @@
-import { GlobalState } from "./types";
+import {GlobalState, McpAuthConfig} from "./types";
 import { v7 as uuidv7 } from "uuid";
 import { initApps } from "../apps/context/initState";
 
@@ -57,6 +57,7 @@ export const initState: GlobalState = {
       top_p: 1,
       stream: true,
       assistant: "",
+      mcpAuthConfigs: new Map<string, McpAuthConfig>(),
     },
   },
   is: {

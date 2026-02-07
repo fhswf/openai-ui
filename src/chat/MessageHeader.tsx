@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 
-import { Tool, OptionActionType } from "./context/types";
+import { Tool, OptionActionType, McpAuthConfig } from "./context/types";
 
 import {
   Avatar,
@@ -24,10 +24,7 @@ import {
 } from "@chakra-ui/react";
 
 import { useTranslation } from "react-i18next";
-import {
-  IoLogoMarkdown,
-  IoSettingsOutline,
-} from "react-icons/io5";
+import { IoLogoMarkdown, IoSettingsOutline } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
 import {
   LuChevronRight,
@@ -46,9 +43,10 @@ import { modelOptions, toolOptions } from "./utils/options";
 import { GitHubMenu } from "./GitHubMenu";
 import { RiChatNewLine } from "react-icons/ri";
 
-
 import "../assets/icon/style.css";
 import { UsageInformationDialog } from "./UsageInformationDialog";
+import { McpAuthFields } from "./McpAuthFields";
+import { useMcpAuth } from "./hooks/useMcpAuth";
 
 export function MessageHeader() {
   const {
@@ -72,12 +70,16 @@ export function MessageHeader() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const [editMCPServices, setEditMCPServices] = useState(false);
+  const [editingMcpKey, setEditingMcpKey] = useState<string | null>(null);
+
+  const { getAuthorization, userFields } = useMcpAuth(user);
 
   const [mcpToolForm, setMcpToolForm] = useState({
     label: "",
     server_url: "",
     require_approval: "never",
     allowed_tools: [],
+    authConfig: { mode: "none", selectedFields: [] } as McpAuthConfig,
   });
 
   const approval_options = createListCollection({
@@ -94,6 +96,14 @@ export function MessageHeader() {
 
   const editMCP = () => {
     console.log("Edit MCP Services");
+    setEditingMcpKey(null);
+    setMcpToolForm({
+      label: "",
+      server_url: "",
+      require_approval: "never",
+      allowed_tools: [],
+      authConfig: { mode: "none", selectedFields: [] },
+    });
     setEditMCPServices(true);
   };
 
@@ -121,20 +131,49 @@ export function MessageHeader() {
   }
 
   function editTool(key: string, tool: Tool.Mcp): void {
-    console.log("Edit tool: %s %o", key, tool);
+    const savedAuthConfig = options.openai.mcpAuthConfigs.get(key);
+    setEditingMcpKey(key);
     setMcpToolForm({
       label: tool.server_label || "",
       server_url: tool.server_url || "",
       require_approval: (tool.require_approval as string) || "never",
       allowed_tools: (tool.allowed_tools as string[]) || [],
+      authConfig: savedAuthConfig ?? { mode: "none", selectedFields: [] },
     });
     setEditMCPServices(true);
   }
 
-  function handleAddService() {
-    console.log("Add/Save MCP Service", mcpToolForm);
+  function cleanupRenamedTool(
+    oldKey: string | null,
+    newKey: string,
+    tools: Map<string, Tool>,
+    openai: typeof options.openai
+  ) {
+    if (oldKey && oldKey !== newKey) {
+      tools.delete(oldKey);
+      openai.toolsEnabled.delete(oldKey);
+      openai.mcpAuthConfigs.delete(oldKey);
+    }
+  }
+
+  async function handleAddService() {
     if (!mcpToolForm.label || !mcpToolForm.server_url) {
       alert(t("Please fill in all required fields"));
+      return;
+    }
+
+    let authorization: string | undefined;
+    try {
+      authorization = await getAuthorization(
+        mcpToolForm.authConfig,
+        mcpToolForm.server_url
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Autorisierung konnte nicht erstellt werden"
+      );
       return;
     }
 
@@ -143,17 +182,28 @@ export function MessageHeader() {
       server_label: mcpToolForm.label,
       server_url: mcpToolForm.server_url,
       require_approval: mcpToolForm.require_approval as "always" | "never",
+      authorization: authorization,
     };
 
-    if (mcpToolForm.allowed_tools && mcpToolForm.allowed_tools.length > 0) {
+    if (mcpToolForm.allowed_tools.length > 0) {
       newTool.allowed_tools = mcpToolForm.allowed_tools;
     }
 
-    console.log("newTool:", newTool);
+    cleanupRenamedTool(editingMcpKey, mcpToolForm.label, tools, options.openai);
+    setEditingMcpKey(null);
+
     tools.set(mcpToolForm.label, newTool);
+    options.openai.mcpAuthConfigs.set(
+      mcpToolForm.label,
+      mcpToolForm.authConfig
+    );
     setOptions({
       type: OptionActionType.OPENAI,
-      data: { ...options.openai, tools },
+      data: {
+        ...options.openai,
+        tools,
+        mcpAuthConfigs: options.openai.mcpAuthConfigs,
+      },
     });
   }
 
@@ -165,6 +215,7 @@ export function MessageHeader() {
     }
     tools.delete(key);
     options.openai.toolsEnabled.delete(key);
+    options.openai.mcpAuthConfigs.delete(key);
     setOptions({
       type: OptionActionType.OPENAI,
       data: { ...options.openai, tools },
@@ -176,8 +227,11 @@ export function MessageHeader() {
     options.openai.toolsEnabled = new Set<string>();
   }
 
+  if (!(options.openai.mcpAuthConfigs instanceof Map)) {
+    options.openai.mcpAuthConfigs = new Map();
+  }
+
   if (tools instanceof Map) {
-    // Check for new tools in toolOptions
     for (const [key, value] of toolOptions) {
       if (!tools.has(key)) {
         tools.set(key, value);
@@ -185,13 +239,13 @@ export function MessageHeader() {
     }
   } else {
     console.error("Tools is not a Map:", tools);
-    tools = new Map(toolOptions.entries()); // Fallback to default tools if not a Map
+    tools = new Map(toolOptions.entries());
     setOptions({
       type: OptionActionType.OPENAI,
       data: { ...options.openai, tools },
     });
   }
-  const mcpTools: Record<string, Tool> = {}; // Filter MCP tools from tools
+  const mcpTools: Record<string, Tool> = {};
 
   for (const [key, value] of tools) {
     if (value.type === "mcp") mcpTools[key] = value;
@@ -231,7 +285,11 @@ export function MessageHeader() {
 
       <Menu.Root>
         <Menu.Trigger asChild>
-          <IconButton variant="ghost" title={t("chat_options")}>
+          <IconButton
+            variant="ghost"
+            title={t("chat_options")}
+            data-testid="chat-options-btn"
+          >
             <CgOptions aria-label={t("chat_options")} />
           </IconButton>
         </Menu.Trigger>
@@ -270,7 +328,7 @@ export function MessageHeader() {
               ))}
 
               <Menu.Root positioning={{ placement: "right-start", gutter: 2 }}>
-                <Menu.TriggerItem>
+                <Menu.TriggerItem data-testid="mcp-services-menu-trigger">
                   {t("MCP Services")} <LuChevronRight />
                 </Menu.TriggerItem>
                 <Portal>
@@ -290,7 +348,11 @@ export function MessageHeader() {
                         </Menu.CheckboxItem>
                       ))}
 
-                      <Menu.Item onClick={editMCP} value="edit_mcp_services">
+                      <Menu.Item
+                        onClick={editMCP}
+                        value="edit_mcp_services"
+                        data-testid="mcp-add-remove-services"
+                      >
                         {t("Add/Remove MCP Services")}
                       </Menu.Item>
                     </Menu.Content>
@@ -303,6 +365,7 @@ export function MessageHeader() {
       </Menu.Root>
 
       <Dialog.Root
+        data-testid="mcp-services-dialog"
         open={editMCPServices}
         onOpenChange={(e) => setEditMCPServices(e.open)}
         lazyMount
@@ -315,7 +378,7 @@ export function MessageHeader() {
               <Dialog.Header>
                 <Dialog.Title>{t("Edit MCP Services")}</Dialog.Title>
               </Dialog.Header>
-              <Dialog.Body>
+              <Dialog.Body overflowY="auto">
                 <Stack gap={4}>
                   <Stack gap={4}>
                     <Field.Root>
@@ -355,6 +418,7 @@ export function MessageHeader() {
                     </Field.Root>
                     <Field.Root>
                       <Select.Root
+                        data-testid="mcp-require-approval-select"
                         collection={approval_options}
                         size="sm"
                         width="320px"
@@ -370,7 +434,7 @@ export function MessageHeader() {
                         <Select.HiddenSelect />
                         <Select.Label>{t("Require Approval")}</Select.Label>
                         <Select.Control>
-                          <Select.Trigger>
+                          <Select.Trigger data-testid="mcp-require-approval-trigger">
                             <Select.ValueText placeholder="Select" />
                           </Select.Trigger>
 
@@ -416,7 +480,19 @@ export function MessageHeader() {
                       />
                     </Field.Root>
                   </Stack>
-                  <Button onClick={handleAddService} colorPalette="blue">
+                  <McpAuthFields
+                    config={mcpToolForm.authConfig}
+                    onChange={(authConfig) => {
+                      setMcpToolForm((f) => ({ ...f, authConfig }));
+                    }}
+                    userFields={userFields}
+                    user={user}
+                  />
+                  <Button
+                    data-testid="mcp-add-service-btn"
+                    onClick={handleAddService}
+                    colorPalette="blue"
+                  >
                     {t("Add/Save Service")}
                   </Button>
                 </Stack>
@@ -428,7 +504,7 @@ export function MessageHeader() {
                   gap={2}
                   as="form"
                   onSubmit={(e) => {
-                    e.preventDefault(); /* handle submit here */
+                    e.preventDefault();
                   }}
                 >
                   <Text fontWeight="bold">{t("MCP Services")}</Text>
@@ -457,6 +533,7 @@ export function MessageHeader() {
                         </HStack>
                         <HStack gap={1} alignItems="center">
                           <Button
+                            data-testid={`mcp-edit-${key}`}
                             variant="ghost"
                             size="sm"
                             onClick={() => {
@@ -466,6 +543,7 @@ export function MessageHeader() {
                             <MdEdit />
                           </Button>
                           <Button
+                            data-testid={`mcp-delete-${key}`}
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteService(key)}
@@ -546,8 +624,6 @@ export function MessageHeader() {
         </Menu.Content>
       </Menu.Root>
       <GitHubMenu />
-
-
 
       <UsageInformationDialog />
 

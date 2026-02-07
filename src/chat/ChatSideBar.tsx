@@ -114,6 +114,44 @@ OpenAI nicht für Trainingszwecke verwendet.
 Seitens OpenAI wird der Zugriff auf die API protokolliert, um die Nutzung zu überwachen und die Einhaltung der
 Nutzungsbedingungen sicherzustellen.
 
+### MCP-Dienste und Benutzerdatenübertragung
+
+Die Anwendung unterstützt die Anbindung von **MCP-Servern** (Model Context Protocol), die erweiterte 
+Funktionen wie Raumbuchungen, Terminvereinbarungen oder personalisierte Informationsabfragen ermöglichen.
+
+#### Optionale Datenübertragung
+
+Die Übertragung von Benutzerdaten an MCP-Server ist **freiwillig** und erfolgt nur nach 
+**ausdrücklicher Einwilligung** des Nutzers. Ohne Ihre Zustimmung werden keine personenbezogenen 
+Daten an MCP-Server übertragen.
+
+Sie können individuell auswählen, welche der folgenden Daten übertragen werden sollen:
+
+- Ihr vollständiger Name
+- Ihre Hochschul-E-Mail-Adresse
+- Ihre Benutzerkennung
+- Ihre eindeutige Benutzer-ID
+- Ihre Zugehörigkeiten und Rollen an der Hochschule
+
+#### Ende-zu-Ende-Verschlüsselung
+
+Übertragene Benutzerdaten werden **Ende-zu-Ende verschlüsselt**. Dies bedeutet:
+
+- Die Daten werden vor der Übertragung verschlüsselt
+- **Nur autorisierte MCP-Server der FH Südwestfalen** können die Daten entschlüsseln
+- OpenAI oder unbefugte Dritte können die verschlüsselten Daten **nicht** lesen
+- Die Verschlüsselung erfolgt mit einem öffentlichen Schlüssel, der nur den autorisierten Servern der FH bekannt ist
+
+#### Widerruf der Einwilligung
+
+Sie können Ihre Einwilligung zur Datenübertragung **jederzeit widerrufen**, indem Sie:
+
+1. Die Autorisierungseinstellungen des jeweiligen MCP-Dienstes aufrufen
+2. Die Option "Keine" auswählen oder die gewünschten Felder abwählen
+3. Die Änderungen speichern
+
+Nach dem Widerruf werden bei zukünftigen Anfragen keine personenbezogenen Daten mehr an den 
+betreffenden MCP-Server übertragen.
 ### Cookies
 Die Anwendung verwendet lediglich technisch notwendige Session-Cookies, um die Funktionalität der 
 Anwendung zu gewährleisten (Anmeldung an der Anwendung).
