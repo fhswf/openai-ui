@@ -481,7 +481,7 @@ export function MessageHeader() {
                     </Field.Root>
                   </Stack>
                   <McpAuthFields
-                    _config={mcpToolForm.authConfig}
+                    config={mcpToolForm.authConfig}
                     onChange={(authConfig) => {
                       setMcpToolForm((f) => ({ ...f, authConfig }));
                     }}

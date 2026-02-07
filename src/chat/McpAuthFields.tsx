@@ -40,7 +40,7 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
 
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
-  onChange: (_newConfig: McpAuthConfig) => void;
+  onChange: React.Dispatch<McpAuthConfig>;
   userFields: string[];
   user?: Record<string, unknown>;
 }
