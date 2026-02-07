@@ -233,6 +233,17 @@ test.describe("MCP Services", () => {
       "fh-swf.de": ["affiliate", "faculty", "employee", "member"],
     },
   };
+  const jwks = {
+    keys: [
+      {
+        kty: "RSA",
+        n: "2phSoFd1TfAG5zXPy27HckDYdRoEeAVEnlcE-yasXbNAPSgYc84j20Kgw9t8SY_qW2pDjE-yhdqO0xiue5QSyfYkyaemUB8LnAQiZpajCL_RZOrHACWP55axzZbGXwAmCu6rdhd1XyV71TA5N2Big15998WKl3DiVOftZlxJ6WiV7CJSlKYPBSUrXanoDMwSjW-HHl38XYgRmzqNJIc0j5JPSWtjTCp0rJ7Zzq5VkaRsWZ5Ea-lN09XDjCUQYvv2BqlMtyuxgNlXDji51MfhMTw2CjUfa6eaU2ATRNDHqn32uubKLiiJkxqhh9XKHiQh-rEqEeTzIFMPr3mgViE2mQ",
+        e: "AQAB",
+        alg: "RSA-OAEP-256",
+        use: "enc",
+      },
+    ],
+  };
 
   test.beforeEach(async ({ page }) => {
     await page.route("**/api/user", async (route) => {
@@ -240,6 +251,13 @@ test.describe("MCP Services", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(mockUser),
+      });
+    });
+    await page.route("**/.well-known/jwks.json", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(jwks),
       });
     });
     await page.goto("/");
@@ -390,6 +408,7 @@ test.describe("MCP Services", () => {
   test("should handle errors when fetching MCP server public key", async ({
     page,
   }) => {
+    await page.unroute("**/.well-known/jwks.json");
     await page.route("**/.well-known/jwks.json", async (route) => {
       await route.fulfill({
         status: 500,
@@ -424,6 +443,9 @@ test.describe("MCP Services", () => {
     await page.getByTestId("mcp-auth-field-email").click();
     await page.getByTestId("mcp-add-service-btn").click();
 
+    await expect(
+      page.getByTestId("mcp-edit-Preserved Auth Service")
+    ).toBeVisible();
     await page.getByTestId("mcp-edit-Preserved Auth Service").click();
     await expect(page.locator('input[name="label"]')).toHaveValue(
       "Preserved Auth Service"
