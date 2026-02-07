@@ -39,14 +39,14 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
 `;
 
 export interface McpAuthFieldsProps {
-  config: McpAuthConfig;
+  _config: McpAuthConfig;
   onChange: (newConfig: McpAuthConfig) => void;
   userFields: string[];
   user?: Record<string, unknown>;
 }
 
 export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
-  config,
+  _config,
   onChange,
   userFields,
   user,
@@ -57,22 +57,22 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
   const handleModeChange = (details: { value: string }) => {
     const mode = details.value as McpAuthMode;
     onChange({
-      ...config,
+      ..._config,
       mode,
-      selectedFields: mode === "user-data" ? config.selectedFields : [],
-      staticToken: mode === "static" ? config.staticToken : "",
+      selectedFields: mode === "user-data" ? _config.selectedFields : [],
+      staticToken: mode === "static" ? _config.staticToken : "",
     });
   };
 
   const handleFieldToggle = (field: string, checked: boolean) => {
     const fields = checked
-      ? [...config.selectedFields, field]
-      : config.selectedFields.filter((f) => f !== field);
-    onChange({ ...config, selectedFields: fields });
+      ? [..._config.selectedFields, field]
+      : _config.selectedFields.filter((f) => f !== field);
+    onChange({ ..._config, selectedFields: fields });
   };
 
   const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...config, staticToken: e.target.value });
+    onChange({ ..._config, staticToken: e.target.value });
   };
 
   const getFieldValue = (fieldName: string): unknown => {
@@ -128,7 +128,7 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
 
         <Fieldset.Content mt={2}>
           <RadioGroup.Root
-            value={config.mode}
+            value={_config.mode}
             onValueChange={handleModeChange}
             data-testid="mcp-auth-mode-group"
             size="sm"
@@ -157,11 +157,11 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
                 </HStack>
               </RadioGroup.Item>
 
-              {config.mode === "static" && (
+              {_config.mode === "static" && (
                 <Box pl={6}>
                   <Input
                     data-testid="mcp-auth-static-token-input"
-                    value={config.staticToken || ""}
+                    value={_config.staticToken || ""}
                     onChange={handleTokenChange}
                     placeholder={t("enter_token")}
                     size="sm"
@@ -186,7 +186,7 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
                 </HStack>
               </RadioGroup.Item>
 
-              {config.mode === "user-data" && (
+              {_config.mode === "user-data" && (
                 <Box pl={6} data-testid="mcp-auth-fields-container">
                   <Stack gap={2}>
                     <HStack
@@ -215,7 +215,8 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
 
                     <Stack gap={1}>
                       {userFields.map((field) => {
-                        const isChecked = config.selectedFields.includes(field);
+                        const isChecked =
+                          _config.selectedFields.includes(field);
                         const value = getFieldValue(field);
                         return (
                           <Checkbox.Root
@@ -261,7 +262,7 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
                     </Stack>
 
                     <Text fontSize="xs" color="gray.500">
-                      {config.selectedFields.length}/{userFields.length}{" "}
+                      {_config.selectedFields.length}/{userFields.length}{" "}
                       {t("selected")}
                     </Text>
                   </Stack>

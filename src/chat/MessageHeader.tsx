@@ -143,8 +143,20 @@ export function MessageHeader() {
     setEditMCPServices(true);
   }
 
+  function cleanupRenamedTool(
+    oldKey: string | null,
+    newKey: string,
+    tools: Map<string, Tool>,
+    openai: typeof options.openai
+  ) {
+    if (oldKey && oldKey !== newKey) {
+      tools.delete(oldKey);
+      openai.toolsEnabled.delete(oldKey);
+      openai.mcpAuthConfigs.delete(oldKey);
+    }
+  }
+
   async function handleAddService() {
-    console.log("Add/Save MCP Service", mcpToolForm);
     if (!mcpToolForm.label || !mcpToolForm.server_url) {
       alert(t("Please fill in all required fields"));
       return;
@@ -173,25 +185,25 @@ export function MessageHeader() {
       authorization: authorization,
     };
 
-    if (mcpToolForm.allowed_tools && mcpToolForm.allowed_tools.length > 0) {
+    if (mcpToolForm.allowed_tools?.length > 0) {
       newTool.allowed_tools = mcpToolForm.allowed_tools;
     }
 
-    console.log("newTool:", newTool);
-
-    if (editingMcpKey && editingMcpKey !== mcpToolForm.label) {
-      tools.delete(editingMcpKey);
-      options.openai.toolsEnabled.delete(editingMcpKey);
-      options.openai.mcpAuthConfigs.delete(editingMcpKey);
-    }
+    cleanupRenamedTool(editingMcpKey, mcpToolForm.label, tools, options.openai);
     setEditingMcpKey(null);
 
     tools.set(mcpToolForm.label, newTool);
-    const authConfigs = options.openai.mcpAuthConfigs;
-    authConfigs.set(mcpToolForm.label, mcpToolForm.authConfig);
+    options.openai.mcpAuthConfigs.set(
+      mcpToolForm.label,
+      mcpToolForm.authConfig
+    );
     setOptions({
       type: OptionActionType.OPENAI,
-      data: { ...options.openai, tools, mcpAuthConfigs: authConfigs },
+      data: {
+        ...options.openai,
+        tools,
+        mcpAuthConfigs: options.openai.mcpAuthConfigs,
+      },
     });
   }
 
@@ -215,10 +227,7 @@ export function MessageHeader() {
     options.openai.toolsEnabled = new Set<string>();
   }
 
-  if (
-    !options.openai.mcpAuthConfigs ||
-    !(options.openai.mcpAuthConfigs instanceof Map)
-  ) {
+  if (!(options.openai.mcpAuthConfigs instanceof Map)) {
     options.openai.mcpAuthConfigs = new Map();
   }
 
@@ -472,7 +481,7 @@ export function MessageHeader() {
                     </Field.Root>
                   </Stack>
                   <McpAuthFields
-                    config={mcpToolForm.authConfig}
+                    _config={mcpToolForm.authConfig}
                     onChange={(authConfig) => {
                       setMcpToolForm((f) => ({ ...f, authConfig }));
                     }}
