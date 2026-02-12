@@ -22,7 +22,7 @@ setup('Cluster Login Test', async ({ page }, testInfo) => {
     } catch (e) {
         console.log('Timed out waiting for SSO Login. Current URL:', page.url());
         // Log the HTML content for debugging if it fails
-        // console.log(await page.content()); 
+        console.log(await page.content());
         throw e;
     }
     await expect(page.locator('.cluster-login')).toBeVisible();
