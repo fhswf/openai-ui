@@ -289,7 +289,7 @@ export function MessageItem(props) {
   );
 }
 
-function toContentArray(content: unknown): any[] {
+function toContentArray(content: unknown): unknown[] {
   if (Array.isArray(content)) return content;
   return content ? [{ type: 'input_text', text: content }] : [];
 }
