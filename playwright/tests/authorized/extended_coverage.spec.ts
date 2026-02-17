@@ -271,30 +271,32 @@ test.describe("DashboardChart Coverage", () => {
         );
 
         // Mock the usage API with sample data for dashboard chart
+        const mockDashboardUsageData = {
+            data: [
+                {
+                    model: "gpt-4",
+                    total_tokens: 5000,
+                    prompt_tokens: 3000,
+                    completion_tokens: 2000,
+                    n_requests: 50,
+                    user: "chgaw002",
+                },
+                {
+                    model: "gpt-3.5-turbo",
+                    total_tokens: 8000,
+                    prompt_tokens: 5000,
+                    completion_tokens: 3000,
+                    n_requests: 100,
+                    user: "user2",
+                },
+            ],
+        };
+
         await page.route("**/api/usage**", async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: "application/json",
-                body: JSON.stringify({
-                    data: [
-                        {
-                            model: "gpt-4",
-                            total_tokens: 5000,
-                            prompt_tokens: 3000,
-                            completion_tokens: 2000,
-                            n_requests: 50,
-                            user: "chgaw002",
-                        },
-                        {
-                            model: "gpt-3.5-turbo",
-                            total_tokens: 8000,
-                            prompt_tokens: 5000,
-                            completion_tokens: 3000,
-                            n_requests: 100,
-                            user: "user2",
-                        },
-                    ],
-                }),
+                body: JSON.stringify(mockDashboardUsageData),
             });
         });
 
@@ -315,19 +317,16 @@ test.describe("DashboardChart Coverage", () => {
         const allButtons = bottomSidebar.locator("button, a, [role='button']");
         const buttonCount = await allButtons.count();
 
+        const keywords = ["dashboard", "statistik", "usage"];
+        const isMatch = (s: string | null) => s && keywords.some((k) => s.toLowerCase().includes(k));
+
         for (let i = 0; i < buttonCount; i++) {
             try {
                 const btn = allButtons.nth(i);
                 const text = await btn.innerText();
                 const title = await btn.getAttribute("title");
-                if (
-                    text?.toLowerCase().includes("dashboard") ||
-                    text?.toLowerCase().includes("statistik") ||
-                    text?.toLowerCase().includes("usage") ||
-                    title?.toLowerCase().includes("dashboard") ||
-                    title?.toLowerCase().includes("statistik") ||
-                    title?.toLowerCase().includes("usage")
-                ) {
+
+                if (isMatch(text) || isMatch(title)) {
                     await btn.click();
                     await page.waitForTimeout(1000);
                     break;

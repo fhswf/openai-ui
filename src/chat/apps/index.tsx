@@ -12,7 +12,7 @@ export function AppItem(props) {
   const { setApp, newChat, currentApp } = useGlobal();
 
   const { category } = props;
-  const app = apps.find((item: any) => item.category === category);
+  const app = apps.find((item: unknown) => item.category === category);
   console.log("AppItem: %o %o", currentApp, props);
   return (
     <Card.Root variant={currentApp?.id === props?.id ? "elevated" : "subtle"}>

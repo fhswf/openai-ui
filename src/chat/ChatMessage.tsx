@@ -277,7 +277,7 @@ export function MessageItem(props) {
   );
 }
 
-function toContentArray(content: any): any[] {
+function toContentArray(content: unknown): any[] {
   if (Array.isArray(content)) return content;
   if (content) return [{ type: 'input_text', text: content }];
   return [];
@@ -311,7 +311,7 @@ function mergeAssistantMessages(acc: Message[], message: Message): Message[] {
   return acc;
 }
 
-function isApprovalResponse(message: any): boolean {
+function isApprovalResponse(message: unknown): boolean {
   return Array.isArray(message.content) &&
     message.content.length > 0 &&
     message.content[0].type === 'mcp_approval_response';

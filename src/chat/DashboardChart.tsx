@@ -25,14 +25,14 @@ const snapAngle = (angle: number) => {
   return snappedAngle;
 };
 
-const getStartAngle = (data: any) => {
+const getStartAngle = (data: unknown) => {
   const maxValue = data[0].value;
   return 180 + maxValue * 1.8;
 };
 
 const renderPieLabel =
-  (data: any) =>
-    ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+  (data: unknown) =>
+    ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: unknown) => {
       const radius = innerRadius + (outerRadius - innerRadius) * 0.8; // Adjust radius to position text in the middle of the pie-piece
       const x = cx + radius * Math.cos(-midAngle * RADIAN);
       const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -57,7 +57,7 @@ const renderPieLabel =
       );
     };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload }: unknown) => {
   if (active && payload?.length) {
     const { longName, count, value } = payload[0].payload;
     const percentage = value.toFixed(1);

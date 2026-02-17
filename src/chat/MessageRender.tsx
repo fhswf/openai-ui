@@ -32,7 +32,7 @@ export const MessageRender = (props) => {
   function CopyIcon(props) {
 
 
-    const [IconComponent, setIconComponent] = useState<any>(LuClipboardCopy);
+    const [IconComponent, setIconComponent] = useState<unknown>(LuClipboardCopy);
     const { t } = useTranslation();
 
     const handleCopy = async (e) => {
