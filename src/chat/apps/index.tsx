@@ -8,11 +8,11 @@ import { useTranslation } from "react-i18next";
 
 export function AppItem(props) {
   const { t } = useTranslation();
-  const { setCurrent, apps, dispatch } = useApps();
+  const { apps } = useApps();
   const { setApp, newChat, currentApp } = useGlobal();
 
   const { category } = props;
-  const app = apps.filter((item) => item.category === category)[0];
+  const app = apps.find((item: any) => item.category === category);
   console.log("AppItem: %o %o", currentApp, props);
   return (
     <Card.Root variant={currentApp?.id === props?.id ? "elevated" : "subtle"}>
@@ -47,7 +47,7 @@ export function Empty() {
 }
 
 export function Category(props) {
-  const { setState, apps, current, category } = useApps();
+  const { apps, category } = useApps();
   const list = apps.filter(
     (item) => item.category === category[props.index].id
   );
@@ -64,7 +64,7 @@ export function Category(props) {
       </Heading>
       <div>
         {list.map((item, index) => (
-          <AppItem {...item} key={index} />
+          <AppItem {...item} key={item.id} />
         ))}
       </div>
     </div>
@@ -72,7 +72,7 @@ export function Category(props) {
 }
 
 export function AppContainer() {
-  const { category, dispatch } = useApps();
+  const { category } = useApps();
   return (
     <div className={styles.apps} data-testid="AppsList">
       {category.map((item, index) => (

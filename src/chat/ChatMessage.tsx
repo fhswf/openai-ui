@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import type { Message } from "./context/types";
 import { Tool } from "openai/resources/responses/responses.mjs";
 
 import {
@@ -43,8 +44,8 @@ type UsageProps = {
   endTime?: number;
 };
 
-function Usage(props: UsageProps) {
-  const { usage, startTime, endTime } = props;
+function Usage(props: Readonly<UsageProps>) {
+  const { usage } = props;
   const formatter = new Intl.NumberFormat();
 
   if (!usage) {
@@ -153,11 +154,6 @@ export function MessageItem(props) {
   const { t } = useTranslation();
   const avatar = options.general.theme === "dark" ? avatar_white : avatar_black;
 
-  //console.log("MessageItem props:", props);
-
-
-
-
 
   let message = "";
   let image_url = null;
@@ -263,17 +259,15 @@ export function MessageItem(props) {
             </IconButton>
           </Tooltip>
           {role === "user" ? (
-            <React.Fragment>
-              <IconButton
-                minWidth="24px"
-                size="sm"
-                variant="ghost"
-                onClick={() => editMessage(id)}
-                data-testid="EditMessageBtn"
-              >
-                <MdEdit />
-              </IconButton>
-            </React.Fragment>
+            <IconButton
+              minWidth="24px"
+              size="sm"
+              variant="ghost"
+              onClick={() => editMessage(id)}
+              data-testid="EditMessageBtn"
+            >
+              <MdEdit />
+            </IconButton>
           ) : (
             <CopyIcon value={content} />
           )}
@@ -281,6 +275,46 @@ export function MessageItem(props) {
       </Card.Footer>
     </Card.Root>
   );
+}
+
+function toContentArray(content: any): any[] {
+  if (Array.isArray(content)) return content;
+  if (content) return [{ type: 'input_text', text: content }];
+  return [];
+}
+
+function mergeAssistantMessages(acc: Message[], message: Message): Message[] {
+  if (acc.length === 0) return [message];
+  const last = acc.at(-1)!;
+  if (last.role !== 'assistant' || message.role !== 'assistant') {
+    return [...acc, message];
+  }
+
+  const merged = { ...last };
+
+  if (Array.isArray(last.content) || Array.isArray(message.content)) {
+    const c1 = toContentArray(last.content);
+    const c2 = toContentArray(message.content);
+    merged.content = [...c1, ...c2];
+  } else {
+    merged.content = (last.content || "") + (message.content || "");
+  }
+
+  if (message.toolsUsed) {
+    merged.toolsUsed = [...(last.toolsUsed || []), ...message.toolsUsed];
+  }
+  if (message.images) {
+    merged.images = { ...last.images, ...message.images };
+  }
+
+  acc[acc.length - 1] = merged;
+  return acc;
+}
+
+function isApprovalResponse(message: any): boolean {
+  return Array.isArray(message.content) &&
+    message.content.length > 0 &&
+    message.content[0].type === 'mcp_approval_response';
 }
 
 export function MessageContainer() {
@@ -295,42 +329,10 @@ export function MessageContainer() {
           {messages
             .filter((message) => {
               if (message.role === "system") return false;
-              // Hide explicit approval response messages as they are technical
-              if (Array.isArray(message.content) &&
-                message.content.length > 0 &&
-                (message.content[0] as any).type === 'mcp_approval_response') {
-                return false;
-              }
+              if (isApprovalResponse(message)) return false;
               return true;
             })
-            .reduce((acc: Message[], message) => {
-              if (acc.length === 0) return [message];
-              const last = acc[acc.length - 1];
-              if (last.role === 'assistant' && message.role === 'assistant') {
-                // Merge logic
-                const merged = { ...last };
-                // Content merge
-                if (Array.isArray(last.content) || Array.isArray(message.content)) {
-                  const c1 = Array.isArray(last.content) ? last.content : (last.content ? [{ type: 'input_text', text: last.content }] : []);
-                  const c2 = Array.isArray(message.content) ? message.content : (message.content ? [{ type: 'input_text', text: message.content }] : []);
-                  merged.content = [...c1, ...c2];
-                } else {
-                  merged.content = (last.content || "") + (message.content || "");
-                }
-                // Tools merge
-                if (message.toolsUsed) {
-                  merged.toolsUsed = [...(last.toolsUsed || []), ...message.toolsUsed];
-                }
-                // Images merge
-                if (message.images) {
-                  merged.images = { ...(last.images || {}), ...message.images };
-                }
-
-                acc[acc.length - 1] = merged;
-                return acc;
-              }
-              return [...acc, message];
-            }, [])
+            .reduce(mergeAssistantMessages, [])
             .map((item, index) => (
               <MessageItem
                 key={item.id || item.sentTime}
@@ -345,8 +347,6 @@ export function MessageContainer() {
 }
 
 export function ChatMessage() {
-  const { is, setState } = useGlobal();
-
   return (
     <ScrollView id="chat_list" data-testid="ChatList">
       <MessageContainer />

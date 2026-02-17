@@ -1,16 +1,12 @@
 import React, {
-  memo,
   forwardRef,
   useEffect,
   useRef,
   useState,
   useMemo,
 } from "react";
-import { Skeleton, SkeletonText } from "@chakra-ui/react";
-import { IconButton } from "@chakra-ui/react";
-import { Tooltip } from "../components/ui/tooltip";
-import { LuClipboardCheck } from "react-icons/lu";
-import { LuClipboardCopy } from "react-icons/lu";
+import { SkeletonText } from "@chakra-ui/react";
+import { LuClipboardCheck, LuClipboardCopy } from "react-icons/lu";
 import MarkdownHooks from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -34,8 +30,9 @@ export const MessageRender = (props) => {
   const textRef = useRef(null);
 
   function CopyIcon(props) {
-    const { value, className } = props;
-    const [icon, setIcon] = useState(LuClipboardCopy);
+
+
+    const [IconComponent, setIconComponent] = useState<any>(LuClipboardCopy);
     const { t } = useTranslation();
 
     const handleCopy = async (e) => {
@@ -44,9 +41,9 @@ export const MessageRender = (props) => {
 
         const text = textRef.current.innerText;
         await navigator.clipboard.writeText(text);
-        setIcon(LuClipboardCheck);
+        setIconComponent(LuClipboardCheck);
         setTimeout(() => {
-          setIcon(LuClipboardCopy);
+          setIconComponent(LuClipboardCopy);
         }, 1500);
       } catch (err) {
         console.error("Failed to copy: ", err);
@@ -54,16 +51,16 @@ export const MessageRender = (props) => {
     };
 
     return (
-      <span className="copy" onClick={handleCopy}>
-        {icon}
-      </span>
+      <button className="copy" onClick={handleCopy} type="button" aria-label={t("copy_code") || "Copy code"}>
+        <IconComponent />
+      </button>
     );
   }
 
   const rendered = useMemo(
     () => (
       <MarkdownHooks
-        children={props.children}
+
         remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeKatex, rehypeRaw]}
         components={{
@@ -77,18 +74,21 @@ export const MessageRender = (props) => {
                 <SyntaxHighlighter
                   ref={textRef}
                   {...rest}
-                  children={children}
                   style={style}
                   language={match[1]}
                   PreTag="div"
-                />
+                >
+                  {String(children).replace(/\n$/, "")}
+                </SyntaxHighlighter>
               </>
             ) : (
               <code {...props}>{children}</code>
             );
           },
         }}
-      />
+      >
+        {props.children}
+      </MarkdownHooks>
     ),
     [props.children]
   );
@@ -114,13 +114,12 @@ type LazyRendererProps = {
 };
 
 export const LazyRenderer = (props: LazyRendererProps) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(props.isVisible || false);
   const ref = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        //console.log('isIntersecting: %o %o', entry, ref.current);
         setIsVisible(entry.isIntersecting);
         observer.disconnect();
       }

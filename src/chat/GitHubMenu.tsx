@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   Button,
   HStack,
@@ -24,7 +24,7 @@ export function GitHubMenu() {
     import.meta.env.VITE_ISSUE_URL ||
     "https://github.com/fhswf/openai-ui/issues/new?template=Blank+issue";
 
-  const [menuOpen, setMenuOpen] = useState(false);
+
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   return (
