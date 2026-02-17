@@ -64,7 +64,7 @@ export const MessageRender = (props) => {
         remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeKatex, rehypeRaw]}
         components={{
-          code({ node, inline, className, children, ...rest }) {
+          code({ node, inline, className, children, ...rest }: any) {
             const match = /language-(\w+)/.exec(className || "");
             return !inline && match ? (
               <>
@@ -114,7 +114,7 @@ type LazyRendererProps = {
 };
 
 export const LazyRenderer = (props: LazyRendererProps) => {
-  const [isVisible, setIsVisible] = useState(props.isVisible || false);
+  const [isVisible, setIsVisible] = useState(props.isVisible ?? false);
   const ref = useRef(null);
 
   useEffect(() => {

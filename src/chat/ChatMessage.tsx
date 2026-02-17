@@ -137,6 +137,69 @@ function ImageBlobRenderer({ image, fileName }) {
   );
 }
 
+function processMessageContent(content: unknown): { message: string, image_url: string | null, image_name: string | null } {
+  let message = "";
+  let image_url: string | null = null;
+  let image_name: string | null = null;
+
+  if (typeof content == "string") {
+    message = processLaTeX(content);
+  } else if (Array.isArray(content)) {
+    content.forEach((item) => {
+      if (item.type === "input_text") {
+        message += item.text;
+      } else if (item.type === "input_image") {
+        image_url = item.image_url;
+        image_name = item.name;
+      } else if (item.type === "mcp_approval_response") {
+        message += item.approve ? "Approved" : "Denied";
+      }
+    });
+  }
+  return { message, image_url, image_name };
+}
+
+function MessageImages({ images }: { images: any }) {
+  if (!images) return null;
+
+  return (
+    <>
+      {Object.entries(images).map(([fileName, image]: [string, any]) => {
+        if (image.src) {
+          return (
+            <img
+              key={fileName}
+              src={image.src}
+              alt={fileName}
+              className={styles.generated_image}
+              data-testid={`generated-image-${fileName}`}
+            />
+          );
+        } else if (image.url?.startsWith("opfs://")) {
+          return (
+            <OPFSImage
+              key={fileName}
+              src={image.url}
+              alt={fileName}
+              className={styles.generated_image}
+              data-testid={`generated-image-${fileName}`}
+            />
+          );
+        } else if (image.url && image.blob) {
+          return (
+            <ImageBlobRenderer
+              key={fileName}
+              image={image}
+              fileName={fileName}
+            />
+          );
+        }
+        return <Skeleton key={fileName} className={styles.image} />;
+      })}
+    </>
+  );
+}
+
 export function MessageItem(props) {
   const {
     content,
@@ -153,25 +216,7 @@ export function MessageItem(props) {
   const { removeMessage, editMessage, user, options, is } = useGlobal();
   const { t } = useTranslation();
   const avatar = options.general.theme === "dark" ? avatar_white : avatar_black;
-
-
-  let message = "";
-  let image_url = null;
-  let image_name = null;
-  if (typeof content == "string") {
-    message = processLaTeX(content);
-  } else {
-    content?.map((item, index) => {
-      if (item.type === "input_text") {
-        message += item.text;
-      } else if (item.type === "input_image") {
-        image_url = item.image_url;
-        image_name = item.name;
-      } else if (item.type === "mcp_approval_response") {
-        message += item.approve ? "Approved" : "Denied";
-      }
-    });
-  }
+  const { message, image_url, image_name } = processMessageContent(content);
 
   return (
     <Card.Root
@@ -193,40 +238,7 @@ export function MessageItem(props) {
       </Card.Header>
       <Card.Body>
         <LazyRenderer isVisible={is.thinking}>{message}</LazyRenderer>
-        {images &&
-          Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
-            if (image.src) {
-              // If image has a src, use it directly
-              return (
-                <img
-                  key={fileName}
-                  src={image.src}
-                  alt={fileName}
-                  className={styles.generated_image}
-                  data-testid={`generated-image-${fileName}`}
-                />
-              );
-            } else if (image.url?.startsWith("opfs://")) {
-              return (
-                <OPFSImage
-                  key={fileName}
-                  src={image.url}
-                  alt={fileName}
-                  className={styles.generated_image}
-                  data-testid={`generated-image-${fileName}`}
-                />
-              );
-            } else if (image.url && image.blob) {
-              return (
-                <ImageBlobRenderer
-                  key={fileName}
-                  image={image}
-                  fileName={fileName}
-                />
-              );
-            }
-            return <Skeleton key={fileName} className={styles.image} />;
-          })}
+        <MessageImages images={images} />
         {image_url &&
           (image_url.startsWith("opfs://") ? (
             <OPFSImage
@@ -279,33 +291,30 @@ export function MessageItem(props) {
 
 function toContentArray(content: unknown): any[] {
   if (Array.isArray(content)) return content;
-  if (content) return [{ type: 'input_text', text: content }];
-  return [];
+  return content ? [{ type: 'input_text', text: content }] : [];
+}
+
+function mergeContent(last: Message, message: Message) {
+  if (Array.isArray(last.content) || Array.isArray(message.content)) {
+    return [...toContentArray(last.content), ...toContentArray(message.content)];
+  }
+  return (last.content || "") + (message.content || "");
 }
 
 function mergeAssistantMessages(acc: Message[], message: Message): Message[] {
   if (acc.length === 0) return [message];
-  const last = acc.at(-1)!;
+  const last = acc[acc.length - 1];
+
   if (last.role !== 'assistant' || message.role !== 'assistant') {
     return [...acc, message];
   }
 
-  const merged = { ...last };
-
-  if (Array.isArray(last.content) || Array.isArray(message.content)) {
-    const c1 = toContentArray(last.content);
-    const c2 = toContentArray(message.content);
-    merged.content = [...c1, ...c2];
-  } else {
-    merged.content = (last.content || "") + (message.content || "");
-  }
-
-  if (message.toolsUsed) {
-    merged.toolsUsed = [...(last.toolsUsed || []), ...message.toolsUsed];
-  }
-  if (message.images) {
-    merged.images = { ...last.images, ...message.images };
-  }
+  const merged = {
+    ...last,
+    content: mergeContent(last, message),
+    toolsUsed: message.toolsUsed ? [...(last.toolsUsed ?? []), ...message.toolsUsed] : last.toolsUsed,
+    images: message.images ? { ...last.images, ...message.images } : last.images
+  };
 
   acc[acc.length - 1] = merged;
   return acc;
