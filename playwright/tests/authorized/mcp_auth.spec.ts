@@ -174,4 +174,73 @@ test.describe("MCP Auth", () => {
       page.getByTestId("mcp-auth-field-email-control")
     ).toBeChecked();
   });
+
+  test("legacy config without selectedFields does not crash", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const raw = localStorage.getItem("SESSIONS");
+      const session = raw ? JSON.parse(raw) : {};
+      if (!session.options) session.options = {};
+      if (!session.options.openai) session.options.openai = {};
+
+      session.options.openai.mcpAuthConfigs = {
+        dataType: "Map",
+        value: [["FH SWF (beta)", { mode: "user-data" }]],
+      };
+
+      localStorage.setItem("SESSIONS", JSON.stringify(session));
+    });
+
+    await page.reload();
+    await expect(page.getByTestId("LeftSideBar")).toBeVisible({
+      timeout: 10000,
+    });
+
+    const termsBtn = page.getByTestId("accept-terms-btn");
+    if (await termsBtn.isVisible()) {
+      await termsBtn.click();
+    }
+
+    await openMcpDialog(page);
+    await page.getByTestId("mcp-edit-FH SWF (beta)").click();
+
+    await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
+    await expect(
+      page.getByTestId("mcp-auth-field-email-control")
+    ).not.toBeChecked();
+  });
+
+  test("missing mcpAuthConfigs does not crash", async ({ page }) => {
+    await page.evaluate(() => {
+      const raw = localStorage.getItem("SESSIONS");
+      const session = raw ? JSON.parse(raw) : {};
+      if (!session.options) session.options = {};
+      if (!session.options.openai) session.options.openai = {};
+
+      delete session.options.openai.mcpAuthConfigs;
+      localStorage.setItem("SESSIONS", JSON.stringify(session));
+    });
+
+    await page.reload();
+    await expect(page.getByTestId("LeftSideBar")).toBeVisible({
+      timeout: 10000,
+    });
+
+    const termsBtn = page.getByTestId("accept-terms-btn");
+    if (await termsBtn.isVisible()) {
+      await termsBtn.click();
+    }
+
+    await openMcpDialog(page);
+    await page.getByTestId("mcp-edit-FH SWF (beta)").click();
+
+    await expect(page.getByTestId("mcp-auth-fields-container")).toHaveCount(0);
+
+    await page.getByTestId("mcp-auth-mode-user-data").click();
+    await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
+    await expect(
+      page.getByTestId("mcp-auth-field-email-control")
+    ).not.toBeChecked();
+  });
 });

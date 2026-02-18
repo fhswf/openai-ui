@@ -59,9 +59,12 @@ async function getUserDataAuthorization(
   serverUrl: string,
   user: Record<string, unknown> | null
 ): Promise<string | undefined> {
-  if (!config.selectedFields.length || !serverUrl || !user) return undefined;
+  const selectedFields = Array.isArray(config.selectedFields)
+    ? config.selectedFields
+    : [];
+  if (!selectedFields.length || !serverUrl || !user) return undefined;
 
-  const filteredData = buildFilteredData(config.selectedFields, user);
+  const filteredData = buildFilteredData(selectedFields, user);
   if (!filteredData) return undefined;
 
   try {

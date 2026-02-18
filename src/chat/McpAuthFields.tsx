@@ -53,21 +53,24 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
 }) => {
   const { t } = useTranslation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const selectedFields = Array.isArray(config.selectedFields)
+    ? config.selectedFields
+    : [];
 
   const handleModeChange = (details: { value: string }) => {
     const mode = details.value as McpAuthMode;
     onChange({
       ...config,
       mode,
-      selectedFields: mode === "user-data" ? config.selectedFields : [],
+      selectedFields: mode === "user-data" ? selectedFields : [],
       staticToken: mode === "static" ? config.staticToken : "",
     });
   };
 
   const handleFieldToggle = (field: string, checked: boolean) => {
     const fields = checked
-      ? [...config.selectedFields, field]
-      : config.selectedFields.filter((f) => f !== field);
+      ? [...selectedFields, field]
+      : selectedFields.filter((f) => f !== field);
     onChange({ ...config, selectedFields: fields });
   };
 
@@ -215,7 +218,7 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
 
                     <Stack gap={1}>
                       {userFields.map((field) => {
-                        const isChecked = config.selectedFields.includes(field);
+                        const isChecked = selectedFields.includes(field);
                         const value = getFieldValue(field);
                         return (
                           <Checkbox.Root
@@ -261,7 +264,7 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
                     </Stack>
 
                     <Text fontSize="xs" color="gray.500">
-                      {config.selectedFields.length}/{userFields.length}{" "}
+                      {selectedFields.length}/{userFields.length}{" "}
                       {t("selected")}
                     </Text>
                   </Stack>
