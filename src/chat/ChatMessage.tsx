@@ -159,12 +159,12 @@ function processMessageContent(content: unknown): { message: string, image_url: 
   return { message, image_url, image_name };
 }
 
-function MessageImages({ images }: { images: any }) {
+function MessageImages({ images }: { images: unknown }) {
   if (!images) return null;
 
   return (
     <>
-      {Object.entries(images).map(([fileName, image]: [string, any]) => {
+      {Object.entries(images).map(([fileName, image]: [string, unknown]) => {
         if (image.src) {
           return (
             <img
