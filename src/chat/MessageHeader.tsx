@@ -338,9 +338,7 @@ export function MessageHeader() {
                         <Menu.CheckboxItem
                           key={tool.server_label}
                           value={key}
-                          checked={
-                            options.openai.toolsEnabled.has(key)
-                          }
+                          checked={options.openai.toolsEnabled.has(key)}
                           onCheckedChange={(e) => setTool(key, tool, e)}
                         >
                           <Menu.ItemIndicator />
@@ -519,9 +517,7 @@ export function MessageHeader() {
                           <Checkbox.Root
                             size="sm"
                             variant={"outline"}
-                            checked={
-                              options.openai.toolsEnabled.has(key)
-                            }
+                            checked={options.openai.toolsEnabled.has(key)}
                             onCheckedChange={(e) =>
                               setTool(key, tool, e.checked)
                             }

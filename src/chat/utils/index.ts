@@ -1,6 +1,7 @@
 import i18next from "i18next";
 import {
   AccountOptions,
+  GeneralOptions,
   GlobalAction,
   McpAuthConfig,
   OpenAIOptions,
@@ -9,8 +10,6 @@ import {
   Tool,
 } from "../context/types";
 import { getAuthorizationForMcpConfig } from "../hooks/useMcpAuth";
-
-import avatar from "../../assets/images/avatar.png";
 
 export * from "./options";
 
@@ -34,12 +33,15 @@ export async function sha256Digest(message) {
   const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8); // hash the message
   const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
   const hashHex = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join(""); // convert bytes to hex string
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join(""); // convert bytes to hex string
   return hashHex;
 }
 
-type McpAuthorizationUpdate = { key: string; authorization?: string };
+interface McpAuthorizationUpdate {
+  key: string;
+  authorization?: string;
+}
 
 function isRefreshableMcpAuth(
   openai: OpenAIOptions | undefined
@@ -52,15 +54,20 @@ function isRefreshableMcpAuth(
   );
 }
 
-function isMcpTool(tool: Tool | undefined): tool is Tool.Mcp {
-  return Boolean(tool && tool.type === "mcp");
+function isMcpTool(tool: unknown): tool is Tool.Mcp {
+  return Boolean(
+    tool &&
+      typeof tool === "object" &&
+      "type" in tool &&
+      (tool as { type?: unknown }).type === "mcp"
+  );
 }
 
 async function buildMcpAuthorizationUpdates(
   tools: Map<string, Tool>,
   configs: Map<string, McpAuthConfig>,
   user: Record<string, unknown> | null
-): Promise<Array<McpAuthorizationUpdate | null>> {
+): Promise<(McpAuthorizationUpdate | null)[]> {
   return Promise.all(
     Array.from(configs.entries()).map(async ([key, config]) => {
       const tool = tools.get(key);
@@ -87,7 +94,7 @@ async function buildMcpAuthorizationUpdates(
 
 function applyMcpAuthorizationUpdates(
   tools: Map<string, Tool>,
-  updates: Array<McpAuthorizationUpdate | null>
+  updates: (McpAuthorizationUpdate | null)[]
 ): boolean {
   let changed = false;
   for (const update of updates) {
@@ -127,13 +134,13 @@ async function refreshMcpToolAuthorizations(
 }
 
 export function fetchAndGetUser(
-  dispatch: (action: GlobalAction) => void,
+  dispatch: (_action: GlobalAction) => void,
   options: {
     account?: AccountOptions;
-    general: any;
+    general: Pick<GeneralOptions, "gravatar">;
     openai: OpenAIOptions | undefined;
   },
-  setOptions?: (arg: OptionAction) => void
+  setOptions?: (_arg: OptionAction) => void
 ) {
   fetch(import.meta.env.VITE_USER_URL, { credentials: "include" })
     .then((res) => {
@@ -156,7 +163,10 @@ export function fetchAndGetUser(
       dispatch({ type: "SET_STATE", payload: { user } });
 
       if (setOptions) {
-        const updatedTools = await refreshMcpToolAuthorizations(options.openai, user);
+        const updatedTools = await refreshMcpToolAuthorizations(
+          options.openai,
+          user
+        );
         if (updatedTools) {
           setOptions({
             type: OptionActionType.OPENAI,
