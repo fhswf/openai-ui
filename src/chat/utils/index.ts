@@ -1,6 +1,14 @@
 import i18next from "i18next";
-import { AccountOptions, GlobalAction, OpenAIOptions, OptionAction, OptionActionType, Tool} from "../context/types";
-import {getAuthorizationForMcpConfig} from "../hooks/useMcpAuth";
+import {
+  AccountOptions,
+  GlobalAction,
+  McpAuthConfig,
+  OpenAIOptions,
+  OptionAction,
+  OptionActionType,
+  Tool,
+} from "../context/types";
+import { getAuthorizationForMcpConfig } from "../hooks/useMcpAuth";
 
 import avatar from "../../assets/images/avatar.png";
 
@@ -31,50 +39,65 @@ export async function sha256Digest(message) {
   return hashHex;
 }
 
-async function refreshMcpToolAuthorizations(
-    openai: OpenAIOptions | undefined,
-    user: Record<string, unknown> | null
-): Promise<Map<string, Tool> | null> {
-  if (!openai) return null;
-  if (!(openai.tools instanceof Map)) return null;
-  if (!(openai.mcpAuthConfigs instanceof Map)) return null;
-  if (openai.mcpAuthConfigs.size === 0) return null;
+type McpAuthorizationUpdate = { key: string; authorization?: string };
 
-  const tools = new Map(openai.tools);
-  const updates = await Promise.all(
-      Array.from(openai.mcpAuthConfigs.entries()).map(async ([key, config]) => {
-        const tool = tools.get(key);
-        if (!tool || tool.type !== "mcp") return null;
-        const serverUrl = (tool as Tool.Mcp).server_url || "";
-        try {
-          const authorization = await getAuthorizationForMcpConfig(
-              config,
-              serverUrl,
-              user
-          );
-          return {key, authorization};
-        } catch (error) {
-          console.warn(
-              "Unable to refresh MCP authorization for %s: %o",
-              key,
-              error
-          );
-          return {key, authorization: undefined};
-        }
-      })
+function isRefreshableMcpAuth(
+  openai: OpenAIOptions | undefined
+): openai is OpenAIOptions & { mcpAuthConfigs: Map<string, McpAuthConfig> } {
+  return Boolean(
+    openai &&
+      openai.tools instanceof Map &&
+      openai.mcpAuthConfigs instanceof Map &&
+      openai.mcpAuthConfigs.size > 0
   );
+}
 
+function isMcpTool(tool: Tool | undefined): tool is Tool.Mcp {
+  return Boolean(tool && tool.type === "mcp");
+}
+
+async function buildMcpAuthorizationUpdates(
+  tools: Map<string, Tool>,
+  configs: Map<string, McpAuthConfig>,
+  user: Record<string, unknown> | null
+): Promise<Array<McpAuthorizationUpdate | null>> {
+  return Promise.all(
+    Array.from(configs.entries()).map(async ([key, config]) => {
+      const tool = tools.get(key);
+      if (!isMcpTool(tool)) return null;
+      const serverUrl = tool.server_url || "";
+      try {
+        const authorization = await getAuthorizationForMcpConfig(
+          config,
+          serverUrl,
+          user
+        );
+        return { key, authorization };
+      } catch (error) {
+        console.warn(
+          "Unable to refresh MCP authorization for %s: %o",
+          key,
+          error
+        );
+        return { key, authorization: undefined };
+      }
+    })
+  );
+}
+
+function applyMcpAuthorizationUpdates(
+  tools: Map<string, Tool>,
+  updates: Array<McpAuthorizationUpdate | null>
+): boolean {
   let changed = false;
   for (const update of updates) {
     if (!update) continue;
     const tool = tools.get(update.key);
-    if (!tool || tool.type !== "mcp") continue;
-    const previousAuthorization = (tool as Tool.Mcp).authorization;
+    if (!isMcpTool(tool)) continue;
+    const previousAuthorization = tool.authorization;
     const nextAuthorization = update.authorization;
-    if (previousAuthorization === nextAuthorization) {
-      continue;
-    }
-    const nextTool = {...tool} as Tool.Mcp;
+    if (previousAuthorization === nextAuthorization) continue;
+    const nextTool = { ...tool } as Tool.Mcp;
     if (nextAuthorization) {
       nextTool.authorization = nextAuthorization;
     } else {
@@ -83,14 +106,35 @@ async function refreshMcpToolAuthorizations(
     tools.set(update.key, nextTool);
     changed = true;
   }
+  return changed;
+}
+
+async function refreshMcpToolAuthorizations(
+  openai: OpenAIOptions | undefined,
+  user: Record<string, unknown> | null
+): Promise<Map<string, Tool> | null> {
+  if (!isRefreshableMcpAuth(openai)) return null;
+
+  const tools = new Map(openai.tools);
+  const updates = await buildMcpAuthorizationUpdates(
+    tools,
+    openai.mcpAuthConfigs,
+    user
+  );
+  const changed = applyMcpAuthorizationUpdates(tools, updates);
 
   return changed ? tools : null;
 }
 
-export function fetchAndGetUser(dispatch: {
-  (action: GlobalAction): void;
-  (arg0: { type: string; payload: { user: any; } | { user: any; }; }): void;
-}, options: { account?: AccountOptions; general: any; openai: any; }, setOptions?: { (arg: OptionAction): void; (arg0: { type: OptionActionType; data: { tools: Map<string, Tool>; }; }): void; }) {
+export function fetchAndGetUser(
+  dispatch: (action: GlobalAction) => void,
+  options: {
+    account?: AccountOptions;
+    general: any;
+    openai: OpenAIOptions | undefined;
+  },
+  setOptions?: (arg: OptionAction) => void
+) {
   fetch(import.meta.env.VITE_USER_URL, { credentials: "include" })
     .then((res) => {
       console.log("getting user: ", res.status);
@@ -112,10 +156,7 @@ export function fetchAndGetUser(dispatch: {
       dispatch({ type: "SET_STATE", payload: { user } });
 
       if (setOptions) {
-        const updatedTools = await refreshMcpToolAuthorizations(
-          options?.openai,
-          user
-        );
+        const updatedTools = await refreshMcpToolAuthorizations(options.openai, user);
         if (updatedTools) {
           setOptions({
             type: OptionActionType.OPENAI,

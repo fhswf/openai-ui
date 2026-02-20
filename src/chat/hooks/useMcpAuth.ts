@@ -86,7 +86,6 @@ export async function getAuthorizationForMcpConfig(
   serverUrl: string,
   user: Record<string, unknown> | null
 ): Promise<string | undefined> {
-  if (!config) return undefined;
   switch (config.mode) {
     case "none":
       return undefined;

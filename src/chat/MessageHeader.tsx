@@ -64,7 +64,7 @@ export function MessageHeader() {
   const messages = message?.messages;
   const columnIcon = is.toolbar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />;
 
-  let tools: Map<string, Tool> = options.openai?.tools;
+  let tools: Map<string, Tool> = options.openai.tools;
 
   const { t } = useTranslation();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -296,7 +296,7 @@ export function MessageHeader() {
         <Menu.Positioner>
           <Menu.Content>
             <Menu.RadioItemGroup
-              value={options.openai?.model}
+              value={options.openai.model}
               onValueChange={(e) =>
                 setOptions({
                   type: OptionActionType.OPENAI,
@@ -319,7 +319,7 @@ export function MessageHeader() {
                 <Menu.CheckboxItem
                   value={value.type === "mcp" ? value.server_label : value.type}
                   key={key}
-                  checked={options.openai?.toolsEnabled?.has(key) || false}
+                  checked={options.openai.toolsEnabled.has(key)}
                   onCheckedChange={(e) => setTool(key, value, e)}
                 >
                   <Menu.ItemIndicator />
@@ -339,7 +339,7 @@ export function MessageHeader() {
                           key={tool.server_label}
                           value={key}
                           checked={
-                            options.openai?.toolsEnabled?.has(key) || false
+                            options.openai.toolsEnabled.has(key)
                           }
                           onCheckedChange={(e) => setTool(key, tool, e)}
                         >
@@ -520,7 +520,7 @@ export function MessageHeader() {
                             size="sm"
                             variant={"outline"}
                             checked={
-                              options.openai?.toolsEnabled?.has(key) || false
+                              options.openai.toolsEnabled.has(key)
                             }
                             onCheckedChange={(e) =>
                               setTool(key, tool, e.checked)
