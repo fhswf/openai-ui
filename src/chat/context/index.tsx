@@ -82,7 +82,7 @@ export const ChatProvider = ({ children }) => {
   // get user
   useEffect(() => {
     console.log("fetch user");
-    fetchAndGetUser(dispatch, state.options);
+    fetchAndGetUser(dispatch, state.options, actionList.setOptions);
   }, []);
 
   useEffect(() => {

@@ -49,7 +49,7 @@ export type OpenAIOptions = {
   stream: boolean;
   tools: Map<string, Tool>;
   toolsEnabled: Set<string>;
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
+  mcpAuthConfigs?: Map<string, McpAuthConfig>;
 };
 
 export type Options = {

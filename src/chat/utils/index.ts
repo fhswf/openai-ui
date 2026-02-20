@@ -1,4 +1,6 @@
 import i18next from "i18next";
+import { AccountOptions, GlobalAction, OpenAIOptions, OptionAction, OptionActionType, Tool} from "../context/types";
+import {getAuthorizationForMcpConfig} from "../hooks/useMcpAuth";
 
 import avatar from "../../assets/images/avatar.png";
 
@@ -24,12 +26,71 @@ export async function sha256Digest(message) {
   const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8); // hash the message
   const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
   const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join(""); // convert bytes to hex string
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join(""); // convert bytes to hex string
   return hashHex;
 }
 
-export function fetchAndGetUser(dispatch, options) {
+async function refreshMcpToolAuthorizations(
+    openai: OpenAIOptions | undefined,
+    user: Record<string, unknown> | null
+): Promise<Map<string, Tool> | null> {
+  if (!openai) return null;
+  if (!(openai.tools instanceof Map)) return null;
+  if (!(openai.mcpAuthConfigs instanceof Map)) return null;
+  if (openai.mcpAuthConfigs.size === 0) return null;
+
+  const tools = new Map(openai.tools);
+  const updates = await Promise.all(
+      Array.from(openai.mcpAuthConfigs.entries()).map(async ([key, config]) => {
+        const tool = tools.get(key);
+        if (!tool || tool.type !== "mcp") return null;
+        const serverUrl = (tool as Tool.Mcp).server_url || "";
+        try {
+          const authorization = await getAuthorizationForMcpConfig(
+              config,
+              serverUrl,
+              user
+          );
+          return {key, authorization};
+        } catch (error) {
+          console.warn(
+              "Unable to refresh MCP authorization for %s: %o",
+              key,
+              error
+          );
+          return {key, authorization: undefined};
+        }
+      })
+  );
+
+  let changed = false;
+  for (const update of updates) {
+    if (!update) continue;
+    const tool = tools.get(update.key);
+    if (!tool || tool.type !== "mcp") continue;
+    const previousAuthorization = (tool as Tool.Mcp).authorization;
+    const nextAuthorization = update.authorization;
+    if (previousAuthorization === nextAuthorization) {
+      continue;
+    }
+    const nextTool = {...tool} as Tool.Mcp;
+    if (nextAuthorization) {
+      nextTool.authorization = nextAuthorization;
+    } else {
+      delete nextTool.authorization;
+    }
+    tools.set(update.key, nextTool);
+    changed = true;
+  }
+
+  return changed ? tools : null;
+}
+
+export function fetchAndGetUser(dispatch: {
+  (action: GlobalAction): void;
+  (arg0: { type: string; payload: { user: any; } | { user: any; }; }): void;
+}, options: { account?: AccountOptions; general: any; openai: any; }, setOptions?: { (arg: OptionAction): void; (arg0: { type: OptionActionType; data: { tools: Map<string, Tool>; }; }): void; }) {
   fetch(import.meta.env.VITE_USER_URL, { credentials: "include" })
     .then((res) => {
       console.log("getting user: ", res.status);
@@ -45,10 +106,23 @@ export function fetchAndGetUser(dispatch, options) {
       return res.json();
     })
 
-    .then((user) => {
+    .then(async (user) => {
       user.avatar = null;
       console.log("updating user: ", user);
       dispatch({ type: "SET_STATE", payload: { user } });
+
+      if (setOptions) {
+        const updatedTools = await refreshMcpToolAuthorizations(
+          options?.openai,
+          user
+        );
+        if (updatedTools) {
+          setOptions({
+            type: OptionActionType.OPENAI,
+            data: { tools: updatedTools },
+          });
+        }
+      }
 
       if (options.general.gravatar) {
         console.log("user uses gravatar");

@@ -51,7 +51,8 @@ function encryptPayload(
 function getStaticAuthorization(
   staticToken: string | undefined
 ): string | undefined {
-  return staticToken?.trim() ?? undefined;
+  const token = staticToken?.trim();
+  return token ? token : undefined;
 }
 
 async function getUserDataAuthorization(
@@ -80,21 +81,30 @@ async function getUserDataAuthorization(
   }
 }
 
+export async function getAuthorizationForMcpConfig(
+  config: McpAuthConfig,
+  serverUrl: string,
+  user: Record<string, unknown> | null
+): Promise<string | undefined> {
+  if (!config) return undefined;
+  switch (config.mode) {
+    case "none":
+      return undefined;
+    case "static":
+      return getStaticAuthorization(config.staticToken);
+    case "user-data":
+      return getUserDataAuthorization(config, serverUrl, user);
+    default:
+      return undefined;
+  }
+}
+
 export function useMcpAuth(user: Record<string, unknown> | null) {
   const getAuthorization = async (
     config: McpAuthConfig,
     serverUrl: string
   ): Promise<string | undefined> => {
-    switch (config.mode) {
-      case "none":
-        return undefined;
-      case "static":
-        return getStaticAuthorization(config.staticToken);
-      case "user-data":
-        return getUserDataAuthorization(config, serverUrl, user);
-      default:
-        return undefined;
-    }
+    return getAuthorizationForMcpConfig(config, serverUrl, user);
   };
 
   const userFields = user ? Object.keys(user) : [];

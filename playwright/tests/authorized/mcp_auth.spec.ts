@@ -178,7 +178,7 @@ test.describe("MCP Auth", () => {
   test("legacy config without selectedFields does not crash", async ({
     page,
   }) => {
-    await page.evaluate(() => {
+    await page.addInitScript(() => {
       const raw = localStorage.getItem("SESSIONS");
       const session = raw ? JSON.parse(raw) : {};
       if (!session.options) session.options = {};
@@ -212,7 +212,7 @@ test.describe("MCP Auth", () => {
   });
 
   test("missing mcpAuthConfigs does not crash", async ({ page }) => {
-    await page.evaluate(() => {
+    await page.addInitScript(() => {
       const raw = localStorage.getItem("SESSIONS");
       const session = raw ? JSON.parse(raw) : {};
       if (!session.options) session.options = {};
@@ -222,7 +222,7 @@ test.describe("MCP Auth", () => {
       localStorage.setItem("SESSIONS", JSON.stringify(session));
     });
 
-    await page.reload();
+    await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("LeftSideBar")).toBeVisible({
       timeout: 10000,
     });
@@ -242,5 +242,62 @@ test.describe("MCP Auth", () => {
     await expect(
       page.getByTestId("mcp-auth-field-email-control")
     ).not.toBeChecked();
+  });
+
+  test("missing mcpAuthConfigs on fresh login does not crash", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({
+      storageState: "playwright/.auth/user.json",
+    });
+    const page = await context.newPage();
+
+    await page.route("**/api/user", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockUser),
+      });
+    });
+    await page.route("**/.well-known/jwks.json", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(jwks),
+      });
+    });
+
+    await page.addInitScript(() => {
+      const raw = localStorage.getItem("SESSIONS");
+      const session = raw ? JSON.parse(raw) : {};
+      if (!session.options) session.options = {};
+      if (!session.options.openai) session.options.openai = {};
+
+      delete session.options.openai.mcpAuthConfigs;
+      localStorage.setItem("SESSIONS", JSON.stringify(session));
+    });
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("LeftSideBar")).toBeVisible({
+      timeout: 10000,
+    });
+
+    const termsBtn = page.getByTestId("accept-terms-btn");
+    if (await termsBtn.isVisible()) {
+      await termsBtn.click();
+    }
+
+    await openMcpDialog(page);
+    await page.getByTestId("mcp-edit-FH SWF (beta)").click();
+
+    await expect(page.getByTestId("mcp-auth-fields-container")).toHaveCount(0);
+
+    await page.getByTestId("mcp-auth-mode-user-data").click();
+    await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
+    await expect(
+      page.getByTestId("mcp-auth-field-email-control")
+    ).not.toBeChecked();
+
+    await context.close();
   });
 });
