@@ -12,6 +12,9 @@ const mockUser = {
   },
 };
 
+const userEndpointPattern = /\/(?:api\/)?user(?:\?.*)?$/;
+const loginEndpointPattern = /\/(?:api\/)?login(?:\?.*)?$/;
+
 async function acceptTermsIfVisible(page: Page) {
   const termsBtn = page.getByTestId("accept-terms-btn");
   let shouldAccept = await termsBtn.isVisible();
@@ -96,7 +99,7 @@ test.describe("Authentication (fetchAndGetUser)", () => {
   test("redirects to login when user endpoint returns 401", async ({
     page,
   }) => {
-    await page.route("**/api/user**", async (route) => {
+    await page.route(userEndpointPattern, async (route) => {
       await route.fulfill({
         status: 401,
         contentType: "application/json",
@@ -108,7 +111,7 @@ test.describe("Authentication (fetchAndGetUser)", () => {
       });
     });
 
-    await page.route("**/api/login**", async (route) => {
+    await page.route(loginEndpointPattern, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "text/html",
@@ -117,7 +120,7 @@ test.describe("Authentication (fetchAndGetUser)", () => {
     });
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveURL(/\/api\/login/, { timeout: 50000 });
+    await expect(page).toHaveURL(loginEndpointPattern, { timeout: 50000 });
     await expect(page.getByText("Login")).toBeVisible();
   });
 
@@ -130,7 +133,7 @@ test.describe("Authentication (fetchAndGetUser)", () => {
       localStorage.removeItem("CHAT_HISTORY");
     });
 
-    await page.route("**/api/user", async (route) => {
+    await page.route(userEndpointPattern, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -138,7 +141,7 @@ test.describe("Authentication (fetchAndGetUser)", () => {
       });
     });
 
-    const userResponse = page.waitForResponse(/\/api\/user/);
+    const userResponse = page.waitForResponse(userEndpointPattern);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await userResponse;
     await expect(page.getByTestId("UserInformationBtn")).toBeVisible({
@@ -166,7 +169,7 @@ test.describe("Authentication (fetchAndGetUser)", () => {
       localStorage.setItem("SESSIONS", value);
     }, JSON.stringify(session));
 
-    await page.route("**/api/user", async (route) => {
+    await page.route(userEndpointPattern, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",

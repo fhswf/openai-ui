@@ -143,7 +143,9 @@ export function fetchAndGetUser(
   },
   setOptions?: Dispatch<OptionAction>
 ) {
-  fetch(import.meta.env.VITE_USER_URL, { credentials: "include" })
+  const userUrl = import.meta.env.VITE_USER_URL || "/api/user";
+
+  fetch(userUrl, { credentials: "include" })
     .then((res) => {
       console.log("getting user: ", res.status);
       if (res.status === 401) {
@@ -152,7 +154,7 @@ export function fetchAndGetUser(
           "unauthorized, redirecting to login: %s",
           loginUrl
         );
-        window.location.href = loginUrl;
+        window.location.href = escape(loginUrl);
         throw new Error("unauthorized");
       }
 
