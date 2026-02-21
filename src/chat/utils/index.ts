@@ -1,4 +1,5 @@
 import i18next from "i18next";
+import type { Dispatch } from "react";
 import {
   AccountOptions,
   GeneralOptions,
@@ -134,26 +135,28 @@ async function refreshMcpToolAuthorizations(
 }
 
 export function fetchAndGetUser(
-  dispatch: (_action: GlobalAction) => void,
+  dispatch: Dispatch<GlobalAction>,
   options: {
     account?: AccountOptions;
     general: Pick<GeneralOptions, "gravatar">;
     openai: OpenAIOptions | undefined;
   },
-  setOptions?: (_arg: OptionAction) => void
+  setOptions?: Dispatch<OptionAction>
 ) {
   fetch(import.meta.env.VITE_USER_URL, { credentials: "include" })
     .then((res) => {
       console.log("getting user: ", res.status);
       if (res.status === 401) {
+        const loginUrl = import.meta.env.VITE_LOGIN_URL || "/api/login";
         console.log(
           "unauthorized, redirecting to login: %s",
-          import.meta.env.VITE_LOGIN_URL
+          loginUrl
         );
-        window.location.href = import.meta.env.VITE_LOGIN_URL;
-        return Promise.resolve(Error("unauthorized"));
+        window.location.href = loginUrl;
+        throw new Error("unauthorized");
       }
 
+      if (!res.ok) throw new Error(`failed to fetch user: ${res.status}`);
       return res.json();
     })
 
@@ -195,6 +198,7 @@ export function fetchAndGetUser(
       }
     })
     .catch((err) => {
+      if (err instanceof Error && err.message === "unauthorized") return;
       console.log("error getting user: ", err);
     });
 }
