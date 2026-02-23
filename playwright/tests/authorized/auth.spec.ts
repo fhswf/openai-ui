@@ -23,7 +23,6 @@ async function acceptTermsIfVisible(page: Page) {
       await termsBtn.waitFor({ state: "visible", timeout: 5000 });
       shouldAccept = true;
     } catch {
-      // Terms dialog did not appear; continue.
       shouldAccept = false;
     }
   }
@@ -115,7 +114,7 @@ test.describe("Authentication (fetchAndGetUser)", () => {
       await route.fulfill({
         status: 200,
         contentType: "text/html",
-        body: "<html><body>Login</body></html>",
+        body: '<html lang=""><body>Login</body></html>',
       });
     });
 
