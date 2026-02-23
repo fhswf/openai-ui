@@ -10,7 +10,7 @@ export function generateUUID(): string {
 }
 
 export const test = baseTest.extend({
-    context: async ({ context }, use) => {
+    context: async ({ context }, use, testInfo) => {
         await context.addInitScript(() =>
             window.addEventListener('beforeunload', () =>
                 (() => {
@@ -27,10 +27,13 @@ export const test = baseTest.extend({
                 fs.writeFileSync(path.join(istanbulCLIOutput, `playwright_coverage_${generateUUID()}.json`), coverageJSON);
         });
         await use(context);
+        if (testInfo.status === 'timedOut')
+            return;
         for (const page of context.pages()) {
             if (page.isClosed())
                 continue;
             try {
+                page.setDefaultTimeout(1000);
                 await page.evaluate(() => {
                     const collect = (window as any).collectIstanbulCoverage;
                     const coverage = (window as any).__coverage__;
@@ -40,6 +43,8 @@ export const test = baseTest.extend({
             } catch (error) {
                 const message = error instanceof Error ? error.message : `${error}`;
                 if (
+                    !message.includes('Test ended') &&
+                    !message.includes('Timeout') &&
                     !message.includes('Execution context was destroyed') &&
                     !message.includes('Target page, context or browser has been closed')
                 )

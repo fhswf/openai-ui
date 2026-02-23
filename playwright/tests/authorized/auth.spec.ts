@@ -12,8 +12,18 @@ const mockUser = {
   },
 };
 
-const userEndpointPattern = /\/(?:api\/)?user(?:\?.*)?$/;
-const loginEndpointPattern = /\/(?:api\/)?login(?:\?.*)?$/;
+const userEndpointPattern = /\/(?:api\/)?user\/?(?:\?.*)?$/;
+const loginEndpointPattern = /\/(?:api\/)?login\/?(?:\?.*)?$/;
+const userPathPattern = /\/(?:api\/)?user\/?$/;
+const loginPathPattern = /\/(?:api\/)?login\/?$/;
+
+function matchesPath(url: string, pattern: RegExp) {
+  try {
+    return pattern.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
 
 async function acceptTermsIfVisible(page: Page) {
   const termsBtn = page.getByTestId("accept-terms-btn");
@@ -98,27 +108,47 @@ test.describe("Authentication (fetchAndGetUser)", () => {
   test("redirects to login when user endpoint returns 401", async ({
     page,
   }) => {
-    await page.route(userEndpointPattern, async (route) => {
-      await route.fulfill({
-        status: 401,
-        contentType: "application/json",
-        headers: {
-          "access-control-allow-origin": "http://localhost:5173",
-          "access-control-allow-credentials": "true",
-        },
-        body: JSON.stringify({}),
-      });
+    await page.addInitScript(() => {
+      localStorage.removeItem("SESSIONS");
+      localStorage.removeItem("CHAT_HISTORY");
     });
 
-    await page.route(loginEndpointPattern, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "text/html",
-        body: '<html lang=""><body>Login</body></html>',
-      });
+    const user401Response = page.waitForResponse(
+      (response) =>
+        matchesPath(response.url(), userPathPattern) &&
+        response.status() === 401
+    );
+
+    await page.route("**/*", async (route) => {
+      const url = route.request().url();
+
+      if (matchesPath(url, userPathPattern)) {
+        await route.fulfill({
+          status: 401,
+          contentType: "application/json",
+          headers: {
+            "access-control-allow-origin": "http://localhost:5173",
+            "access-control-allow-credentials": "true",
+          },
+          body: JSON.stringify({}),
+        });
+        return;
+      }
+
+      if (matchesPath(url, loginPathPattern)) {
+        await route.fulfill({
+          status: 200,
+          contentType: "text/html",
+          body: '<html lang=""><body>Login</body></html>',
+        });
+        return;
+      }
+
+      await route.continue();
     });
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
+    await user401Response;
     await expect(page).toHaveURL(loginEndpointPattern, { timeout: 50000 });
     await expect(page.getByText("Login")).toBeVisible();
   });
