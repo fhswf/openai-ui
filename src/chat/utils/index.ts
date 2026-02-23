@@ -1,5 +1,5 @@
 import i18next from "i18next";
-import type { Dispatch } from "react";
+import type {Dispatch} from "react";
 import {
   AccountOptions,
   GeneralOptions,
@@ -10,7 +10,7 @@ import {
   OptionActionType,
   Tool,
 } from "../context/types";
-import { getAuthorizationForMcpConfig } from "../hooks/useMcpAuth";
+import {getAuthorizationForMcpConfig} from "../hooks/useMcpAuth";
 
 export * from "./options";
 
@@ -33,10 +33,10 @@ export async function sha256Digest(message) {
   const msgUint8 = new TextEncoder().encode(message); // encode as (utf-8) Uint8Array
   const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8); // hash the message
   const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join(""); // convert bytes to hex string
-  return hashHex;
+   // convert bytes to hex string
+  return hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
 }
 
 interface McpAuthorizationUpdate {
@@ -154,7 +154,7 @@ export function fetchAndGetUser(
           "unauthorized, redirecting to login: %s",
           loginUrl
         );
-        window.location.href = escape(loginUrl);
+        window.location.assign(loginUrl);
         throw new Error("unauthorized");
       }
 
