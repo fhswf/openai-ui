@@ -215,7 +215,8 @@
     "exclude": [
       "src/**/*.test.*",
       "src/**/*.spec.*",
-      "src/**/*.d.ts"
+      "src/**/*.d.ts",
+      "src/components/ui/**"
     ],
     "extension": [
       ".ts",

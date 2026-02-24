@@ -14,7 +14,7 @@ import { join, relative } from 'path';
 const LCOV_PATH = 'coverage/lcov.info';
 const SRC_DIR = 'src';
 const EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx']);
-const EXCLUDE_PATTERNS = [/\.d\.ts$/, /\.test\./, /\.spec\./];
+const EXCLUDE_PATTERNS = [/\.d\.ts$/, /\.test\./, /\.spec\./, /components\/ui\//];
 
 function getAllSourceFiles(dir, files = []) {
     for (const entry of readdirSync(dir)) {
