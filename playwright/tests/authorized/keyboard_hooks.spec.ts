@@ -91,11 +91,15 @@ test.describe("Keyboard Hooks Coverage", () => {
         page,
     }) => {
         // Mock the chat completion API
-        await page.route("**/api/chat/completions", async (route) => {
+        await page.route("**/v1/responses", async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: "text/event-stream",
-                body: `data: {"choices":[{"delta":{"content":"Hello"}}]}\n\ndata: [DONE]\n\n`,
+                body: [
+                    `data: {"type":"response.created","response":{"id":"resp_mock","status":"in_progress"},"item":null}\n\n`,
+                    `data: {"type":"response.output_text.delta","delta":"Hello"}\n\n`,
+                    `data: {"type":"response.completed","response":{"id":"resp_mock","status":"completed","usage":{"total_tokens":10,"input_tokens":5,"output_tokens":5}}}\n\n`,
+                ].join(""),
             });
         });
 

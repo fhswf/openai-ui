@@ -14,7 +14,7 @@
     "test": "npx playwright test",
     "test:e2e:ci": "npx playwright test",
     "test:e2e:prod": "npx playwright test",
-    "test:coverage": "rm -rf .nyc_output && npx playwright test --project=chromium && npx nyc report --reporter=text-summary",
+    "test:coverage": "rm -rf .nyc_output coverage && npx playwright test --project=chromium && npx nyc report && node scripts/fix-lcov.mjs",
     "build-storybook": "storybook build"
   },
   "dependencies": {
@@ -206,6 +206,28 @@
     "vite": "^7.3.1",
     "vite-plugin-compression2": "^2.4.0",
     "vite-plugin-istanbul": "^7.2.1"
+  },
+  "nyc": {
+    "all": true,
+    "include": [
+      "src/**"
+    ],
+    "exclude": [
+      "src/**/*.test.*",
+      "src/**/*.spec.*",
+      "src/**/*.d.ts"
+    ],
+    "extension": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ],
+    "reporter": [
+      "text-summary",
+      "lcov"
+    ],
+    "report-dir": "coverage"
   },
   "packageManager": "yarn@4.11.0"
 }

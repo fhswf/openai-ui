@@ -47,13 +47,17 @@ test.describe("Apps and Services Coverage", () => {
         page,
     }) => {
         // Mock streaming API that doesn't complete immediately
-        await page.route("**/api/chat/completions", async (route) => {
+        await page.route("**/v1/responses", async (route) => {
             // Simulate a slow response
             await new Promise((resolve) => setTimeout(resolve, 2000));
             await route.fulfill({
                 status: 200,
                 contentType: "text/event-stream",
-                body: `data: {"choices":[{"delta":{"content":"Hello from AI"}}]}\n\ndata: [DONE]\n\n`,
+                body: [
+                    `data: {"type":"response.created","response":{"id":"resp_mock","status":"in_progress"},"item":null}\n\n`,
+                    `data: {"type":"response.output_text.delta","delta":"Hello from AI"}\n\n`,
+                    `data: {"type":"response.completed","response":{"id":"resp_mock","status":"completed","usage":{"total_tokens":10,"input_tokens":5,"output_tokens":5}}}\n\n`,
+                ].join(""),
             });
         });
 
@@ -71,7 +75,7 @@ test.describe("Apps and Services Coverage", () => {
         page,
     }) => {
         // Mock API to return an error - exercises Error component
-        await page.route("**/api/chat/completions", async (route) => {
+        await page.route("**/v1/responses", async (route) => {
             await route.fulfill({
                 status: 500,
                 contentType: "application/json",
@@ -126,11 +130,15 @@ test.describe("Apps and Services Coverage", () => {
         page,
     }) => {
         // Mock successful chat response
-        await page.route("**/api/chat/completions", async (route) => {
+        await page.route("**/v1/responses", async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: "text/event-stream",
-                body: `data: {"choices":[{"delta":{"content":"Response from AI"}}]}\n\ndata: [DONE]\n\n`,
+                body: [
+                    `data: {"type":"response.created","response":{"id":"resp_mock","status":"in_progress"},"item":null}\n\n`,
+                    `data: {"type":"response.output_text.delta","delta":"Response from AI"}\n\n`,
+                    `data: {"type":"response.completed","response":{"id":"resp_mock","status":"completed","usage":{"total_tokens":10,"input_tokens":5,"output_tokens":5}}}\n\n`,
+                ].join(""),
             });
         });
 

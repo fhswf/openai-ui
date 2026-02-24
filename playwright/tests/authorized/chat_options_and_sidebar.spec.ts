@@ -223,11 +223,15 @@ test.describe("ChatMessage Coverage", () => {
 
     test("should exercise chat message rendering and edit", async ({ page }) => {
         // Mock API to get a response
-        await page.route("**/api/chat/completions", async (route) => {
+        await page.route("**/v1/responses", async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: "text/event-stream",
-                body: `data: {"choices":[{"delta":{"content":"Hello! This is a test response with **markdown** and \`code\` formatting."}}]}\n\ndata: [DONE]\n\n`,
+                body: [
+                    `data: {"type":"response.created","response":{"id":"resp_mock","status":"in_progress"},"item":null}\n\n`,
+                    `data: {"type":"response.output_text.delta","delta":"Hello! This is a test response with **markdown** and \`code\` formatting."}\n\n`,
+                    `data: {"type":"response.completed","response":{"id":"resp_mock","status":"completed","usage":{"total_tokens":10,"input_tokens":5,"output_tokens":5}}}\n\n`,
+                ].join(""),
             });
         });
 
@@ -253,11 +257,15 @@ test.describe("ChatMessage Coverage", () => {
 
     test("should exercise message menu interactions", async ({ page }) => {
         // First send a message to have content
-        await page.route("**/api/chat/completions", async (route) => {
+        await page.route("**/v1/responses", async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: "text/event-stream",
-                body: `data: {"choices":[{"delta":{"content":"Response text"}}]}\n\ndata: [DONE]\n\n`,
+                body: [
+                    `data: {"type":"response.created","response":{"id":"resp_mock","status":"in_progress"},"item":null}\n\n`,
+                    `data: {"type":"response.output_text.delta","delta":"Response text"}\n\n`,
+                    `data: {"type":"response.completed","response":{"id":"resp_mock","status":"completed","usage":{"total_tokens":10,"input_tokens":5,"output_tokens":5}}}\n\n`,
+                ].join(""),
             });
         });
 

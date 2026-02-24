@@ -64,7 +64,7 @@ export const MessageRender = (props) => {
         remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeKatex, rehypeRaw]}
         components={{
-          code({ inline, className, children, ...rest }: any) {
+          code({ inline, className, children, ...rest }: unknown) {
             const match = /language-(\w+)/.exec(className || "");
             return !inline && match ? (
               <>
