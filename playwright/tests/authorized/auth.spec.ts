@@ -38,6 +38,29 @@ const updatedMcpUser = {
   },
 };
 
+const baseAccountOptions = { name: "Anonymus", avatar: "", terms: true };
+const baseGeneralOptions = {
+  language: "de",
+  theme: "light",
+  sendCommand: "COMMAND_ENTER",
+  size: "normal",
+  codeEditor: false,
+  gravatar: false,
+};
+const baseOpenAiOptions = {
+  baseUrl: "https://openai.ki.fh-swf.de/api",
+  organizationId: "",
+  temperature: 1,
+  mode: "chat",
+  model: "gpt-4o-mini",
+  apiKey: "unused",
+  max_tokens: 2048,
+  n: 1,
+  top_p: 1,
+  stream: true,
+  assistant: "",
+};
+
 const userEndpointPattern = /\/(?:api\/)?user\/?(?:\?.*)?$/;
 const loginEndpointPattern = /\/(?:api\/)?login\/?(?:\?.*)?$/;
 const userPathPattern = /\/(?:api\/)?user\/?$/;
@@ -93,81 +116,79 @@ async function clickWithBackdropRetry(page: Page, locator: Locator) {
   await locator.click({ force: true });
 }
 
+function buildMcpTools(args: {
+  staleAuthorization: string;
+  staticToken: string;
+}) {
+  return {
+    dataType: "Map",
+    value: [
+      [
+        mcpServiceLabels.userData,
+        {
+          type: "mcp",
+          server_label: "MCP_USER",
+          server_url: "https://userdata.example.com",
+          require_approval: "never",
+          authorization: args.staleAuthorization,
+        },
+      ],
+      [
+        mcpServiceLabels.static,
+        {
+          type: "mcp",
+          server_label: "MCP_STATIC",
+          server_url: "https://static.example.com",
+          require_approval: "never",
+          authorization: args.staticToken,
+        },
+      ],
+    ],
+  };
+}
+
+function buildMcpToolsEnabled() {
+  return {
+    dataType: "Set",
+    value: [mcpServiceLabels.userData, mcpServiceLabels.static],
+  };
+}
+
+function buildMcpAuthConfigs(staticToken: string) {
+  return {
+    dataType: "Map",
+    value: [
+      [
+        mcpServiceLabels.userData,
+        {
+          mode: "user-data",
+          selectedFields: ["email", "name"],
+        },
+      ],
+      [
+        mcpServiceLabels.static,
+        {
+          mode: "static",
+          staticToken,
+        },
+      ],
+    ],
+  };
+}
+
 function buildMcpSeedSession(args: {
   staleAuthorization: string;
   staticToken: string;
 }) {
   return {
     options: {
-      account: { name: "Anonymus", avatar: "", terms: true },
-      general: {
-        language: "de",
-        theme: "light",
-        sendCommand: "COMMAND_ENTER",
-        size: "normal",
-        codeEditor: false,
-        gravatar: false,
-      },
+      account: baseAccountOptions,
+      general: baseGeneralOptions,
       openai: {
-        baseUrl: "https://openai.ki.fh-swf.de/api",
-        organizationId: "",
-        temperature: 1,
-        mode: "chat",
-        model: "gpt-4o-mini",
-        apiKey: "unused",
-        max_tokens: 2048,
-        n: 1,
-        tools: {
-          dataType: "Map",
-          value: [
-            [
-              mcpServiceLabels.userData,
-              {
-                type: "mcp",
-                server_label: "MCP_USER",
-                server_url: "https://userdata.example.com",
-                require_approval: "never",
-                authorization: args.staleAuthorization,
-              },
-            ],
-            [
-              mcpServiceLabels.static,
-              {
-                type: "mcp",
-                server_label: "MCP_STATIC",
-                server_url: "https://static.example.com",
-                require_approval: "never",
-                authorization: args.staticToken,
-              },
-            ],
-          ],
-        },
-        toolsEnabled: {
-          dataType: "Set",
-          value: [mcpServiceLabels.userData, mcpServiceLabels.static],
-        },
-        top_p: 1,
-        stream: true,
-        assistant: "",
-        mcpAuthConfigs: {
-          dataType: "Map",
-          value: [
-            [
-              mcpServiceLabels.userData,
-              {
-                mode: "user-data",
-                selectedFields: ["email", "name"],
-              },
-            ],
-            [
-              mcpServiceLabels.static,
-              {
-                mode: "static",
-                staticToken: args.staticToken,
-              },
-            ],
-          ],
-        },
+        ...baseOpenAiOptions,
+        tools: buildMcpTools(args),
+        toolsEnabled: buildMcpToolsEnabled(),
+        mcpAuthConfigs: buildMcpAuthConfigs(args.staticToken),
       },
     },
   };
