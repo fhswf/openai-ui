@@ -23,6 +23,21 @@ const jwks = {
   ],
 };
 
+const mcpServiceLabels = {
+  userData: "User Data Service",
+  static: "Static Service",
+};
+
+const updatedMcpUser = {
+  name: "Updated User",
+  email: "updated.user@fh-swf.de",
+  sub: "updated-user",
+  preferred_username: "updated.user",
+  affiliations: {
+    "fh-swf.de": ["member"],
+  },
+};
+
 const userEndpointPattern = /\/(?:api\/)?user\/?(?:\?.*)?$/;
 const loginEndpointPattern = /\/(?:api\/)?login\/?(?:\?.*)?$/;
 const userPathPattern = /\/(?:api\/)?user\/?$/;
@@ -76,6 +91,149 @@ async function clickWithBackdropRetry(page: Page, locator: Locator) {
   }
 
   await locator.click({ force: true });
+}
+
+function buildMcpSeedSession(args: {
+  staleAuthorization: string;
+  staticToken: string;
+}) {
+  return {
+    options: {
+      account: { name: "Anonymus", avatar: "", terms: true },
+      general: {
+        language: "de",
+        theme: "light",
+        sendCommand: "COMMAND_ENTER",
+        size: "normal",
+        codeEditor: false,
+        gravatar: false,
+      },
+      openai: {
+        baseUrl: "https://openai.ki.fh-swf.de/api",
+        organizationId: "",
+        temperature: 1,
+        mode: "chat",
+        model: "gpt-4o-mini",
+        apiKey: "unused",
+        max_tokens: 2048,
+        n: 1,
+        tools: {
+          dataType: "Map",
+          value: [
+            [
+              mcpServiceLabels.userData,
+              {
+                type: "mcp",
+                server_label: "MCP_USER",
+                server_url: "https://userdata.example.com",
+                require_approval: "never",
+                authorization: args.staleAuthorization,
+              },
+            ],
+            [
+              mcpServiceLabels.static,
+              {
+                type: "mcp",
+                server_label: "MCP_STATIC",
+                server_url: "https://static.example.com",
+                require_approval: "never",
+                authorization: args.staticToken,
+              },
+            ],
+          ],
+        },
+        toolsEnabled: {
+          dataType: "Set",
+          value: [mcpServiceLabels.userData, mcpServiceLabels.static],
+        },
+        top_p: 1,
+        stream: true,
+        assistant: "",
+        mcpAuthConfigs: {
+          dataType: "Map",
+          value: [
+            [
+              mcpServiceLabels.userData,
+              {
+                mode: "user-data",
+                selectedFields: ["email", "name"],
+              },
+            ],
+            [
+              mcpServiceLabels.static,
+              {
+                mode: "static",
+                staticToken: args.staticToken,
+              },
+            ],
+          ],
+        },
+      },
+    },
+  };
+}
+
+async function seedSession(page: Page, sessionSeed: unknown) {
+  await page.addInitScript((seed) => {
+    localStorage.setItem("SESSIONS", JSON.stringify(seed));
+    localStorage.removeItem("CHAT_HISTORY");
+  }, sessionSeed);
+}
+
+async function routeMcpUserAndJwks(
+  page: Page,
+  jwksRequestCount: { count: number }
+) {
+  await page.route(userEndpointPattern, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(updatedMcpUser),
+    });
+  });
+  await page.route("**/.well-known/jwks.json", async (route) => {
+    jwksRequestCount.count += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(jwks),
+    });
+  });
+}
+
+async function waitForMcpAuthRefresh(
+  page: Page,
+  args: {
+    staleAuthorization: string;
+    staticToken: string;
+    userLabel: string;
+    staticLabel: string;
+  }
+) {
+  await page.waitForFunction(
+    ({ staleAuthorization, staticToken, userLabel, staticLabel }) => {
+      const raw = localStorage.getItem("SESSIONS");
+      if (!raw) return false;
+      const session = JSON.parse(raw);
+      const tools = session?.options?.openai?.tools;
+      if (!tools || tools.dataType !== "Map") return false;
+
+      const findAuthorization = (label: string) => {
+        const entry = tools.value.find(([key]: [string]) => key === label);
+        return entry?.[1]?.authorization;
+      };
+
+      const userAuth = findAuthorization(userLabel);
+      const staticAuth = findAuthorization(staticLabel);
+
+      return (
+        userAuth &&
+        userAuth !== staleAuthorization &&
+        staticAuth === staticToken
+      );
+    },
+    args
+  );
 }
 
 test.describe("Authentication (fetchAndGetUser)", () => {
@@ -162,151 +320,27 @@ test.describe("Authentication (fetchAndGetUser)", () => {
   }) => {
     const staleAuthorization = "stale-authorization";
     const staticToken = "static-token";
-    const mcpUserServiceLabel = "User Data Service";
-    const mcpStaticServiceLabel = "Static Service";
 
-    const seedSession = {
-      options: {
-        account: { name: "Anonymus", avatar: "", terms: true },
-        general: {
-          language: "de",
-          theme: "light",
-          sendCommand: "COMMAND_ENTER",
-          size: "normal",
-          codeEditor: false,
-          gravatar: false,
-        },
-        openai: {
-          baseUrl: "https://openai.ki.fh-swf.de/api",
-          organizationId: "",
-          temperature: 1,
-          mode: "chat",
-          model: "gpt-4o-mini",
-          apiKey: "unused",
-          max_tokens: 2048,
-          n: 1,
-          tools: {
-            dataType: "Map",
-            value: [
-              [
-                mcpUserServiceLabel,
-                {
-                  type: "mcp",
-                  server_label: "MCP_USER",
-                  server_url: "https://userdata.example.com",
-                  require_approval: "never",
-                  authorization: staleAuthorization,
-                },
-              ],
-              [
-                mcpStaticServiceLabel,
-                {
-                  type: "mcp",
-                  server_label: "MCP_STATIC",
-                  server_url: "https://static.example.com",
-                  require_approval: "never",
-                  authorization: staticToken,
-                },
-              ],
-            ],
-          },
-          toolsEnabled: {
-            dataType: "Set",
-            value: [mcpUserServiceLabel, mcpStaticServiceLabel],
-          },
-          top_p: 1,
-          stream: true,
-          assistant: "",
-          mcpAuthConfigs: {
-            dataType: "Map",
-            value: [
-              [
-                mcpUserServiceLabel,
-                {
-                  mode: "user-data",
-                  selectedFields: ["email", "name"],
-                },
-              ],
-              [
-                mcpStaticServiceLabel,
-                {
-                  mode: "static",
-                  staticToken,
-                },
-              ],
-            ],
-          },
-        },
-      },
-    };
+    await seedSession(
+      page,
+      buildMcpSeedSession({ staleAuthorization, staticToken })
+    );
 
-    await page.addInitScript((sessionSeed) => {
-      localStorage.setItem("SESSIONS", JSON.stringify(sessionSeed));
-      localStorage.removeItem("CHAT_HISTORY");
-    }, seedSession);
-
-    let jwksRequestCount = 0;
-    await page.route(userEndpointPattern, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          name: "Updated User",
-          email: "updated.user@fh-swf.de",
-          sub: "updated-user",
-          preferred_username: "updated.user",
-          affiliations: {
-            "fh-swf.de": ["member"],
-          },
-        }),
-      });
-    });
-    await page.route("**/.well-known/jwks.json", async (route) => {
-      jwksRequestCount += 1;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(jwks),
-      });
-    });
+    const jwksRequestCount = { count: 0 };
+    await routeMcpUserAndJwks(page, jwksRequestCount);
 
     const userResponse = page.waitForResponse(userEndpointPattern);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await userResponse;
     await acceptTermsIfVisible(page);
 
-    await page.waitForFunction(
-      ({ staleAuthorization, staticToken, userLabel, staticLabel }) => {
-        const raw = localStorage.getItem("SESSIONS");
-        if (!raw) return false;
-        const session = JSON.parse(raw);
-        const tools = session?.options?.openai?.tools;
-        if (!tools || tools.dataType !== "Map") return false;
+    await waitForMcpAuthRefresh(page, {
+      staleAuthorization,
+      staticToken,
+      userLabel: mcpServiceLabels.userData,
+      staticLabel: mcpServiceLabels.static,
+    });
 
-        const findAuthorization = (label) => {
-          const entry = tools.value.find(
-            ([key]) => key === label
-          );
-          return entry?.[1]?.authorization;
-        };
-
-        const userAuth = findAuthorization(userLabel);
-        const staticAuth = findAuthorization(staticLabel);
-
-        return (
-          userAuth &&
-          userAuth !== staleAuthorization &&
-          staticAuth === staticToken
-        );
-      },
-      {
-        staleAuthorization,
-        staticToken,
-        userLabel: mcpUserServiceLabel,
-        staticLabel: mcpStaticServiceLabel,
-      }
-    );
-
-    expect(jwksRequestCount).toBeGreaterThan(0);
+    expect(jwksRequestCount.count).toBeGreaterThan(0);
   });
 });
