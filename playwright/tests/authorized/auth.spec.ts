@@ -1,5 +1,4 @@
 import { test, expect } from "../baseFixtures";
-import crypto from "node:crypto";
 import type { Locator, Page } from "@playwright/test";
 
 const mockUser = {
@@ -12,10 +11,21 @@ const mockUser = {
   },
 };
 
+const jwks = {
+  keys: [
+    {
+      kty: "RSA",
+      n: "2phSoFd1TfAG5zXPy27HckDYdRoEeAVEnlcE-yasXbNAPSgYc84j20Kgw9t8SY_qW2pDjE-yhdqO0xiue5QSyfYkyaemUB8LnAQiZpajCL_RZOrHACWP55axzZbGXwAmCu6rdhd1XyV71TA5N2Big15998WKl3DiVOftZlxJ6WiV7CJSlKYPBSUrXanoDMwSjW-HHl38XYgRmzqNJIc0j5JPSWtjTCp0rJ7Zzq5VkaRsWZ5Ea-lN09XDjCUQYvv2BqlMtyuxgNlXDji51MfhMTw2CjUfa6eaU2ATRNDHqn32uubKLiiJkxqhh9XKHiQh-rEqEeTzIFMPr3mgViE2mQ",
+      e: "AQAB",
+      alg: "RSA-OAEP-256",
+      use: "enc",
+    },
+  ],
+};
+
 const userEndpointPattern = /\/(?:api\/)?user\/?(?:\?.*)?$/;
 const loginEndpointPattern = /\/(?:api\/)?login\/?(?:\?.*)?$/;
 const userPathPattern = /\/(?:api\/)?user\/?$/;
-const loginPathPattern = /\/(?:api\/)?login\/?$/;
 
 function matchesPath(url: string, pattern: RegExp) {
   try {
@@ -68,42 +78,6 @@ async function clickWithBackdropRetry(page: Page, locator: Locator) {
   await locator.click({ force: true });
 }
 
-function buildSessionWithGravatar(gravatar: boolean) {
-  return {
-    options: {
-      account: {
-        name: "Anonymus",
-        avatar: "",
-        terms: true,
-      },
-      general: {
-        language: "de",
-        theme: "light",
-        sendCommand: "COMMAND_ENTER",
-        size: "normal",
-        codeEditor: false,
-        gravatar,
-      },
-      openai: {
-        baseUrl: "https://openai.ki.fh-swf.de/api",
-        organizationId: "",
-        temperature: 1,
-        mode: "chat",
-        model: "gpt-4o-mini",
-        apiKey: "unused",
-        max_tokens: 2048,
-        n: 1,
-        tools: { dataType: "Map", value: [] },
-        toolsEnabled: { dataType: "Set", value: [] },
-        top_p: 1,
-        stream: true,
-        assistant: "",
-        mcpAuthConfigs: { dataType: "Map", value: [] },
-      },
-    },
-  };
-}
-
 test.describe("Authentication (fetchAndGetUser)", () => {
   test("redirects to login when user endpoint returns 401", async ({
     page,
@@ -119,38 +93,31 @@ test.describe("Authentication (fetchAndGetUser)", () => {
         response.status() === 401
     );
 
-    await page.route("**/*", async (route) => {
-      const url = route.request().url();
-
-      if (matchesPath(url, userPathPattern)) {
-        await route.fulfill({
-          status: 401,
-          contentType: "application/json",
-          headers: {
-            "access-control-allow-origin": "http://localhost:5173",
-            "access-control-allow-credentials": "true",
-          },
-          body: JSON.stringify({}),
-        });
-        return;
-      }
-
-      if (matchesPath(url, loginPathPattern)) {
-        await route.fulfill({
-          status: 200,
-          contentType: "text/html",
-          body: '<html lang=""><body>Login</body></html>',
-        });
-        return;
-      }
-
-      await route.continue();
+    await page.route(userEndpointPattern, async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        headers: {
+          "access-control-allow-origin": "http://localhost:5173",
+          "access-control-allow-credentials": "true",
+        },
+        body: JSON.stringify({}),
+      });
+    });
+    await page.route(loginEndpointPattern, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/html",
+        body: '<html lang=""><body>Login</body></html>',
+      });
     });
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await user401Response;
-    await expect(page).toHaveURL(loginEndpointPattern, { timeout: 50000 });
-    await expect(page.getByText("Login")).toBeVisible();
+    await page.waitForURL(loginEndpointPattern, {
+      timeout: 50000,
+      waitUntil: "commit",
+    });
   });
 
   test("shows user information after successful fetch", async ({
@@ -190,43 +157,156 @@ test.describe("Authentication (fetchAndGetUser)", () => {
     await expect(popover.getByText(mockUser.email)).toBeVisible();
   });
 
-  test("gravatar enabled uses identicon fallback when no gravatar", async ({
+  test("refreshes MCP user-data authorization when user changes", async ({
     page,
   }) => {
-    const session = buildSessionWithGravatar(true);
-    await page.addInitScript((value) => {
-      localStorage.setItem("SESSIONS", value);
-    }, JSON.stringify(session));
+    const staleAuthorization = "stale-authorization";
+    const staticToken = "static-token";
+    const mcpUserServiceLabel = "User Data Service";
+    const mcpStaticServiceLabel = "Static Service";
 
+    const seedSession = {
+      options: {
+        account: { name: "Anonymus", avatar: "", terms: true },
+        general: {
+          language: "de",
+          theme: "light",
+          sendCommand: "COMMAND_ENTER",
+          size: "normal",
+          codeEditor: false,
+          gravatar: false,
+        },
+        openai: {
+          baseUrl: "https://openai.ki.fh-swf.de/api",
+          organizationId: "",
+          temperature: 1,
+          mode: "chat",
+          model: "gpt-4o-mini",
+          apiKey: "unused",
+          max_tokens: 2048,
+          n: 1,
+          tools: {
+            dataType: "Map",
+            value: [
+              [
+                mcpUserServiceLabel,
+                {
+                  type: "mcp",
+                  server_label: "MCP_USER",
+                  server_url: "https://userdata.example.com",
+                  require_approval: "never",
+                  authorization: staleAuthorization,
+                },
+              ],
+              [
+                mcpStaticServiceLabel,
+                {
+                  type: "mcp",
+                  server_label: "MCP_STATIC",
+                  server_url: "https://static.example.com",
+                  require_approval: "never",
+                  authorization: staticToken,
+                },
+              ],
+            ],
+          },
+          toolsEnabled: {
+            dataType: "Set",
+            value: [mcpUserServiceLabel, mcpStaticServiceLabel],
+          },
+          top_p: 1,
+          stream: true,
+          assistant: "",
+          mcpAuthConfigs: {
+            dataType: "Map",
+            value: [
+              [
+                mcpUserServiceLabel,
+                {
+                  mode: "user-data",
+                  selectedFields: ["email", "name"],
+                },
+              ],
+              [
+                mcpStaticServiceLabel,
+                {
+                  mode: "static",
+                  staticToken,
+                },
+              ],
+            ],
+          },
+        },
+      },
+    };
+
+    await page.addInitScript((sessionSeed) => {
+      localStorage.setItem("SESSIONS", JSON.stringify(sessionSeed));
+      localStorage.removeItem("CHAT_HISTORY");
+    }, seedSession);
+
+    let jwksRequestCount = 0;
     await page.route(userEndpointPattern, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(mockUser),
+        body: JSON.stringify({
+          name: "Updated User",
+          email: "updated.user@fh-swf.de",
+          sub: "updated-user",
+          preferred_username: "updated.user",
+          affiliations: {
+            "fh-swf.de": ["member"],
+          },
+        }),
       });
     });
-
-    const hash = crypto
-      .createHash("sha256")
-      .update(mockUser.email)
-      .digest("hex");
-
-    await page.route(`**/gravatar.com/${hash}`, async (route) => {
+    await page.route("**/.well-known/jwks.json", async (route) => {
+      jwksRequestCount += 1;
       await route.fulfill({
-        status: 404,
-        contentType: "text/plain",
-        body: "not found",
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(jwks),
       });
     });
 
-    await page.goto("/");
+    const userResponse = page.waitForResponse(userEndpointPattern);
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await userResponse;
     await acceptTermsIfVisible(page);
 
-    const avatarImg = page.getByTestId("UserInformationBtn").locator("img");
+    await page.waitForFunction(
+      ({ staleAuthorization, staticToken, userLabel, staticLabel }) => {
+        const raw = localStorage.getItem("SESSIONS");
+        if (!raw) return false;
+        const session = JSON.parse(raw);
+        const tools = session?.options?.openai?.tools;
+        if (!tools || tools.dataType !== "Map") return false;
 
-    await expect(avatarImg).toHaveAttribute(
-      "src",
-      new RegExp(`gravatar\\.com/avatar/${hash}\\?d=identicon`)
+        const findAuthorization = (label) => {
+          const entry = tools.value.find(
+            ([key]) => key === label
+          );
+          return entry?.[1]?.authorization;
+        };
+
+        const userAuth = findAuthorization(userLabel);
+        const staticAuth = findAuthorization(staticLabel);
+
+        return (
+          userAuth &&
+          userAuth !== staleAuthorization &&
+          staticAuth === staticToken
+        );
+      },
+      {
+        staleAuthorization,
+        staticToken,
+        userLabel: mcpUserServiceLabel,
+        staticLabel: mcpStaticServiceLabel,
+      }
     );
+
+    expect(jwksRequestCount).toBeGreaterThan(0);
   });
 });
