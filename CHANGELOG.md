@@ -1,3 +1,35 @@
+# [0.33.0](https://github.com/fhswf/openai-ui/compare/v0.32.2...v0.33.0) (2026-03-06)
+
+
+### Features
+
+* **mcp:** implement encrypted sensitive data sharing ([320f579](https://github.com/fhswf/openai-ui/commit/320f579f1e955694a4887474a7afde879374b1ae))
+* **mcp:** implement encrypted sensitive data sharing ([5a36cb0](https://github.com/fhswf/openai-ui/commit/5a36cb0a4cb0073003a285fdde04d87c0d71ab68))
+* **mcp:** implement encrypted sensitive data sharing ([afd1d74](https://github.com/fhswf/openai-ui/commit/afd1d74a11fbb089092a0ea566cb304e45ee9057))
+* **mcp:** implement encrypted sensitive data sharing ([8513666](https://github.com/fhswf/openai-ui/commit/8513666f3cd0f16f42b454908932b268b1fb2ca2))
+* **mcp:** implement encrypted sensitive data sharing ([eed7691](https://github.com/fhswf/openai-ui/commit/eed76919c32b0bc2d2a7fc35f2e9bdbaf5abb376))
+* **mcp:** implement encrypted sensitive data sharing ([37cbefe](https://github.com/fhswf/openai-ui/commit/37cbefef764516ca78011c44edac4ebf8728bd2a))
+* **mcp:** implement encrypted sensitive data sharing ([e65a947](https://github.com/fhswf/openai-ui/commit/e65a947a214a5f2d8ce498fc5d359ddaa54563d9))
+* **mcp:** implement encrypted sensitive data sharing ([d025a21](https://github.com/fhswf/openai-ui/commit/d025a21f0da74382658e8b8e2673a8f231a8fe53))
+* **mcp:** implement encrypted sensitive data sharing ([b1bb2ae](https://github.com/fhswf/openai-ui/commit/b1bb2ae467b697cb214da1c891bd87e7e00639a5))
+* **mcp:** implement encrypted sensitive data sharing ([4867136](https://github.com/fhswf/openai-ui/commit/48671365e5c9899bc36e56b9b770134af3278a41))
+* **mcp:** implement encrypted sensitive data sharing ([a7a60cc](https://github.com/fhswf/openai-ui/commit/a7a60ccf6378f44ff362374e362e0e441cc37bfa))
+* **mcp:** implement encrypted sensitive data sharing ([b296b4f](https://github.com/fhswf/openai-ui/commit/b296b4fb7c491a48994d1b084d53e6475f0b8ba8))
+* **mcp:** implement encrypted sensitive data sharing ([f1e2542](https://github.com/fhswf/openai-ui/commit/f1e25420396265f044b9180dfe02bb7e0038277b))
+* **mcp:** implement encrypted sensitive data sharing ([521bac6](https://github.com/fhswf/openai-ui/commit/521bac6ab6f4dc6524b3e3b892280b2a26eed97b))
+* **mcp:** implement encrypted sensitive data sharing ([8338f8d](https://github.com/fhswf/openai-ui/commit/8338f8d266d8feeca3bbaf77f23daf4405e4b86e))
+* **mcp:** implement encrypted sensitive data sharing ([37599ee](https://github.com/fhswf/openai-ui/commit/37599eeba03e009bdd159f0a04225284fa1f95ab))
+* **mcp:** implement encrypted sensitive data sharing ([a1bbc7f](https://github.com/fhswf/openai-ui/commit/a1bbc7ffbb4942a876c1a3ca568098a90133c540))
+* **mcp:** implement encrypted sensitive data sharing ([a8fb675](https://github.com/fhswf/openai-ui/commit/a8fb675018fcb4ee6ecc9bb0eceaf41d5a0ca902))
+* **mcp:** implement encrypted sensitive data sharing ([69e57c7](https://github.com/fhswf/openai-ui/commit/69e57c782edbf28ca9b672cb619ca40add4a2a89))
+* **mcp:** implement encrypted sensitive data sharing ([fd708a1](https://github.com/fhswf/openai-ui/commit/fd708a1e928de6f3cbb4b2735eab2e9375b355d9))
+* **mcp:** implement encrypted sensitive data sharing ([b6bcc90](https://github.com/fhswf/openai-ui/commit/b6bcc90c8735bb4951b749b0d9558d1af50d6f5f))
+* **mcp:** implement encrypted sensitive data sharing ([dde4f23](https://github.com/fhswf/openai-ui/commit/dde4f23a2af0cd412a50d930f1b9ab379c25b814))
+* **mcp:** implement encrypted sensitive data sharing ([31b38dd](https://github.com/fhswf/openai-ui/commit/31b38ddcc2e3bd42b110aac928e4567b55070f66))
+* **mcp:** implement encrypted sensitive data sharing ([430cb79](https://github.com/fhswf/openai-ui/commit/430cb794f567f624a924045b430f5c4658c6b674))
+* **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
+* **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
+
 ## [0.32.2](https://github.com/fhswf/openai-ui/compare/v0.32.1...v0.32.2) (2026-01-12)
 
 
