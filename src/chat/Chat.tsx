@@ -1,15 +1,6 @@
 import React from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import {
-  Alert,
-  Button,
-  Center,
-  Grid,
-  GridItem,
-  Heading,
-  HStack,
-  Text,
-} from "@chakra-ui/react";
+import { Grid, GridItem } from "@chakra-ui/react";
 import { Toaster, toaster } from "../components/ui/toaster";
 import { ChatMessage } from "./ChatMessage";
 import { MessageHeader } from "./MessageHeader";

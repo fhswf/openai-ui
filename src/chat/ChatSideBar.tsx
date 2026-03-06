@@ -19,14 +19,10 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { IoInformationCircleOutline } from "react-icons/io5";
-import { IoSettingsOutline } from "react-icons/io5";
-import { IoApps } from "react-icons/io5";
+import { IoInformationCircleOutline, IoSettingsOutline, IoApps } from "react-icons/io5";
 import { RiChatHistoryLine } from "react-icons/ri";
-import { MdOutlineDarkMode } from "react-icons/md";
-import { MdOutlineLightMode } from "react-icons/md";
-import { TbArrowsMinimize } from "react-icons/tb";
-import { TbArrowsMaximize } from "react-icons/tb";
+import { MdOutlineDarkMode, MdOutlineLightMode } from "react-icons/md";
+import { TbArrowsMinimize, TbArrowsMaximize } from "react-icons/tb";
 import { useGlobal } from "./context";
 import { classnames } from "../components/utils";
 import { useOptions } from "./hooks";
@@ -166,7 +162,7 @@ Der Quellcode der Anwendung ist auf GitHub in folgenden Repositories verfügbar:
 export function ChatSideBar() {
   const [open, setOpen] = useState(false);
   const [metadata, setMetadata] = useState({});
-  const [newRelease, setNewRelease] = useState(false);
+  const [, setNewRelease] = useState(false);
   const { is, setState, options, version, release } = useGlobal();
   const { setGeneral, setAccount } = useOptions();
 

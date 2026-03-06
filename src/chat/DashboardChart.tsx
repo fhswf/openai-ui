@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   BarChart,
   Bar,
-  Rectangle,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -12,22 +11,74 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Sector,
   Cell,
 } from "recharts";
 
-import { t } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Skeleton, Tabs } from "@chakra-ui/react";
 import styles from "./style/dashboard.module.less";
-import { getStackGroupsByAxisId } from "recharts/types/util/ChartUtils";
+
+const RADIAN = Math.PI / 180;
+
+const snapAngle = (angle: number) => {
+  const snappedAngle = Math.round(angle / 5) * 5;
+  return snappedAngle;
+};
+
+const getStartAngle = (data: unknown) => {
+  const maxValue = data[0].value;
+  return 180 + maxValue * 1.8;
+};
+
+const renderPieLabel =
+  (data: unknown) =>
+    ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: unknown) => {
+      const radius = innerRadius + (outerRadius - innerRadius) * 0.8; // Adjust radius to position text in the middle of the pie-piece
+      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+      const rotation = midAngle; // Calculate rotation angle for radial direction
+
+      console.log("label: ", percent, midAngle, data[index]);
+      if (percent < 0.02) {
+        return null;
+      }
+      const offset = Math.abs(midAngle) < 90 ? 0 : 180;
+      return (
+        <text
+          x={x}
+          y={y}
+          fill="white"
+          textAnchor={offset ? "start" : "end"}
+          dominantBaseline="central"
+          transform={`rotate(${snapAngle(offset - rotation)}, ${x}, ${y})`} // Rotate text to align radially
+        >
+          {`${data[index].name}`}
+        </text>
+      );
+    };
+
+const CustomTooltip = ({ active, payload }: unknown) => {
+  if (active && payload?.length) {
+    const { longName, count, value } = payload[0].payload;
+    const percentage = value.toFixed(1);
+    return (
+      <div className={styles.tooltip}>
+        <p className="label">{`${longName} : ${percentage}%`}</p>
+        <p className="description">{`${new Intl.NumberFormat().format(
+          count
+        )} Aufrufe`}</p>
+      </div>
+    );
+  }
+
+  return null;
+};
 
 const DashboardChart = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const { t } = useTranslation();
-  const chartRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,50 +106,41 @@ const DashboardChart = () => {
   const labels = [];
 
   // Daten verarbeiten
-  data[0].byScope.forEach((yearData) => {
-    let monthTotal = 0;
-    yearData.months
-      .sort((a, b) => a.month - b.month)
-      .forEach((month) => {
-        labels.push(`${month.month}/${yearData._id}`);
-        monthTotal = 0;
+  for (const yearData of data[0].byScope) {
+    for (const month of yearData.months.sort((a, b) => a.month - b.month)) {
+      labels.push(`${month.month}/${yearData._id}`);
 
-        month.scopes.forEach((scopes) => {
-          if (scopes.scope === "fh-swf.de") {
-            totalCounts.push(scopes.count);
-          }
+      for (const scopes of month.scopes) {
+        if (scopes.scope === "fh-swf.de") {
+          totalCounts.push(scopes.count);
+        }
 
-          // Schlüsseln nach der gewünschten Form
-          const match =
-            scopes.scope.endsWith(".fh-swf.de") &&
+        // Schlüsseln nach der gewünschten Form
+        const match =
+          scopes.scope.endsWith(".fh-swf.de") &&
             scopes.scope.split(".").length === 3
-              ? scopes.scope.split(".")[0]
-              : null;
-          console.log("match: ", match);
-          if (match) {
-            if (!scopeData[match]) {
-              scopeData[match] = 0;
-            }
-            scopeData[match] += scopes.count;
+            ? scopes.scope.split(".")[0]
+            : null;
+        console.log("match: ", match);
+        if (match) {
+          if (!scopeData[match]) {
+            scopeData[match] = 0;
           }
-        });
-      });
-  });
-  data[0].byRole.forEach((yearData) => {
-    let monthTotal = 0;
-    yearData.months
-      .sort((a, b) => a.month - b.month)
-      .forEach((month) => {
-        monthTotal = 0;
-
-        month.roles.forEach((roles) => {
-          if (!roleData[roles.role]) {
-            roleData[roles.role] = 0;
-          }
-          roleData[roles.role] += roles.count;
-        });
-      });
-  });
+          scopeData[match] += scopes.count;
+        }
+      }
+    }
+  }
+  for (const yearData of data[0].byRole) {
+    for (const month of yearData.months.sort((a, b) => a.month - b.month)) {
+      for (const roles of month.roles) {
+        if (!roleData[roles.role]) {
+          roleData[roles.role] = 0;
+        }
+        roleData[roles.role] += roles.count;
+      }
+    }
+  }
 
   console.log("roleData: ", roleData);
   console.log("scopeData: ", scopeData);
@@ -217,60 +259,7 @@ const DashboardChart = () => {
       fill: COLORS[index % COLORS.length],
     }));
 
-  const RADIAN = Math.PI / 180;
-  const renderPieLabel =
-    (data) =>
-    ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-      const radius = innerRadius + (outerRadius - innerRadius) * 0.8; // Adjust radius to position text in the middle of the pie-piece
-      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-      const rotation = midAngle; // Calculate rotation angle for radial direction
 
-      console.log("label: ", percent, midAngle, data[index]);
-      if (percent < 0.02) {
-        return null;
-      }
-      const offset = Math.abs(midAngle) < 90 ? 0 : 180;
-      return (
-        <text
-          x={x}
-          y={y}
-          fill="white"
-          textAnchor={offset ? "start" : "end"}
-          dominantBaseline="central"
-          transform={`rotate(${snapAngle(offset - rotation)}, ${x}, ${y})`} // Rotate text to align radially
-        >
-          {`${data[index].name}`}
-        </text>
-      );
-    };
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const { name, longName, count, value } = payload[0].payload;
-      const percentage = value.toFixed(1);
-      return (
-        <div className={styles.tooltip}>
-          <p className="label">{`${longName} : ${percentage}%`}</p>
-          <p className="description">{`${new Intl.NumberFormat().format(
-            count
-          )} Aufrufe`}</p>
-        </div>
-      );
-    }
-
-    return null;
-  };
-
-  const getStartAngle = (data) => {
-    const maxValue = data[0].value;
-    return 180 + maxValue * 1.8;
-  };
-
-  const snapAngle = (angle) => {
-    const snappedAngle = Math.round(angle / 5) * 5;
-    return snappedAngle;
-  };
 
   return (
     <Tabs.Root defaultValue="total_requests" className={styles.chart}>
@@ -323,7 +312,7 @@ const DashboardChart = () => {
               endAngle={getStartAngle(scopeChartData) - 360}
             >
               {scopeChartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
+                <Cell key={entry.affiliation} fill={entry.fill} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
@@ -346,7 +335,7 @@ const DashboardChart = () => {
               endAngle={getStartAngle(roleChartData) - 360}
             >
               {roleChartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
+                <Cell key={entry.name} fill={entry.fill} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />

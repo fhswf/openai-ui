@@ -512,6 +512,7 @@ export function MessageHeader() {
                         key={key}
                         justifyContent="space-between"
                         alignItems="center"
+                        data-testid={`mcp-service-${key.replace(/\s+/g, '-')}`}
                       >
                         <HStack>
                           <Checkbox.Root

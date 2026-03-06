@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import type { Message } from "./context/types";
 import { Tool } from "openai/resources/responses/responses.mjs";
 
 import {
@@ -43,8 +44,8 @@ type UsageProps = {
   endTime?: number;
 };
 
-function Usage(props: UsageProps) {
-  const { usage, startTime, endTime } = props;
+function Usage(props: Readonly<UsageProps>) {
+  const { usage } = props;
   const formatter = new Intl.NumberFormat();
 
   if (!usage) {
@@ -136,6 +137,69 @@ function ImageBlobRenderer({ image, fileName }) {
   );
 }
 
+function processMessageContent(content: unknown): { message: string, image_url: string | null, image_name: string | null } {
+  let message = "";
+  let image_url: string | null = null;
+  let image_name: string | null = null;
+
+  if (typeof content == "string") {
+    message = processLaTeX(content);
+  } else if (Array.isArray(content)) {
+    content.forEach((item) => {
+      if (item.type === "input_text") {
+        message += item.text;
+      } else if (item.type === "input_image") {
+        image_url = item.image_url;
+        image_name = item.name;
+      } else if (item.type === "mcp_approval_response") {
+        message += item.approve ? "Approved" : "Denied";
+      }
+    });
+  }
+  return { message, image_url, image_name };
+}
+
+function MessageImages({ images }: { images: unknown }) {
+  if (!images) return null;
+
+  return (
+    <>
+      {Object.entries(images).map(([fileName, image]: [string, unknown]) => {
+        if (image.src) {
+          return (
+            <img
+              key={fileName}
+              src={image.src}
+              alt={fileName}
+              className={styles.generated_image}
+              data-testid={`generated-image-${fileName}`}
+            />
+          );
+        } else if (image.url?.startsWith("opfs://")) {
+          return (
+            <OPFSImage
+              key={fileName}
+              src={image.url}
+              alt={fileName}
+              className={styles.generated_image}
+              data-testid={`generated-image-${fileName}`}
+            />
+          );
+        } else if (image.url && image.blob) {
+          return (
+            <ImageBlobRenderer
+              key={fileName}
+              image={image}
+              fileName={fileName}
+            />
+          );
+        }
+        return <Skeleton key={fileName} className={styles.image} />;
+      })}
+    </>
+  );
+}
+
 export function MessageItem(props) {
   const {
     content,
@@ -152,30 +216,7 @@ export function MessageItem(props) {
   const { removeMessage, editMessage, user, options, is } = useGlobal();
   const { t } = useTranslation();
   const avatar = options.general.theme === "dark" ? avatar_white : avatar_black;
-
-  //console.log("MessageItem props:", props);
-
-
-
-
-
-  let message = "";
-  let image_url = null;
-  let image_name = null;
-  if (typeof content == "string") {
-    message = processLaTeX(content);
-  } else {
-    content?.map((item, index) => {
-      if (item.type === "input_text") {
-        message += item.text;
-      } else if (item.type === "input_image") {
-        image_url = item.image_url;
-        image_name = item.name;
-      } else if (item.type === "mcp_approval_response") {
-        message += item.approve ? "Approved" : "Denied";
-      }
-    });
-  }
+  const { message, image_url, image_name } = processMessageContent(content);
 
   return (
     <Card.Root
@@ -197,40 +238,7 @@ export function MessageItem(props) {
       </Card.Header>
       <Card.Body>
         <LazyRenderer isVisible={is.thinking}>{message}</LazyRenderer>
-        {images &&
-          Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
-            if (image.src) {
-              // If image has a src, use it directly
-              return (
-                <img
-                  key={fileName}
-                  src={image.src}
-                  alt={fileName}
-                  className={styles.generated_image}
-                  data-testid={`generated-image-${fileName}`}
-                />
-              );
-            } else if (image.url?.startsWith("opfs://")) {
-              return (
-                <OPFSImage
-                  key={fileName}
-                  src={image.url}
-                  alt={fileName}
-                  className={styles.generated_image}
-                  data-testid={`generated-image-${fileName}`}
-                />
-              );
-            } else if (image.url && image.blob) {
-              return (
-                <ImageBlobRenderer
-                  key={fileName}
-                  image={image}
-                  fileName={fileName}
-                />
-              );
-            }
-            return <Skeleton key={fileName} className={styles.image} />;
-          })}
+        <MessageImages images={images} />
         {image_url &&
           (image_url.startsWith("opfs://") ? (
             <OPFSImage
@@ -263,17 +271,15 @@ export function MessageItem(props) {
             </IconButton>
           </Tooltip>
           {role === "user" ? (
-            <React.Fragment>
-              <IconButton
-                minWidth="24px"
-                size="sm"
-                variant="ghost"
-                onClick={() => editMessage(id)}
-                data-testid="EditMessageBtn"
-              >
-                <MdEdit />
-              </IconButton>
-            </React.Fragment>
+            <IconButton
+              minWidth="24px"
+              size="sm"
+              variant="ghost"
+              onClick={() => editMessage(id)}
+              data-testid="EditMessageBtn"
+            >
+              <MdEdit />
+            </IconButton>
           ) : (
             <CopyIcon value={content} />
           )}
@@ -281,6 +287,43 @@ export function MessageItem(props) {
       </Card.Footer>
     </Card.Root>
   );
+}
+
+function toContentArray(content: unknown): unknown[] {
+  if (Array.isArray(content)) return content;
+  return content ? [{ type: 'input_text', text: content }] : [];
+}
+
+function mergeContent(last: Message, message: Message) {
+  if (Array.isArray(last.content) || Array.isArray(message.content)) {
+    return [...toContentArray(last.content), ...toContentArray(message.content)];
+  }
+  return (last.content || "") + (message.content || "");
+}
+
+function mergeAssistantMessages(acc: Message[], message: Message): Message[] {
+  if (acc.length === 0) return [message];
+  const last = acc[acc.length - 1];
+
+  if (last.role !== 'assistant' || message.role !== 'assistant') {
+    return [...acc, message];
+  }
+
+  const merged = {
+    ...last,
+    content: mergeContent(last, message),
+    toolsUsed: message.toolsUsed ? [...(last.toolsUsed ?? []), ...message.toolsUsed] : last.toolsUsed,
+    images: message.images ? { ...last.images, ...message.images } : last.images
+  };
+
+  acc[acc.length - 1] = merged;
+  return acc;
+}
+
+function isApprovalResponse(message: unknown): boolean {
+  return Array.isArray(message.content) &&
+    message.content.length > 0 &&
+    message.content[0].type === 'mcp_approval_response';
 }
 
 export function MessageContainer() {
@@ -295,42 +338,10 @@ export function MessageContainer() {
           {messages
             .filter((message) => {
               if (message.role === "system") return false;
-              // Hide explicit approval response messages as they are technical
-              if (Array.isArray(message.content) &&
-                message.content.length > 0 &&
-                (message.content[0] as any).type === 'mcp_approval_response') {
-                return false;
-              }
+              if (isApprovalResponse(message)) return false;
               return true;
             })
-            .reduce((acc: Message[], message) => {
-              if (acc.length === 0) return [message];
-              const last = acc[acc.length - 1];
-              if (last.role === 'assistant' && message.role === 'assistant') {
-                // Merge logic
-                const merged = { ...last };
-                // Content merge
-                if (Array.isArray(last.content) || Array.isArray(message.content)) {
-                  const c1 = Array.isArray(last.content) ? last.content : (last.content ? [{ type: 'input_text', text: last.content }] : []);
-                  const c2 = Array.isArray(message.content) ? message.content : (message.content ? [{ type: 'input_text', text: message.content }] : []);
-                  merged.content = [...c1, ...c2];
-                } else {
-                  merged.content = (last.content || "") + (message.content || "");
-                }
-                // Tools merge
-                if (message.toolsUsed) {
-                  merged.toolsUsed = [...(last.toolsUsed || []), ...message.toolsUsed];
-                }
-                // Images merge
-                if (message.images) {
-                  merged.images = { ...(last.images || {}), ...message.images };
-                }
-
-                acc[acc.length - 1] = merged;
-                return acc;
-              }
-              return [...acc, message];
-            }, [])
+            .reduce(mergeAssistantMessages, [])
             .map((item, index) => (
               <MessageItem
                 key={item.id || item.sentTime}
@@ -345,8 +356,6 @@ export function MessageContainer() {
 }
 
 export function ChatMessage() {
-  const { is, setState } = useGlobal();
-
   return (
     <ScrollView id="chat_list" data-testid="ChatList">
       <MessageContainer />
