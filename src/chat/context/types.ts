@@ -155,9 +155,26 @@ export type App = {
 
 export type McpAuthMode = "none" | "static" | "user-data";
 
+export type McpServerType = "scoped" | "plain" | "unknown";
+export type McpDiscoveryState = "consent-required" | "no-consent" | "unreachable" | "unknown";
+export type McpAvailabilityState = "available" | "unavailable" | "unknown";
+
+export interface McpScopeDefinition {
+  scope: string;
+  description?: string;
+  description_en?: string;
+}
 
 export interface McpAuthConfig {
   mode: McpAuthMode;
   staticToken?: string;
   selectedFields: string[];
+  serverType: McpServerType;
+  discoveryState: McpDiscoveryState;
+  availabilityState: McpAvailabilityState;
+  scopes: McpScopeDefinition[];
+  grantedScopes: string[];
+  discoveryError?: string;
+  availabilityMessage?: string;
+  lastCheckedAt?: number;
 }

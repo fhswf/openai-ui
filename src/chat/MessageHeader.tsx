@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 
 import { Tool, OptionActionType, McpAuthConfig } from "./context/types";
 
@@ -21,6 +21,7 @@ import {
   Checkbox,
   Separator,
   createListCollection,
+  Badge,
 } from "@chakra-ui/react";
 
 import { useTranslation } from "react-i18next";
@@ -39,7 +40,7 @@ import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { MessageMenu } from "./MessageMenu";
-import { modelOptions, toolOptions } from "./utils/options";
+import { modelOptions } from "./utils/options";
 import { GitHubMenu } from "./GitHubMenu";
 import { RiChatNewLine } from "react-icons/ri";
 
@@ -47,6 +48,18 @@ import "../assets/icon/style.css";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { McpAuthFields } from "./McpAuthFields";
 import { useMcpAuth } from "./hooks/useMcpAuth";
+import { getOpenMcpSettingsEventName } from "./component/McpSettingsAction";
+import {
+  createDefaultMcpAuthConfig,
+  discoverMcpServerScopes,
+  mergeDiscoveryIntoConfig,
+  isConsentRequired,
+  normalizeMcpAuthConfig,
+  needsConsent,
+  getMcpUserDataSupportState,
+  validateMcpAuthConfigForSave,
+} from "./utils/mcp";
+import { normalizeOpenAIOptions } from "./utils/mcpOptions";
 
 export function MessageHeader() {
   const {
@@ -64,7 +77,8 @@ export function MessageHeader() {
   const messages = message?.messages;
   const columnIcon = is.toolbar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />;
 
-  let tools: Map<string, Tool> = options.openai.tools;
+  const openaiOptions = normalizeOpenAIOptions(options.openai);
+  let tools: Map<string, Tool> = openaiOptions.tools;
 
   const { t } = useTranslation();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -79,8 +93,10 @@ export function MessageHeader() {
     server_url: "",
     require_approval: "never",
     allowed_tools: [],
-    authConfig: { mode: "none", selectedFields: [] } as McpAuthConfig,
+    authConfig: createDefaultMcpAuthConfig(),
   });
+  const [isChecking, setIsChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string | null>(null);
 
   const approval_options = createListCollection({
     items: [
@@ -94,60 +110,55 @@ export function MessageHeader() {
     globalThis.location.href = import.meta.env.VITE_LOGOUT_URL || "/";
   };
 
-  const editMCP = () => {
+  const editMCP = useCallback(() => {
     console.log("Edit MCP Services");
     setEditingMcpKey(null);
+    setCheckError(null);
     setMcpToolForm({
       label: "",
       server_url: "",
       require_approval: "never",
       allowed_tools: [],
-      authConfig: { mode: "none", selectedFields: [] },
+      authConfig: createDefaultMcpAuthConfig(),
     });
     setEditMCPServices(true);
-  };
-
-  if (typeof options.openai.tools !== "object") {
-    options.openai.tools = toolOptions;
-  }
+  }, []);
 
   function setTool(key: string, tool: Tool, checked: boolean): void {
     console.log("Set tool: %s %o", key, checked);
-    if (
-      !options.openai.toolsEnabled ||
-      !(options.openai.toolsEnabled instanceof Set)
-    ) {
-      options.openai.toolsEnabled = new Set<string>();
-    }
+    const nextToolsEnabled = new Set(openaiOptions.toolsEnabled);
     if (checked) {
-      options.openai.toolsEnabled.add(key);
+      nextToolsEnabled.add(key);
     } else {
-      options.openai.toolsEnabled.delete(key);
+      nextToolsEnabled.delete(key);
     }
     setOptions({
       type: OptionActionType.OPENAI,
-      data: { ...options.openai },
+      data: { ...openaiOptions, toolsEnabled: nextToolsEnabled },
     });
   }
 
-  function editTool(key: string, tool: Tool.Mcp): void {
-    const savedAuthConfig = options.openai.mcpAuthConfigs.get(key);
+  const editTool = useCallback((key: string, tool: Tool.Mcp): void => {
+    const savedAuthConfig = openaiOptions.mcpAuthConfigs.get(key);
     setEditingMcpKey(key);
+    setCheckError(null);
     setMcpToolForm({
       label: tool.server_label || "",
       server_url: tool.server_url || "",
       require_approval: (tool.require_approval as string) || "never",
       allowed_tools: (tool.allowed_tools as string[]) || [],
-      authConfig: savedAuthConfig ?? { mode: "none", selectedFields: [] },
+      authConfig: savedAuthConfig
+        ? normalizeMcpAuthConfig(savedAuthConfig)
+        : createDefaultMcpAuthConfig(),
     });
     setEditMCPServices(true);
-  }
+  }, [openaiOptions.mcpAuthConfigs]);
 
   function cleanupRenamedTool(
     oldKey: string | null,
     newKey: string,
     tools: Map<string, Tool>,
-    openai: typeof options.openai
+    openai: typeof openaiOptions
   ) {
     if (oldKey && oldKey !== newKey) {
       tools.delete(oldKey);
@@ -156,17 +167,121 @@ export function MessageHeader() {
     }
   }
 
+  const inspectServerAuthConfig = useCallback(
+    async (serverUrl: string, authConfig: McpAuthConfig) => {
+      const discoveryResult = await discoverMcpServerScopes(serverUrl);
+      let updatedConfig = mergeDiscoveryIntoConfig(authConfig, discoveryResult);
+
+      if (needsConsent(updatedConfig)) {
+        updatedConfig = {
+          ...updatedConfig,
+          mode: "user-data",
+          staticToken: "",
+        };
+      }
+
+      return { discoveryResult, updatedConfig };
+    },
+    []
+  );
+
+  const handleCheckServer = useCallback(async () => {
+    const serverUrl = mcpToolForm.server_url;
+    if (!serverUrl) return;
+
+    setIsChecking(true);
+    setCheckError(null);
+
+    try {
+      const { discoveryResult, updatedConfig } = await inspectServerAuthConfig(
+        serverUrl,
+        mcpToolForm.authConfig
+      );
+
+      if (discoveryResult.kind === "unreachable") {
+        setCheckError(discoveryResult.error || t("server_unreachable"));
+      }
+
+      setMcpToolForm((f) => ({ ...f, authConfig: updatedConfig }));
+    } catch (_error) {
+      setCheckError(t("server_unreachable"));
+    } finally {
+      setIsChecking(false);
+    }
+  }, [inspectServerAuthConfig, mcpToolForm.server_url, mcpToolForm.authConfig, t]);
+
   async function handleAddService() {
-    if (!mcpToolForm.label || !mcpToolForm.server_url) {
+    const nextLabel = mcpToolForm.label.trim();
+    const nextServerUrl = mcpToolForm.server_url.trim();
+    const nextAllowedTools = mcpToolForm.allowed_tools.filter(
+      (tool) => typeof tool === "string" && tool.length > 0
+    );
+
+    if (!nextLabel || !nextServerUrl) {
       alert(t("Please fill in all required fields"));
+      return;
+    }
+
+    if (editingMcpKey !== nextLabel && tools.has(nextLabel)) {
+      alert(t("Label already exists"));
+      return;
+    }
+
+    setIsChecking(true);
+    setCheckError(null);
+
+    let config = mcpToolForm.authConfig;
+    try {
+      const { discoveryResult, updatedConfig } = await inspectServerAuthConfig(
+        nextServerUrl,
+        mcpToolForm.authConfig
+      );
+      config = updatedConfig;
+      setMcpToolForm((f) => ({
+        ...f,
+        label: nextLabel,
+        server_url: nextServerUrl,
+        allowed_tools: nextAllowedTools,
+        authConfig: updatedConfig,
+      }));
+
+      if (discoveryResult.kind === "unreachable") {
+        setCheckError(discoveryResult.error || t("server_unreachable"));
+      }
+    } catch (_error) {
+      const errorMessage = t("server_unreachable");
+      setCheckError(errorMessage);
+      config = {
+        ...normalizeMcpAuthConfig(mcpToolForm.authConfig),
+        discoveryState: "unreachable",
+        availabilityState: "unavailable",
+        discoveryError: errorMessage,
+      };
+    } finally {
+      setIsChecking(false);
+    }
+
+    const validation = validateMcpAuthConfigForSave(config);
+    if (validation.blockingReason !== "none") {
+      const errorMessage =
+        validation.blockingReason === "server-unreachable"
+          ? config.discoveryError || t("server_unreachable")
+          : validation.blockingReason === "user-data-required"
+            ? t("mcp_user_data_required")
+          : validation.blockingReason === "consent-missing"
+            ? t("consent_missing_userdata")
+          : getMcpUserDataSupportState(config) === "plain-server"
+              ? t("mcp_user_data_plain_server")
+              : t("mcp_user_data_check_server_hint");
+      alert(errorMessage);
       return;
     }
 
     let authorization: string | undefined;
     try {
       authorization = await getAuthorization(
-        mcpToolForm.authConfig,
-        mcpToolForm.server_url
+        config,
+        nextServerUrl
       );
     } catch (error) {
       alert(
@@ -179,30 +294,41 @@ export function MessageHeader() {
 
     const newTool: Tool.Mcp = {
       type: "mcp",
-      server_label: mcpToolForm.label,
-      server_url: mcpToolForm.server_url,
+      server_label: nextLabel,
+      server_url: nextServerUrl,
       require_approval: mcpToolForm.require_approval as "always" | "never",
       authorization: authorization,
     };
 
-    if (mcpToolForm.allowed_tools.length > 0) {
-      newTool.allowed_tools = mcpToolForm.allowed_tools;
+    if (nextAllowedTools.length > 0) {
+      newTool.allowed_tools = nextAllowedTools;
     }
 
-    cleanupRenamedTool(editingMcpKey, mcpToolForm.label, tools, options.openai);
+    const wasEnabled = editingMcpKey
+      ? openaiOptions.toolsEnabled.has(editingMcpKey)
+      : openaiOptions.toolsEnabled.has(nextLabel);
+
+    const nextMcpAuthConfigs = new Map(openaiOptions.mcpAuthConfigs);
+    const nextToolsEnabled = new Set(openaiOptions.toolsEnabled);
+    cleanupRenamedTool(editingMcpKey, nextLabel, tools, {
+      ...openaiOptions,
+      mcpAuthConfigs: nextMcpAuthConfigs,
+      toolsEnabled: nextToolsEnabled,
+    });
     setEditingMcpKey(null);
 
-    tools.set(mcpToolForm.label, newTool);
-    options.openai.mcpAuthConfigs.set(
-      mcpToolForm.label,
-      mcpToolForm.authConfig
-    );
+    tools.set(nextLabel, newTool);
+    nextMcpAuthConfigs.set(nextLabel, config);
+    if (wasEnabled) {
+      nextToolsEnabled.add(nextLabel);
+    }
     setOptions({
       type: OptionActionType.OPENAI,
       data: {
-        ...options.openai,
+        ...openaiOptions,
         tools,
-        mcpAuthConfigs: options.openai.mcpAuthConfigs,
+        toolsEnabled: nextToolsEnabled,
+        mcpAuthConfigs: nextMcpAuthConfigs,
       },
     });
   }
@@ -214,42 +340,64 @@ export function MessageHeader() {
       return;
     }
     tools.delete(key);
-    options.openai.toolsEnabled.delete(key);
-    options.openai.mcpAuthConfigs.delete(key);
+    const nextToolsEnabled = new Set(openaiOptions.toolsEnabled);
+    const nextMcpAuthConfigs = new Map(openaiOptions.mcpAuthConfigs);
+    nextToolsEnabled.delete(key);
+    nextMcpAuthConfigs.delete(key);
     setOptions({
       type: OptionActionType.OPENAI,
-      data: { ...options.openai, tools },
+      data: {
+        ...openaiOptions,
+        tools,
+        toolsEnabled: nextToolsEnabled,
+        mcpAuthConfigs: nextMcpAuthConfigs,
+      },
     });
   }
+  const mcpTools: Record<string, Tool.Mcp> = {};
+  const missingPermissionsMessage = t("mcp_missing_permissions");
 
-  if (!(options.openai.toolsEnabled instanceof Set)) {
-    console.error("ToolsEnabled is not a Set:", options.openai.toolsEnabled);
-    options.openai.toolsEnabled = new Set<string>();
+  function isMcpToolSelectable(key: string): boolean {
+    const cfg = openaiOptions.mcpAuthConfigs.get(key);
+    if (!cfg) return true;
+    if (cfg.serverType === "scoped" && cfg.availabilityState === "unavailable")
+      return false;
+    if (needsConsent(cfg)) return false;
+    return true;
   }
-
-  if (!(options.openai.mcpAuthConfigs instanceof Map)) {
-    options.openai.mcpAuthConfigs = new Map();
-  }
-
-  if (tools instanceof Map) {
-    for (const [key, value] of toolOptions) {
-      if (!tools.has(key)) {
-        tools.set(key, value);
-      }
-    }
-  } else {
-    console.error("Tools is not a Map:", tools);
-    tools = new Map(toolOptions.entries());
-    setOptions({
-      type: OptionActionType.OPENAI,
-      data: { ...options.openai, tools },
-    });
-  }
-  const mcpTools: Record<string, Tool> = {};
 
   for (const [key, value] of tools) {
-    if (value.type === "mcp") mcpTools[key] = value;
+    if (value.type === "mcp") mcpTools[key] = value as Tool.Mcp;
   }
+
+  useEffect(() => {
+    const handleOpenSettings = (event: Event) => {
+      const detail = (event as CustomEvent<{ key?: string }>).detail;
+      const serviceKey = detail?.key;
+      if (serviceKey) {
+        const tool = tools.get(serviceKey);
+        if (tool?.type === "mcp") {
+          editTool(serviceKey, tool as Tool.Mcp);
+          return;
+        }
+      }
+      editMCP();
+    };
+
+    const eventName = getOpenMcpSettingsEventName();
+    window.addEventListener(eventName, handleOpenSettings);
+    return () => {
+      window.removeEventListener(eventName, handleOpenSettings);
+    };
+  }, [editMCP, editTool, tools]);
+
+  const userDataSupportState = getMcpUserDataSupportState(mcpToolForm.authConfig);
+  const userDataSupportMessage =
+    userDataSupportState === "unknown"
+      ? t("mcp_user_data_check_server_hint")
+      : userDataSupportState === "plain-server"
+        ? t("mcp_user_data_plain_server")
+          : null;
 
   return (
     <HStack
@@ -296,11 +444,11 @@ export function MessageHeader() {
         <Menu.Positioner>
           <Menu.Content>
             <Menu.RadioItemGroup
-              value={options.openai.model}
+              value={openaiOptions.model}
               onValueChange={(e) =>
                 setOptions({
                   type: OptionActionType.OPENAI,
-                  data: { ...options.openai, model: e.value },
+                  data: { ...openaiOptions, model: e.value },
                 })
               }
             >
@@ -315,17 +463,24 @@ export function MessageHeader() {
 
             <Menu.ItemGroup>
               <Menu.ItemGroupLabel>{t("tool_options")}</Menu.ItemGroupLabel>
-              {Array.from(tools.entries()).map(([key, value]) => (
-                <Menu.CheckboxItem
-                  value={value.type === "mcp" ? value.server_label : value.type}
-                  key={key}
-                  checked={options.openai.toolsEnabled.has(key)}
-                  onCheckedChange={(e) => setTool(key, value, e)}
-                >
-                  <Menu.ItemIndicator />
-                  {key}
-                </Menu.CheckboxItem>
-              ))}
+              {Array.from(tools.entries())
+                .filter(
+                  ([key, value]) =>
+                    value.type !== "mcp" || isMcpToolSelectable(key)
+                )
+                .map(([key, value]) => (
+                  <Menu.CheckboxItem
+                    value={
+                      value.type === "mcp" ? value.server_label : value.type
+                    }
+                    key={key}
+                    checked={openaiOptions.toolsEnabled.has(key)}
+                    onCheckedChange={(e) => setTool(key, value, e)}
+                  >
+                    <Menu.ItemIndicator />
+                    {key}
+                  </Menu.CheckboxItem>
+                ))}
 
               <Menu.Root positioning={{ placement: "right-start", gutter: 2 }}>
                 <Menu.TriggerItem data-testid="mcp-services-menu-trigger">
@@ -334,17 +489,19 @@ export function MessageHeader() {
                 <Portal>
                   <Menu.Positioner>
                     <Menu.Content>
-                      {Object.entries(mcpTools).map(([key, tool]) => (
-                        <Menu.CheckboxItem
-                          key={tool.server_label}
-                          value={key}
-                          checked={options.openai.toolsEnabled.has(key)}
-                          onCheckedChange={(e) => setTool(key, tool, e)}
-                        >
-                          <Menu.ItemIndicator />
-                          {tool.title || key}
-                        </Menu.CheckboxItem>
-                      ))}
+                      {Object.entries(mcpTools)
+                        .filter(([key]) => isMcpToolSelectable(key))
+                        .map(([key, tool]) => (
+                          <Menu.CheckboxItem
+                            key={tool.server_label}
+                            value={key}
+                            checked={openaiOptions.toolsEnabled.has(key)}
+                            onCheckedChange={(e) => setTool(key, tool, e)}
+                          >
+                            <Menu.ItemIndicator />
+                            {tool.title || key}
+                          </Menu.CheckboxItem>
+                        ))}
 
                       <Menu.Item
                         onClick={editMCP}
@@ -478,6 +635,23 @@ export function MessageHeader() {
                       />
                     </Field.Root>
                   </Stack>
+                  <Button
+                    data-testid="mcp-check-server-btn"
+                    onClick={handleCheckServer}
+                    variant="outline"
+                    size="sm"
+                    loading={isChecking}
+                    disabled={!mcpToolForm.server_url}
+                  >
+                    {t("check_server")}
+                  </Button>
+
+                  {checkError && (
+                    <Text color="red.500" fontSize="sm">
+                      {checkError}
+                    </Text>
+                  )}
+
                   <McpAuthFields
                     config={mcpToolForm.authConfig}
                     onChange={(authConfig) => {
@@ -486,6 +660,15 @@ export function MessageHeader() {
                     userFields={userFields}
                     user={user}
                   />
+                  {userDataSupportMessage && (
+                    <Text
+                      data-testid="mcp-user-data-support-message"
+                      fontSize="xs"
+                      color={userDataSupportState === "unreachable" ? "red.500" : "gray.500"}
+                    >
+                      {userDataSupportMessage}
+                    </Text>
+                  )}
                   <Button
                     data-testid="mcp-add-service-btn"
                     onClick={handleAddService}
@@ -507,48 +690,73 @@ export function MessageHeader() {
                 >
                   <Text fontWeight="bold">{t("MCP Services")}</Text>
                   <Stack padding={2} gap={2} className={styles.mcpServices}>
-                    {Object.entries(mcpTools).map(([key, tool]) => (
-                      <HStack
-                        key={key}
-                        justifyContent="space-between"
-                        alignItems="center"
-                      >
-                        <HStack>
-                          <Checkbox.Root
-                            size="sm"
-                            variant={"outline"}
-                            checked={options.openai.toolsEnabled.has(key)}
-                            onCheckedChange={(e) =>
-                              setTool(key, tool, e.checked)
-                            }
-                          >
-                            <Checkbox.HiddenInput />
-                            <Checkbox.Control />
-                          </Checkbox.Root>
-                          <Text>{tool.title || key}</Text>
+                    {Object.entries(mcpTools).map(([key, tool]) => {
+                      const authConfig = openaiOptions.mcpAuthConfigs.get(key);
+                      const isUnavailable =
+                        authConfig?.serverType === "scoped" &&
+                        authConfig?.availabilityState === "unavailable" &&
+                        authConfig?.discoveryState === "unreachable";
+                      const isConsentPending =
+                        !!authConfig && needsConsent(authConfig);
+                      const isDisabled = isUnavailable || isConsentPending;
+                      return (
+                        <HStack
+                          key={key}
+                          justifyContent="space-between"
+                          alignItems="center"
+                        >
+                          <HStack flexWrap="wrap">
+                            <Checkbox.Root
+                              size="sm"
+                              variant={"outline"}
+                              checked={openaiOptions.toolsEnabled.has(key)}
+                              onCheckedChange={(e) =>
+                                setTool(key, tool, !!e.checked)
+                              }
+                              disabled={isDisabled}
+                            >
+                              <Checkbox.HiddenInput />
+                              <Checkbox.Control />
+                            </Checkbox.Root>
+                            <Text>{tool.title || key}</Text>
+                            {isConsentPending && (
+                              <Text fontSize="xs" color="red.600">
+                                {missingPermissionsMessage}
+                              </Text>
+                            )}
+                            {isUnavailable && !isConsentPending && (
+                              <Badge
+                                colorPalette="gray"
+                                size="sm"
+                                variant="subtle"
+                              >
+                                {t("currently_unavailable")}
+                              </Badge>
+                            )}
+                          </HStack>
+                          <HStack gap={1} alignItems="center">
+                            <Button
+                              data-testid={`mcp-edit-${key}`}
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                editTool(key, tool);
+                              }}
+                            >
+                              <MdEdit />
+                            </Button>
+                            <Button
+                              data-testid={`mcp-delete-${key}`}
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteService(key)}
+                            >
+                              <MdDelete />
+                            </Button>
+                          </HStack>
                         </HStack>
-                        <HStack gap={1} alignItems="center">
-                          <Button
-                            data-testid={`mcp-edit-${key}`}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              editTool(key, tool);
-                            }}
-                          >
-                            <MdEdit />
-                          </Button>
-                          <Button
-                            data-testid={`mcp-delete-${key}`}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteService(key)}
-                          >
-                            <MdDelete />
-                          </Button>
-                        </HStack>
-                      </HStack>
-                    ))}
+                      );
+                    })}
                   </Stack>
                 </Stack>
               </Dialog.Body>
@@ -591,7 +799,7 @@ export function MessageHeader() {
 
       <MessageMenu />
 
-      {options.openai.mode == "assistant" ? (
+      {openaiOptions.mode == "assistant" ? (
         <IconButton
           variant="ghost"
           title={t("chat_settings")}

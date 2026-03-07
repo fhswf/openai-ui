@@ -1,16 +1,24 @@
 import i18next from "i18next";
-import type {Dispatch} from "react";
+import type { Dispatch } from "react";
 import {
   AccountOptions,
   GeneralOptions,
   GlobalAction,
+  GlobalActionType,
   McpAuthConfig,
   OpenAIOptions,
   OptionAction,
   OptionActionType,
   Tool,
 } from "../context/types";
-import {getAuthorizationForMcpConfig} from "../hooks/useMcpAuth";
+import { getAuthorizationForMcpConfig } from "../hooks/useMcpAuth";
+import {
+  createDefaultMcpAuthConfig,
+  discoverMcpServerScopes,
+  mergeDiscoveryIntoConfig,
+  needsConsent,
+} from "./mcp";
+import { normalizeOpenAIOptions } from "./mcpOptions";
 
 export * from "./options";
 
@@ -22,7 +30,6 @@ export function dateFormat(secs) {
   const activeLocale = i18next.resolvedLanguage;
 
   const date = new Date(1000 * secs);
-  //console.log("dateFormat: ", date, "activeLocale: ", activeLocale, "ms: ", ms, "date: ", date);
   return new Intl.DateTimeFormat(activeLocale, {
     dateStyle: "short",
     timeStyle: "medium",
@@ -30,13 +37,10 @@ export function dateFormat(secs) {
 }
 
 export async function sha256Digest(message) {
-  const msgUint8 = new TextEncoder().encode(message); // encode as (utf-8) Uint8Array
-  const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8); // hash the message
-  const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
-   // convert bytes to hex string
-  return hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+  const msgUint8 = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 interface McpAuthorizationUpdate {
@@ -121,17 +125,114 @@ async function refreshMcpToolAuthorizations(
   openai: OpenAIOptions | undefined,
   user: Record<string, unknown> | null
 ): Promise<Map<string, Tool> | null> {
-  if (!isRefreshableMcpAuth(openai)) return null;
+  const normalizedOpenai = normalizeOpenAIOptions(openai);
+  if (!isRefreshableMcpAuth(normalizedOpenai)) return null;
 
-  const tools = new Map(openai.tools);
+  const tools = new Map(normalizedOpenai.tools);
   const updates = await buildMcpAuthorizationUpdates(
     tools,
-    openai.mcpAuthConfigs,
+    normalizedOpenai.mcpAuthConfigs,
     user
   );
   const changed = applyMcpAuthorizationUpdates(tools, updates);
 
   return changed ? tools : null;
+}
+
+async function checkMcpServersOnLogin(
+  openai: OpenAIOptions | undefined
+): Promise<
+  | {
+      mcpAuthConfigs: Map<string, McpAuthConfig>;
+      toolsEnabled?: Set<string>;
+    }
+  | null
+> {
+  const normalizedOpenai = normalizeOpenAIOptions(openai);
+  if (normalizedOpenai.mcpAuthConfigs.size === 0) return null;
+
+  const configs = new Map(normalizedOpenai.mcpAuthConfigs);
+  const toolsEnabled =
+    normalizedOpenai.toolsEnabled instanceof Set
+      ? new Set(normalizedOpenai.toolsEnabled)
+      : undefined;
+  let configsChanged = false;
+  let toolsEnabledChanged = false;
+
+  await Promise.all(
+    Array.from(normalizedOpenai.tools.entries()).map(async ([key, tool]) => {
+      if (!isMcpTool(tool)) return;
+      const serverUrl = tool.server_url || "";
+      if (!serverUrl) return;
+
+      const config = configs.get(key) ?? createDefaultMcpAuthConfig();
+
+      if (config.serverType === "scoped") {
+        try {
+          const discovery = await discoverMcpServerScopes(serverUrl);
+          const updated = mergeDiscoveryIntoConfig(config, discovery);
+          if (needsConsent(updated)) {
+            updated.mode = "user-data";
+            updated.staticToken = "";
+          }
+          updated.lastCheckedAt = Date.now();
+          configs.set(key, updated);
+          configsChanged = true;
+
+          if (
+            toolsEnabled &&
+            (updated.discoveryState === "unreachable" || needsConsent(updated)) &&
+            toolsEnabled.delete(key)
+          ) {
+            toolsEnabledChanged = true;
+          }
+        } catch (_error) {
+          configs.set(key, {
+            ...config,
+            discoveryState: "unreachable",
+            discoveryError: "The server could not be reached. Please check the URL.",
+            lastCheckedAt: Date.now(),
+          });
+          configsChanged = true;
+          if (toolsEnabled?.delete(key)) {
+            toolsEnabledChanged = true;
+          }
+        }
+        return;
+      }
+
+      try {
+        const discovery = await discoverMcpServerScopes(serverUrl);
+        if (discovery.kind !== "consent-required") return;
+
+        const updated = mergeDiscoveryIntoConfig(config, discovery);
+        if (needsConsent(updated)) {
+          updated.mode = "user-data";
+          updated.staticToken = "";
+        }
+
+        configs.set(key, updated);
+        configsChanged = true;
+
+        if (
+          toolsEnabled &&
+          (updated.discoveryState === "unreachable" || needsConsent(updated)) &&
+          toolsEnabled.delete(key)
+        ) {
+          toolsEnabledChanged = true;
+        }
+      } catch (_error) {
+        // Leave config unchanged if discovery fails on login.
+      }
+    })
+  );
+
+  if (!configsChanged && !toolsEnabledChanged) return null;
+
+  return {
+    mcpAuthConfigs: configs,
+    toolsEnabled: toolsEnabledChanged ? toolsEnabled : undefined,
+  };
 }
 
 export function fetchAndGetUser(
@@ -150,10 +251,7 @@ export function fetchAndGetUser(
       console.log("getting user: ", res.status);
       if (res.status === 401) {
         const loginUrl = import.meta.env.VITE_LOGIN_URL || "/api/login";
-        console.log(
-          "unauthorized, redirecting to login: %s",
-          loginUrl
-        );
+        console.log("unauthorized, redirecting to login: %s", loginUrl);
         window.location.assign(loginUrl);
         throw new Error("unauthorized");
       }
@@ -165,17 +263,27 @@ export function fetchAndGetUser(
     .then(async (user) => {
       user.avatar = null;
       console.log("updating user: ", user);
-      dispatch({ type: "SET_STATE", payload: { user } });
+      dispatch({ type: GlobalActionType.SET_STATE, payload: { user } });
 
       if (setOptions) {
-        const updatedTools = await refreshMcpToolAuthorizations(
-          options.openai,
-          user
-        );
-        if (updatedTools) {
+        // A successful /api/user response is the frontend's source of truth for
+        // the active session, so refresh MCP authorizations from that payload.
+        const [updatedTools, updatedAuthState] = await Promise.all([
+          refreshMcpToolAuthorizations(options.openai, user),
+          checkMcpServersOnLogin(options.openai),
+        ]);
+        const data: Partial<OpenAIOptions> = {};
+        if (updatedTools) data.tools = updatedTools;
+        if (updatedAuthState) {
+          data.mcpAuthConfigs = updatedAuthState.mcpAuthConfigs;
+          if (updatedAuthState.toolsEnabled) {
+            data.toolsEnabled = updatedAuthState.toolsEnabled;
+          }
+        }
+        if (updatedTools || updatedAuthState) {
           setOptions({
             type: OptionActionType.OPENAI,
-            data: { tools: updatedTools },
+            data,
           });
         }
       }
@@ -193,7 +301,7 @@ export function fetchAndGetUser(
                 console.log("user has no gravatar");
                 user.avatar = `https://www.gravatar.com/avatar/${hash}?d=identicon`;
               }
-              dispatch({ type: "SET_STATE", payload: { user } });
+              dispatch({ type: GlobalActionType.SET_STATE, payload: { user } });
             }
           );
         });

@@ -222,4 +222,74 @@ test.describe("Config Menu", () => {
     // Verifying Settings is closed.
     await expect(page.getByTestId("SettingsHeader")).not.toBeVisible();
   });
+
+  test("Importing legacy MCP settings normalizes runtime state without reload", async ({
+    page,
+  }) => {
+    const importedSettings = {
+      options: {
+        account: { name: "Test", avatar: "", terms: true },
+        general: {
+          language: "en",
+          theme: "light",
+          sendCommand: "COMMAND_ENTER",
+          size: "normal",
+          codeEditor: false,
+          gravatar: false,
+        },
+        openai: {
+          baseUrl: "https://openai.ki.fh-swf.de/api",
+          organizationId: "",
+          temperature: 1,
+          top_p: 1,
+          mode: "chat",
+          model: "gpt-4o-mini",
+          assistant: "",
+          apiKey: "unused",
+          max_tokens: 2048,
+          n: 1,
+          stream: true,
+          tools: {
+            dataType: "Map",
+            value: [
+              [
+                "Imported Legacy MCP",
+                {
+                  type: "mcp",
+                  server_label: "Imported Legacy MCP",
+                  server_url: "https://imported-legacy.example.com",
+                  require_approval: "never",
+                },
+              ],
+            ],
+          },
+          toolsEnabled: { dataType: "Set", value: ["Imported Legacy MCP"] },
+          mcpAuthConfigs: {
+            dataType: "Map",
+            value: [["Imported Legacy MCP", { mode: "user-data" }]],
+          },
+        },
+      },
+    };
+
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "legacy-settings.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(importedSettings)),
+    });
+
+    await expect(page.getByTestId("SettingsHeader")).not.toBeVisible();
+
+    await page.getByTestId("chat-options-btn").click();
+    await page.getByTestId("mcp-services-menu-trigger").click();
+    await page.getByTestId("mcp-add-remove-services").click();
+    await page.getByTestId("mcp-edit-Imported Legacy MCP").click();
+
+    await expect(page.locator('input[name="server_url"]')).toHaveValue(
+      "https://imported-legacy.example.com"
+    );
+    await expect(
+      page.getByTestId("mcp-user-data-support-message")
+    ).toBeVisible();
+  });
 });

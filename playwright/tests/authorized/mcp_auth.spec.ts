@@ -27,6 +27,23 @@ test.describe("MCP Auth", () => {
       },
     ],
   };
+  const scopes = [
+    { scope: "email", description: "Email" },
+    { scope: "name", description: "Name" },
+  ];
+  const consentHosts = new Set([
+    "userdata.example.com",
+    "transition.example.com",
+    "preserve.example.com",
+    "rename.example.com",
+    "legacy.example.com",
+    "fresh-legacy.example.com",
+  ]);
+  const unreachableHosts = new Set([
+    "unreachable-static.example.com",
+    "unreachable-none.example.com",
+    "unreachable-userdata.example.com",
+  ]);
 
   let jwksRequestCount = 0;
 
@@ -40,11 +57,32 @@ test.describe("MCP Auth", () => {
       });
     });
     await page.route("**/.well-known/jwks.json", async (route) => {
+      const url = new URL(route.request().url());
+      if (unreachableHosts.has(url.hostname)) {
+        await route.abort("failed");
+        return;
+      }
       jwksRequestCount += 1;
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(jwks),
+      });
+    });
+    await page.route("**/.well-known/fhswf-scopes", async (route) => {
+      const url = new URL(route.request().url());
+      if (unreachableHosts.has(url.hostname)) {
+        await route.abort("failed");
+        return;
+      }
+      if (!consentHosts.has(url.hostname)) {
+        await route.fulfill({ status: 404 });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(scopes),
       });
     });
     await page.goto("/");
@@ -69,6 +107,10 @@ test.describe("MCP Auth", () => {
     await page.locator('input[name="server_url"]').fill(url);
   }
 
+  async function checkServer(page) {
+    await page.getByTestId("mcp-check-server-btn").click();
+  }
+
   type AuthMode = "none" | "static" | "user-data";
 
   async function setAuthMode(page, mode: AuthMode) {
@@ -77,7 +119,7 @@ test.describe("MCP Auth", () => {
 
   async function toggleUserFields(page, fields: string[]) {
     for (const field of fields) {
-      await page.getByTestId(`mcp-auth-field-${field}`).click();
+      await page.getByTestId(`mcp-scope-${field}`).click();
     }
   }
 
@@ -89,6 +131,9 @@ test.describe("MCP Auth", () => {
     selectedFields?: string[];
   }) {
     await fillServiceBase(page, args.label, args.url);
+    if (args.mode === "user-data") {
+      await checkServer(page);
+    }
     await setAuthMode(page, args.mode);
     if (args.mode === "static" && args.staticToken) {
       await page
@@ -131,14 +176,94 @@ test.describe("MCP Auth", () => {
     });
   });
 
+  test.describe("Save policy", () => {
+    test("allows saving static auth when discovery is unreachable", async ({
+      page,
+    }) => {
+      await openMcpDialog(page);
+
+      await createService(page, {
+        label: "Static Unreachable",
+        url: "https://unreachable-static.example.com",
+        mode: "static",
+        staticToken: "token-123",
+      });
+
+      await expect(page.getByText("Static Unreachable")).toBeVisible();
+    });
+
+    test("allows saving none auth when discovery is unreachable", async ({
+      page,
+    }) => {
+      await openMcpDialog(page);
+
+      await createService(page, {
+        label: "None Unreachable",
+        url: "https://unreachable-none.example.com",
+        mode: "none",
+      });
+
+      await expect(page.getByText("None Unreachable")).toBeVisible();
+    });
+
+    test("blocks saving user-data auth when discovery is unreachable", async ({
+      page,
+    }) => {
+      let alertMessage = "";
+      page.on("dialog", async (dialog) => {
+        alertMessage = dialog.message();
+        await dialog.accept();
+      });
+
+      await openMcpDialog(page);
+      await fillServiceBase(
+        page,
+        "User Data Unreachable",
+        "https://unreachable-userdata.example.com"
+      );
+      await setAuthMode(page, "user-data");
+      await page.getByTestId("mcp-add-service-btn").click();
+
+      expect(alertMessage).toContain("Server");
+      await expect(page.getByText("User Data Unreachable")).toHaveCount(0);
+    });
+
+    test("plain legacy server does not block none or static auth", async ({
+      page,
+    }) => {
+      await openMcpDialog(page);
+
+      await createService(page, {
+        label: "Plain Static",
+        url: "https://plain-static.example.com",
+        mode: "static",
+        staticToken: "legacy-token",
+      });
+      await expect(page.getByText("Plain Static")).toBeVisible();
+
+      await createService(page, {
+        label: "Plain None",
+        url: "https://plain-none.example.com",
+        mode: "none",
+      });
+      await expect(page.getByText("Plain None")).toBeVisible();
+    });
+  });
+
   test.describe("Mode transitions", () => {
     test("clears user-data fields when switching modes", async ({ page }) => {
       await openMcpDialog(page);
 
+      await fillServiceBase(
+        page,
+        "Transition Service",
+        "https://transition.example.com"
+      );
+      await checkServer(page);
       await setAuthMode(page, "user-data");
       await toggleUserFields(page, ["email"]);
       await expect(
-        page.getByTestId("mcp-auth-field-email-control")
+        page.getByTestId("mcp-scope-email").locator("input")
       ).toBeChecked();
 
       await setAuthMode(page, "static");
@@ -146,7 +271,7 @@ test.describe("MCP Auth", () => {
 
       await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
       await expect(
-        page.getByTestId("mcp-auth-field-email-control")
+        page.getByTestId("mcp-scope-email").locator("input")
       ).not.toBeChecked();
     });
 
@@ -180,10 +305,10 @@ test.describe("MCP Auth", () => {
       await page.getByTestId("mcp-edit-Preserve Fields").click();
       await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
       await expect(
-        page.getByTestId("mcp-auth-field-email-control")
+        page.getByTestId("mcp-scope-email").locator("input")
       ).toBeChecked();
       await expect(
-        page.getByTestId("mcp-auth-field-name-control")
+        page.getByTestId("mcp-scope-name").locator("input")
       ).toBeChecked();
     });
 
@@ -205,7 +330,7 @@ test.describe("MCP Auth", () => {
       await page.getByTestId("mcp-edit-Renamed Service").click();
       await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
       await expect(
-        page.getByTestId("mcp-auth-field-email-control")
+        page.getByTestId("mcp-scope-email").locator("input")
       ).toBeChecked();
     });
   });
@@ -243,8 +368,58 @@ test.describe("MCP Auth", () => {
 
       await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
       await expect(
-        page.getByTestId("mcp-auth-field-email-control")
+        page.getByTestId("mcp-scope-email").locator("input")
       ).not.toBeChecked();
+    });
+
+    test("legacy config can be switched to static and saved", async ({
+      page,
+    }) => {
+      await page.addInitScript(() => {
+        const raw = localStorage.getItem("SESSIONS");
+        const session = raw ? JSON.parse(raw) : {};
+        if (!session.options) session.options = {};
+        if (!session.options.openai) session.options.openai = {};
+
+        session.options.openai.tools = {
+          dataType: "Map",
+          value: [
+            [
+              "Legacy Save",
+              {
+                type: "mcp",
+                server_label: "Legacy Save",
+                server_url: "https://legacy-save.example.com",
+                require_approval: "never",
+              },
+            ],
+          ],
+        };
+        session.options.openai.mcpAuthConfigs = {
+          dataType: "Map",
+          value: [["Legacy Save", { mode: "user-data" }]],
+        };
+
+        localStorage.setItem("SESSIONS", JSON.stringify(session));
+      });
+
+      await page.reload();
+      await expect(page.getByTestId("LeftSideBar")).toBeVisible({
+        timeout: 10000,
+      });
+
+      const termsBtn = page.getByTestId("accept-terms-btn");
+      if (await termsBtn.isVisible()) {
+        await termsBtn.click();
+      }
+
+      await openMcpDialog(page);
+      await page.getByTestId("mcp-edit-Legacy Save").click();
+      await setAuthMode(page, "static");
+      await page.getByTestId("mcp-auth-static-token-input").fill("legacy");
+      await page.getByTestId("mcp-add-service-btn").click();
+
+      await expect(page.getByText("Legacy Save")).toBeVisible();
     });
 
     test("missing mcpAuthConfigs does not crash", async ({ page }) => {
@@ -273,10 +448,14 @@ test.describe("MCP Auth", () => {
 
       await expect(page.getByTestId("mcp-auth-fields-container")).toHaveCount(0);
 
+      await page
+        .locator('input[name="server_url"]')
+        .fill("https://legacy.example.com");
+      await checkServer(page);
       await setAuthMode(page, "user-data");
       await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
       await expect(
-        page.getByTestId("mcp-auth-field-email-control")
+        page.getByTestId("mcp-scope-email").locator("input")
       ).not.toBeChecked();
     });
 
@@ -328,10 +507,14 @@ test.describe("MCP Auth", () => {
 
       await expect(page.getByTestId("mcp-auth-fields-container")).toHaveCount(0);
 
+      await page
+        .locator('input[name="server_url"]')
+        .fill("https://fresh-legacy.example.com");
+      await checkServer(page);
       await setAuthMode(page, "user-data");
       await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
       await expect(
-        page.getByTestId("mcp-auth-field-email-control")
+        page.getByTestId("mcp-scope-email").locator("input")
       ).not.toBeChecked();
 
       await context.close();

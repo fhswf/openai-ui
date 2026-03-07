@@ -26,6 +26,15 @@ test.describe("MCP Services", () => {
       },
     ],
   };
+  const scopes = [
+    { scope: "email", description: "Email" },
+    { scope: "name", description: "Name" },
+  ];
+  const consentHosts = new Set([
+    "auth-modes.example.com",
+    "error.example.com",
+    "preserved.example.com",
+  ]);
 
   test.beforeEach(async ({ page }) => {
     await page.route("**/api/user**", async (route) => {
@@ -40,6 +49,18 @@ test.describe("MCP Services", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(jwks),
+      });
+    });
+    await page.route("**/.well-known/fhswf-scopes", async (route) => {
+      const url = new URL(route.request().url());
+      if (!consentHosts.has(url.hostname)) {
+        await route.fulfill({ status: 404 });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(scopes),
       });
     });
     await page.goto("/");
@@ -76,6 +97,10 @@ test.describe("MCP Services", () => {
     }
   }
 
+  async function checkServer(page) {
+    await page.getByTestId("mcp-check-server-btn").click();
+  }
+
   test("should display MCP dialog with all form fields", async ({ page }) => {
     await openMcpDialog(page);
 
@@ -88,6 +113,49 @@ test.describe("MCP Services", () => {
     await expect(page.getByTestId("mcp-auth-mode-group")).toBeVisible();
   });
 
+  test("shows a neutral helper before server inspection", async ({ page }) => {
+    await openMcpDialog(page);
+
+    await expect(page.getByTestId("mcp-user-data-support-message")).toBeVisible();
+    await expect(
+      page.getByTestId("mcp-user-data-support-message")
+    ).not.toContainText("fhswf-scopes");
+  });
+
+  test("shows a plain-server helper after checking a legacy server", async ({
+    page,
+  }) => {
+    await openMcpDialog(page);
+
+    await fillServiceBase(page, {
+      label: "Plain Service",
+      url: "https://plain.example.com",
+    });
+    await checkServer(page);
+
+    await expect(page.getByTestId("mcp-user-data-support-message")).toContainText(
+      /static|statische/i
+    );
+  });
+
+  test("consent-based servers require user-data auth", async ({ page }) => {
+    await openMcpDialog(page);
+
+    await fillServiceBase(page, {
+      label: "Consent Required",
+      url: "https://auth-modes.example.com",
+    });
+    await checkServer(page);
+
+    await expect(
+      page.getByTestId("mcp-auth-mode-none").locator("input")
+    ).toBeDisabled();
+    await expect(
+      page.getByTestId("mcp-auth-mode-static").locator("input")
+    ).toBeDisabled();
+    await expect(page.getByTestId("mcp-auth-user-data-required")).toBeVisible();
+  });
+
   test("should handle all authorization mode transitions", async ({ page }) => {
     await openMcpDialog(page);
 
@@ -95,19 +163,24 @@ test.describe("MCP Services", () => {
     await expect(page.getByTestId("mcp-auth-static-token-input")).toBeVisible();
     await page.getByTestId("mcp-auth-static-token-input").fill("test-token");
 
+    await fillServiceBase(page, {
+      label: "Auth Mode Service",
+      url: "https://auth-modes.example.com",
+    });
+    await checkServer(page);
     await setAuthMode(page, "user-data");
     await expect(
       page.getByTestId("mcp-auth-static-token-input")
     ).not.toBeVisible();
     await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
 
-    await expect(page.getByTestId("mcp-auth-field-name")).toBeVisible();
-    await expect(page.getByTestId("mcp-auth-field-email")).toBeVisible();
+    await expect(page.getByTestId("mcp-scope-name")).toBeVisible();
+    await expect(page.getByTestId("mcp-scope-email")).toBeVisible();
 
-    const emailControl = page.getByTestId("mcp-auth-field-email-control");
-    await page.getByTestId("mcp-auth-field-email").click();
+    const emailControl = page.getByTestId("mcp-scope-email").locator("input");
+    await page.getByTestId("mcp-scope-email").click();
     await expect(emailControl).toBeChecked();
-    await page.getByTestId("mcp-auth-field-email").click();
+    await page.getByTestId("mcp-scope-email").click();
     await expect(emailControl).not.toBeChecked();
 
     await setAuthMode(page, "none");
@@ -194,7 +267,6 @@ test.describe("MCP Services", () => {
       label: "No Fields Service",
       url: "https://nofields.example.com",
     });
-    await setAuthMode(page, "user-data");
     await page.getByTestId("mcp-add-service-btn").click();
     await expect(page.getByText("No Fields Service")).toBeVisible();
 
@@ -224,11 +296,12 @@ test.describe("MCP Services", () => {
       label: "Error Service",
       url: "https://error.example.com",
     });
-    await setAuthMode(page, "user-data");
-    await page.getByTestId("mcp-auth-field-email").click();
-    await page.getByTestId("mcp-add-service-btn").click();
-
-    await expect(page.locator('input[name="label"]')).toBeVisible();
+    await checkServer(page);
+    await expect(
+      page.getByText(
+        "Benutzerdaten-Autorisierung ist nur verfÃ¼gbar, wenn der Server fhswf-scopes und JWKS bereitstellt."
+      )
+    ).toBeVisible();
   });
 
   test("should edit service with user-data auth and preserve config", async ({
@@ -240,8 +313,9 @@ test.describe("MCP Services", () => {
       label: "Preserved Auth Service",
       url: "https://preserved.example.com",
     });
+    await checkServer(page);
     await setAuthMode(page, "user-data");
-    await page.getByTestId("mcp-auth-field-email").click();
+    await page.getByTestId("mcp-scope-email").click();
     await page.getByTestId("mcp-add-service-btn").click();
 
     await expect(
@@ -254,5 +328,15 @@ test.describe("MCP Services", () => {
     await expect(page.locator('input[name="server_url"]')).toHaveValue(
       "https://preserved.example.com"
     );
+  });
+
+  test("open-mcp-settings event opens the MCP settings dialog", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent("open-mcp-settings"));
+    });
+
+    await expect(page.getByTestId("mcp-services-dialog")).toBeVisible();
   });
 });

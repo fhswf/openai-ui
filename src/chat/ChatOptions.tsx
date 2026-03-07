@@ -30,6 +30,7 @@ import { initState } from "./context/initState";
 import { GlobalState } from "./context/types";
 import { Trans } from "react-i18next";
 import { exportSettings, importSettings } from "./utils/settings";
+import { normalizePersistedState } from "./utils/mcpOptions";
 import { HiUpload } from "react-icons/hi";
 import { toaster } from "../components/ui/toaster";
 
@@ -86,7 +87,9 @@ export function ChatOptions() {
                     importSettings(file)
                       .then((settings: GlobalState) => {
                         setIs({ config: false });
-                        setState({ ...initState, ...settings });
+                        setState(
+                          normalizePersistedState({ ...initState, ...settings })
+                        );
                         toaster.create({
                           title: t("import_settings_success"),
                           description: t("import_settings_success_desc"),

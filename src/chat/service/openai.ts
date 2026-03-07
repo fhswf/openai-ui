@@ -17,6 +17,7 @@ import {
 } from "openai/resources/responses/responses.mjs";
 import { toaster } from "../../components/ui/toaster";
 import { showMcpApprovalToast } from "../component/McpToast";
+import { openMcpSettings } from "../component/McpSettingsAction";
 
 export const apiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
@@ -199,6 +200,38 @@ export async function createResponse(
         });
         window.location.href = import.meta.env.VITE_LOGIN_URL;
         return;
+      }
+
+      if (apiError.status === 403) {
+        try {
+          const body =
+            typeof apiError.error === "object" ? apiError.error : null;
+          if (body && (body as any).error === "missing_scopes") {
+            const missing = (body as any).missing;
+            if (Array.isArray(missing)) {
+              const descriptions = missing
+                .map(
+                  (s: any) =>
+                    s.description || s.description_en || s.scope || ""
+                )
+                .filter(Boolean)
+                .join(", ");
+              toaster.create({
+                title: t("missing_scopes_error"),
+                description: descriptions,
+                duration: 8000,
+                type: "warning",
+                action: {
+                  label: t("open_settings"),
+                  onClick: () => openMcpSettings(),
+                },
+              });
+              return;
+            }
+          }
+        } catch (_e) {
+          // fall through to generic error
+        }
       }
     }
 
