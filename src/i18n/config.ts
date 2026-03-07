@@ -149,31 +149,6 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           selected: "selected",
           privacy_notice: "Privacy Notice",
           understood: "Understood",
-          consent_info:
-            "This service requires access to the following data from your university account. All permissions are required for the service to function.",
-          consent_all_required:
-            "Please grant all required permissions. This service cannot function without full consent.",
-          consent_missing_userdata:
-            "Please accept all required user data permissions before saving.",
-          server_unreachable:
-            "The server could not be reached. Please check the URL.",
-          currently_unavailable: "Currently unavailable",
-          consent_pending:
-            "Data transfer consent is required in the settings to use this server.",
-          mcp_missing_permissions:
-            "Not all required permissions were granted. This MCP server cannot be used. Change this in settings.",
-          mcp_user_data_check_server_hint:
-            "Check the server to inspect whether encrypted user authorization is supported.",
-          mcp_user_data_plain_server:
-            "This server does not support consent-based user authorization. None and static token authorization remain available.",
-          mcp_user_data_required:
-            "This server requires encrypted user authorization. None and static token authorization are not allowed.",
-          check_server: "Check Server",
-          session_refresh_failed:
-            "Your session could not be extended. Please check your connection.",
-          missing_scopes_error:
-            "This service requires additional permissions. Please update the configuration.",
-          open_settings: "Open Settings",
         },
       }, // German
       de: {
@@ -434,33 +409,6 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           selected: "ausgewählt",
           privacy_notice: "Datenschutzhinweise",
           understood: "Verstanden",
-          consent_info:
-            "Dieser Dienst benötigt Zugriff auf die folgenden Daten Ihres Hochschulkontos. Alle Berechtigungen sind für die Funktion des Dienstes erforderlich.",
-          consent_all_required:
-            "Bitte erteilen Sie alle erforderlichen Berechtigungen. Dieser Dienst kann ohne vollständige Zustimmung nicht funktionieren.",
-          consent_missing_userdata:
-            "Bitte akzeptieren Sie alle erforderlichen Benutzerdaten-Berechtigungen vor dem Speichern.",
-          server_unreachable:
-            "Der Server konnte nicht erreicht werden. Bitte überprüfen Sie die URL.",
-          currently_unavailable: "Derzeit nicht verfügbar",
-          consent_pending:
-            "In den Einstellungen muss noch der Datenübertragung zugestimmt werden, um diesen Server zu nutzen.",
-          mcp_missing_permissions:
-            "Nicht alle Permissions gegeben. MCP Server nicht nutzbar. Ändere das in den Einstellungen.",
-          mcp_user_data_unavailable:
-            "Benutzerdaten-Autorisierung ist nur verfügbar, wenn der Server fhswf-scopes und JWKS bereitstellt.",
-          mcp_user_data_check_server_hint:
-            "Prüfen Sie den Server, um zu sehen, ob verschlüsselte Benutzerdaten-Autorisierung unterstützt wird.",
-          mcp_user_data_plain_server:
-            "Dieser Server unterstützt keine zustimmungsbasierte Benutzerdaten-Autorisierung. Keine Autorisierung und statische Tokens bleiben verfügbar.",
-          mcp_user_data_required:
-            "Dieser Server erfordert verschlüsselte Benutzerdaten-Autorisierung. Keine Autorisierung und statische Tokens sind nicht erlaubt.",
-          check_server: "Server prüfen",
-          session_refresh_failed:
-            "Die Sitzung konnte nicht verlängert werden. Bitte prüfen Sie Ihre Verbindung.",
-          missing_scopes_error:
-            "Dieser Dienst benötigt zusätzliche Berechtigungen. Bitte aktualisieren Sie die Konfiguration.",
-          open_settings: "Einstellungen öffnen",
         },
       },
     },

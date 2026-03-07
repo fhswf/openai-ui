@@ -30,7 +30,6 @@ import {
   SESSION_KEY,
   CHAT_HISTORY_KEY,
 } from "../utils/settings";
-import { normalizePersistedState } from "../utils/mcpOptions";
 
 export const ChatContext = createContext(null);
 export const MessagesContext = createContext<Dispatch<GlobalAction>>(null);
@@ -57,7 +56,6 @@ export const ChatProvider = ({ children }) => {
     if (chatHistory) {
       init.chat = chatHistory;
     }
-    init = normalizePersistedState(init);
   } catch (e) {
     console.error("error parsing state: %s", e);
   }

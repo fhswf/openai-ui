@@ -1,6 +1,5 @@
 import { initState } from "../context/initState";
 import { App, Chat, GlobalState, Message, Options } from "../context/types";
-import { normalizePersistedState } from "./mcpOptions";
 
 export const SESSION_KEY = "SESSIONS";
 export const CHAT_HISTORY_KEY = "CHAT_HISTORY";
@@ -109,8 +108,7 @@ export async function loadState(): Promise<GlobalState> {
       combinedState.chat = parsedChat;
     }
 
-    const normalized = normalizePersistedState(combinedState);
-    const inflated = await inflateState(normalized);
+    const inflated = await inflateState(combinedState);
     return inflated;
   } catch (error) {
     console.error("Error parsing state from localStorage:", error);
@@ -212,10 +210,8 @@ export const importSettings = (file: File): Promise<GlobalState> => {
     reader.onload = (event) => {
       const data = event.target?.result as string;
       try {
-        const settings = normalizePersistedState(
-          JSON.parse(data, reviver) as GlobalState
-        );
-        localStorage.setItem(SESSION_KEY, JSON.stringify(settings, replacer));
+        const settings = JSON.parse(data);
+        localStorage.setItem(SESSION_KEY, JSON.stringify(settings));
         console.log("Settings imported successfully");
         resolve(settings);
       } catch (error) {
