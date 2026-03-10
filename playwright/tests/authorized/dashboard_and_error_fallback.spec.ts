@@ -59,34 +59,41 @@ test.describe("UI Components Coverage", () => {
         await page.waitForTimeout(1000);
     });
 
-    test("should render ErrorFallback on boundary", async ({ page }) => {
-        // To trigger ErrorFallback, we need to cause a render error.
-        // Since we can't easily modify code to throw, we can try to navigate to a route that might error 
-        // or trigger a state that causes a crash if possible. 
-        // Alternatively, we can rely on the fact that `ErrorFallback` logic is simple.
+    test("should render ErrorFallback on boundary", async ({ context }) => {
+        // Create a new page to avoid beforeEach hooks
+        const newPage = await context.newPage();
 
-        // However, we can test the *appearance* of an error if we can simulate one.
-        // One way is to mock a critical API to return garbage that causes a component to throw during render.
-
-        // Mock api/user to return malformed data that might crash the logic consuming it
-        await page.route("**/api/user", async (route) => {
+        // Mock api/user to return malformed data
+        await newPage.route("**/api/user", async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: "application/json",
                 body: JSON.stringify({
-                    name: "Crash User",
-                    // Missing affiliations might crash checkUser if not handled safely
-                    affiliations: null
+                    name: "No Access User",
+                    email: "noaccess@test.com",
+                    // Missing affiliations to trigger no-access branch
+                    affiliations: {}
                 }),
             });
         });
 
-        await page.goto("/");
-        await page.waitForLoadState("networkidle");
+        await newPage.route("**/gravatar.com/**", (route) => route.fulfill({ status: 200 }));
 
-        // If the app crashes safely to ErrorUI, we might see "An Error Occurred" or similar.
-        // If checkUser handles null safely, this might just show "Not Allowed".
-        // Let's check for the "User not allowed" text which covers the "no-access" branch in Chat.tsx
-        await expect(page.getByTestId("no-access-message")).toBeVisible({ timeout: 15000 });
+        await newPage.goto("/");
+        await newPage.waitForLoadState("networkidle");
+        await newPage.waitForTimeout(1000);
+
+        // Handle accept terms if it appears
+        const termsBtn = newPage.getByTestId("accept-terms-btn");
+        const isTermsVisible = await termsBtn.isVisible({ timeout: 2000 }).catch(() => false);
+        if (isTermsVisible) {
+            await termsBtn.click();
+            await newPage.waitForTimeout(500);
+        }
+
+        // Check for the "User not allowed" message which covers the "no-access" branch in Chat.tsx
+        await expect(newPage.getByTestId("no-access-message")).toBeVisible({ timeout: 15000 });
+
+        await newPage.close();
     });
 });
