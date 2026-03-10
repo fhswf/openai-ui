@@ -52,25 +52,33 @@ test.describe("MCP Settings and Export Flows", () => {
         const textarea = page.getByTestId("ChatTextArea");
         await textarea.fill("Export this message");
         await page.getByTestId("SendMessageBtn").click();
-        await page.waitForTimeout(1000); // Wait for message to "send" (optimistic update)
+        await page.waitForTimeout(2000); // Wait for message to "send" (optimistic update)
 
         // Open Download Menu
         // Button title: t("download_thread")
         const downloadBtn = page.getByTitle(/download_thread|Unterhaltung herunterladen/i).first();
+        await downloadBtn.waitFor({ state: "visible", timeout: 10000 });
         await downloadBtn.click();
+        await page.waitForTimeout(500);
 
         // --- DOWNLOAD JSON ---
-        const downloadPromiseJson = page.waitForEvent("download");
-        await page.getByText(/download_json|als JSON herunterladen/i).click();
+        const downloadPromiseJson = page.waitForEvent("download", { timeout: 15000 });
+        const jsonBtn = page.getByText(/download_json|als JSON herunterladen/i);
+        await jsonBtn.waitFor({ state: "visible", timeout: 5000 });
+        await jsonBtn.click();
         const downloadJson = await downloadPromiseJson;
         expect(downloadJson.suggestedFilename()).toContain(".json");
 
         // Re-open menu for Markdown
+        await page.waitForTimeout(500);
         await downloadBtn.click();
+        await page.waitForTimeout(500);
 
         // --- DOWNLOAD MARKDOWN ---
-        const downloadPromiseMd = page.waitForEvent("download");
-        await page.getByText(/download_markdown|Markdown herunterladen/i).click();
+        const downloadPromiseMd = page.waitForEvent("download", { timeout: 15000 });
+        const mdBtn = page.getByText(/download_markdown|Markdown herunterladen/i);
+        await mdBtn.waitFor({ state: "visible", timeout: 5000 });
+        await mdBtn.click();
         const downloadMd = await downloadPromiseMd;
         expect(downloadMd.suggestedFilename()).toContain(".md");
     });

@@ -30,8 +30,17 @@ test.describe("Low Coverage Boost", () => {
     });
 
     test("should exercise useWindowTheme and useDebounce hooks", async ({ page }) => {
+        // useDebounce - type rapidly in textarea (test this first)
+        const textarea = page.getByTestId("ChatTextArea");
+        await textarea.waitFor({ state: "visible", timeout: 10000 });
+        await textarea.fill("Test debounce");
+        await page.waitForTimeout(100);
+        await textarea.fill("Test debounce 2");
+        await page.waitForTimeout(100);
+        await textarea.fill("Test debounce 3");
+        await page.waitForTimeout(600); // Wait for debounce
+
         // useWindowTheme is triggered by system theme changes
-        // Simulate theme change by toggling in UI
         const configBtn = page.getByTestId("OpenConfigBtn");
         const isVisible = await configBtn.isVisible({ timeout: 5000 }).catch(() => false);
 
@@ -43,30 +52,17 @@ test.describe("Low Coverage Boost", () => {
             const selects = page.locator("select");
             const count = await selects.count();
             for (let i = 0; i < count && i < 3; i++) {
-                try {
-                    const select = selects.nth(i);
-                    if (await select.isVisible({ timeout: 1000 })) {
-                        await select.selectOption({ index: 0 });
-                        await page.waitForTimeout(200);
-                    }
-                } catch (e) {
-                    // Continue
+                const select = selects.nth(i);
+                const selectVisible = await select.isVisible({ timeout: 1000 }).catch(() => false);
+                if (selectVisible) {
+                    await select.selectOption({ index: 0 });
+                    await page.waitForTimeout(200);
                 }
             }
 
             await page.keyboard.press("Escape");
             await page.waitForTimeout(300);
         }
-
-        // useDebounce - type rapidly in textarea
-        const textarea = page.getByTestId("ChatTextArea");
-        await textarea.waitFor({ state: "visible", timeout: 5000 });
-        await textarea.fill("Test debounce");
-        await page.waitForTimeout(100);
-        await textarea.fill("Test debounce 2");
-        await page.waitForTimeout(100);
-        await textarea.fill("Test debounce 3");
-        await page.waitForTimeout(600); // Wait for debounce
     });
 
     test("should exercise MessageInput edge cases", async ({ page }) => {

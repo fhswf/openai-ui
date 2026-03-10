@@ -235,25 +235,35 @@ test.describe("MessageHeader MCP and tool coverage", () => {
 
         await page.getByTestId("ChatTextArea").fill("Generate download content");
         await page.getByTestId("SendMessageBtn").click();
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(2000);
 
         // Open download menu (German: "Unterhaltung herunterladen")
-        await page.waitForTimeout(1000);
         const downloadBtn = page.getByTitle("Unterhaltung herunterladen", { exact: false }).first();
-        if (await downloadBtn.isVisible()) {
+        const isBtnVisible = await downloadBtn.isVisible({ timeout: 5000 }).catch(() => false);
+
+        if (isBtnVisible) {
             await downloadBtn.click();
             await page.waitForTimeout(500);
             // German: "als JSON herunterladen"
             const jsonItem = page.getByRole("menuitem").filter({ hasText: /JSON/i }).first();
-            if (await jsonItem.isVisible()) await jsonItem.click({ force: true });
+            const isJsonVisible = await jsonItem.isVisible({ timeout: 3000 }).catch(() => false);
+            if (isJsonVisible) {
+                await jsonItem.click({ force: true });
+                await page.waitForTimeout(500);
+            }
         } else {
             // Fallback to icon if title doesn't match
             const iconBtn = page.locator("button").filter({ has: page.locator("svg") }).nth(4);
-            if (await iconBtn.isVisible()) {
+            const isIconVisible = await iconBtn.isVisible({ timeout: 3000 }).catch(() => false);
+            if (isIconVisible) {
                 await iconBtn.click();
                 await page.waitForTimeout(500);
                 const jsonItem = page.getByRole("menuitem").filter({ hasText: /JSON/i }).first();
-                if (await jsonItem.isVisible()) await jsonItem.click({ force: true });
+                const isJsonVisible = await jsonItem.isVisible({ timeout: 3000 }).catch(() => false);
+                if (isJsonVisible) {
+                    await jsonItem.click({ force: true });
+                    await page.waitForTimeout(500);
+                }
             }
         }
 

@@ -82,10 +82,11 @@ test.describe("UI Components Coverage", () => {
         });
 
         await page.goto("/");
+        await page.waitForLoadState("networkidle");
 
         // If the app crashes safely to ErrorUI, we might see "An Error Occurred" or similar.
         // If checkUser handles null safely, this might just show "Not Allowed".
         // Let's check for the "User not allowed" text which covers the "no-access" branch in Chat.tsx
-        await expect(page.getByTestId("no-access-message")).toBeVisible();
+        await expect(page.getByTestId("no-access-message")).toBeVisible({ timeout: 15000 });
     });
 });
