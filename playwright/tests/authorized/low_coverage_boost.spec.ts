@@ -269,7 +269,6 @@ test.describe("Low Coverage Boost", () => {
         const isBtnVisible = await configBtn.isVisible({ timeout: 5000 }).catch(() => false);
 
         if (!isBtnVisible) {
-            // If config button is not visible, just do a simple check
             await expect(page.getByTestId("ChatTextArea")).toBeVisible();
             return;
         }
@@ -277,61 +276,60 @@ test.describe("Low Coverage Boost", () => {
         await configBtn.click();
         await page.waitForTimeout(500);
 
-        // Try export button
+        // Mock download and test export
+        await page.evaluate(() => {
+            const origCreate = document.createElement.bind(document);
+            document.createElement = function(tag: string) {
+                const el = origCreate(tag);
+                if (tag.toLowerCase() === 'a') {
+                    el.click = () => console.log('Download intercepted');
+                }
+                return el;
+            };
+        });
+
         const exportBtn = page.getByRole("button", { name: /Export|Exportieren/i }).first();
         const isExportVisible = await exportBtn.isVisible({ timeout: 2000 }).catch(() => false);
-
         if (isExportVisible) {
-            // Mock download to prevent actual file save
-            await page.evaluate(() => {
-                const origCreate = document.createElement.bind(document);
-                document.createElement = function(tag: string) {
-                    const el = origCreate(tag);
-                    if (tag.toLowerCase() === 'a') {
-                        const origClick = el.click;
-                        el.click = function() {
-                            console.log('Download intercepted');
-                        };
-                    }
-                    return el;
-                };
-            });
-
             await exportBtn.click();
             await page.waitForTimeout(500);
         }
 
-        // Test various input changes
-        const inputs = page.locator("input[type='text'], input[type='number'], input[type='url']");
-        const inputCount = await inputs.count();
-        for (let i = 0; i < Math.min(inputCount, 3); i++) {
-            try {
-                const input = inputs.nth(i);
-                if (await input.isVisible({ timeout: 500 })) {
-                    await input.fill("test-value");
-                    await page.waitForTimeout(100);
-                }
-            } catch (e) {
-                // Continue
-            }
-        }
+        // Test inputs
+        await testInputFields(page);
 
-        // Test checkboxes/switches
-        const switches = page.locator("[role='switch'], input[type='checkbox']");
-        const switchCount = await switches.count();
-        for (let i = 0; i < Math.min(switchCount, 3); i++) {
-            try {
-                const sw = switches.nth(i);
-                if (await sw.isVisible({ timeout: 500 })) {
-                    await sw.click({ timeout: 500 });
-                    await page.waitForTimeout(100);
-                }
-            } catch (e) {
-                // Continue
-            }
-        }
+        // Test switches
+        await testSwitchFields(page);
 
         await page.keyboard.press("Escape");
         await page.waitForTimeout(300);
     });
 });
+
+async function testInputFields(page: any) {
+    const inputs = page.locator("input[type='text'], input[type='number'], input[type='url']");
+    const inputCount = await inputs.count();
+
+    for (let i = 0; i < Math.min(inputCount, 3); i++) {
+        const input = inputs.nth(i);
+        const isVisible = await input.isVisible({ timeout: 500 }).catch(() => false);
+        if (isVisible) {
+            await input.fill("test-value");
+            await page.waitForTimeout(100);
+        }
+    }
+}
+
+async function testSwitchFields(page: any) {
+    const switches = page.locator("[role='switch'], input[type='checkbox']");
+    const switchCount = await switches.count();
+
+    for (let i = 0; i < Math.min(switchCount, 3); i++) {
+        const sw = switches.nth(i);
+        const isVisible = await sw.isVisible({ timeout: 500 }).catch(() => false);
+        if (isVisible) {
+            await sw.click({ timeout: 500 });
+            await page.waitForTimeout(100);
+        }
+    }
+}
