@@ -8,6 +8,71 @@ import { test, expect } from "../baseFixtures";
  * - src/chat/component/McpToast.tsx (Toast interactions)
  */
 
+/**
+ * Helper function to try selecting theme options from a select element
+ */
+async function trySelectThemeOptions(select, page) {
+    const optionCount = await select.locator("option").count();
+    if (optionCount < 2) {
+        return false;
+    }
+
+    await select.selectOption({ index: 0 });
+    await page.waitForTimeout(300);
+    await select.selectOption({ index: 1 });
+    await page.waitForTimeout(300);
+
+    if (optionCount >= 3) {
+        await select.selectOption({ index: 2 });
+        await page.waitForTimeout(300);
+    }
+
+    return true;
+}
+
+/**
+ * Helper function to find and interact with theme select elements
+ */
+async function tryThemeSelects(page) {
+    const selects = page.locator("select");
+    const selectCount = await selects.count();
+
+    for (let i = 0; i < selectCount; i++) {
+        const select = selects.nth(i);
+        if (!(await select.isVisible())) {
+            continue;
+        }
+
+        try {
+            const success = await trySelectThemeOptions(select, page);
+            if (success) {
+                return true;
+            }
+        } catch (e) {
+            // Continue to next select
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Helper function to try theme buttons or radio groups as fallback
+ */
+async function tryThemeButtons(page) {
+    const themeButtons = page.locator("button, [role='radio']").filter({ hasText: /light|dark|system/i });
+    const btnCount = await themeButtons.count();
+
+    for (let i = 0; i < Math.min(btnCount, 3); i++) {
+        try {
+            await themeButtons.nth(i).click({ timeout: 1000 });
+            await page.waitForTimeout(300);
+        } catch (e) {
+            // Continue
+        }
+    }
+}
+
 test.describe("Gap Coverage Push", () => {
     test.beforeEach(async ({ page }) => {
         await page.route("**/api/user", async (route) => {
@@ -37,50 +102,12 @@ test.describe("Gap Coverage Push", () => {
         // Wait for settings dialog to be visible
         await expect(page.getByTestId("SettingsHeader")).toBeVisible({ timeout: 5000 });
 
-        // Look for theme select - try different approaches
-        // First try to find any select element in the settings
-        const selects = page.locator("select");
-        const selectCount = await selects.count();
-
-        let themeFound = false;
-
-        // Try to find the theme select by iterating through selects
-        for (let i = 0; i < selectCount; i++) {
-            const select = selects.nth(i);
-            if (await select.isVisible()) {
-                // Try to select options to exercise the theme logic
-                try {
-                    const optionCount = await select.locator("option").count();
-                    if (optionCount >= 2) {
-                        await select.selectOption({ index: 0 });
-                        await page.waitForTimeout(300);
-                        await select.selectOption({ index: 1 });
-                        await page.waitForTimeout(300);
-                        if (optionCount >= 3) {
-                            await select.selectOption({ index: 2 });
-                            await page.waitForTimeout(300);
-                        }
-                        themeFound = true;
-                        break;
-                    }
-                } catch (e) {
-                    // Continue to next select
-                }
-            }
-        }
+        // Try to find and interact with theme controls
+        const themeFound = await tryThemeSelects(page);
 
         // If no select worked, try to find theme buttons or radio groups
         if (!themeFound) {
-            const themeButtons = page.locator("button, [role='radio']").filter({ hasText: /light|dark|system/i });
-            const btnCount = await themeButtons.count();
-            for (let i = 0; i < Math.min(btnCount, 3); i++) {
-                try {
-                    await themeButtons.nth(i).click({ timeout: 1000 });
-                    await page.waitForTimeout(300);
-                } catch (e) {
-                    // Continue
-                }
-            }
+            await tryThemeButtons(page);
         }
 
         // Close Settings

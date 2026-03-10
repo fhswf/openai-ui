@@ -9,17 +9,47 @@
  */
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
-import { join, relative } from 'path';
+import { join, resolve, normalize } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const PROJECT_ROOT = resolve(__dirname, '..');
 
 const LCOV_PATH = 'coverage/lcov.info';
 const SRC_DIR = 'src';
 const EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx']);
 const EXCLUDE_PATTERNS = [/\.d\.ts$/, /\.test\./, /\.spec\./, /components\/ui\//];
 
+/**
+ * Validiert einen Pfad, um sicherzustellen, dass er innerhalb des Projektverzeichnisses liegt
+ * @param {string} filePath - Der zu validierende Pfad
+ * @returns {string} Der normalisierte, sichere Pfad
+ * @throws {Error} Wenn Path Traversal erkannt wird
+ */
+function validatePath(filePath) {
+    const normalizedPath = normalize(resolve(PROJECT_ROOT, filePath));
+
+    if (!normalizedPath.startsWith(PROJECT_ROOT)) {
+        throw new Error(`Path traversal attempt detected: ${filePath}`);
+    }
+
+    return normalizedPath;
+}
+
 function getAllSourceFiles(dir, files = []) {
-    for (const entry of readdirSync(dir)) {
-        const full = join(dir, entry);
-        const stat = statSync(full);
+    // Validiere das Basisverzeichnis gegen Path Traversal
+    const safeDir = validatePath(dir);
+
+    // eslint-disable-next-line security/detect-non-literal-fs-filename Pfad wurde durch validatePath() validiert
+    for (const entry of readdirSync(safeDir)) {
+        const full = join(safeDir, entry);
+        // Validiere jeden Pfad vor dem Zugriff
+        const safeFull = validatePath(full);
+        // eslint-disable-next-line security/detect-non-literal-fs-filename Pfad wurde durch validatePath() validiert
+        const stat = statSync(safeFull);
+
         if (stat.isDirectory()) {
             getAllSourceFiles(full, files);
         } else {
@@ -30,29 +60,6 @@ function getAllSourceFiles(dir, files = []) {
         }
     }
     return files;
-}
-
-function countExecutableLines(filePath) {
-    const content = readFileSync(filePath, 'utf-8');
-    const lines = content.split('\n');
-    const executableLines = [];
-
-    for (let i = 0; i < lines.length; i++) {
-        const trimmed = lines[i].trim();
-        // Skip empty lines, comments, and pure type declarations
-        if (!trimmed) continue;
-        if (trimmed.startsWith('//')) continue;
-        if (trimmed.startsWith('/*') || trimmed.startsWith('*') || trimmed.startsWith('*/')) continue;
-        if (trimmed.startsWith('import ') && !trimmed.includes('(')) continue;
-        if (trimmed.startsWith('export type ') || trimmed.startsWith('export interface ')) continue;
-        if (trimmed.startsWith('type ') || trimmed.startsWith('interface ')) continue;
-        if (trimmed === '}' || trimmed === '};' || trimmed === '{') continue;
-        if (trimmed === 'export default' || trimmed.startsWith('export {')) continue;
-
-        executableLines.push(i + 1); // 1-indexed
-    }
-
-    return executableLines;
 }
 
 // Read existing lcov.info
