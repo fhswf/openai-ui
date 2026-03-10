@@ -175,7 +175,10 @@ test.describe("MessageInput Coverage", () => {
         await page.waitForTimeout(500);
     });
 
-    test("should handle OPFS image building without URL", async ({ page }) => {
+    test("should handle OPFS image building without URL", async ({ page, browserName }) => {
+        // Skip this test on WebKit as it doesn't support OPFS
+        test.skip(browserName === 'webkit', 'OPFS not supported in WebKit');
+
         // Evaluate adding an image directly to the 'typeingMessage' state but without 'url' to trigger OPFS fallback
         await page.evaluate(() => {
             // First we need to make sure we set something up
@@ -184,6 +187,9 @@ test.describe("MessageInput Coverage", () => {
 
         // This is a bit tricky to mock state without React dev tools, so we'll mock the OPFS read flow via drag-drop and then manually edit the URL out
         await page.evaluate(async () => {
+            if (!navigator.storage?.getDirectory) {
+                throw new Error('OPFS not supported');
+            }
             const opfs = await navigator.storage.getDirectory();
             const fh = await opfs.getFileHandle("mocked_image.png", { create: true });
             const w = await fh.createWritable();

@@ -469,7 +469,9 @@ test.describe("Settings Deep Coverage", () => {
     });
 
     test("should exercise import/export settings flows", async ({ page }) => {
-        await page.getByTestId("OpenConfigBtn").click();
+        const configBtn = page.getByTestId("OpenConfigBtn");
+        await configBtn.waitFor({ state: "visible", timeout: 10000 });
+        await configBtn.click();
         await expect(page.getByTestId("SettingsHeader")).toBeVisible();
 
         // Try to find export button
@@ -498,7 +500,9 @@ test.describe("Settings Deep Coverage", () => {
     });
 
     test("should exercise system prompt configuration", async ({ page }) => {
-        await page.getByTestId("OpenConfigBtn").click();
+        const configBtn = page.getByTestId("OpenConfigBtn");
+        await configBtn.waitFor({ state: "visible", timeout: 10000 });
+        await configBtn.click();
         await expect(page.getByTestId("SettingsHeader")).toBeVisible();
 
         // Find system prompt textarea if it exists
@@ -530,7 +534,9 @@ test.describe("Settings Deep Coverage", () => {
     });
 
     test("should exercise MCP server toggle if available", async ({ page }) => {
-        await page.getByTestId("OpenConfigBtn").click();
+        const configBtn = page.getByTestId("OpenConfigBtn");
+        await configBtn.waitFor({ state: "visible", timeout: 10000 });
+        await configBtn.click();
         await expect(page.getByTestId("SettingsHeader")).toBeVisible();
 
         // Look for MCP-related switches
