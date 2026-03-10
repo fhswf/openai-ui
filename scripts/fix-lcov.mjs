@@ -42,14 +42,14 @@ function getAllSourceFiles(dir, files = []) {
     // Validiere das Basisverzeichnis gegen Path Traversal
     const safeDir = validatePath(dir);
 
-    // eslint-disable-next-line security/detect-non-literal-fs-filename Pfad wurde durch validatePath() validiert
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- Pfad wurde durch validatePath() validiert
     for (const entry of readdirSync(safeDir)) {
         const full = join(safeDir, entry);
         // Validiere jeden Pfad vor dem Zugriff
         const safeFull = validatePath(full);
-        // eslint-disable-next-line security/detect-non-literal-fs-filename Pfad wurde durch validatePath() validiert
-        const stat = statSync(safeFull);
 
+        // eslint-disable-next-line security/detect-non-literal-fs-filename -- Pfad wurde durch validatePath() validiert
+        const stat = statSync(safeFull);
         if (stat.isDirectory()) {
             getAllSourceFiles(full, files);
         } else {
