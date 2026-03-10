@@ -13,16 +13,15 @@ import {
   Button,
   Card,
   Field,
+  FileUpload,
   FileUploadFileAcceptDetails,
   Heading,
   Input,
+  Select,
+  Slider,
   Stack,
   createListCollection,
 } from "@chakra-ui/react";
-
-import { Select } from "@chakra-ui/react";
-import { FileUpload } from "@chakra-ui/react";
-import { Slider } from "@chakra-ui/react";
 
 import { useOptions } from "./hooks";
 import { t } from "i18next";

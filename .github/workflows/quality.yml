@@ -9,7 +9,7 @@ on:
 
 jobs:
   playwright:
-    timeout-minutes: 60
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -26,7 +26,7 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      run: npx playwright test
+      run: npx playwright test --workers=4
       env:
         PLAYWRIGHT_TEST_BASE_URL: http://localhost:5173
         VITE_LOGIN_URL: https://openai.ki.fh-swf.de/api/login

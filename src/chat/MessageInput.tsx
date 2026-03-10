@@ -1,6 +1,5 @@
 import React, {
   BaseSyntheticEvent,
-  SyntheticEvent,
   useEffect,
   useRef,
   useState,
@@ -17,8 +16,6 @@ import {
   Kbd,
   Progress,
   Stack,
-  StepsStatus,
-  Text,
   Textarea,
 } from "@chakra-ui/react";
 import { Switch } from "../components/ui/switch";
@@ -137,7 +134,7 @@ export function MessageInput() {
       });
   };
 
-  const handleFileDrop = (files: File[]) => {
+  const handleFileDrop = async (files: File[]) => {
     if (files.length === 0) {
       console.warn("No files dropped");
       return;
@@ -146,7 +143,7 @@ export function MessageInput() {
     if (!newMessage.images) {
       newMessage.images = [];
     }
-    files.forEach(async (file) => {
+    for (const file of files) {
       if (file.type.startsWith("image/")) {
         try {
           const opfs = await navigator.storage.getDirectory();
@@ -176,7 +173,7 @@ export function MessageInput() {
         });
         setState({ typeingMessage: newMessage });
       }
-    });
+    }
   };
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
