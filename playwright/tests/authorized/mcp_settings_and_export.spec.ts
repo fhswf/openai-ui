@@ -66,31 +66,58 @@ test.describe("MCP Settings and Export Flows", () => {
         await downloadBtn.click();
         await page.waitForTimeout(500);
 
-        // --- TEST JSON BUTTON ---
-        const jsonBtn = page.getByText(/download_json|als JSON herunterladen/i);
-        const isJsonVisible = await jsonBtn.isVisible({ timeout: 5000 }).catch(() => false);
+        // Test JSON export
+        await testJsonExport(page);
 
-        if (isJsonVisible) {
-            // Just click to exercise code path, don't wait for download
-            await jsonBtn.click().catch(() => {});
-            await page.waitForTimeout(500);
-        }
+        // Test Markdown export
+        await testMarkdownExport(page, downloadBtn);
 
-        // Re-open menu for Markdown
-        await page.waitForTimeout(500);
-        const isBtnStillVisible = await downloadBtn.isVisible({ timeout: 3000 }).catch(() => false);
-        if (isBtnStillVisible) {
-            await downloadBtn.click();
-            await page.waitForTimeout(500);
-
-            const mdBtn = page.getByText(/download_markdown|Markdown herunterladen/i);
-            const isMdVisible = await mdBtn.isVisible({ timeout: 5000 }).catch(() => false);
-
-            if (isMdVisible) {
-                // Just click to exercise code path, don't wait for download
-                await mdBtn.click().catch(() => {});
-                await page.waitForTimeout(500);
-            }
-        }
+        // Close any open menus before teardown
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(300);
     });
 });
+
+async function testJsonExport(page: any) {
+    const jsonBtn = page.getByText(/download_json|als JSON herunterladen/i);
+    const isJsonVisible = await jsonBtn.isVisible({ timeout: 5000 }).catch(() => false);
+
+    if (isJsonVisible) {
+        // Set up download handler before clicking
+        const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
+        await jsonBtn.click().catch(() => {});
+
+        // Wait for download to start or timeout
+        const download = await downloadPromise;
+        if (download) {
+            await download.cancel().catch(() => {});
+        }
+        await page.waitForTimeout(300);
+    }
+}
+
+async function testMarkdownExport(page: any, downloadBtn: any) {
+    await page.waitForTimeout(500);
+    const isBtnStillVisible = await downloadBtn.isVisible({ timeout: 3000 }).catch(() => false);
+
+    if (isBtnStillVisible) {
+        await downloadBtn.click();
+        await page.waitForTimeout(500);
+
+        const mdBtn = page.getByText(/download_markdown|Markdown herunterladen/i);
+        const isMdVisible = await mdBtn.isVisible({ timeout: 5000 }).catch(() => false);
+
+        if (isMdVisible) {
+            // Set up download handler before clicking
+            const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
+            await mdBtn.click().catch(() => {});
+
+            // Wait for download to start or timeout
+            const download = await downloadPromise;
+            if (download) {
+                await download.cancel().catch(() => {});
+            }
+            await page.waitForTimeout(300);
+        }
+    }
+}

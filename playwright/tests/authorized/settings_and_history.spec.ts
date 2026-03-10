@@ -248,9 +248,16 @@ test.describe("MessageHeader MCP and tool coverage", () => {
             const jsonItem = page.getByRole("menuitem").filter({ hasText: /JSON/i }).first();
             const isJsonVisible = await jsonItem.isVisible({ timeout: 3000 }).catch(() => false);
             if (isJsonVisible) {
-                // Just click to exercise code, don't wait for download
+                // Set up download handler before clicking
+                const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
                 await jsonItem.click({ force: true }).catch(() => {});
-                await page.waitForTimeout(500);
+
+                // Wait for download to start or timeout
+                const download = await downloadPromise;
+                if (download) {
+                    await download.cancel().catch(() => {});
+                }
+                await page.waitForTimeout(300);
             }
         } else {
             // Fallback to icon if title doesn't match
@@ -262,12 +269,23 @@ test.describe("MessageHeader MCP and tool coverage", () => {
                 const jsonItem = page.getByRole("menuitem").filter({ hasText: /JSON/i }).first();
                 const isJsonVisible = await jsonItem.isVisible({ timeout: 3000 }).catch(() => false);
                 if (isJsonVisible) {
-                    // Just click to exercise code, don't wait for download
+                    // Set up download handler before clicking
+                    const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
                     await jsonItem.click({ force: true }).catch(() => {});
-                    await page.waitForTimeout(500);
+
+                    // Wait for download to start or timeout
+                    const download = await downloadPromise;
+                    if (download) {
+                        await download.cancel().catch(() => {});
+                    }
+                    await page.waitForTimeout(300);
                 }
             }
         }
+
+        // Close any open menus before teardown
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(300);
     });
 });
 

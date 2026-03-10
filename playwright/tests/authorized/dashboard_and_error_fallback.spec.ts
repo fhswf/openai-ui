@@ -63,7 +63,7 @@ test.describe("UI Components Coverage", () => {
         // Create a new page to avoid beforeEach hooks
         const newPage = await context.newPage();
 
-        // Mock api/user to return malformed data
+        // Mock api/user to return data without fh-swf.de affiliation
         await newPage.route("**/api/user", async (route) => {
             await route.fulfill({
                 status: 200,
@@ -71,8 +71,23 @@ test.describe("UI Components Coverage", () => {
                 body: JSON.stringify({
                     name: "No Access User",
                     email: "noaccess@test.com",
-                    // Missing affiliations to trigger no-access branch
+                    // Missing fh-swf.de affiliation to trigger no-access branch
                     affiliations: {}
+                }),
+            });
+        });
+
+        // Mock Auth Session (required for app to load properly)
+        await newPage.route("**/api/auth/session", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify({
+                    user: {
+                        name: "No Access User",
+                        email: "noaccess@test.com",
+                    },
+                    expires: new Date(Date.now() + 86400 * 1000).toISOString(),
                 }),
             });
         });
@@ -81,15 +96,17 @@ test.describe("UI Components Coverage", () => {
 
         await newPage.goto("/");
         await newPage.waitForLoadState("networkidle");
-        await newPage.waitForTimeout(1000);
 
         // Handle accept terms if it appears
         const termsBtn = newPage.getByTestId("accept-terms-btn");
-        const isTermsVisible = await termsBtn.isVisible({ timeout: 2000 }).catch(() => false);
+        const isTermsVisible = await termsBtn.isVisible({ timeout: 3000 }).catch(() => false);
         if (isTermsVisible) {
             await termsBtn.click();
-            await newPage.waitForTimeout(500);
+            await newPage.waitForTimeout(1000);
         }
+
+        // Wait for the page to fully load and process user data
+        await newPage.waitForTimeout(1500);
 
         // Check for the "User not allowed" message which covers the "no-access" branch in Chat.tsx
         await expect(newPage.getByTestId("no-access-message")).toBeVisible({ timeout: 15000 });
