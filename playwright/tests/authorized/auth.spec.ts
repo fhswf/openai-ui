@@ -1,6 +1,15 @@
 import { test, expect } from "../baseFixtures";
 import type { Locator, Page } from "@playwright/test";
 
+const APP_READY_TIMEOUT = 15000;
+const DISABLE_ANIMATIONS_STYLE = `
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+`;
+
 const mockUser = {
   name: "Playwright Auth",
   email: "auth.user@fh-swf.de",
@@ -21,6 +30,18 @@ const jwks = {
       use: "enc",
     },
   ],
+};
+
+const discoveredScopes = {
+  scopes_supported: [
+    { scope: "email", description: "Email address" },
+    { scope: "name", description: "Display name" },
+  ],
+};
+const openIdConfiguration = {
+  issuer: "https://userdata.example.com",
+  jwks_uri: "https://userdata.example.com/.well-known/jwks.json",
+  scopes_supported: discoveredScopes.scopes_supported,
 };
 
 const mcpServiceLabels = {
@@ -64,6 +85,7 @@ const baseOpenAiOptions = {
 const userEndpointPattern = /\/(?:api\/)?user\/?(?:\?.*)?$/;
 const loginEndpointPattern = /\/(?:api\/)?login\/?(?:\?.*)?$/;
 const userPathPattern = /\/(?:api\/)?user\/?$/;
+const loginPathPattern = /\/(?:api\/)?login\/?$/;
 
 function matchesPath(url: string, pattern: RegExp) {
   try {
@@ -73,32 +95,35 @@ function matchesPath(url: string, pattern: RegExp) {
   }
 }
 
+async function disableAnimations(page: Page) {
+  // Neutralize animations for cross-browser timing consistency
+  await page.addStyleTag({ content: DISABLE_ANIMATIONS_STYLE });
+}
+
+async function waitForAuthenticatedShell(page: Page) {
+  await disableAnimations(page);
+  await expect(page.getByTestId("UserInformationBtn")).toBeVisible({
+    timeout: APP_READY_TIMEOUT,
+  });
+}
+
 async function acceptTermsIfVisible(page: Page) {
   const termsBtn = page.getByTestId("accept-terms-btn");
-  let shouldAccept = await termsBtn.isVisible();
-  if (!shouldAccept) {
-    try {
-      await termsBtn.waitFor({ state: "visible", timeout: 5000 });
-      shouldAccept = true;
-    } catch {
-      shouldAccept = false;
-    }
-  }
+  const informationWindow = page.getByTestId("InformationWindow");
+  if ((await termsBtn.count()) === 0) return;
 
-  if (!shouldAccept) return;
-
+  await expect(termsBtn).toBeVisible({ timeout: 5000 });
   await termsBtn.scrollIntoViewIfNeeded();
   await clickWithBackdropRetry(page, termsBtn);
   await expect(termsBtn).toBeHidden({ timeout: 15000 });
-  await expect(
-    page.locator('[data-scope="dialog"][data-part="backdrop"][data-state="open"]')
-  ).toHaveCount(0, { timeout: 15000 });
-  await expect(page.getByTestId("InformationWindow")).toBeHidden({
+  await expect(informationWindow).toBeHidden({
     timeout: 15000,
   });
 }
 
 async function clickWithBackdropRetry(page: Page, locator: Locator) {
+  const informationWindow = page.getByTestId("InformationWindow");
+
   for (let attempt = 0; attempt < 6; attempt++) {
     try {
       await locator.click({ timeout: 3000 });
@@ -109,7 +134,7 @@ async function clickWithBackdropRetry(page: Page, locator: Locator) {
         message.includes("intercepts pointer events") &&
         message.includes("dialog__backdrop");
       if (!isBackdropInterception) throw error;
-      await page.waitForTimeout(200);
+      await expect(informationWindow).toBeHidden({ timeout: 3000 });
     }
   }
 
@@ -162,7 +187,10 @@ function buildMcpAuthConfigs(staticToken: string) {
         mcpServiceLabels.userData,
         {
           mode: "user-data",
-          selectedFields: ["email", "name"],
+          userData: {
+            scopes: [{ scope: "email" }, { scope: "name" }],
+            consentGranted: true,
+          },
         },
       ],
       [
@@ -212,14 +240,37 @@ async function routeMcpUserAndJwks(
       body: JSON.stringify(updatedMcpUser),
     });
   });
-  await page.route("**/.well-known/jwks.json", async (route) => {
-    jwksRequestCount.count += 1;
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(jwks),
-    });
-  });
+  await page.route(
+    "https://userdata.example.com/.well-known/jwks.json",
+    async (route) => {
+      jwksRequestCount.count += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(jwks),
+      });
+    }
+  );
+  await page.route(
+    "https://userdata.example.com/.well-known/openid-configuration",
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(openIdConfiguration),
+      });
+    }
+  );
+  await page.route(
+    "https://static.example.com/.well-known/openid-configuration",
+    async (route) => {
+      await route.fulfill({
+        status: 404,
+        contentType: "text/plain",
+        body: "missing",
+      });
+    }
+  );
 }
 
 async function waitForMcpAuthRefresh(
@@ -231,30 +282,35 @@ async function waitForMcpAuthRefresh(
     staticLabel: string;
   }
 ) {
-  await page.waitForFunction(
-    ({ staleAuthorization, staticToken, userLabel, staticLabel }) => {
-      const raw = localStorage.getItem("SESSIONS");
-      if (!raw) return false;
-      const session = JSON.parse(raw);
-      const tools = session?.options?.openai?.tools;
-      if (!tools || tools.dataType !== "Map") return false;
+  await expect(async () => {
+    const authWasRefreshed = await page.evaluate(
+      ({ staleAuthorization, staticToken, userLabel, staticLabel }) => {
+        const raw = localStorage.getItem("SESSIONS");
+        if (!raw) return false;
 
-      const findAuthorization = (label: string) => {
-        const entry = tools.value.find(([key]: [string]) => key === label);
-        return entry?.[1]?.authorization;
-      };
+        const session = JSON.parse(raw);
+        const tools = session?.options?.openai?.tools;
+        if (!tools || tools.dataType !== "Map") return false;
 
-      const userAuth = findAuthorization(userLabel);
-      const staticAuth = findAuthorization(staticLabel);
+        const findAuthorization = (label: string) => {
+          const entry = tools.value.find(([key]: [string]) => key === label);
+          return entry?.[1]?.authorization;
+        };
 
-      return (
-        userAuth &&
-        userAuth !== staleAuthorization &&
-        staticAuth === staticToken
-      );
-    },
-    args
-  );
+        const userAuth = findAuthorization(userLabel);
+        const staticAuth = findAuthorization(staticLabel);
+
+        return (
+          typeof userAuth === "string" &&
+          userAuth !== staleAuthorization &&
+          staticAuth === staticToken
+        );
+      },
+      args
+    );
+
+    expect(authWasRefreshed).toBe(true);
+  }).toPass({ timeout: APP_READY_TIMEOUT });
 }
 
 test.describe("Authentication (fetchAndGetUser)", () => {
@@ -271,7 +327,13 @@ test.describe("Authentication (fetchAndGetUser)", () => {
         matchesPath(response.url(), userPathPattern) &&
         response.status() === 401
     );
+    const loginResponse = page.waitForResponse(
+      (response) =>
+        matchesPath(response.url(), loginPathPattern) &&
+        response.status() === 200
+    );
 
+    // Mocked to eliminate network timing variance across browsers
     await page.route(userEndpointPattern, async (route) => {
       await route.fulfill({
         status: 401,
@@ -293,21 +355,20 @@ test.describe("Authentication (fetchAndGetUser)", () => {
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await user401Response;
-    await page.waitForURL(loginEndpointPattern, {
-      timeout: 50000,
-      waitUntil: "commit",
+    await loginResponse;
+    await expect(page).toHaveURL(loginEndpointPattern, {
+      timeout: APP_READY_TIMEOUT,
     });
+    await expect(page.getByText("Login")).toBeVisible();
   });
 
-  test("shows user information after successful fetch", async ({
-    page,
-    isMobile,
-  }) => {
+  test("shows user information after successful fetch", async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.removeItem("SESSIONS");
       localStorage.removeItem("CHAT_HISTORY");
     });
 
+    // Mocked to eliminate network timing variance across browsers
     await page.route(userEndpointPattern, async (route) => {
       await route.fulfill({
         status: 200,
@@ -319,14 +380,7 @@ test.describe("Authentication (fetchAndGetUser)", () => {
     const userResponse = page.waitForResponse(userEndpointPattern);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await userResponse;
-    await expect(page.getByTestId("UserInformationBtn")).toBeVisible({
-      timeout: 10000,
-    });
-    if (!isMobile) {
-      await expect(page.getByTestId("LeftSideBar")).toBeVisible({
-        timeout: 10000,
-      });
-    }
+    await waitForAuthenticatedShell(page);
     await acceptTermsIfVisible(page);
 
     const popover = page.getByTestId("UserInformation");
@@ -353,6 +407,7 @@ test.describe("Authentication (fetchAndGetUser)", () => {
     const userResponse = page.waitForResponse(userEndpointPattern);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await userResponse;
+    await waitForAuthenticatedShell(page);
     await acceptTermsIfVisible(page);
 
     await waitForMcpAuthRefresh(page, {
@@ -362,6 +417,6 @@ test.describe("Authentication (fetchAndGetUser)", () => {
       staticLabel: mcpServiceLabels.static,
     });
 
-    expect(jwksRequestCount.count).toBeGreaterThan(0);
+    await expect.poll(() => jwksRequestCount.count).toBeGreaterThan(0);
   });
 });

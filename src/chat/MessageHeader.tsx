@@ -46,7 +46,22 @@ import { RiChatNewLine } from "react-icons/ri";
 import "../assets/icon/style.css";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { McpAuthFields } from "./McpAuthFields";
-import { useMcpAuth } from "./hooks/useMcpAuth";
+import {
+  DEFAULT_MCP_AUTH_CONFIG,
+  isMcpAuthorizationIncomplete,
+  normalizeMcpAuthConfig,
+  useMcpAuth,
+} from "./hooks/useMcpAuth";
+
+type McpToolFormState = {
+  label: string;
+  server_url: string;
+  require_approval: "always" | "never";
+  allowed_tools_input: string;
+  authConfig: McpAuthConfig;
+};
+
+type CheckedChange = boolean | { checked: boolean | "indeterminate" };
 
 export function MessageHeader() {
   const {
@@ -72,14 +87,14 @@ export function MessageHeader() {
   const [editMCPServices, setEditMCPServices] = useState(false);
   const [editingMcpKey, setEditingMcpKey] = useState<string | null>(null);
 
-  const { getAuthorization, userFields } = useMcpAuth(user);
+  const { getAuthorization } = useMcpAuth(user);
 
-  const [mcpToolForm, setMcpToolForm] = useState({
+  const [mcpToolForm, setMcpToolForm] = useState<McpToolFormState>({
     label: "",
     server_url: "",
     require_approval: "never",
-    allowed_tools: [],
-    authConfig: { mode: "none", selectedFields: [] } as McpAuthConfig,
+    allowed_tools_input: "",
+    authConfig: DEFAULT_MCP_AUTH_CONFIG,
   });
 
   const approval_options = createListCollection({
@@ -101,8 +116,8 @@ export function MessageHeader() {
       label: "",
       server_url: "",
       require_approval: "never",
-      allowed_tools: [],
-      authConfig: { mode: "none", selectedFields: [] },
+      allowed_tools_input: "",
+      authConfig: DEFAULT_MCP_AUTH_CONFIG,
     });
     setEditMCPServices(true);
   };
@@ -111,13 +126,30 @@ export function MessageHeader() {
     options.openai.tools = toolOptions;
   }
 
-  function setTool(key: string, tool: Tool, checked: boolean): void {
+  function isMcpTool(tool: Tool): tool is Tool.Mcp {
+    return tool.type === "mcp";
+  }
+
+  function getCheckedValue(checked: CheckedChange): boolean {
+    return typeof checked === "boolean" ? checked : checked.checked === true;
+  }
+
+  function setTool(key: string, tool: Tool, checkedChange: CheckedChange): void {
+    const checked = getCheckedValue(checkedChange);
     console.log("Set tool: %s %o", key, checked);
     if (
       !options.openai.toolsEnabled ||
       !(options.openai.toolsEnabled instanceof Set)
     ) {
       options.openai.toolsEnabled = new Set<string>();
+    }
+    if (
+      checked &&
+      isMcpTool(tool) &&
+      isMcpAuthorizationIncomplete(options.openai.mcpAuthConfigs.get(key))
+    ) {
+      editTool(key, tool);
+      return;
     }
     if (checked) {
       options.openai.toolsEnabled.add(key);
@@ -134,11 +166,11 @@ export function MessageHeader() {
     const savedAuthConfig = options.openai.mcpAuthConfigs.get(key);
     setEditingMcpKey(key);
     setMcpToolForm({
-      label: tool.server_label || "",
+      label: tool.server_label || key,
       server_url: tool.server_url || "",
-      require_approval: (tool.require_approval as string) || "never",
-      allowed_tools: (tool.allowed_tools as string[]) || [],
-      authConfig: savedAuthConfig ?? { mode: "none", selectedFields: [] },
+      require_approval: tool.require_approval === "always" ? "always" : "never",
+      allowed_tools_input: ((tool.allowed_tools as string[]) || []).join(","),
+      authConfig: savedAuthConfig ?? DEFAULT_MCP_AUTH_CONFIG,
     });
     setEditMCPServices(true);
   }
@@ -162,10 +194,17 @@ export function MessageHeader() {
       return;
     }
 
+    const nextAuthConfig = normalizeMcpAuthConfig(mcpToolForm.authConfig);
+    const authorizationIncomplete = isMcpAuthorizationIncomplete(nextAuthConfig);
+    const allowedTools = mcpToolForm.allowed_tools_input
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
     let authorization: string | undefined;
     try {
       authorization = await getAuthorization(
-        mcpToolForm.authConfig,
+        nextAuthConfig,
         mcpToolForm.server_url
       );
     } catch (error) {
@@ -182,21 +221,24 @@ export function MessageHeader() {
       server_label: mcpToolForm.label,
       server_url: mcpToolForm.server_url,
       require_approval: mcpToolForm.require_approval as "always" | "never",
-      authorization: authorization,
     };
 
-    if (mcpToolForm.allowed_tools.length > 0) {
-      newTool.allowed_tools = mcpToolForm.allowed_tools;
+    if (authorization) {
+      newTool.authorization = authorization;
+    }
+
+    if (allowedTools.length > 0) {
+      newTool.allowed_tools = allowedTools;
     }
 
     cleanupRenamedTool(editingMcpKey, mcpToolForm.label, tools, options.openai);
     setEditingMcpKey(null);
 
     tools.set(mcpToolForm.label, newTool);
-    options.openai.mcpAuthConfigs.set(
-      mcpToolForm.label,
-      mcpToolForm.authConfig
-    );
+    options.openai.mcpAuthConfigs.set(mcpToolForm.label, nextAuthConfig);
+    if (authorizationIncomplete) {
+      options.openai.toolsEnabled.delete(mcpToolForm.label);
+    }
     setOptions({
       type: OptionActionType.OPENAI,
       data: {
@@ -230,6 +272,10 @@ export function MessageHeader() {
   if (!(options.openai.mcpAuthConfigs instanceof Map)) {
     options.openai.mcpAuthConfigs = new Map();
   }
+
+  const authorizationIncomplete = isMcpAuthorizationIncomplete(
+    mcpToolForm.authConfig
+  );
 
   if (tools instanceof Map) {
     for (const [key, value] of toolOptions) {
@@ -466,13 +512,11 @@ export function MessageHeader() {
                         name="allowed_tools"
                         placeholder={t("Comma separated")}
                         className={styles.input}
-                        value={mcpToolForm.allowed_tools}
+                        value={mcpToolForm.allowed_tools_input}
                         onChange={(e) =>
                           setMcpToolForm((f) => ({
                             ...f,
-                            allowed_tools: e.target.value
-                              .split(",")
-                              .map((item) => item.trim()),
+                            allowed_tools_input: e.target.value,
                           }))
                         }
                       />
@@ -483,9 +527,13 @@ export function MessageHeader() {
                     onChange={(authConfig) => {
                       setMcpToolForm((f) => ({ ...f, authConfig }));
                     }}
-                    userFields={userFields}
                     user={user}
                   />
+                  {authorizationIncomplete && (
+                    <Text fontSize="sm" color="orange.600">
+                      {t("mcp_authorization_required_before_save")}
+                    </Text>
+                  )}
                   <Button
                     data-testid="mcp-add-service-btn"
                     onClick={handleAddService}
