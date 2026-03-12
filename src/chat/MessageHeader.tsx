@@ -63,6 +63,30 @@ type McpToolFormState = {
 
 type CheckedChange = boolean | { checked: boolean | "indeterminate" };
 
+function isMcpTool(tool: Tool): tool is Tool.Mcp {
+  return tool.type === "mcp";
+}
+
+function getCheckedValue(checked: CheckedChange): boolean {
+  return typeof checked === "boolean" ? checked : checked.checked === true;
+}
+
+function cleanupRenamedTool(
+  oldKey: string | null,
+  newKey: string,
+  tools: Map<string, Tool>,
+  openai: {
+    toolsEnabled: Set<string>;
+    mcpAuthConfigs: Map<string, McpAuthConfig>;
+  }
+) {
+  if (oldKey && oldKey !== newKey) {
+    tools.delete(oldKey);
+    openai.toolsEnabled.delete(oldKey);
+    openai.mcpAuthConfigs.delete(oldKey);
+  }
+}
+
 export function MessageHeader() {
   const {
     is,
@@ -126,15 +150,11 @@ export function MessageHeader() {
     options.openai.tools = toolOptions;
   }
 
-  function isMcpTool(tool: Tool): tool is Tool.Mcp {
-    return tool.type === "mcp";
-  }
-
-  function getCheckedValue(checked: CheckedChange): boolean {
-    return typeof checked === "boolean" ? checked : checked.checked === true;
-  }
-
-  function setTool(key: string, tool: Tool, checkedChange: CheckedChange): void {
+  function setTool(
+    key: string,
+    tool: Tool,
+    checkedChange: CheckedChange
+  ): void {
     const checked = getCheckedValue(checkedChange);
     console.log("Set tool: %s %o", key, checked);
     if (
@@ -175,19 +195,6 @@ export function MessageHeader() {
     setEditMCPServices(true);
   }
 
-  function cleanupRenamedTool(
-    oldKey: string | null,
-    newKey: string,
-    tools: Map<string, Tool>,
-    openai: typeof options.openai
-  ) {
-    if (oldKey && oldKey !== newKey) {
-      tools.delete(oldKey);
-      openai.toolsEnabled.delete(oldKey);
-      openai.mcpAuthConfigs.delete(oldKey);
-    }
-  }
-
   async function handleAddService() {
     if (!mcpToolForm.label || !mcpToolForm.server_url) {
       alert(t("Please fill in all required fields"));
@@ -195,7 +202,8 @@ export function MessageHeader() {
     }
 
     const nextAuthConfig = normalizeMcpAuthConfig(mcpToolForm.authConfig);
-    const authorizationIncomplete = isMcpAuthorizationIncomplete(nextAuthConfig);
+    const authorizationIncomplete =
+      isMcpAuthorizationIncomplete(nextAuthConfig);
     const allowedTools = mcpToolForm.allowed_tools_input
       .split(",")
       .map((item) => item.trim())
