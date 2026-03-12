@@ -125,7 +125,7 @@ function AuthModeOption({
 }
 
 type StaticTokenFieldProps = {
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
   value: string;
 };
 
@@ -148,7 +148,7 @@ function StaticTokenField({ onChange, value }: StaticTokenFieldProps) {
 type UserDataSectionProps = {
   consentGranted: boolean;
   displayedScopes: UserDataConfig["scopes"];
-  onConsentChange: (checked: boolean) => void;
+  onConsentChange: React.Dispatch<boolean>;
   onOpenPrivacyNotice: () => void;
   user?: Record<string, unknown> | null;
 };
