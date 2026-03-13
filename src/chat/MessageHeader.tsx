@@ -6,6 +6,7 @@ import {
   McpAuthConfig,
   OpenAIOptions,
   GlobalActions,
+  OptionActionType,
 } from "./context/types";
 import {
   Avatar,
