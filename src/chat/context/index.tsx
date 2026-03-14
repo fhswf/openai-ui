@@ -56,6 +56,9 @@ export const ChatProvider = ({ children }) => {
     if (chatHistory) {
       init.chat = chatHistory;
     }
+    if (init.options?.openai && !init.options.openai.mcpAuthConfigs) {
+      init.options.openai.mcpAuthConfigs = new Map();
+    }
   } catch (e) {
     console.error("error parsing state: %s", e);
   }

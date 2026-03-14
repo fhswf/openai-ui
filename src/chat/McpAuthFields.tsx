@@ -40,7 +40,7 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
 
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
-  onChange: (newConfig: McpAuthConfig) => void;
+  onChange: (_newConfig: McpAuthConfig) => void;
   userFields: string[];
   user?: Record<string, unknown>;
 }

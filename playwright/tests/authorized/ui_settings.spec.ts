@@ -394,4 +394,39 @@ test.describe("MCP Services", () => {
         await expect(page.locator('input[name="label"]')).toHaveValue("Preserved Auth Service");
         await expect(page.locator('input[name="server_url"]')).toHaveValue("https://preserved.example.com");
     });
+
+    test("regression: should recover from missing mcpAuthConfigs in localStorage", async ({ page }) => {
+        // Artificially corrupt localStorage to remove mcpAuthConfigs
+        await page.evaluate(() => {
+            const sessionKey = "SESSIONS"; // Matching SESSION_KEY from settings.ts
+            const session = JSON.parse(localStorage.getItem(sessionKey) || '{}');
+            if (session.options?.openai) {
+                // Determine if we need to remove it or ensure it's missing (simulation of old state)
+                // Note: replacer might turn Map into object { dataType: 'Map', value: ... }
+                // but here we deal with the raw JSON object structure before reviver
+                // In localStorage JSON, it might look different depending on how it was saved.
+                // But we can just delete the key.
+                delete session.options.openai.mcpAuthConfigs;
+            }
+            localStorage.setItem(sessionKey, JSON.stringify(session));
+        });
+
+        // Reload page to trigger state hydration which should now handle the missing key
+        await page.reload();
+        await expect(page.getByTestId("LeftSideBar")).toBeVisible({ timeout: 10000 });
+
+        // Open MCP dialog
+        await openMcpDialog(page);
+
+        // Try adding a service - this validates that mcpAuthConfigs was initialized and we can write to it
+        await page.locator('input[name="label"]').fill("Regression Test Service");
+        await page.locator('input[name="server_url"]').fill("https://regression.example.com");
+        await page.getByTestId("mcp-add-service-btn").click();
+
+        await expect(page.getByText("Regression Test Service")).toBeVisible();
+
+        // Try Validated Edit - this was the original crash
+        await page.getByTestId("mcp-edit-Regression Test Service").click();
+        await expect(page.locator('input[name="label"]')).toHaveValue("Regression Test Service");
+    });
 });

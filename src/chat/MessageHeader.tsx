@@ -102,6 +102,13 @@ export function MessageHeader() {
     options.openai.tools = toolOptions;
   }
 
+  if (
+    !options.openai.mcpAuthConfigs ||
+    !(options.openai.mcpAuthConfigs instanceof Map)
+  ) {
+    options.openai.mcpAuthConfigs = new Map();
+  }
+
   function setTool(key: string, tool: Tool, checked: boolean): void {
     console.log("Set tool: %s %o", key, checked);
     if (
