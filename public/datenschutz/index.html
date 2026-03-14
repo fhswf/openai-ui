@@ -48,43 +48,46 @@
  Seitens OpenAI wird der Zugriff auf die API protokolliert, um die Nutzung zu überwachen und die Einhaltung der
  Nutzungsbedingungen sicherzustellen.</p>
 
-<h2>MCP-Dienste und Benutzerdatenübertragung</h2>
+<h2>MCP-Dienste und Autorisierung</h2>
 <p>Die Anwendung unterstützt die Anbindung von <strong>MCP-Servern</strong> (Model Context Protocol), die erweiterte
  Funktionen wie Raumbuchungen, Terminvereinbarungen oder personalisierte Informationsabfragen ermöglichen.</p>
 
-<h3>Optionale Datenübertragung</h3>
-<p>Die Übertragung von Benutzerdaten an MCP-Server ist <strong>freiwillig</strong> und erfolgt nur nach
- <strong>ausdrücklicher Einwilligung</strong> des Nutzers. Ohne Ihre Zustimmung werden keine personenbezogenen
- Daten an MCP-Server übertragen.</p>
-<p>Sie können individuell auswählen, welche der folgenden Daten übertragen werden sollen:</p>
+<h3>Mögliche Autorisierungsarten</h3>
+<p>Je nach MCP-Server können unterschiedliche Autorisierungsarten angeboten werden:</p>
 <ul>
- <li>Ihr vollständiger Name</li>
- <li>Ihre Hochschul-E-Mail-Adresse</li>
- <li>Ihre Benutzerkennung</li>
- <li>Ihre eindeutige Benutzer-ID</li>
- <li>Ihre Zugehörigkeiten und Rollen an der Hochschule</li>
+ <li>keine zusätzliche Autorisierung</li>
+ <li>ein statischer Token, den Sie selbst hinterlegen</li>
+ <li>die verschlüsselte Übertragung freigegebener Benutzerdaten</li>
 </ul>
+<p>Wenn ein MCP-Server die Option <strong>Benutzerdaten</strong> unterstützt, liest die Anwendung die angeforderten
+ Bereiche (<em>Scopes</em>) automatisch aus der OpenID-Konfiguration des jeweiligen Servers aus und zeigt diese
+ vor der Freigabe an.</p>
 
-<h3>Ende-zu-Ende-Verschlüsselung</h3>
-<p>Übertragene Benutzerdaten werden <strong>Ende-zu-Ende verschlüsselt</strong>. Dies bedeutet:</p>
+<h3>Optionale Übertragung von Benutzerdaten</h3>
+<p>Die Übertragung von Benutzerdaten an einen MCP-Server ist <strong>freiwillig</strong> und erfolgt nur, wenn Sie
+ für den jeweiligen Dienst die Option <strong>Benutzerdaten</strong> aktivieren und die Einwilligung ausdrücklich
+ erteilen. Ohne diese Zustimmung werden keine personenbezogenen Daten an diesen MCP-Server übertragen.</p>
+<p>Die konkret übertragenen Angaben ergeben sich aus den vom MCP-Server veröffentlichten Scopes. Je nach Server
+ können dazu insbesondere Name, E-Mail-Adresse, Benutzerkennung, die interne Kennung <code>sub</code> sowie
+ Zugehörigkeiten und Rollen an der Hochschule gehören.</p>
+
+<h3>Verschlüsselung der Benutzerdaten</h3>
+<p>Freigegebene Benutzerdaten werden vor der Übertragung verschlüsselt. Dies bedeutet:</p>
 <ul>
- <li>Die Daten werden vor der Übertragung verschlüsselt</li>
- <li><strong>Nur autorisierte MCP-Server der FH Südwestfalen</strong> können die Daten entschlüsseln</li>
- <li>OpenAI  oder unbefugte Dritte können die verschlüsselten Daten <strong>nicht</strong>
-  lesen</li>
- <li>Die Verschlüsselung erfolgt mit einem öffentlichen Schlüssel, der nur den autorisierten Servern der FH
-  bekannt ist</li>
+ <li>Die Anwendung verschlüsselt die Daten lokal im Browser vor dem Versand.</li>
+ <li>Der benötigte öffentliche Schlüssel wird über die OpenID-/JWKS-Endpunkte des jeweiligen MCP-Servers geladen.</li>
+ <li>Nur der MCP-Server mit dem passenden privaten Schlüssel kann die Daten entschlüsseln.</li>
+ <li>OpenAI oder unbefugte Dritte können die verschlüsselten Daten <strong>nicht</strong> lesen.</li>
 </ul>
+<p>Werden keine Scopes bereitgestellt oder keine Einwilligung erteilt, erzeugt die Anwendung kein Token mit
+ Benutzerdaten.</p>
 
 <h3>Widerruf der Einwilligung</h3>
-<p>Sie können Ihre Einwilligung zur Datenübertragung <strong>jederzeit widerrufen</strong>, indem Sie:</p>
-<ol>
- <li>Die Autorisierungseinstellungen des jeweiligen MCP-Dienstes aufrufen</li>
- <li>Die Option "Keine" auswählen oder die gewünschten Felder abwählen</li>
- <li>Die Änderungen speichern</li>
-</ol>
-<p>Nach dem Widerruf werden bei zukünftigen Anfragen keine personenbezogenen Daten mehr an den
- betreffenden MCP-Server übertragen.</p>
+<p>Sie können Ihre Einwilligung zur Datenübertragung <strong>jederzeit widerrufen</strong>, indem Sie die
+ Autorisierungseinstellungen des jeweiligen MCP-Dienstes erneut öffnen und entweder die Option
+ <strong>Keine</strong> auswählen oder die Einwilligung für <strong>Benutzerdaten</strong> wieder deaktivieren.</p>
+<p>Nach dem Widerruf werden bei zukünftigen Anfragen keine personenbezogenen Daten mehr an den betreffenden
+ MCP-Server übertragen.</p>
 
 <h2>Cookies</h2>
 <p>Die Anwendung verwendet lediglich technisch notwendige Session-Cookies, um die Funktionalität der
