@@ -17,7 +17,7 @@ setup('Cluster Login Test', async ({ page }, testInfo) => {
 
     // Wait for potential redirect
     try {
-        await expect(page.locator('.sso-login')).toBeVisible({ timeout: 60000 });
+        await expect(page.locator('.sso-login')).toBeVisible({ timeout: 10000 });
         console.log('SSO Login visible on:', page.url());
     } catch (e) {
         console.log('Timed out waiting for SSO Login. Current URL:', page.url());

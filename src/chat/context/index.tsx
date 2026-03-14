@@ -15,16 +15,9 @@ import {
   GlobalActions,
   GlobalState,
   GlobalActionType,
-  Chat,
-  Message,
-  App,
-  Options,
 } from "./types";
-import { getResponse } from "../service/openai";
 import {
-  inflateState,
   loadState,
-  reduceState,
   reviver,
   saveState,
   SESSION_KEY,
@@ -51,10 +44,16 @@ export const ChatProvider = ({ children }) => {
 
   try {
     const stored = JSON.parse(localStorage.getItem(SESSION_KEY), reviver);
-    const chatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY), reviver);
+    const chatHistory = JSON.parse(
+      localStorage.getItem(CHAT_HISTORY_KEY),
+      reviver
+    );
     init = { ...init, ...stored };
     if (chatHistory) {
       init.chat = chatHistory;
+    }
+    if (init.options?.openai && !init.options.openai.mcpAuthConfigs) {
+      init.options.openai.mcpAuthConfigs = new Map();
     }
   } catch (e) {
     console.error("error parsing state: %s", e);
@@ -82,7 +81,11 @@ export const ChatProvider = ({ children }) => {
   // get user
   useEffect(() => {
     console.log("fetch user");
-    fetchAndGetUser(dispatch, state.options, actionList.setOptions);
+    fetchAndGetUser(
+      dispatch,
+      () => latestState.current.options,
+      actionList.setOptions
+    );
   }, []);
 
   useEffect(() => {

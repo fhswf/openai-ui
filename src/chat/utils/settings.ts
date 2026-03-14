@@ -108,6 +108,13 @@ export async function loadState(): Promise<GlobalState> {
       combinedState.chat = parsedChat;
     }
 
+    if (
+      combinedState.options?.openai &&
+      !combinedState.options.openai.mcpAuthConfigs
+    ) {
+      combinedState.options.openai.mcpAuthConfigs = new Map();
+    }
+
     const inflated = await inflateState(combinedState);
     return inflated;
   } catch (error) {
