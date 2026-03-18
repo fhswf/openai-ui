@@ -1,5 +1,7 @@
 import { initState } from "../context/initState";
 import { App, Chat, GlobalState, Message, Options } from "../context/types";
+import { toaster } from "../../components/ui/toaster";
+import { t } from "i18next";
 
 export const SESSION_KEY = "SESSIONS";
 export const CHAT_HISTORY_KEY = "CHAT_HISTORY";
@@ -60,6 +62,11 @@ export function saveState(stateToSave: {
 
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify(settings, replacer));
+  } catch (error) {
+    console.error("Failed to save settings:", error);
+  }
+
+  try {
     localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chat, replacer));
   } catch (error) {
     if (error instanceof Error && error.name === "QuotaExceededError") {
@@ -75,8 +82,47 @@ export function saveState(stateToSave: {
       }
       const chatStr = JSON.stringify(chat, replacer);
       console.log("Total chat history size:", chatStr ? chatStr.length : 0);
+
+      let prunedChat = [...chat];
+      let hasNotified = false;
+      while (prunedChat.length > 0) {
+        if (!hasNotified) {
+          toaster.create({
+            title: t("Storage Limit Reached"),
+            description: t("Automatically removing oldest chats to save space."),
+            type: "warning",
+            duration: 5000,
+          });
+          hasNotified = true;
+        }
+
+        let indexToRemove = prunedChat.length - 1;
+        if (indexToRemove === settings.currentChat) {
+          indexToRemove--;
+        }
+        if (indexToRemove < 0) {
+          console.error("Cannot prune chat history any further.");
+          throw error;
+        }
+        
+        prunedChat.splice(indexToRemove, 1);
+        try {
+          localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(prunedChat, replacer));
+          if (indexToRemove < settings.currentChat) {
+            settings.currentChat--;
+            localStorage.setItem(SESSION_KEY, JSON.stringify(settings, replacer));
+          }
+          break;
+        } catch (e2) {
+          if (e2 instanceof Error && e2.name === "QuotaExceededError") {
+            continue;
+          }
+          throw e2;
+        }
+      }
+    } else {
+      throw error;
     }
-    throw error;
   }
 }
 
