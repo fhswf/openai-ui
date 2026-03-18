@@ -4,7 +4,14 @@ resources:
   - ../../base
 namePrefix: staging-
 namespace: staging-openai-proxy
+
+configMapGenerator:
+  - name: nginx-staging-conf
+    files:
+      - default.conf=nginx-staging.conf
+
 patches:
+  - path: deployment-patch.yaml
   - target:
       kind: Ingress
     patch: |-
