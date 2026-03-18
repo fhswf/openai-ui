@@ -147,9 +147,10 @@ export type App = {
   category: number;
   title: string;
   desc: string;
-  id: number;
+  id: number | string;
   content: string;
   botStarts: boolean;
+  role: "system" | "assistant" | "user";
 };
 
 
