@@ -87,7 +87,7 @@ jobs:
       - name: Update Staging Kustomize Image
         run: |
           cd k8s/overlays/staging
-          kustomize edit set image ghcr.io/fhswf/openai-ui=ghcr.io/fhswf/openai-ui:sha-${{ github.sha }}
+          kustomize edit set image ghcr.io/fhswf/openai-ui=ghcr.io/fhswf/openai-ui:sha-$(echo ${{ github.sha }} | cut -c1-7)
 
       - name: Update Prod Kustomize Image
         if: needs.release.outputs.release_created == 'true'
