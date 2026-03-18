@@ -1,3 +1,10 @@
+# [0.34.0](https://github.com/fhswf/openai-ui/compare/v0.33.0...v0.34.0) (2026-03-18)
+
+
+### Features
+
+* automatically prune old chat history and notify users when localStorage quota is exceeded ([6cd74d2](https://github.com/fhswf/openai-ui/commit/6cd74d2b95117c5dee4eacdd934f4bfd2e0b6cbc))
+
 # [0.33.0](https://github.com/fhswf/openai-ui/compare/v0.32.2...v0.33.0) (2026-03-06)
 
 
