@@ -35,7 +35,5 @@ spec:
           env:
             - name: VITE_RELEASE
               value: 0.34.0
-            - name: VITE_BUILD_SHA
-              value: db16a807ea2290790ded0bf45e823030ddd51f2c
       restartPolicy: Always
 status: {}
