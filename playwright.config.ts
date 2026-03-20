@@ -57,7 +57,7 @@ export default defineConfig({
         ...devices['Desktop Firefox'],
         storageState: 'playwright/.auth/user.json'
       },
-      dependencies: ['setup'],
+            dependencies: ['setup'],
     },
 
     {
@@ -92,12 +92,12 @@ export default defineConfig({
     {
       name: 'Microsoft Edge',
       use: { ...devices['Desktop Edge'], channel: 'msedge', storageState: 'playwright/.auth/user.json' },
-      dependencies: ['setup'],
+            dependencies: ['setup'],
     },
     {
       name: 'Google Chrome',
       use: { ...devices['Desktop Chrome'], channel: 'chrome', storageState: 'playwright/.auth/user.json' },
-      dependencies: ['setup'],
+            dependencies: ['setup'],
     },
   ],
 

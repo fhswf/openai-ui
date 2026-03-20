@@ -72,7 +72,8 @@ export const ChatProvider = ({ children }) => {
     const fetchState = async () => {
       const savedState = await getState();
       if (savedState) {
-        dispatch({ type: GlobalActionType.SET_STATE, payload: savedState });
+        // Only merge chat to prevent overwriting options modified during initial loading
+        dispatch({ type: GlobalActionType.SET_STATE, payload: { chat: savedState.chat } });
       }
     };
     fetchState();
