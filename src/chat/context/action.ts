@@ -30,30 +30,12 @@ async function processImages(images: any[], opfs: FileSystemDirectoryHandle | nu
           console.error("File not found in OPFS: %s", image.name);
           throw new Error(`File not found: ${image.name}`);
         }
-        const file = await fileHandle.getFile();
 
-        const promise = new Promise((resolve, reject) => {
-          // read file as data URL
-          const reader = new FileReader();
-          let result;
-          reader.onload = () => {
-            console.log("File read as data URL: %o", reader.result);
-            result = {
-              type: "input_image",
-              image_url: reader.result as string,
-              name: image.name,
-            };
-            resolve(result);
-          };
-          reader.onerror = () => {
-            console.error("Error reading file: %o", reader.error);
-            reject(reader.error || new Error("Unknown error reading file"));
-          };
-          reader.readAsDataURL(file);
-          console.log("FileReader started for image: %o", image.name);
-        });
-
-        return await promise;
+        return {
+          type: "input_image",
+          image_url: `opfs://${image.name}`,
+          name: image.name,
+        };
       }
     })
   );

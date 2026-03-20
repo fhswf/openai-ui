@@ -169,27 +169,41 @@ export function reduceState(state: GlobalState): GlobalState {
   delete cleanState.is;
   delete cleanState.eventProcessor;
   cleanState.chat = cleanState.chat.map((chat: Chat) => {
-    chat.messages = chat.messages.map((message: Message) => {
-      if (message.content && Array.isArray(message.content)) {
-        message.content = message.content.map((content) => {
+    const cleanChat = { ...chat };
+    cleanChat.messages = cleanChat.messages.map((message: Message) => {
+      const cleanMessage = { ...message };
+
+      if (cleanMessage.content && Array.isArray(cleanMessage.content)) {
+        cleanMessage.content = cleanMessage.content.map((content) => {
           if (content.type === "input_image" && content.image_url) {
-            // If the content is an image, remove the image_url property
-            const { image_url, ...rest } = content;
-            // If the image_url is too large, remove it
-            if (image_url.length > 100000) {
-              console.warn(
-                "Image URL is too large, removing it: %s",
-                image_url
-              );
+            // Remove data urls to save space. OPFS URLs stay.
+            if (content.image_url.startsWith("data:")) {
+              const { image_url, ...rest } = content;
               return rest;
             }
           }
           return content;
         });
       }
-      return message;
+
+      if (cleanMessage.toolsUsed) {
+        cleanMessage.toolsUsed = cleanMessage.toolsUsed.map((tool) => {
+          const cleanTool = { ...tool };
+          if (cleanTool.type === "image_generation_call" && cleanTool.result) {
+            cleanTool.result = "[image data stored in OPFS]";
+          } else if (cleanTool.result && typeof cleanTool.result === "string" && cleanTool.result.length > 50000) {
+            cleanTool.result = "[stripped to save space]";
+          }
+          if (cleanTool.image_b64) {
+            delete cleanTool.image_b64;
+          }
+          return cleanTool;
+        });
+      }
+
+      return cleanMessage;
     });
-    return chat;
+    return cleanChat;
   });
   // Remove any properties that are not needed in the options
   return cleanState;
