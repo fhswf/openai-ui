@@ -73,6 +73,22 @@ function Usage(props: UsageProps) {
   );
 }
 
+function groupToolsByType(toolsUsed: Tool[]) {
+  const grouped = new Map<string, Tool[]>();
+
+  toolsUsed.forEach((tool) => {
+    const key = tool.type;
+    const bucket = grouped.get(key);
+    if (bucket) {
+      bucket.push(tool);
+      return;
+    }
+    grouped.set(key, [tool]);
+  });
+
+  return Array.from(grouped.entries());
+}
+
 
 
 function ToolUse(props) {
@@ -84,9 +100,7 @@ function ToolUse(props) {
     return null;
   }
 
-  const groupedTools = Array.from(
-    Map.groupBy<string, Tool>(toolsUsed, (tool) => tool.type)
-  );
+  const groupedTools = groupToolsByType(toolsUsed);
   console.log("Grouped tools:", groupedTools);
 
   return (
@@ -196,7 +210,7 @@ export function MessageItem(props) {
         </HStack>
       </Card.Header>
       <Card.Body>
-        <LazyRenderer isVisible={is.thinking}>{message}</LazyRenderer>
+        <LazyRenderer isVisible={true}>{message}</LazyRenderer>
         {images &&
           Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
             if (image.src) {

@@ -114,10 +114,25 @@ type LazyRendererProps = {
 };
 
 export const LazyRenderer = (props: LazyRendererProps) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(Boolean(props.isVisible));
   const ref = useRef(null);
 
   useEffect(() => {
+    if (props.isVisible) {
+      setIsVisible(true);
+    }
+  }, [props.isVisible]);
+
+  useEffect(() => {
+    if (isVisible) {
+      return;
+    }
+
+    if (typeof IntersectionObserver !== "function") {
+      setIsVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         //console.log('isIntersecting: %o %o', entry, ref.current);
@@ -133,7 +148,7 @@ export const LazyRenderer = (props: LazyRendererProps) => {
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [isVisible]);
 
   return isVisible ? (
     <Renderer ref={ref}>{props.children}</Renderer>
