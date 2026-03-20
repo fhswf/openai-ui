@@ -178,7 +178,8 @@ export function reduceState(state: GlobalState): GlobalState {
           if (content.type === "input_image" && content.image_url) {
             // Remove data urls to save space. OPFS URLs stay.
             if (content.image_url.startsWith("data:")) {
-              const { image_url, ...rest } = content;
+              const rest = { ...content };
+              delete rest.image_url;
               return rest;
             }
           }
