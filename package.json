@@ -11,6 +11,7 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
+    "preview": "vite preview",
     "test": "npx playwright test",
     "test:e2e:ci": "npx playwright test",
     "test:e2e:prod": "npx playwright test",

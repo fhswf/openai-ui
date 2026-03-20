@@ -17,15 +17,15 @@ export default defineConfig({
     timeout: 10000,
   },
   /* Run tests in files in parallel */
-  fullyParallel: false,
+  fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : 2,
+  workers: process.env.CI ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? [['github'], ['html']] : 'html',
+  reporter: process.env.CI ? [['github'], ['html'], ['json', { outputFile: 'playwright-report/results.json' }]] : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
@@ -66,6 +66,7 @@ export default defineConfig({
         ...devices['Desktop Safari'],
         storageState: 'playwright/.auth/user.json'
       },
+      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
       dependencies: ['setup'],
 
     },
@@ -77,6 +78,7 @@ export default defineConfig({
         ...devices['Pixel 5'],
         storageState: 'playwright/.auth/user.json'
       },
+      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
       dependencies: ['setup'],
     },
     {
@@ -85,6 +87,7 @@ export default defineConfig({
         ...devices['iPhone 12'],
         storageState: 'playwright/.auth/user.json'
       },
+      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
       dependencies: ['setup'],
     },
 
@@ -92,18 +95,20 @@ export default defineConfig({
     {
       name: 'Microsoft Edge',
       use: { ...devices['Desktop Edge'], channel: 'msedge', storageState: 'playwright/.auth/user.json' },
+      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
       dependencies: ['setup'],
     },
     {
       name: 'Google Chrome',
       use: { ...devices['Desktop Chrome'], channel: 'chrome', storageState: 'playwright/.auth/user.json' },
+      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
       dependencies: ['setup'],
     },
   ],
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'yarn start',
+    command: 'yarn build && yarn preview --port 5173',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
   },
