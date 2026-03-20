@@ -35,13 +35,13 @@ export interface McpAuthFieldsProps {
 type NormalizedMcpAuthConfig = ReturnType<typeof normalizeMcpAuthConfig>;
 type UserDataConfig = Extract<McpAuthConfig, { mode: "user-data" }>["userData"];
 
-type ScopeItemProps = {
+interface ScopeItemProps {
   scope: Extract<
     McpAuthConfig,
     { mode: "user-data" }
   >["userData"]["scopes"][number];
   user?: Record<string, unknown> | null;
-};
+}
 
 function formatPreviewValue(value: unknown): string | null {
   if (value === null || value === undefined) return null;
@@ -92,13 +92,13 @@ function ScopeItem({ scope, user }: ScopeItemProps) {
   );
 }
 
-type AuthModeOptionProps = {
+interface AuthModeOptionProps {
   disabled: boolean;
   label: string;
   testId: string;
   value: McpAuthMode;
   children?: React.ReactNode;
-};
+}
 
 function AuthModeOption({
   disabled,
@@ -124,10 +124,10 @@ function AuthModeOption({
   );
 }
 
-type StaticTokenFieldProps = {
+interface StaticTokenFieldProps {
   onChange: React.ChangeEventHandler<HTMLInputElement>;
   value: string;
-};
+}
 
 function StaticTokenField({ onChange, value }: StaticTokenFieldProps) {
   const { t } = useTranslation();
@@ -145,13 +145,13 @@ function StaticTokenField({ onChange, value }: StaticTokenFieldProps) {
   );
 }
 
-type UserDataSectionProps = {
+interface UserDataSectionProps {
   consentGranted: boolean;
   displayedScopes: UserDataConfig["scopes"];
   onConsentChange: React.Dispatch<boolean>;
   onOpenPrivacyNotice: () => void;
   user?: Record<string, unknown> | null;
-};
+}
 
 function UserDataSection({
   consentGranted,
@@ -223,10 +223,10 @@ function UserDataSection({
   );
 }
 
-type PrivacyNoticeDialogProps = {
+interface PrivacyNoticeDialogProps {
   onClose: () => void;
   open: boolean;
-};
+}
 
 function PrivacyNoticeDialog({ onClose, open }: PrivacyNoticeDialogProps) {
   const { t } = useTranslation();
@@ -390,7 +390,9 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
                   consentGranted={userData.consentGranted}
                   displayedScopes={displayedScopes}
                   onConsentChange={handleConsentChange}
-                  onOpenPrivacyNotice={() => setPrivacyOpen(true)}
+                  onOpenPrivacyNotice={() => {
+                    setPrivacyOpen(true);
+                  }}
                   user={user}
                 />
               )}
@@ -401,7 +403,9 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
 
       <PrivacyNoticeDialog
         open={privacyOpen}
-        onClose={() => setPrivacyOpen(false)}
+        onClose={() => {
+          setPrivacyOpen(false);
+        }}
       />
     </>
   );

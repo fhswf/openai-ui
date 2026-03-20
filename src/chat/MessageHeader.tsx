@@ -26,7 +26,6 @@ import {
   Select,
   Checkbox,
   Separator,
-  createListCollection,
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { IoLogoMarkdown, IoSettingsOutline } from "react-icons/io5";
@@ -45,526 +44,41 @@ import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { MessageMenu } from "./MessageMenu";
-import { modelOptions, toolOptions } from "./utils/options";
+import { modelOptions } from "./utils/options";
 import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { McpAuthFields } from "./McpAuthFields";
+import { isMcpAuthorizationIncomplete, useMcpAuth } from "./hooks/useMcpAuth";
 import {
-  DEFAULT_MCP_AUTH_CONFIG,
-  isMcpAuthorizationIncomplete,
-  normalizeMcpAuthConfig,
-  useMcpAuth,
-} from "./hooks/useMcpAuth";
+  ApprovalOptions,
+  buildMcpTools,
+  CheckedChange,
+  createDeleteMcpServiceHandler,
+  createEditToolHandler,
+  createEmptyMcpToolForm,
+  createOpenMcpEditorHandler,
+  createSaveMcpServiceHandler,
+  createToolChangeHandler,
+  EditToolRequest,
+  ensureToolCollections,
+  getApprovalOptions,
+  getNormalizedTools,
+  McpTextFieldName,
+  McpToolFormState,
+  McpToolMap,
+  ToolChangeRequest,
+  updateFormField,
+} from "./utils/mcpServices";
 
 import "../assets/icon/style.css";
-
-interface McpToolFormState {
-  label: string;
-  server_url: string;
-  require_approval: "always" | "never";
-  allowed_tools_input: string;
-  authConfig: McpAuthConfig;
-}
-
-type CheckedChange = boolean | { checked: boolean | "indeterminate" };
-type McpTextFieldName = "label" | "server_url" | "allowed_tools_input";
 
 interface CategoryItem {
   id: number;
   icon: string;
 }
-
-type McpToolMap = Map<string, Tool.Mcp>;
-
-interface EditToolRequest {
-  key: string;
-  tool: Tool.Mcp;
-}
-
-interface ToolChangeRequest {
-  checkedChange: CheckedChange;
-  key: string;
-  tool: Tool;
-}
-
-interface AuthorizationResult {
-  authorization?: string;
-  ok: boolean;
-}
-
-interface ApprovalOption {
-  label: string;
-  value: "always" | "never";
-}
-
-type ApprovalOptions = ReturnType<typeof createListCollection<ApprovalOption>>;
-
-function createEmptyMcpToolForm(): McpToolFormState {
-  return {
-    label: "",
-    server_url: "",
-    require_approval: "never",
-    allowed_tools_input: "",
-    authConfig: DEFAULT_MCP_AUTH_CONFIG,
-  };
-}
-
-function isMcpTool(tool: Tool): tool is Tool.Mcp {
-  return tool.type === "mcp";
-}
-
-function getCheckedValue(checked: CheckedChange): boolean {
-  return typeof checked === "boolean" ? checked : checked.checked === true;
-}
-
-function getAllowedToolsInput(tool: Tool.Mcp): string {
-  return Array.isArray(tool.allowed_tools) ? tool.allowed_tools.join(",") : "";
-}
-
-function getAllowedTools(input: string): string[] {
-  return input
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function getApprovalOptions(t: TFunction) {
-  return createListCollection({
-    items: [
-      { label: t("Always"), value: "always" },
-      { label: t("Never"), value: "never" },
-    ],
-  });
-}
-
-function getNormalizedTools(
-  openai: OpenAIOptions,
-  setOptions: GlobalActions["setOptions"]
-): Map<string, Tool> {
-  if (!(openai.tools instanceof Map)) {
-    const tools = new Map(toolOptions.entries());
-    setOptions({ type: OptionActionType.OPENAI, data: { ...openai, tools } });
-    return tools;
-  }
-
-  for (const [key, value] of toolOptions) {
-    if (!openai.tools.has(key)) {
-      openai.tools.set(key, value);
-    }
-  }
-
-  return openai.tools;
-}
-
-function ensureToolCollections(openai: OpenAIOptions): {
-  toolsEnabled: Set<string>;
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
-} {
-  if (!(openai.toolsEnabled instanceof Set)) {
-    openai.toolsEnabled = new Set<string>();
-  }
-  if (!(openai.mcpAuthConfigs instanceof Map)) {
-    openai.mcpAuthConfigs = new Map<string, McpAuthConfig>();
-  }
-
-  return {
-    toolsEnabled: openai.toolsEnabled,
-    mcpAuthConfigs: openai.mcpAuthConfigs,
-  };
-}
-
-function buildMcpTools(tools: Map<string, Tool>): McpToolMap {
-  const mcpTools: McpToolMap = new Map();
-
-  for (const [key, value] of tools) {
-    if (isMcpTool(value)) {
-      mcpTools.set(key, value);
-    }
-  }
-
-  return mcpTools;
-}
-
-function validateMcpToolForm(form: McpToolFormState, t: TFunction): boolean {
-  if (form.label && form.server_url) {
-    return true;
-  }
-
-  alert(t("Please fill in all required fields"));
-  return false;
-}
-
-function updateFormField(
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>,
-  field: keyof McpToolFormState,
-  value: McpToolFormState[keyof McpToolFormState]
-): void {
-  setForm((current) => {
-    switch (field) {
-      case "label":
-        return { ...current, label: String(value) };
-      case "server_url":
-        return { ...current, server_url: String(value) };
-      case "require_approval":
-        return {
-          ...current,
-          require_approval: value as McpToolFormState["require_approval"],
-        };
-      case "allowed_tools_input":
-        return { ...current, allowed_tools_input: String(value) };
-      case "authConfig":
-        return { ...current, authConfig: value as McpAuthConfig };
-      default:
-        return current;
-    }
-  });
-}
-
-function openCreateMcpEditor(
-  setEditingKey: React.Dispatch<React.SetStateAction<string | null>>,
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>,
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>
-): void {
-  setEditingKey(null);
-  setForm(createEmptyMcpToolForm());
-  setOpen(true);
-}
-
-function openEditMcpEditor(
-  key: string,
-  tool: Tool.Mcp,
-  mcpAuthConfigs: Map<string, McpAuthConfig>,
-  setEditingKey: React.Dispatch<React.SetStateAction<string | null>>,
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>,
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>
-): void {
-  setEditingKey(key);
-  setForm({
-    label: tool.server_label || key,
-    server_url: tool.server_url || "",
-    require_approval: tool.require_approval === "always" ? "always" : "never",
-    allowed_tools_input: getAllowedToolsInput(tool),
-    authConfig: mcpAuthConfigs.get(key) ?? DEFAULT_MCP_AUTH_CONFIG,
-  });
-  setOpen(true);
-}
-
-function updateToolSelection(args: {
-  checkedChange: CheckedChange;
-  key: string;
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
-  onEditTool: React.Dispatch<EditToolRequest>;
-  openai: OpenAIOptions;
-  setOptions: GlobalActions["setOptions"];
-  tool: Tool;
-  toolsEnabled: Set<string>;
-}): void {
-  const checked = getCheckedValue(args.checkedChange);
-
-  if (
-    checked &&
-    isMcpTool(args.tool) &&
-    isMcpAuthorizationIncomplete(args.mcpAuthConfigs.get(args.key))
-  ) {
-    args.onEditTool({ key: args.key, tool: args.tool });
-    return;
-  }
-
-  if (checked) {
-    args.toolsEnabled.add(args.key);
-  } else {
-    args.toolsEnabled.delete(args.key);
-  }
-
-  args.setOptions({
-    type: OptionActionType.OPENAI,
-    data: { ...args.openai },
-  });
-}
-
-function cleanupRenamedTool(
-  oldKey: string | null,
-  newKey: string,
-  tools: Map<string, Tool>,
-  toolsEnabled: Set<string>,
-  mcpAuthConfigs: Map<string, McpAuthConfig>
-): void {
-  if (oldKey && oldKey !== newKey) {
-    tools.delete(oldKey);
-    toolsEnabled.delete(oldKey);
-    mcpAuthConfigs.delete(oldKey);
-  }
-}
-
-async function getAuthorizationResult(args: {
-  authConfig: McpAuthConfig;
-  getAuthorization: ReturnType<typeof useMcpAuth>["getAuthorization"];
-  serverUrl: string;
-  t: TFunction;
-}): Promise<AuthorizationResult> {
-  try {
-    return {
-      ok: true,
-      authorization: await args.getAuthorization(
-        args.authConfig,
-        args.serverUrl
-      ),
-    };
-  } catch (error) {
-    alert(
-      error instanceof Error
-        ? error.message
-        : args.t("mcp_authorization_failed")
-    );
-    return { ok: false };
-  }
-}
-
-function createBaseMcpToolDefinition(form: McpToolFormState): Tool.Mcp {
-  return {
-    type: "mcp",
-    server_label: form.label,
-    server_url: form.server_url,
-    require_approval: form.require_approval,
-  };
-}
-
-function applyMcpAuthorization(tool: Tool.Mcp, authorization?: string): void {
-  if (authorization) {
-    tool.authorization = authorization;
-  }
-}
-
-function applyAllowedToolList(tool: Tool.Mcp, allowedToolsInput: string): void {
-  const allowedTools = getAllowedTools(allowedToolsInput);
-  if (allowedTools.length > 0) {
-    tool.allowed_tools = allowedTools;
-  }
-}
-
-function createMcpToolDefinition(
-  form: McpToolFormState,
-  authorization?: string
-): Tool.Mcp {
-  const tool = createBaseMcpToolDefinition(form);
-
-  applyMcpAuthorization(tool, authorization);
-  applyAllowedToolList(tool, form.allowed_tools_input);
-
-  return tool;
-}
-
-async function saveMcpService(args: {
-  editingKey: string | null;
-  form: McpToolFormState;
-  getAuthorization: ReturnType<typeof useMcpAuth>["getAuthorization"];
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
-  openai: OpenAIOptions;
-  setEditingKey: React.Dispatch<React.SetStateAction<string | null>>;
-  setOptions: GlobalActions["setOptions"];
-  t: TFunction;
-  tools: Map<string, Tool>;
-  toolsEnabled: Set<string>;
-}): Promise<void> {
-  if (!validateMcpToolForm(args.form, args.t)) {
-    return;
-  }
-
-  const nextAuthConfig = normalizeMcpAuthConfig(args.form.authConfig);
-  const result = await getAuthorizationResult({
-    authConfig: nextAuthConfig,
-    getAuthorization: args.getAuthorization,
-    serverUrl: args.form.server_url,
-    t: args.t,
-  });
-
-  if (!result.ok) {
-    return;
-  }
-
-  persistMcpService({
-    editingKey: args.editingKey,
-    form: args.form,
-    mcpAuthConfigs: args.mcpAuthConfigs,
-    openai: args.openai,
-    resultAuthorization: result.authorization,
-    setEditingKey: args.setEditingKey,
-    setOptions: args.setOptions,
-    tools: args.tools,
-    toolsEnabled: args.toolsEnabled,
-  });
-}
-
-function persistMcpService(args: {
-  editingKey: string | null;
-  form: McpToolFormState;
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
-  openai: OpenAIOptions;
-  resultAuthorization?: string;
-  setEditingKey: React.Dispatch<React.SetStateAction<string | null>>;
-  setOptions: GlobalActions["setOptions"];
-  tools: Map<string, Tool>;
-  toolsEnabled: Set<string>;
-}): void {
-  const nextAuthConfig = normalizeMcpAuthConfig(args.form.authConfig);
-
-  cleanupRenamedTool(
-    args.editingKey,
-    args.form.label,
-    args.tools,
-    args.toolsEnabled,
-    args.mcpAuthConfigs
-  );
-  args.setEditingKey(null);
-  args.tools.set(
-    args.form.label,
-    createMcpToolDefinition(args.form, args.resultAuthorization)
-  );
-  args.mcpAuthConfigs.set(args.form.label, nextAuthConfig);
-
-  if (isMcpAuthorizationIncomplete(nextAuthConfig)) {
-    args.toolsEnabled.delete(args.form.label);
-  }
-
-  args.setOptions({
-    type: OptionActionType.OPENAI,
-    data: {
-      ...args.openai,
-      tools: args.tools,
-      mcpAuthConfigs: args.mcpAuthConfigs,
-    },
-  });
-}
-
-function deleteMcpService(args: {
-  key: string;
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
-  openai: OpenAIOptions;
-  setOptions: GlobalActions["setOptions"];
-  tools: Map<string, Tool>;
-  toolsEnabled: Set<string>;
-}): void {
-  if (!args.tools.has(args.key)) {
-    console.error(`Tool with key ${args.key} does not exist.`);
-    return;
-  }
-
-  args.tools.delete(args.key);
-  args.toolsEnabled.delete(args.key);
-  args.mcpAuthConfigs.delete(args.key);
-  args.setOptions({
-    type: OptionActionType.OPENAI,
-    data: { ...args.openai, tools: args.tools },
-  });
-}
-
 function logout(): void {
   console.log("Logout");
   globalThis.location.assign(import.meta.env.VITE_LOGOUT_URL || "/");
-}
-
-function createEditToolHandler(args: {
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
-  setDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setEditingKey: React.Dispatch<React.SetStateAction<string | null>>;
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>;
-}): React.Dispatch<EditToolRequest> {
-  return ({ key, tool }) => {
-    openEditMcpEditor(
-      key,
-      tool,
-      args.mcpAuthConfigs,
-      args.setEditingKey,
-      args.setForm,
-      args.setDialogOpen
-    );
-  };
-}
-
-function createToolChangeHandler(args: {
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
-  onEditTool: React.Dispatch<EditToolRequest>;
-  openai: OpenAIOptions;
-  setOptions: GlobalActions["setOptions"];
-  toolsEnabled: Set<string>;
-}): React.Dispatch<ToolChangeRequest> {
-  return ({ checkedChange, key, tool }) => {
-    updateToolSelection({
-      checkedChange,
-      key,
-      mcpAuthConfigs: args.mcpAuthConfigs,
-      onEditTool: args.onEditTool,
-      openai: args.openai,
-      setOptions: args.setOptions,
-      tool,
-      toolsEnabled: args.toolsEnabled,
-    });
-  };
-}
-
-function createOpenMcpEditorHandler(args: {
-  setDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setEditingKey: React.Dispatch<React.SetStateAction<string | null>>;
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>;
-}): VoidFunction {
-  return () => {
-    openCreateMcpEditor(args.setEditingKey, args.setForm, args.setDialogOpen);
-  };
-}
-
-interface DeleteMcpServiceHandlerArgs {
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
-  openai: OpenAIOptions;
-  setOptions: GlobalActions["setOptions"];
-  tools: Map<string, Tool>;
-  toolsEnabled: Set<string>;
-}
-
-function createDeleteMcpServiceHandler(
-  args: DeleteMcpServiceHandlerArgs
-): React.Dispatch<string> {
-  return (key) => {
-    deleteMcpService({
-      key,
-      mcpAuthConfigs: args.mcpAuthConfigs,
-      openai: args.openai,
-      setOptions: args.setOptions,
-      tools: args.tools,
-      toolsEnabled: args.toolsEnabled,
-    });
-  };
-}
-
-interface SaveMcpServiceHandlerArgs {
-  editingKey: string | null;
-  form: McpToolFormState;
-  getAuthorization: ReturnType<typeof useMcpAuth>["getAuthorization"];
-  mcpAuthConfigs: Map<string, McpAuthConfig>;
-  openai: OpenAIOptions;
-  setEditingKey: React.Dispatch<React.SetStateAction<string | null>>;
-  setOptions: GlobalActions["setOptions"];
-  t: TFunction;
-  tools: Map<string, Tool>;
-  toolsEnabled: Set<string>;
-}
-
-function createSaveMcpServiceHandler(
-  args: SaveMcpServiceHandlerArgs
-): VoidFunction {
-  return () => {
-    void saveMcpService({
-      editingKey: args.editingKey,
-      form: args.form,
-      getAuthorization: args.getAuthorization,
-      mcpAuthConfigs: args.mcpAuthConfigs,
-      openai: args.openai,
-      setEditingKey: args.setEditingKey,
-      setOptions: args.setOptions,
-      t: args.t,
-      tools: args.tools,
-      toolsEnabled: args.toolsEnabled,
-    });
-  };
 }
 
 interface ToolbarToggleButtonProps {
@@ -708,7 +222,7 @@ function McpServicesMenu({
                 }}
               >
                 <Menu.ItemIndicator />
-                {tool.title || key}
+                {tool.server_label || key}
               </Menu.CheckboxItem>
             ))}
             <Menu.Item
@@ -916,7 +430,7 @@ function McpServiceRow({
           <Checkbox.HiddenInput />
           <Checkbox.Control />
         </Checkbox.Root>
-        <Text>{tool.title || toolKey}</Text>
+        <Text>{tool.server_label || toolKey}</Text>
       </HStack>
       <HStack gap={1} alignItems="center">
         <Button
@@ -1259,11 +773,10 @@ function createChatOptionsMenuHandlers(
     setForm: args.setForm,
   });
   const handleToolChange = createToolChangeHandler({
-    mcpAuthConfigs: args.mcpAuthConfigs,
+    collections: args,
     onEditTool: handleEditTool,
     openai: args.openai,
     setOptions: args.setOptions,
-    toolsEnabled: args.toolsEnabled,
   });
 
   return {
@@ -1538,7 +1051,7 @@ export function MessageHeader() {
       data-testid="ChatHeader"
     >
       <ToolbarToggleButton toolbar={is.toolbar} setIs={setIs} />
-      <HeaderTitleBlock title={message?.title} messages={message?.messages} />
+      <HeaderTitleBlock title={message.title} messages={message.messages} />
       <ChatOptionsMenu
         openai={options.openai}
         setOptions={setOptions}

@@ -94,10 +94,13 @@ export async function loadState(): Promise<GlobalState> {
       : {};
     const parsedChat = chatData ? JSON.parse(chatData, reviver) : null;
 
-    // Migration: if no new chat history, check if it exists in session
-    if (!parsedChat && parsedSession.chat) {
+    // Migration: if no dedicated chat history exists yet, move legacy chat
+    // out of SESSIONS immediately instead of waiting for a later save cycle.
+    if (!parsedChat && Array.isArray(parsedSession.chat)) {
       console.log("Migrating chat history from session to separate key");
-      // We don't save here, it will be saved on next update
+      const { chat, ...sessionWithoutChat } = parsedSession;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionWithoutChat, replacer));
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chat, replacer));
     }
 
     const combinedState = {
@@ -129,29 +132,32 @@ export function reduceState(state: GlobalState): GlobalState {
   const cleanState = { ...state };
   delete cleanState.is;
   delete cleanState.eventProcessor;
-  cleanState.chat = cleanState.chat.map((chat: Chat) => {
-    chat.messages = chat.messages.map((message: Message) => {
+  cleanState.chat = cleanState.chat.map((chat: Chat) => ({
+    ...chat,
+    messages: chat.messages.map((message: Message) => {
       if (message.content && Array.isArray(message.content)) {
-        message.content = message.content.map((content) => {
-          if (content.type === "input_image" && content.image_url) {
-            // If the content is an image, remove the image_url property
-            const { image_url, ...rest } = content;
-            // If the image_url is too large, remove it
-            if (image_url.length > 100000) {
-              console.warn(
-                "Image URL is too large, removing it: %s",
-                image_url
-              );
-              return rest;
+        return {
+          ...message,
+          content: message.content.map((content) => {
+            if (content.type === "input_image" && content.image_url) {
+              // If the content is an image, remove the image_url property
+              const { image_url, ...rest } = content;
+              // If the image_url is too large, remove it
+              if (image_url.length > 100000) {
+                console.warn(
+                  "Image URL is too large, removing it: %s",
+                  image_url
+                );
+                return rest;
+              }
             }
-          }
-          return content;
-        });
+            return content;
+          }),
+        };
       }
-      return message;
-    });
-    return chat;
-  });
+      return { ...message };
+    }),
+  }));
   // Remove any properties that are not needed in the options
   return cleanState;
 }

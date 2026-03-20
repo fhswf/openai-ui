@@ -52,7 +52,7 @@ export const ChatProvider = ({ children }) => {
     if (chatHistory) {
       init.chat = chatHistory;
     }
-    if (init.options?.openai && !init.options.openai.mcpAuthConfigs) {
+    if (!init.options.openai.mcpAuthConfigs) {
       init.options.openai.mcpAuthConfigs = new Map();
     }
   } catch (e) {
@@ -71,9 +71,14 @@ export const ChatProvider = ({ children }) => {
     console.log("ChatProvider: useEffect: fetching state from localStorage");
     const fetchState = async () => {
       const savedState = await getState();
-      if (savedState) {
-        // Only merge chat to prevent overwriting options modified during initial loading
-        dispatch({ type: GlobalActionType.SET_STATE, payload: { chat: savedState.chat } });
+      if (savedState && Array.isArray(savedState.chat)) {
+        // Only merge persisted chat during async hydration. Some seeded sessions
+        // only contain options, and dispatching `chat: undefined` would wipe the
+        // initialized chat state and break subsequent persistence.
+        dispatch({
+          type: GlobalActionType.SET_STATE,
+          payload: { chat: savedState.chat },
+        });
       }
     };
     fetchState();
@@ -90,9 +95,10 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const stateToSave = { ...latestState.current };
-    saveState(stateToSave);
-  }, [latestState.current]);
+    // Persist the current reducer state directly so MCP auth/tool changes are
+    // saved immediately instead of lagging one render behind the ref.
+    saveState({ ...state });
+  }, [state]);
 
   return (
     <ChatContext.Provider value={{ ...state, ...actionList }}>
