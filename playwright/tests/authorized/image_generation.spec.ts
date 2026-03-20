@@ -43,7 +43,6 @@ test('Image Generation', async ({ page, browserName }) => {
     });
 
     // Enable console logging
-    page.on('console', msg => console.log(`BROWSER LOG: ${msg.text()}`));
 
     await page.goto("");
 
