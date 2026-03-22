@@ -23,12 +23,10 @@ export interface ErrorFallbackProps {
 export function ErrorFallback({ error, resetErrorBoundary }: Readonly<ErrorFallbackProps>) {
     console.log("error: %o %s", error.stack, typeof error.stack);
 
-    const stackTrace = React.useMemo(() => {
-        return error.stack ? error.stack.split("\n").map((line, index) => ({
-            id: `trace-${index}`,
-            content: line,
-        })) : [];
-    }, [error.stack]);
+    const stackTrace = error.stack ? error.stack.split("\n").map((line, index) => ({
+        id: `trace-${index}`,
+        content: line,
+    })) : [];
 
     logger.emit({
         severityNumber: SeverityNumber.ERROR,
