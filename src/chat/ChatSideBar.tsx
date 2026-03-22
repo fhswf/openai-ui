@@ -178,10 +178,11 @@ export function ChatSideBar() {
   const [newRelease, setNewRelease] = useState(false);
   const { is, setState, options, version, release } = useGlobal();
   const { setGeneral, setAccount } = useOptions();
+  const informationWindowOpen = !options.account.terms || open;
 
   const acceptTerms = () => {
-    setAccount({ terms: true });
     setOpen(false);
+    setAccount({ terms: true });
   };
 
   useEffect(() => {
@@ -246,8 +247,12 @@ export function ChatSideBar() {
       <Spacer />
       <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
         <DialogRoot
-          open={!options.account.terms || open}
-          onOpenChange={(e) => setOpen(e.open)}
+          open={informationWindowOpen}
+          onOpenChange={(e) => {
+            if (options.account.terms) {
+              setOpen(e.open);
+            }
+          }}
           size="lg"
         >
           <DialogTrigger asChild>
