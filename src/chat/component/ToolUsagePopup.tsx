@@ -1,4 +1,5 @@
 import React from "react";
+import type { TFunction } from "i18next";
 import {
     Accordion,
     Badge,
@@ -21,7 +22,7 @@ type ToolUsagePopupProps = {
     toolsUsed: Tool[];
 };
 
-function groupToolsByType(toolsUsed: Tool[]): Array<[string, Tool[]]> {
+function groupToolsByType(toolsUsed: Tool[]): [string, Tool[]][] {
     const grouped = new Map<string, Tool[]>();
 
     toolsUsed.forEach((tool) => {
@@ -110,7 +111,7 @@ function getToolInfo(
     tool: Tool,
     key: string,
     index: number,
-    t: any,
+    t: TFunction,
     renderVisible = false
 ) {
     const info: any = { ...tool };

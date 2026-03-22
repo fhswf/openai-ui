@@ -23,16 +23,16 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   getFallbackMcpUserScopes,
-  normalizeMcpAuthConfig,
+  useMcpAuthDiscovery,
 } from "./hooks/useMcpAuth";
 
 export interface McpAuthFieldsProps {
   config: McpAuthConfig;
   onChange: React.Dispatch<McpAuthConfig>;
+  serverUrl: string;
   user?: Record<string, unknown> | null;
 }
 
-type NormalizedMcpAuthConfig = ReturnType<typeof normalizeMcpAuthConfig>;
 type UserDataConfig = Extract<McpAuthConfig, { mode: "user-data" }>["userData"];
 
 interface ScopeItemProps {
@@ -268,17 +268,9 @@ function PrivacyNoticeDialog({ onClose, open }: PrivacyNoticeDialogProps) {
   );
 }
 
-function getUserDataConfig(config: NormalizedMcpAuthConfig): UserDataConfig {
-  if (config.mode === "user-data") {
-    return config.userData;
-  }
-
-  return { scopes: [], consentGranted: false };
-}
-
 function buildAuthConfigForMode(
   mode: McpAuthMode,
-  config: NormalizedMcpAuthConfig,
+  config: McpAuthConfig,
   userData: UserDataConfig
 ): McpAuthConfig {
   switch (mode) {
@@ -300,23 +292,39 @@ function buildAuthConfigForMode(
 export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
   config,
   onChange,
+  serverUrl,
   user,
 }) => {
-  const normalizedConfig = normalizeMcpAuthConfig(config);
   const { t } = useTranslation();
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const userData = getUserDataConfig(normalizedConfig);
+  const {
+    effectiveUserDataScopes,
+    normalizedConfig,
+    serverAuthOptionsDisabled,
+    userData,
+    userDataOptionDisabled,
+  } = useMcpAuthDiscovery({
+    config,
+    onChange,
+    serverUrl,
+  });
   const displayedScopes =
-    userData.scopes.length > 0
-      ? userData.scopes
+    effectiveUserDataScopes.length > 0
+      ? effectiveUserDataScopes
       : getFallbackMcpUserScopes(user);
-  const serverAuthOptionsDisabled =
-    normalizedConfig.mode === "user-data" && userData.scopes.length > 0;
-  const userDataOptionDisabled = false;
 
   const handleModeChange = (details: { value: string }) => {
     const mode = details.value as McpAuthMode;
-    onChange(buildAuthConfigForMode(mode, normalizedConfig, userData));
+    if (mode === "user-data" && userDataOptionDisabled) {
+      return;
+    }
+
+    onChange(
+      buildAuthConfigForMode(mode, normalizedConfig, {
+        ...userData,
+        scopes: effectiveUserDataScopes,
+      })
+    );
   };
 
   const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {

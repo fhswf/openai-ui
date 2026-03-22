@@ -9,6 +9,7 @@ import {
   OptionActionType,
 } from "./context/types";
 import {
+  Alert,
   Avatar,
   HStack,
   Stack,
@@ -505,6 +506,7 @@ function McpServicesList({
 interface McpServicesDialogProps {
   approvalOptions: ApprovalOptions;
   authorizationIncomplete: boolean;
+  consentPromptOpen: boolean;
   contentRef: React.RefObject<HTMLDivElement | null>;
   form: McpToolFormState;
   mcpTools: McpToolMap;
@@ -522,6 +524,7 @@ interface McpServicesDialogProps {
 interface McpServicesDialogBodyProps {
   approvalOptions: ApprovalOptions;
   authorizationIncomplete: boolean;
+  consentPromptOpen: boolean;
   contentRef: React.RefObject<HTMLDivElement | null>;
   form: McpToolFormState;
   mcpTools: McpToolMap;
@@ -540,6 +543,16 @@ function McpServicesDialogBody(props: McpServicesDialogBodyProps) {
   return (
     <Dialog.Body overflowY="auto">
       <Stack gap={4}>
+        {props.consentPromptOpen && (
+          <Alert.Root status="info" variant="subtle" size="sm">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Description fontSize="sm">
+                {t("mcp_consent_prompt_info")}
+              </Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
+        )}
         <McpServiceFormFields
           approvalOptions={props.approvalOptions}
           contentRef={props.contentRef}
@@ -551,11 +564,12 @@ function McpServicesDialogBody(props: McpServicesDialogBodyProps) {
           onChange={(authConfig) => {
             updateFormField(props.setForm, "authConfig", authConfig);
           }}
+          serverUrl={props.form.server_url}
           user={props.user}
         />
         {props.authorizationIncomplete && (
           <Text fontSize="sm" color="orange.600">
-            {t("mcp_authorization_required_before_save")}
+            {t("mcp_save_without_consent_info")}
           </Text>
         )}
         <Button
@@ -603,6 +617,7 @@ function McpServicesDialog(props: McpServicesDialogProps) {
             <McpServicesDialogBody
               approvalOptions={props.approvalOptions}
               authorizationIncomplete={props.authorizationIncomplete}
+              consentPromptOpen={props.consentPromptOpen}
               contentRef={props.contentRef}
               form={props.form}
               mcpTools={props.mcpTools}
@@ -638,6 +653,7 @@ interface ChatOptionsMenuStateArgs extends ChatOptionsMenuProps {
 interface ChatOptionsMenuState {
   approvalOptions: ApprovalOptions;
   authorizationIncomplete: boolean;
+  consentPromptOpen: boolean;
   contentRef: React.RefObject<HTMLDivElement | null>;
   dialogOpen: boolean;
   form: McpToolFormState;
@@ -675,6 +691,7 @@ interface ChatOptionsMenuHandlersArgs extends ChatOptionsMenuCollections {
   form: McpToolFormState;
   getAuthorization: ReturnType<typeof useMcpAuth>["getAuthorization"];
   openai: OpenAIOptions;
+  setConsentPromptOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setEditingKey: React.Dispatch<React.SetStateAction<string | null>>;
   setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>;
@@ -684,6 +701,7 @@ interface ChatOptionsMenuHandlersArgs extends ChatOptionsMenuCollections {
 
 interface ChatOptionsMenuStateBuilderArgs {
   collections: ChatOptionsMenuCollections;
+  consentPromptOpen: boolean;
   contentRef: React.RefObject<HTMLDivElement | null>;
   dialogOpen: boolean;
   form: McpToolFormState;
@@ -768,6 +786,7 @@ function createChatOptionsMenuHandlers(
 ): ChatOptionsMenuHandlers {
   const handleEditTool = createEditToolHandler({
     mcpAuthConfigs: args.mcpAuthConfigs,
+    setConsentPromptOpen: args.setConsentPromptOpen,
     setDialogOpen: args.setDialogOpen,
     setEditingKey: args.setEditingKey,
     setForm: args.setForm,
@@ -794,6 +813,7 @@ function buildChatOptionsMenuState(
   return {
     approvalOptions: args.collections.approvalOptions,
     authorizationIncomplete: args.collections.authorizationIncomplete,
+    consentPromptOpen: args.consentPromptOpen,
     contentRef: args.contentRef,
     dialogOpen: args.dialogOpen,
     form: args.form,
@@ -819,8 +839,16 @@ function useChatOptionsMenuState({
   const { getAuthorization } = useMcpAuth(user);
   const contentRef = useRef<HTMLDivElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [consentPromptOpen, setConsentPromptOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [form, setForm] = useState(createEmptyMcpToolForm());
+
+  React.useEffect(() => {
+    if (!dialogOpen) {
+      setConsentPromptOpen(false);
+    }
+  }, [dialogOpen]);
+
   const collections = getChatOptionsMenuCollections({
     form,
     openai,
@@ -833,6 +861,7 @@ function useChatOptionsMenuState({
     form,
     getAuthorization,
     openai,
+    setConsentPromptOpen,
     setEditingKey,
     setOptions,
     setDialogOpen,
@@ -842,6 +871,7 @@ function useChatOptionsMenuState({
 
   return buildChatOptionsMenuState({
     collections,
+    consentPromptOpen,
     contentRef,
     dialogOpen,
     form,
@@ -870,6 +900,7 @@ function ChatOptionsMenu({ openai, setOptions, user }: ChatOptionsMenuProps) {
       <McpServicesDialog
         approvalOptions={menuState.approvalOptions}
         authorizationIncomplete={menuState.authorizationIncomplete}
+        consentPromptOpen={menuState.consentPromptOpen}
         contentRef={menuState.contentRef}
         form={menuState.form}
         mcpTools={menuState.mcpTools}

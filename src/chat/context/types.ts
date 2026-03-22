@@ -157,6 +157,7 @@ export type McpScopeDefinition = {
 export type McpUserDataDiscovery = {
   scopes: McpScopeDefinition[];
   consentGranted: boolean;
+  consentPrompted?: boolean;
 };
 
 export type McpAuthConfig =

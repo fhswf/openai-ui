@@ -430,6 +430,21 @@ class EventProcessor {
           // Clear the base64 data from the item to avoid storing it in the state
           event.item.result = "";
         }
+
+        // Detect unauthorized MCP call responses from the server
+        if (
+          event.item.type === "mcp_call" &&
+          typeof event.item.output === "string" &&
+          event.item.output.toLowerCase().includes("unauthorized")
+        ) {
+          toaster.create({
+            title: t("mcp_unauthorized_error"),
+            description: event.item.output,
+            duration: 8000,
+            type: "error",
+          });
+        }
+
         this.updateChat();
         break;
       }

@@ -15,6 +15,7 @@ import {
   DEFAULT_MCP_AUTH_CONFIG,
   discoverMcpAuthForServer,
   getAuthorizationForMcpConfig,
+  hasBeenConsentPrompted,
   isMcpAuthorizationIncomplete,
   normalizeMcpAuthConfig,
 } from "../hooks/useMcpAuth";
@@ -162,7 +163,10 @@ export function fetchAndGetUser(
             configs.get(key) ?? DEFAULT_MCP_AUTH_CONFIG
           );
 
-          if (isMcpAuthorizationIncomplete(config)) {
+          if (
+            isMcpAuthorizationIncomplete(config) &&
+            !hasBeenConsentPrompted(config)
+          ) {
             toolsEnabled.delete(key);
           }
         });

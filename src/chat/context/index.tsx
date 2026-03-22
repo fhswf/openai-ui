@@ -71,7 +71,7 @@ export const ChatProvider = ({ children }) => {
     console.log("ChatProvider: useEffect: fetching state from localStorage");
     const fetchState = async () => {
       const savedState = await getState();
-      if (savedState && Array.isArray(savedState.chat)) {
+      if (Array.isArray(savedState.chat)) {
         // Only merge persisted chat during async hydration. Some seeded sessions
         // only contain options, and dispatching `chat: undefined` would wipe the
         // initialized chat state and break subsequent persistence.

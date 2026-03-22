@@ -180,6 +180,11 @@ You can find the full privacy notice in the app's info menu (?).
             "Authorization is incomplete. Please authorize it in settings.",
           mcp_blocked_missing_consent:
             "blocked: consent required to send user data",
+          mcp_unauthorized_error: "MCP Server: Unauthorized",
+          mcp_consent_prompt_info:
+            "You have been redirected here because this MCP server can use your user data for certain features. You can grant consent below or simply close this dialog. The server is already enabled and will work, but features that require authorization will not be available without consent.",
+          mcp_save_without_consent_info:
+            "You can save and use this server without data transfer, but some features of the MCP server may not be available.",
           please_fill_in_all_required_fields:
             "Please fill in all required fields",
           understood: "Understood",
@@ -474,6 +479,11 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
             "Autorisierung nicht abgeschlossen. Bitte in den Einstellungen autorisieren.",
           mcp_blocked_missing_consent:
             "blockiert: Zustimmung zum Senden von Benutzerdaten erforderlich",
+          mcp_unauthorized_error: "MCP-Server: Nicht autorisiert",
+          mcp_consent_prompt_info:
+            "Sie wurden hierher weitergeleitet, weil dieser MCP-Server Ihre Benutzerdaten für bestimmte Funktionen verwenden kann. Sie können unten Ihre Zustimmung erteilen oder diesen Dialog einfach schließen. Der Server ist bereits aktiviert und funktioniert, aber Funktionen die eine Autorisierung benötigen stehen ohne Zustimmung nicht zur Verfügung.",
+          mcp_save_without_consent_info:
+            "Sie können diesen Server ohne Datenübertragung speichern und verwenden, aber einige Funktionen des MCP-Servers stehen dann nicht zur Verfügung.",
           please_fill_in_all_required_fields:
             "Bitte füllen Sie alle Pflichtfelder aus",
           understood: "Verstanden",
