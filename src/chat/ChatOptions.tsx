@@ -147,7 +147,9 @@ export function ChatOptions() {
                     key={item.value}
                     value={item.value}
                     data-testid={"themeSelect" + item.value}
-                    onClick={() => setGeneral({ theme: item.value })}
+                    onClick={() => {
+                      setGeneral({ theme: item.value });
+                    }}
                   >
                     {item.label}
                   </Radio>
