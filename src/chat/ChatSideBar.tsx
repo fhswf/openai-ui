@@ -185,6 +185,14 @@ export function ChatSideBar() {
     setAccount({ terms: true });
   };
 
+  const toggleTheme = () => {
+    const currentTheme =
+      document.documentElement.dataset.theme || options.general.theme;
+    setGeneral({
+      theme: currentTheme === "light" ? "dark" : "light",
+    });
+  };
+
   useEffect(() => {
     fetch("/metadata.json", { cache: "no-cache" })
       .then((response) => response.json())
@@ -222,11 +230,7 @@ export function ChatSideBar() {
       >
         <Option
           type={options.general.theme}
-          onClick={() =>
-            setGeneral({
-              theme: options.general.theme === "light" ? "dark" : "light",
-            })
-          }
+          onClick={toggleTheme}
           tooltip={t("Theme")}
           dataTestId="OptionDarkModeSelect"
         />
