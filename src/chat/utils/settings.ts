@@ -45,12 +45,9 @@ function logStorageSizes(settings: PersistedSettings, chat: Chat[]) {
   console.error("Quota exceeded! Analyzing sizes...");
   const settingsStr = JSON.stringify(settings, replacer);
   console.log("Total settings size:", settingsStr.length);
-  for (const key in settings) {
-    if (Object.hasOwn(settings, key)) {
-      const value = settings[key];
-      const serialized = JSON.stringify(value, replacer);
-      console.log(`Key: ${key}, Size: ${serialized ? serialized.length : 0}`);
-    }
+  for (const [key, value] of Object.entries(settings)) {
+    const serialized = JSON.stringify(value, replacer);
+    console.log(`Key: ${key}, Size: ${serialized ? serialized.length : 0}`);
   }
   const chatStr = JSON.stringify(chat, replacer);
   console.log("Total chat history size:", chatStr ? chatStr.length : 0);
