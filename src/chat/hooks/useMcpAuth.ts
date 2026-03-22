@@ -24,17 +24,22 @@ const FALLBACK_MCP_USER_SCOPE_KEYS = [
   "affiliations",
 ] as const;
 
-type OpenIdConfigurationResponse = {
+interface OpenIdConfigurationResponse {
   issuer?: unknown;
   jwks_uri?: unknown;
   scopes_supported?: unknown;
-};
+}
 
-type McpDiscoveryMetadata = {
+interface McpDiscoveryMetadata {
   issuer?: string;
   jwksUri: string;
   scopes: McpScopeDefinition[];
-};
+}
+
+interface PublicKeyResult {
+  error?: EndpointInvalidError | EndpointUnavailableError;
+  publicKey?: CryptoKey;
+}
 
 interface UseMcpAuthDiscoveryArgs {
   config: McpAuthConfig;
@@ -49,19 +54,10 @@ function areScopesEqual(
   a: McpScopeDefinition[],
   b: McpScopeDefinition[]
 ): boolean {
-  const sortedA = [...a].sort((left, right) =>
-    left.scope.localeCompare(right.scope)
+  return (
+    JSON.stringify(getSortedScopeNames(a)) ===
+    JSON.stringify(getSortedScopeNames(b))
   );
-  const sortedB = [...b].sort((left, right) =>
-    left.scope.localeCompare(right.scope)
-  );
-
-  if (sortedA.length !== sortedB.length) return false;
-
-  return sortedA.every((scope, index) => {
-    const other = sortedB[index];
-    return scope.scope === other.scope;
-  });
 }
 
 function normalizeScopeDefinitions(scopes: unknown): McpScopeDefinition[] {
@@ -85,13 +81,50 @@ function normalizeScopeDefinitions(scopes: unknown): McpScopeDefinition[] {
     .sort((left, right) => left.scope.localeCompare(right.scope));
 }
 
+function getSortedScopeNames(scopes: McpScopeDefinition[]): string[] {
+  return [...scopes]
+    .map(({ scope }) => scope)
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function getOwnValue(record: Record<string, unknown>, key: string): unknown {
+  return Object.getOwnPropertyDescriptor(record, key)?.value;
+}
+
+function hasDefinedOwnValue(record: Record<string, unknown>, key: string): boolean {
+  return (
+    !BLOCKED_FIELDS.has(key) &&
+    Object.hasOwn(record, key) &&
+    getOwnValue(record, key) != null
+  );
+}
+
+function getPublicKeyErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return "unknown error";
+}
+
+function resolvePublicKey(result: PublicKeyResult): CryptoKey {
+  if (result.publicKey) {
+    return result.publicKey;
+  }
+
+  throw (
+    result.error ??
+    new EndpointInvalidError("JWKS response contains no importable keys")
+  );
+}
+
 export function getFallbackMcpUserScopes(
   user: Record<string, unknown> | null | undefined
 ): McpScopeDefinition[] {
   if (!user) return [];
 
-  return FALLBACK_MCP_USER_SCOPE_KEYS.filter(
-    (scope) => Object.hasOwn(user, scope) && user[scope] != null
+  return FALLBACK_MCP_USER_SCOPE_KEYS.filter((scope) =>
+    hasDefinedOwnValue(user, scope)
   ).map((scope) => ({ scope }));
 }
 
@@ -200,11 +233,8 @@ function buildFilteredData(
   user: Record<string, unknown>
 ): Record<string, unknown> | null {
   const entries = selectedScopes
-    .filter((field) => !BLOCKED_FIELDS.has(field) && Object.hasOwn(user, field))
-    .map((field) => [
-      field,
-      Object.getOwnPropertyDescriptor(user, field)?.value,
-    ]);
+    .filter((field) => hasDefinedOwnValue(user, field))
+    .map((field) => [field, getOwnValue(user, field)]);
 
   if (!entries.length) return null;
   return Object.fromEntries(entries);
@@ -271,32 +301,52 @@ async function fetchMcpDiscoveryMetadata(
   return { issuer, jwksUri, scopes };
 }
 
-async function fetchMcpPublicKey(jwksUri: string): Promise<CryptoKey> {
-  const jwksResponse = await fetch(jwksUri);
+async function fetchMcpPublicKey(jwksUri: string): Promise<PublicKeyResult> {
+  try {
+    const jwksResponse = await fetch(jwksUri);
 
-  if (!jwksResponse.ok) {
-    throw new EndpointUnavailableError(
-      `JWKS fetch failed: ${jwksResponse.status} ${jwksResponse.statusText}`
-    );
-  }
-
-  const jwks = await jwksResponse.json().catch(() => {
-    throw new EndpointInvalidError("JWKS response is not valid JSON");
-  });
-
-  if (!jwks?.keys || !Array.isArray(jwks.keys) || jwks.keys.length === 0) {
-    throw new EndpointInvalidError("JWKS response contains no valid keys");
-  }
-
-  for (const key of jwks.keys) {
-    try {
-      return (await jose.importJWK(key, "RSA-OAEP")) as CryptoKey;
-    } catch (error) {
-      console.warn("Ignoring invalid JWKS key: %o", error);
+    if (!jwksResponse.ok) {
+      return {
+        error: new EndpointUnavailableError(
+          `JWKS fetch failed: ${jwksResponse.status} ${jwksResponse.statusText}`
+        ),
+      };
     }
-  }
 
-  throw new EndpointInvalidError("JWKS response contains no importable keys");
+    const jwks = await jwksResponse.json().catch(() => null);
+
+    if (!jwks) {
+      return {
+        error: new EndpointInvalidError("JWKS response is not valid JSON"),
+      };
+    }
+
+    if (!jwks.keys || !Array.isArray(jwks.keys) || jwks.keys.length === 0) {
+      return {
+        error: new EndpointInvalidError("JWKS response contains no valid keys"),
+      };
+    }
+
+    for (const key of jwks.keys) {
+      try {
+        return {
+          publicKey: (await jose.importJWK(key, "RSA-OAEP")) as CryptoKey,
+        };
+      } catch (error) {
+        console.warn("Ignoring invalid JWKS key: %o", error);
+      }
+    }
+
+    return {
+      error: new EndpointInvalidError("JWKS response contains no importable keys"),
+    };
+  } catch (error) {
+    return {
+      error: new EndpointUnavailableError(
+        `JWKS fetch failed: ${getPublicKeyErrorMessage(error)}`
+      ),
+    };
+  }
 }
 
 export function buildUserDataConfig(
@@ -343,7 +393,7 @@ export async function discoverMcpAuthConfig(
     const discovery = await fetchMcpDiscoveryMetadata(serverUrl);
 
     if (currentConfig.mode === "user-data") {
-      await fetchMcpPublicKey(discovery.jwksUri);
+      resolvePublicKey(await fetchMcpPublicKey(discovery.jwksUri));
     }
 
     return buildUserDataConfig(currentConfig, discovery.scopes);
@@ -506,7 +556,9 @@ async function getUserDataAuthorization(
 
   try {
     const discovery = await fetchMcpDiscoveryMetadata(serverUrl);
-    const publicKey = await fetchMcpPublicKey(discovery.jwksUri);
+    const publicKey = resolvePublicKey(
+      await fetchMcpPublicKey(discovery.jwksUri)
+    );
     return await encryptPayload(
       filteredData,
       publicKey,
@@ -529,15 +581,22 @@ export async function getAuthorizationForMcpConfig(
 ): Promise<string | undefined> {
   const normalizedConfig = normalizeMcpAuthConfig(config);
 
-  switch (normalizedConfig.mode) {
-    case "none":
-      return undefined;
-    case "static":
-      return getStaticAuthorization(normalizedConfig.staticToken);
-    case "user-data":
-      return getUserDataAuthorization(normalizedConfig, serverUrl, user);
-    default:
-      return undefined;
+  try {
+    switch (normalizedConfig.mode) {
+      case "none":
+        return undefined;
+      case "static":
+        return getStaticAuthorization(normalizedConfig.staticToken);
+      case "user-data":
+        return await getUserDataAuthorization(normalizedConfig, serverUrl, user);
+      default:
+        return undefined;
+    }
+  } catch (error) {
+    console.error("Failed to get MCP authorization:", error);
+    throw error instanceof Error
+      ? error
+      : new Error(i18n.t("mcp_authorization_failed"));
   }
 }
 

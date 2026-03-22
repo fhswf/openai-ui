@@ -272,6 +272,88 @@ export function openEditMcpEditor(args: {
   args.setDialogOpen(true);
 }
 
+function updateOpenAiOptions(args: {
+  mcpAuthConfigs?: Map<string, McpAuthConfig>;
+  openai: OpenAIOptions;
+  setOptions: GlobalActions["setOptions"];
+  tools?: Map<string, Tool>;
+}): void {
+  args.setOptions({
+    type: OptionActionType.OPENAI,
+    data: {
+      ...args.openai,
+      ...(args.tools ? { tools: args.tools } : {}),
+      ...(args.mcpAuthConfigs ? { mcpAuthConfigs: args.mcpAuthConfigs } : {}),
+    },
+  });
+}
+
+function shouldPromptForConsent(
+  checked: boolean,
+  tool: Tool,
+  mcpAuthConfig: McpAuthConfig | undefined
+): tool is Tool.Mcp {
+  return (
+    checked &&
+    isMcpTool(tool) &&
+    isMcpAuthorizationIncomplete(mcpAuthConfig) &&
+    !hasBeenConsentPrompted(mcpAuthConfig)
+  );
+}
+
+function markConsentPrompted(
+  mcpAuthConfig: McpAuthConfig | undefined
+): McpAuthConfig | undefined {
+  if (mcpAuthConfig?.mode !== "user-data") {
+    return mcpAuthConfig;
+  }
+
+  return {
+    mode: "user-data",
+    userData: {
+      ...mcpAuthConfig.userData,
+      consentPrompted: true,
+    },
+  };
+}
+
+function setToolEnabled(
+  collections: McpToolCollections,
+  key: string,
+  checked: boolean
+): void {
+  if (checked) {
+    collections.toolsEnabled.add(key);
+    return;
+  }
+
+  collections.toolsEnabled.delete(key);
+}
+
+function openConsentPrompt(args: {
+  collections: McpToolCollections;
+  key: string;
+  mcpAuthConfig: McpAuthConfig | undefined;
+  onEditTool: React.Dispatch<EditToolRequest>;
+  openai: OpenAIOptions;
+  setOptions: GlobalActions["setOptions"];
+  tool: Tool.Mcp;
+}): void {
+  setToolEnabled(args.collections, args.key, true);
+
+  const nextAuthConfig = markConsentPrompted(args.mcpAuthConfig);
+  if (nextAuthConfig) {
+    args.collections.mcpAuthConfigs.set(args.key, nextAuthConfig);
+  }
+
+  updateOpenAiOptions({
+    mcpAuthConfigs: args.collections.mcpAuthConfigs,
+    openai: args.openai,
+    setOptions: args.setOptions,
+  });
+  args.onEditTool({ key: args.key, tool: args.tool, consentPrompt: true });
+}
+
 export function updateToolSelection(args: {
   checkedChange: CheckedChange;
   collections: McpToolCollections;
@@ -284,41 +366,23 @@ export function updateToolSelection(args: {
   const checked = getCheckedValue(args.checkedChange);
   const mcpAuthConfig = args.collections.mcpAuthConfigs.get(args.key);
 
-  if (
-    checked &&
-    isMcpTool(args.tool) &&
-    isMcpAuthorizationIncomplete(mcpAuthConfig) &&
-    !hasBeenConsentPrompted(mcpAuthConfig)
-  ) {
-    // First time: enable the tool, mark as prompted, persist, then open edit dialog
-    args.collections.toolsEnabled.add(args.key);
-    if (mcpAuthConfig?.mode === "user-data") {
-      args.collections.mcpAuthConfigs.set(args.key, {
-        mode: "user-data",
-        userData: {
-          ...mcpAuthConfig.userData,
-          consentPrompted: true,
-        },
-      });
-      args.setOptions({
-        type: OptionActionType.OPENAI,
-        data: { ...args.openai },
-      });
-    }
-    args.onEditTool({ key: args.key, tool: args.tool, consentPrompt: true });
+  if (shouldPromptForConsent(checked, args.tool, mcpAuthConfig)) {
+    openConsentPrompt({
+      collections: args.collections,
+      key: args.key,
+      mcpAuthConfig,
+      onEditTool: args.onEditTool,
+      openai: args.openai,
+      setOptions: args.setOptions,
+      tool: args.tool,
+    });
     return;
   }
 
-  // Already prompted or consent granted: allow normal toggle
-  if (checked) {
-    args.collections.toolsEnabled.add(args.key);
-  } else {
-    args.collections.toolsEnabled.delete(args.key);
-  }
-
-  args.setOptions({
-    type: OptionActionType.OPENAI,
-    data: { ...args.openai },
+  setToolEnabled(args.collections, args.key, checked);
+  updateOpenAiOptions({
+    openai: args.openai,
+    setOptions: args.setOptions,
   });
 }
 
@@ -358,38 +422,25 @@ async function getAuthorizationResult(args: {
   }
 }
 
-function createBaseMcpToolDefinition(form: McpToolFormState): Tool.Mcp {
-  return {
-    type: "mcp",
-    server_label: form.label,
-    server_url: form.server_url,
-    require_approval: form.require_approval,
-  };
-}
-
-function applyMcpAuthorization(tool: Tool.Mcp, authorization?: string): void {
-  if (authorization) {
-    tool.authorization = authorization;
-  }
-}
-
-function applyAllowedToolList(tool: Tool.Mcp, allowedToolsInput: string): void {
+function getAllowedToolsForDefinition(allowedToolsInput: string): string[] {
   const allowedTools = getAllowedTools(allowedToolsInput);
-  if (allowedTools.length > 0) {
-    tool.allowed_tools = allowedTools;
-  }
+  return allowedTools.length > 0 ? allowedTools : [];
 }
 
 function createMcpToolDefinition(
   form: McpToolFormState,
   authorization?: string
 ): Tool.Mcp {
-  const tool = createBaseMcpToolDefinition(form);
+  const allowedTools = getAllowedToolsForDefinition(form.allowed_tools_input);
 
-  applyMcpAuthorization(tool, authorization);
-  applyAllowedToolList(tool, form.allowed_tools_input);
-
-  return tool;
+  return {
+    type: "mcp",
+    server_label: form.label,
+    server_url: form.server_url,
+    require_approval: form.require_approval,
+    ...(authorization ? { authorization } : {}),
+    ...(allowedTools.length > 0 ? { allowed_tools: allowedTools } : {}),
+  };
 }
 
 function persistMcpService(args: PersistMcpServiceArgs): void {
@@ -412,13 +463,11 @@ function persistMcpService(args: PersistMcpServiceArgs): void {
   );
   args.collections.mcpAuthConfigs.set(args.form.label, nextAuthConfig);
 
-  args.setOptions({
-    type: OptionActionType.OPENAI,
-    data: {
-      ...args.openai,
-      tools: args.collections.tools,
-      mcpAuthConfigs: args.collections.mcpAuthConfigs,
-    },
+  updateOpenAiOptions({
+    mcpAuthConfigs: args.collections.mcpAuthConfigs,
+    openai: args.openai,
+    setOptions: args.setOptions,
+    tools: args.collections.tools,
   });
 }
 
@@ -459,9 +508,10 @@ function deleteMcpService(args: DeleteMcpServiceArgs): void {
   args.collections.tools.delete(args.key);
   args.collections.toolsEnabled.delete(args.key);
   args.collections.mcpAuthConfigs.delete(args.key);
-  args.setOptions({
-    type: OptionActionType.OPENAI,
-    data: { ...args.openai, tools: args.collections.tools },
+  updateOpenAiOptions({
+    openai: args.openai,
+    setOptions: args.setOptions,
+    tools: args.collections.tools,
   });
 }
 

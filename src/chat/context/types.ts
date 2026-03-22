@@ -150,15 +150,15 @@ export type App = {
   botStarts: boolean;
 };
 
-export type McpScopeDefinition = {
+export interface McpScopeDefinition {
   scope: string;
-};
+}
 
-export type McpUserDataDiscovery = {
+export interface McpUserDataDiscovery {
   scopes: McpScopeDefinition[];
   consentGranted: boolean;
   consentPrompted?: boolean;
-};
+}
 
 export type McpAuthConfig =
   | { mode: "none" }
