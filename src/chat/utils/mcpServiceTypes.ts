@@ -20,8 +20,8 @@ export type CheckedChange = boolean | { checked: boolean | "indeterminate" };
 export type McpTextFieldName = "label" | "server_url" | "allowed_tools_input";
 export type McpToolMap = Map<string, Tool.Mcp>;
 export type McpAuthorizationGetter = (
-  config: McpAuthConfig,
-  serverUrl: string
+  _config: McpAuthConfig,
+  _serverUrl: string
 ) => Promise<string | undefined>;
 
 export interface EditToolRequest {

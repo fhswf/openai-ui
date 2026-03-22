@@ -165,7 +165,7 @@ export function getAuthorizationResult(args: {
   return args
     .getAuthorization(args.authConfig, args.serverUrl)
     .then((authorization) => ({ ok: true, authorization }))
-    .catch((error) => {
+    .catch((error: unknown) => {
       alert(
         error instanceof Error
           ? error.message
