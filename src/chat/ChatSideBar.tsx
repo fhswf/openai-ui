@@ -187,7 +187,7 @@ export function ChatSideBar() {
 
   const toggleTheme = () => {
     const currentTheme =
-      document.documentElement.dataset.theme || options.general.theme;
+      document.documentElement.dataset.theme ?? options.general.theme;
     setGeneral({
       theme: currentTheme === "light" ? "dark" : "light",
     });
