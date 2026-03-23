@@ -1,13 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useState } from "react";
 
 import { useGlobal } from "./context";
-import { useApps } from "./apps/context";
-import React from "react";
 import {
   Card,
   HStack,
   IconButton,
-  Kbd,
   Dialog,
   SimpleGrid,
   Spacer,
@@ -15,30 +12,25 @@ import {
   Heading,
   Button,
 } from "@chakra-ui/react";
-import { classnames } from "../components/utils";
+
 import styles from "./style/menu.module.less";
 import { useTranslation } from "react-i18next";
-import { IoChatboxOutline, IoCloseOutline } from "react-icons/io5";
-import { IoIosClose } from "react-icons/io";
+import { IoCloseOutline } from "react-icons/io5";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { RiChatHistoryLine, RiChatNewLine } from "react-icons/ri";
 import { Message } from "./context/types";
-import { Toaster, toaster } from "../components/ui/toaster";
+
 
 export function MessageMenu() {
   const {
-    is,
-    setIs,
     setState,
     newChat,
     removeChat,
-    options,
-    user,
     chat,
     currentApp,
     currentChat,
   } = useGlobal();
-  const { apps, category } = useApps();
+
   const { t } = useTranslation();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -87,7 +79,7 @@ export function MessageMenu() {
         (item: { type: string; text: string }) => item.type == "input_image"
       )?.image_url;
       if (url) {
-        return <img src={url} alt="image" className={styles.image} />;
+        return <img src={url} alt="" className={styles.image} />;
       }
     }
   }
