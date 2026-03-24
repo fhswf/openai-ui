@@ -143,7 +143,14 @@ export function ChatOptions() {
             >
               <Stack direction="row">
                 {themeOptions.map((item) => (
-                  <Radio key={item.value} value={item.value} data-testid={"themeSelect" + item.value}>
+                  <Radio
+                    key={item.value}
+                    value={item.value}
+                    data-testid={"themeSelect" + item.value}
+                    onClick={() => {
+                      setGeneral({ theme: item.value });
+                    }}
+                  >
                     {item.label}
                   </Radio>
                 ))}

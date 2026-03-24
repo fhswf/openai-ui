@@ -312,10 +312,12 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
     effectiveUserDataScopes.length > 0
       ? effectiveUserDataScopes
       : getFallbackMcpUserScopes(user);
+  const userDataModeDisabled =
+    userDataOptionDisabled && displayedScopes.length === 0;
 
   const handleModeChange = (details: { value: string }) => {
     const mode = details.value as McpAuthMode;
-    if (mode === "user-data" && userDataOptionDisabled) {
+    if (mode === "user-data" && userDataModeDisabled) {
       return;
     }
 
@@ -384,7 +386,7 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
               <AuthModeOption
                 value="user-data"
                 testId="mcp-auth-mode-user-data"
-                disabled={userDataOptionDisabled}
+                disabled={userDataModeDisabled}
                 label={t("user_data")}
               >
                 <Badge colorPalette="green" size="sm" variant="subtle">

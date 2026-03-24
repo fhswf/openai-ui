@@ -241,9 +241,6 @@ export function useMcpAuthDiscovery({
 
     if (!trimmedServerUrl) {
       setDiscoveredScopes([]);
-      if (normalizedConfig.mode === "user-data") {
-        onChange(DEFAULT_MCP_AUTH_CONFIG);
-      }
       return;
     }
 
@@ -267,10 +264,6 @@ export function useMcpAuthDiscovery({
 
           discoveredServerUrlRef.current = trimmedServerUrl;
           setDiscoveredScopes([]);
-
-          if (normalizedConfig.mode === "user-data") {
-            onChange(DEFAULT_MCP_AUTH_CONFIG);
-          }
         });
     }, 300);
 

@@ -178,10 +178,19 @@ export function ChatSideBar() {
   const [newRelease, setNewRelease] = useState(false);
   const { is, setState, options, version, release } = useGlobal();
   const { setGeneral, setAccount } = useOptions();
+  const informationWindowOpen = !options.account.terms || open;
 
   const acceptTerms = () => {
-    setAccount({ terms: true });
     setOpen(false);
+    setAccount({ terms: true });
+  };
+
+  const toggleTheme = () => {
+    const currentTheme =
+      document.documentElement.dataset.theme ?? options.general.theme;
+    setGeneral({
+      theme: currentTheme === "light" ? "dark" : "light",
+    });
   };
 
   useEffect(() => {
@@ -221,11 +230,7 @@ export function ChatSideBar() {
       >
         <Option
           type={options.general.theme}
-          onClick={() =>
-            setGeneral({
-              theme: options.general.theme === "light" ? "dark" : "light",
-            })
-          }
+          onClick={toggleTheme}
           tooltip={t("Theme")}
           dataTestId="OptionDarkModeSelect"
         />
@@ -246,8 +251,12 @@ export function ChatSideBar() {
       <Spacer />
       <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
         <DialogRoot
-          open={!options.account.terms || open}
-          onOpenChange={(e) => setOpen(e.open)}
+          open={informationWindowOpen}
+          onOpenChange={(e) => {
+            if (options.account.terms) {
+              setOpen(e.open);
+            }
+          }}
           size="lg"
         >
           <DialogTrigger asChild>

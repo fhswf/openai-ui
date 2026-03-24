@@ -40,7 +40,6 @@ test("migrates chat history to separate localStorage key", async ({ page }) => {
     };
 
     // Enable console logging
-    page.on("console", (msg) => console.log(`BROWSER LOG: ${msg.text()}`));
     page.on("pageerror", (err) => console.log(`BROWSER ERROR: ${err}`));
 
     // Mock user API

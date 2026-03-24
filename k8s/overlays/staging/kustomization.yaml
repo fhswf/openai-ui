@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base
+namePrefix: staging-
+namespace: staging-openai-proxy
+
+configMapGenerator:
+- files:
+  - default.conf=nginx-staging.conf
+  name: nginx-staging-conf
+
+patches:
+- path: deployment-patch.yaml
+- patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: openai.gawron.dev
+  target:
+    kind: Ingress
+images:
+- name: ghcr.io/fhswf/openai-ui
+  newName: ghcr.io/fhswf/openai-ui
+  newTag: sha-6d901a8

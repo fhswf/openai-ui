@@ -5,16 +5,19 @@ import {
   OptionActionType,
 } from "../context/types";
 
+function applyDocumentAppearance(theme: string, size: string) {
+  const root = document.documentElement;
+  root.className = "";
+  root.dataset.theme = theme;
+  root.dataset.size = size;
+  root.classList.add(theme, size);
+}
+
 export function useOptions() {
   const { options, setOptions } = useGlobal();
   const { size, theme } = options.general;
   useEffect(() => {
-    const body = document.querySelector("html");
-    if (!body) return;
-    body.className = "";
-    body.dataset.theme = theme;
-    body.dataset.size = size;
-    body.classList.add(theme, size);
+    applyDocumentAppearance(theme, size);
   }, [theme, size]);
 
   const setAccount = (data = {}) => {
@@ -26,6 +29,17 @@ export function useOptions() {
 
   const setGeneral = (data = {}) => {
     console.log("setGeneral: %o", data);
+    const nextTheme = "theme" in data ? data.theme : options.general.theme;
+    const nextSize = "size" in data ? data.size : options.general.size;
+
+    if (
+      typeof nextTheme === "string" &&
+      typeof nextSize === "string" &&
+      ("theme" in data || "size" in data)
+    ) {
+      applyDocumentAppearance(nextTheme, nextSize);
+    }
+
     setOptions({
       type: OptionActionType.GENERAL,
       data,

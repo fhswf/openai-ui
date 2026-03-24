@@ -1,5 +1,7 @@
 import { initState } from "../context/initState";
 import { App, Chat, GlobalState, Message, Options } from "../context/types";
+import { toaster } from "../../components/ui/toaster";
+import { t } from "i18next";
 
 export const SESSION_KEY = "SESSIONS";
 export const CHAT_HISTORY_KEY = "CHAT_HISTORY";
@@ -31,6 +33,123 @@ export function reviver(key, value) {
   return value;
 }
 
+type PersistedSettings = Record<string, unknown> & {
+  currentChat: number;
+};
+
+function isQuotaExceededError(error: unknown): error is Error {
+  return error instanceof Error && error.name === "QuotaExceededError";
+}
+
+function logStorageSizes(settings: PersistedSettings, chat: Chat[]) {
+  console.error("Quota exceeded! Analyzing sizes...");
+  const settingsStr = JSON.stringify(settings, replacer);
+  console.log("Total settings size:", settingsStr.length);
+  for (const [key, value] of Object.entries(settings)) {
+    const serialized = JSON.stringify(value, replacer);
+    console.log(`Key: ${key}, Size: ${serialized ? serialized.length : 0}`);
+  }
+  const chatStr = JSON.stringify(chat, replacer);
+  console.log("Total chat history size:", chatStr ? chatStr.length : 0);
+}
+
+function pruneChatHistoryToFitStorage(
+  settings: PersistedSettings,
+  chat: Chat[],
+  originalError: Error
+) {
+  let prunedChat = [...chat];
+  let hasNotified = false;
+
+  while (prunedChat.length > 0) {
+    if (!hasNotified) {
+      toaster.create({
+        title: t("Storage Limit Reached"),
+        description: t("Automatically removing oldest chats to save space."),
+        type: "warning",
+        duration: 5000,
+      });
+      hasNotified = true;
+    }
+
+    let indexToRemove = prunedChat.length - 1;
+    if (indexToRemove === settings.currentChat) {
+      indexToRemove--;
+    }
+
+    if (indexToRemove < 0) {
+      console.error("Cannot prune chat history any further.");
+      throw originalError;
+    }
+
+    prunedChat.splice(indexToRemove, 1);
+
+    try {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(prunedChat, replacer));
+      if (indexToRemove < settings.currentChat) {
+        settings.currentChat--;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(settings, replacer));
+      }
+      return;
+    } catch (nextError) {
+      if (isQuotaExceededError(nextError)) {
+        continue;
+      }
+      throw nextError;
+    }
+  }
+}
+
+function stripStoredInputImage(content: unknown) {
+  if (!content || typeof content !== "object") {
+    return content;
+  }
+
+  const objectContent = content as Record<string, unknown>;
+  if (
+    objectContent.type !== "input_image" ||
+    typeof objectContent.image_url !== "string"
+  ) {
+    return content;
+  }
+
+  if (
+    objectContent.image_url.startsWith("data:") ||
+    objectContent.image_url.length > 100000
+  ) {
+    const { image_url, ...rest } = objectContent;
+    if (image_url.length > 100000) {
+      console.warn("Image URL is too large, removing it: %s", image_url);
+    }
+    return rest;
+  }
+
+  return content;
+}
+
+function stripStoredToolPayload(tool: unknown) {
+  if (!tool || typeof tool !== "object") {
+    return tool;
+  }
+
+  const cleanTool = { ...(tool as Record<string, unknown>) };
+
+  if (cleanTool.type === "image_generation_call" && cleanTool.result) {
+    cleanTool.result = "[image data stored in OPFS]";
+  } else if (
+    typeof cleanTool.result === "string" &&
+    cleanTool.result.length > 50000
+  ) {
+    cleanTool.result = "[stripped to save space]";
+  }
+
+  if ("image_b64" in cleanTool) {
+    delete cleanTool.image_b64;
+  }
+
+  return cleanTool;
+}
+
 export function saveState(stateToSave: {
   current: number;
   chat: Chat[];
@@ -56,27 +175,25 @@ export function saveState(stateToSave: {
   release?: any;
 }) {
   const reducedState = reduceState(stateToSave);
-  const { chat, ...settings } = reducedState;
+  const { chat, ...settings } = reducedState as typeof reducedState & {
+    currentChat: number;
+  };
 
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify(settings, replacer));
+  } catch (error) {
+    console.error("Failed to save settings:", error);
+  }
+
+  try {
     localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chat, replacer));
   } catch (error) {
-    if (error instanceof Error && error.name === "QuotaExceededError") {
-      console.error("Quota exceeded! Analyzing sizes...");
-      const settingsStr = JSON.stringify(settings, replacer);
-      console.log("Total settings size:", settingsStr.length);
-      for (const key in settings) {
-        if (Object.hasOwn(settings, key)) {
-          const val = (settings as unknown as Record<string, unknown>)[key];
-          const s = JSON.stringify(val, replacer);
-          console.log(`Key: ${key}, Size: ${s ? s.length : 0}`);
-        }
-      }
-      const chatStr = JSON.stringify(chat, replacer);
-      console.log("Total chat history size:", chatStr ? chatStr.length : 0);
+    if (!isQuotaExceededError(error)) {
+      throw error;
     }
-    throw error;
+
+    logStorageSizes(settings, chat);
+    pruneChatHistoryToFitStorage(settings, chat, error);
   }
 }
 
@@ -132,32 +249,29 @@ export function reduceState(state: GlobalState): GlobalState {
   const cleanState = { ...state };
   delete cleanState.is;
   delete cleanState.eventProcessor;
-  cleanState.chat = cleanState.chat.map((chat: Chat) => ({
-    ...chat,
-    messages: chat.messages.map((message: Message) => {
-      if (message.content && Array.isArray(message.content)) {
-        return {
-          ...message,
-          content: message.content.map((content) => {
-            if (content.type === "input_image" && content.image_url) {
-              // If the content is an image, remove the image_url property
-              const { image_url, ...rest } = content;
-              // If the image_url is too large, remove it
-              if (image_url.length > 100000) {
-                console.warn(
-                  "Image URL is too large, removing it: %s",
-                  image_url
-                );
-                return rest;
-              }
-            }
-            return content;
-          }),
-        };
+  cleanState.chat = cleanState.chat.map((chat: Chat) => {
+    const cleanChat = { ...chat };
+
+    cleanChat.messages = cleanChat.messages.map((message: Message) => {
+      const cleanMessage = { ...message };
+
+      if (Array.isArray(cleanMessage.content)) {
+        cleanMessage.content = cleanMessage.content.map((content) =>
+          stripStoredInputImage(content)
+        );
       }
-      return { ...message };
-    }),
-  }));
+
+      if (Array.isArray(cleanMessage.toolsUsed)) {
+        cleanMessage.toolsUsed = cleanMessage.toolsUsed.map((tool) =>
+          stripStoredToolPayload(tool)
+        );
+      }
+
+      return cleanMessage;
+    });
+
+    return cleanChat;
+  });
   // Remove any properties that are not needed in the options
   return cleanState;
 }
