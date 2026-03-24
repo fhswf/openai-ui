@@ -2,8 +2,6 @@ import {
   ToolChoiceTypes,
   Tool,
 } from "openai/resources/responses/responses.mjs";
-import { Tooltip } from "recharts";
-import internal from "stream";
 
 export type { Tool, ToolChoiceTypes };
 
@@ -152,12 +150,19 @@ export type App = {
   botStarts: boolean;
 };
 
-
-export type McpAuthMode = "none" | "static" | "user-data";
-
-
-export interface McpAuthConfig {
-  mode: McpAuthMode;
-  staticToken?: string;
-  selectedFields: string[];
+export interface McpScopeDefinition {
+  scope: string;
 }
+
+export interface McpUserDataDiscovery {
+  scopes: McpScopeDefinition[];
+  consentGranted: boolean;
+  consentPrompted?: boolean;
+}
+
+export type McpAuthConfig =
+  | { mode: "none" }
+  | { mode: "static"; staticToken: string }
+  | { mode: "user-data"; userData: McpUserDataDiscovery };
+
+export type McpAuthMode = McpAuthConfig["mode"];

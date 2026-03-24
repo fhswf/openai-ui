@@ -142,12 +142,51 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           static_token: "Static Token",
           enter_token: "Enter token...",
           user_data: "User Data",
+          mcp_scope_name: "First and last name",
+          mcp_scope_email: "Email address",
+          mcp_scope_preferred_username: "Username",
+          mcp_scope_sub: "User identifier",
+          mcp_scope_affiliations: "Affiliations",
           encrypted: "encrypted",
           only_authorized_servers_can_decrypt:
             "Only authorized FH servers can decrypt.",
           learn_more: "Learn more",
           selected: "selected",
           privacy_notice: "Privacy Notice",
+          mcp_privacy_notice_body: `
+### Data transfer to MCP servers
+
+If you consent to sending user data, the selected data will be
+**encrypted** and transferred to authorized MCP servers of FH Südwestfalen.
+
+**Important:**
+- The data is **end-to-end encrypted** and can only be decrypted by authorized MCP servers
+- OpenAI or unauthorized third parties **cannot** read this data
+- The transfer is **voluntary** and can be revoked at any time
+- Without your consent, **no** personal data will be transferred
+
+You can find the full privacy notice in the app's info menu (?).
+`,
+          mcp_no_user_data_scopes:
+            "No user-data scopes were discovered for this server.",
+          mcp_user_data_consent:
+            "I consent to sending the discovered user data scopes.",
+          mcp_encryption_failed: "Encryption failed",
+          mcp_authorization_could_not_be_created:
+            "Authorization could not be created",
+          mcp_authorization_required_before_save:
+            "To use this MCP server, you must agree to the transfer of user data.",
+          mcp_authorization_incomplete:
+            "Authorization is incomplete. Please authorize it in settings.",
+          mcp_blocked_missing_consent:
+            "blocked: consent required to send user data",
+          mcp_unauthorized_error: "MCP Server: Unauthorized",
+          mcp_consent_prompt_info:
+            "You have been redirected here because this MCP server can use your user data for certain features. You can grant consent below or simply close this dialog. The server is already enabled and will work, but features that require authorization will not be available without consent.",
+          mcp_save_without_consent_info:
+            "You can save and use this server without data transfer, but some features of the MCP server may not be available.",
+          please_fill_in_all_required_fields:
+            "Please fill in all required fields",
           understood: "Understood",
         },
       }, // German
@@ -402,12 +441,51 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           static_token: "Statisches Token",
           enter_token: "Token eingeben...",
           user_data: "Benutzerdaten",
+          mcp_scope_name: "Vor- und Nachname",
+          mcp_scope_email: "E-Mail-Adresse",
+          mcp_scope_preferred_username: "Benutzername",
+          mcp_scope_sub: "Benutzerkennung",
+          mcp_scope_affiliations: "Zugehörigkeiten",
           encrypted: "verschlüsselt",
           only_authorized_servers_can_decrypt:
             "Nur autorisierte FH-Server können entschlüsseln.",
           learn_more: "Mehr erfahren",
           selected: "ausgewählt",
           privacy_notice: "Datenschutzhinweise",
+          mcp_privacy_notice_body: `
+### Datenübertragung an MCP-Server
+
+Wenn Sie der Übertragung von Benutzerdaten zustimmen, werden die ausgewählten Daten
+**verschlüsselt** an autorisierte MCP-Server der FH Südwestfalen übertragen.
+
+**Wichtig:**
+- Die Daten werden **Ende-zu-Ende verschlüsselt** und können nur von autorisierten MCP-Servern entschlüsselt werden
+- OpenAI oder unbefugte Dritte können diese Daten **nicht** lesen
+- Die Übertragung ist **freiwillig** und kann jederzeit widerrufen werden
+- Ohne Ihre Einwilligung werden **keine** personenbezogenen Daten übertragen
+
+Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendung.
+`,
+          mcp_no_user_data_scopes:
+            "Für diesen Server wurden keine Benutzerdaten-Scopes gefunden.",
+          mcp_user_data_consent:
+            "Ich stimme der Übertragung der ermittelten Benutzerdaten-Scopes zu.",
+          mcp_encryption_failed: "Verschlüsselung fehlgeschlagen",
+          mcp_authorization_could_not_be_created:
+            "Autorisierung konnte nicht erstellt werden",
+          mcp_authorization_required_before_save:
+            "Um diesen MCP-Server zu verwenden, müssen Sie der Übertragung der Benutzerdaten zustimmen.",
+          mcp_authorization_incomplete:
+            "Autorisierung nicht abgeschlossen. Bitte in den Einstellungen autorisieren.",
+          mcp_blocked_missing_consent:
+            "blockiert: Zustimmung zum Senden von Benutzerdaten erforderlich",
+          mcp_unauthorized_error: "MCP-Server: Nicht autorisiert",
+          mcp_consent_prompt_info:
+            "Sie wurden hierher weitergeleitet, weil dieser MCP-Server Ihre Benutzerdaten für bestimmte Funktionen verwenden kann. Sie können unten Ihre Zustimmung erteilen oder diesen Dialog einfach schließen. Der Server ist bereits aktiviert und funktioniert, aber Funktionen die eine Autorisierung benötigen stehen ohne Zustimmung nicht zur Verfügung.",
+          mcp_save_without_consent_info:
+            "Sie können diesen Server ohne Datenübertragung speichern und verwenden, aber einige Funktionen des MCP-Servers stehen dann nicht zur Verfügung.",
+          please_fill_in_all_required_fields:
+            "Bitte füllen Sie alle Pflichtfelder aus",
           understood: "Verstanden",
         },
       },

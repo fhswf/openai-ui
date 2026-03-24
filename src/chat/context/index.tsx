@@ -15,16 +15,9 @@ import {
   GlobalActions,
   GlobalState,
   GlobalActionType,
-  Chat,
-  Message,
-  App,
-  Options,
 } from "./types";
-import { getResponse } from "../service/openai";
 import {
-  inflateState,
   loadState,
-  reduceState,
   reviver,
   saveState,
   SESSION_KEY,
@@ -51,10 +44,16 @@ export const ChatProvider = ({ children }) => {
 
   try {
     const stored = JSON.parse(localStorage.getItem(SESSION_KEY), reviver);
-    const chatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY), reviver);
+    const chatHistory = JSON.parse(
+      localStorage.getItem(CHAT_HISTORY_KEY),
+      reviver
+    );
     init = { ...init, ...stored };
     if (chatHistory) {
       init.chat = chatHistory;
+    }
+    if (!init.options.openai.mcpAuthConfigs) {
+      init.options.openai.mcpAuthConfigs = new Map();
     }
   } catch (e) {
     console.error("error parsing state: %s", e);
@@ -72,8 +71,14 @@ export const ChatProvider = ({ children }) => {
     console.log("ChatProvider: useEffect: fetching state from localStorage");
     const fetchState = async () => {
       const savedState = await getState();
-      if (savedState) {
-        dispatch({ type: GlobalActionType.SET_STATE, payload: savedState });
+      if (Array.isArray(savedState.chat)) {
+        // Only merge persisted chat during async hydration. Some seeded sessions
+        // only contain options, and dispatching `chat: undefined` would wipe the
+        // initialized chat state and break subsequent persistence.
+        dispatch({
+          type: GlobalActionType.SET_STATE,
+          payload: { chat: savedState.chat },
+        });
       }
     };
     fetchState();
@@ -82,13 +87,18 @@ export const ChatProvider = ({ children }) => {
   // get user
   useEffect(() => {
     console.log("fetch user");
-    fetchAndGetUser(dispatch, state.options, actionList.setOptions);
+    fetchAndGetUser(
+      dispatch,
+      () => latestState.current.options,
+      actionList.setOptions
+    );
   }, []);
 
   useEffect(() => {
-    const stateToSave = { ...latestState.current };
-    saveState(stateToSave);
-  }, [latestState.current]);
+    // Persist the current reducer state directly so MCP auth/tool changes are
+    // saved immediately instead of lagging one render behind the ref.
+    saveState({ ...state });
+  }, [state]);
 
   return (
     <ChatContext.Provider value={{ ...state, ...actionList }}>

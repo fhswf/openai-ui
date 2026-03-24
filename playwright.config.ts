@@ -7,6 +7,8 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 dotenv.config();
 
+const limitedCrossBrowserTests = /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/;
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -25,7 +27,9 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? [['github'], ['html'], ['json', { outputFile: 'playwright-report/results.json' }]] : 'html',
+  reporter: process.env.CI
+    ? [['github'], ['html'], ['json', { outputFile: 'playwright-report/results.json' }]]
+    : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
@@ -66,9 +70,8 @@ export default defineConfig({
         ...devices['Desktop Safari'],
         storageState: 'playwright/.auth/user.json'
       },
-      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
+      testMatch: limitedCrossBrowserTests,
       dependencies: ['setup'],
-
     },
 
     /* Test against mobile viewports. */
@@ -78,7 +81,7 @@ export default defineConfig({
         ...devices['Pixel 5'],
         storageState: 'playwright/.auth/user.json'
       },
-      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
+      testMatch: limitedCrossBrowserTests,
       dependencies: ['setup'],
     },
     {
@@ -87,7 +90,7 @@ export default defineConfig({
         ...devices['iPhone 12'],
         storageState: 'playwright/.auth/user.json'
       },
-      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
+      testMatch: limitedCrossBrowserTests,
       dependencies: ['setup'],
     },
 
@@ -95,13 +98,13 @@ export default defineConfig({
     {
       name: 'Microsoft Edge',
       use: { ...devices['Desktop Edge'], channel: 'msedge', storageState: 'playwright/.auth/user.json' },
-      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
+      testMatch: limitedCrossBrowserTests,
       dependencies: ['setup'],
     },
     {
       name: 'Google Chrome',
       use: { ...devices['Desktop Chrome'], channel: 'chrome', storageState: 'playwright/.auth/user.json' },
-      testMatch: /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/,
+      testMatch: limitedCrossBrowserTests,
       dependencies: ['setup'],
     },
   ],

@@ -1,50 +1,319 @@
+import React from "react";
 import * as jose from "jose";
-import { McpAuthConfig } from "../context/types";
+import i18n from "../../i18n/config";
+import { McpAuthConfig, McpScopeDefinition } from "../context/types";
+import {
+  areScopesEqual,
+  buildFilteredData,
+  DEFAULT_MCP_USER_DATA,
+  fetchMcpDiscoveryMetadata,
+  fetchMcpPublicKey,
+  hasDefinedOwnValue,
+  isRecord,
+  normalizeScopeDefinitions,
+  resolvePublicKey,
+} from "./mcpAuthHelpers";
 
-const BLOCKED_FIELDS = new Set(["__proto__", "constructor", "prototype"]);
+const MCP_AUTH_TOKEN_LIFETIME_SECONDS = 6 * 60 * 60;
 
-function buildFilteredData(
-  selectedFields: string[],
-  user: Record<string, unknown>
-): Record<string, unknown> | null {
-  const entries = selectedFields
-    .filter((f) => !BLOCKED_FIELDS.has(f) && Object.hasOwn(user, f))
-    .map((f) => [f, Object.getOwnPropertyDescriptor(user, f)?.value]);
+export const DEFAULT_MCP_AUTH_CONFIG: McpAuthConfig = {
+  mode: "none",
+};
 
-  if (!entries.length) return null;
-  return Object.fromEntries(entries);
+const FALLBACK_MCP_USER_SCOPE_KEYS = [
+  "name",
+  "email",
+  "preferred_username",
+  "sub",
+  "affiliations",
+] as const;
+
+interface UseMcpAuthDiscoveryArgs {
+  config: McpAuthConfig;
+  onChange: React.Dispatch<McpAuthConfig>;
+  serverUrl: string;
 }
 
-async function fetchMcpPublicKey(serverUrl: string): Promise<CryptoKey> {
-  const jwksUrl = new URL("/.well-known/jwks.json", serverUrl).toString();
-  const jwksResponse = await fetch(jwksUrl);
+export function getFallbackMcpUserScopes(
+  user: Record<string, unknown> | null | undefined
+): McpScopeDefinition[] {
+  if (!user) return [];
 
-  if (!jwksResponse.ok) {
-    throw new Error(
-      `JWKS fetch failed: ${jwksResponse.status} ${jwksResponse.statusText}`
+  return FALLBACK_MCP_USER_SCOPE_KEYS.filter((scope) =>
+    hasDefinedOwnValue(user, scope)
+  ).map((scope) => ({ scope }));
+}
+
+export function normalizeMcpAuthConfig(config: unknown): McpAuthConfig {
+  if (!isRecord(config)) {
+    return DEFAULT_MCP_AUTH_CONFIG;
+  }
+
+  if (config.mode === "static") {
+    return {
+      mode: "static",
+      staticToken:
+        typeof config.staticToken === "string" ? config.staticToken : "",
+    };
+  }
+
+  if (config.mode === "user-data") {
+    const userData = isRecord(config.userData) ? config.userData : null;
+    const legacySelectedFields = normalizeScopeDefinitions(
+      config.selectedFields
     );
+    const scopes = normalizeScopeDefinitions(userData?.scopes);
+
+    return {
+      mode: "user-data",
+      userData: {
+        ...DEFAULT_MCP_USER_DATA,
+        scopes: scopes.length > 0 ? scopes : legacySelectedFields,
+        consentGranted:
+          userData?.consentGranted === true || legacySelectedFields.length > 0,
+        consentPrompted: userData?.consentPrompted === true,
+      },
+    };
   }
 
-  const jwks = await jwksResponse.json();
+  return {
+    mode: "none",
+  };
+}
 
-  if (!jwks?.keys || !Array.isArray(jwks.keys) || jwks.keys.length === 0) {
-    throw new Error("JWKS response contains no valid keys");
+export function areMcpAuthConfigsEqual(
+  a: McpAuthConfig,
+  b: McpAuthConfig
+): boolean {
+  const normalizedA = normalizeMcpAuthConfig(a);
+  const normalizedB = normalizeMcpAuthConfig(b);
+
+  if (
+    normalizedA.mode !== normalizedB.mode
+  ) {
+    return false;
   }
 
-  return jose.importJWK(jwks.keys[0], "RSA-OAEP-256") as Promise<CryptoKey>;
+  switch (normalizedA.mode) {
+    case "none":
+      return true;
+    case "static": {
+      return (
+        normalizedB.mode === "static" &&
+        normalizedA.staticToken === normalizedB.staticToken
+      );
+    }
+    case "user-data": {
+      if (normalizedB.mode !== "user-data") {
+        return false;
+      }
+
+      return (
+        normalizedA.userData.consentGranted ===
+          normalizedB.userData.consentGranted &&
+        areScopesEqual(normalizedA.userData.scopes, normalizedB.userData.scopes)
+      );
+    }
+    default:
+      return false;
+  }
+}
+
+export function isMcpAuthorizationIncomplete(
+  config: McpAuthConfig | undefined
+): boolean {
+  if (!config) return false;
+
+  const normalizedConfig = normalizeMcpAuthConfig(config);
+  return (
+    normalizedConfig.mode === "user-data" &&
+    normalizedConfig.userData.scopes.length > 0 &&
+    !normalizedConfig.userData.consentGranted
+  );
+}
+
+export function hasBeenConsentPrompted(
+  config: McpAuthConfig | undefined
+): boolean {
+  if (!config) return false;
+
+  const normalizedConfig = normalizeMcpAuthConfig(config);
+  return (
+    normalizedConfig.mode === "user-data" &&
+    normalizedConfig.userData.consentPrompted === true
+  );
+}
+
+export function buildUserDataConfig(
+  currentConfig: McpAuthConfig,
+  scopes: McpScopeDefinition[]
+): McpAuthConfig {
+  const normalizedScopes = [...scopes].sort((a, b) =>
+    a.scope.localeCompare(b.scope)
+  );
+  const currentUserData =
+    currentConfig.mode === "user-data" ? currentConfig.userData : undefined;
+  const scopesMatch =
+    currentUserData && areScopesEqual(currentUserData.scopes, normalizedScopes);
+
+  return {
+    mode: "user-data",
+    userData: {
+      scopes: normalizedScopes,
+      consentGranted: scopesMatch ? currentUserData.consentGranted : false,
+      consentPrompted: scopesMatch
+        ? currentUserData.consentPrompted ?? false
+        : false,
+    },
+  };
+}
+
+export async function discoverMcpUserDataScopes(
+  serverUrl: string
+): Promise<McpScopeDefinition[]> {
+  const discovery = await fetchMcpDiscoveryMetadata(serverUrl);
+  return discovery.scopes;
+}
+
+export async function discoverMcpAuthConfig(
+  config: McpAuthConfig | undefined,
+  serverUrl: string
+): Promise<McpAuthConfig> {
+  const currentConfig = normalizeMcpAuthConfig(config);
+  if (!serverUrl) {
+    return currentConfig;
+  }
+
+  try {
+    const discovery = await fetchMcpDiscoveryMetadata(serverUrl);
+
+    if (currentConfig.mode === "user-data") {
+      resolvePublicKey(await fetchMcpPublicKey(discovery.jwksUri));
+    }
+
+    return buildUserDataConfig(currentConfig, discovery.scopes);
+  } catch (error) {
+    console.warn("Unable to discover MCP auth config for %s: %o", serverUrl, error);
+    return currentConfig;
+  }
+}
+
+export function discoverMcpAuthForServer(
+  serverUrl: string,
+  config?: McpAuthConfig
+): Promise<McpAuthConfig> {
+  return discoverMcpAuthConfig(config, serverUrl);
+}
+
+export function useMcpAuthDiscovery({
+  config,
+  onChange,
+  serverUrl,
+}: UseMcpAuthDiscoveryArgs): {
+  effectiveUserDataScopes: McpScopeDefinition[];
+  normalizedConfig: McpAuthConfig;
+  serverAuthOptionsDisabled: boolean;
+  userData: Extract<McpAuthConfig, { mode: "user-data" }>["userData"];
+  userDataOptionDisabled: boolean;
+} {
+  const normalizedConfig = normalizeMcpAuthConfig(config);
+  const [discoveredScopes, setDiscoveredScopes] = React.useState<
+    McpScopeDefinition[]
+  >([]);
+  const discoveredServerUrlRef = React.useRef("");
+  const trimmedServerUrl = serverUrl.trim();
+  const userData =
+    normalizedConfig.mode === "user-data"
+      ? normalizedConfig.userData
+      : DEFAULT_MCP_USER_DATA;
+  const normalizedMode = normalizedConfig.mode;
+  const staticToken =
+    normalizedConfig.mode === "static" ? normalizedConfig.staticToken : "";
+  const userDataScopeKey = userData.scopes.map((scope) => scope.scope).join(",");
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    if (discoveredServerUrlRef.current !== trimmedServerUrl) {
+      discoveredServerUrlRef.current = trimmedServerUrl;
+      setDiscoveredScopes([]);
+    }
+
+    if (!trimmedServerUrl) {
+      setDiscoveredScopes([]);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void discoverMcpUserDataScopes(trimmedServerUrl)
+        .then((scopes) => {
+          if (cancelled) return;
+
+          discoveredServerUrlRef.current = trimmedServerUrl;
+          setDiscoveredScopes(scopes);
+
+          if (normalizedConfig.mode === "user-data") {
+            const nextConfig = buildUserDataConfig(normalizedConfig, scopes);
+            if (!areMcpAuthConfigsEqual(normalizedConfig, nextConfig)) {
+              onChange(nextConfig);
+            }
+          }
+        })
+        .catch(() => {
+          if (cancelled) return;
+
+          discoveredServerUrlRef.current = trimmedServerUrl;
+          setDiscoveredScopes([]);
+        });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    onChange,
+    trimmedServerUrl,
+    normalizedMode,
+    staticToken,
+    userData.consentGranted,
+    userData.consentPrompted,
+    userDataScopeKey,
+  ]);
+
+  const effectiveUserDataScopes =
+    discoveredScopes.length > 0 ? discoveredScopes : userData.scopes;
+  const serverAuthOptionsDisabled =
+    normalizedConfig.mode === "user-data" && effectiveUserDataScopes.length > 0;
+  const userDataOptionDisabled = effectiveUserDataScopes.length === 0;
+
+  return {
+    effectiveUserDataScopes,
+    normalizedConfig,
+    serverAuthOptionsDisabled,
+    userData,
+    userDataOptionDisabled,
+  };
 }
 
 function encryptPayload(
   data: Record<string, unknown>,
-  publicKey: CryptoKey
-): Promise<string> {
-  const payload = JSON.stringify({ data });
-  return new jose.CompactEncrypt(new TextEncoder().encode(payload))
+  publicKey: CryptoKey,
+  consentGranted: boolean
+): Promise<string | undefined> {
+  if (!consentGranted) {
+    return Promise.resolve(undefined);
+  }
+
+  const issuedAt = Math.floor(Date.now() / 1000);
+
+  return new jose.EncryptJWT({ data })
     .setProtectedHeader({
-      alg: "RSA-OAEP-256",
+      alg: "RSA-OAEP",
       enc: "A256GCM",
-      typ: "JWT",
     })
+    .setIssuedAt(issuedAt)
+    .setExpirationTime(issuedAt + MCP_AUTH_TOKEN_LIFETIME_SECONDS)
     .encrypt(publicKey);
 }
 
@@ -56,25 +325,37 @@ function getStaticAuthorization(
 }
 
 async function getUserDataAuthorization(
-  config: McpAuthConfig,
+  config: Extract<McpAuthConfig, { mode: "user-data" }>,
   serverUrl: string,
   user: Record<string, unknown> | null
 ): Promise<string | undefined> {
-  const selectedFields = Array.isArray(config.selectedFields)
-    ? config.selectedFields
-    : [];
-  if (!selectedFields.length || !serverUrl || !user) return undefined;
+  const selectedScopes = config.userData.scopes.map((scope) => scope.scope);
+  if (
+    !config.userData.consentGranted ||
+    !selectedScopes.length ||
+    !serverUrl ||
+    !user
+  ) {
+    return undefined;
+  }
 
-  const filteredData = buildFilteredData(selectedFields, user);
+  const filteredData = buildFilteredData(selectedScopes, user);
   if (!filteredData) return undefined;
 
   try {
-    const publicKey = await fetchMcpPublicKey(serverUrl);
-    return await encryptPayload(filteredData, publicKey);
+    const discovery = await fetchMcpDiscoveryMetadata(serverUrl);
+    const publicKey = resolvePublicKey(
+      await fetchMcpPublicKey(discovery.jwksUri)
+    );
+    return await encryptPayload(
+      filteredData,
+      publicKey,
+      config.userData.consentGranted
+    );
   } catch (error) {
     console.error("Error encrypting user data:", error);
     throw new Error(
-      `Verschlüsselung fehlgeschlagen: ${
+      `${i18n.t("mcp_encryption_failed")}: ${
         error instanceof Error ? error.message : String(error)
       }`
     );
@@ -86,15 +367,24 @@ export async function getAuthorizationForMcpConfig(
   serverUrl: string,
   user: Record<string, unknown> | null
 ): Promise<string | undefined> {
-  switch (config.mode) {
-    case "none":
-      return undefined;
-    case "static":
-      return getStaticAuthorization(config.staticToken);
-    case "user-data":
-      return getUserDataAuthorization(config, serverUrl, user);
-    default:
-      return undefined;
+  const normalizedConfig = normalizeMcpAuthConfig(config);
+
+  try {
+    switch (normalizedConfig.mode) {
+      case "none":
+        return undefined;
+      case "static":
+        return getStaticAuthorization(normalizedConfig.staticToken);
+      case "user-data":
+        return await getUserDataAuthorization(normalizedConfig, serverUrl, user);
+      default:
+        return undefined;
+    }
+  } catch (error) {
+    console.error("Failed to get MCP authorization:", error);
+    throw error instanceof Error
+      ? error
+      : new Error(i18n.t("mcp_authorization_failed"));
   }
 }
 
@@ -106,7 +396,5 @@ export function useMcpAuth(user: Record<string, unknown> | null) {
     return getAuthorizationForMcpConfig(config, serverUrl, user);
   };
 
-  const userFields = user ? Object.keys(user) : [];
-
-  return { getAuthorization, userFields };
+  return { getAuthorization };
 }

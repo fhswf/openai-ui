@@ -1,4 +1,5 @@
 import React from "react";
+import type { TFunction } from "i18next";
 import {
     Accordion,
     Badge,
@@ -21,6 +22,22 @@ type ToolUsagePopupProps = {
     toolsUsed: Tool[];
 };
 
+function groupToolsByType(toolsUsed: Tool[]): [string, Tool[]][] {
+    const grouped = new Map<string, Tool[]>();
+
+    toolsUsed.forEach((tool) => {
+        const key = tool.type;
+        const bucket = grouped.get(key);
+        if (bucket) {
+            bucket.push(tool);
+            return;
+        }
+        grouped.set(key, [tool]);
+    });
+
+    return Array.from(grouped.entries());
+}
+
 export function ToolUsagePopup({ isOpen, onClose, toolsUsed }: ToolUsagePopupProps) {
     const { t } = useTranslation();
 
@@ -28,9 +45,7 @@ export function ToolUsagePopup({ isOpen, onClose, toolsUsed }: ToolUsagePopupPro
         return null;
     }
 
-    const groupedTools = Array.from(
-        Map.groupBy<string, Tool>(toolsUsed, (tool) => tool.type)
-    );
+    const groupedTools = groupToolsByType(toolsUsed);
 
     return (
         <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="xl" scrollBehavior="inside">
@@ -51,9 +66,13 @@ export function ToolUsagePopup({ isOpen, onClose, toolsUsed }: ToolUsagePopupPro
                                         <Heading size="md" textTransform="capitalize">
                                             {t(key + "_title") || key} <Badge colorPalette="green">{tools.length}</Badge>
                                         </Heading>
-                                        <Accordion.Root multiple>
+                                        <Accordion.Root
+                                            collapsible={false}
+                                            multiple
+                                            defaultValue={tools.map((_, index) => index.toString())}
+                                        >
                                             {tools.map((tool, index) => {
-                                                const info = getToolInfo(tool, key, index, t);
+                                                const info = getToolInfo(tool, key, index, t, isOpen);
                                                 if (!info.items || info.items === t("No additional information available.")) {
                                                     return (
                                                         <Box key={index} p={2} borderWidth="1px" borderRadius="md" data-testid={`tool-item-${key}-${index}`}>
@@ -88,7 +107,13 @@ export function ToolUsagePopup({ isOpen, onClose, toolsUsed }: ToolUsagePopupPro
     );
 }
 
-function getToolInfo(tool: Tool, key: string, index: number, t: any) {
+function getToolInfo(
+    tool: Tool,
+    key: string,
+    index: number,
+    t: TFunction,
+    renderVisible = false
+) {
     const info: any = { ...tool };
     switch ((tool as any).type) {
         case "mcp_list_tools":
@@ -119,17 +144,18 @@ function getToolInfo(tool: Tool, key: string, index: number, t: any) {
             info.title = "" + (tool as any).name;
             info.items = (
                 <VStack alignItems="flex-start">
-                    <Text>
-                        {Object.entries(parsedArgs).map(
-                            ([key, value], index) => (
-                                <React.Fragment key={index}>
-                                    <dt>{key}</dt>
-                                    <dd>{value as any}</dd>
-                                </React.Fragment>
-                            )
-                        ) || t("No arguments provided.")}
-                    </Text>
-                    <LazyRenderer>
+                    {Object.keys(parsedArgs).length > 0 ? (
+                        <Stack gap={1} width="100%">
+                            {Object.entries(parsedArgs).map(([key, value]) => (
+                                <Text key={key}>
+                                    <strong>{key}:</strong> {String(value)}
+                                </Text>
+                            ))}
+                        </Stack>
+                    ) : (
+                        <Text>{t("No arguments provided.")}</Text>
+                    )}
+                    <LazyRenderer isVisible={renderVisible}>
                         {(tool as any).output ||
                             t("No additional information available.")}
                     </LazyRenderer>
@@ -167,7 +193,7 @@ function getToolInfo(tool: Tool, key: string, index: number, t: any) {
                 <ul>
                     {summary.map((item: any, index: number) => (
                         <li key={index}>
-                            {<LazyRenderer>{item.text}</LazyRenderer>}
+                            {<LazyRenderer isVisible={renderVisible}>{item.text}</LazyRenderer>}
                         </li>
                     ))}
                 </ul>
@@ -202,13 +228,13 @@ function getToolInfo(tool: Tool, key: string, index: number, t: any) {
             info.items = (
                 <VStack alignItems="flex-start">
                     <Text>{t("Code")}:</Text>
-                    <LazyRenderer>
+                    <LazyRenderer isVisible={renderVisible}>
                         {"```python\n" + (tool as any).code + "\n```" ||
                             t("No additional information available.")}
                     </LazyRenderer>
                     <Text>{t("Outputs")}:</Text>
                     {(tool as any).outputs?.map((output: any, index: number) => (
-                        <LazyRenderer key={index}>
+                        <LazyRenderer key={index} isVisible={renderVisible}>
                             {"```json\n" + JSON.stringify(output) + "\n```"}
                         </LazyRenderer>
                     ))}
@@ -234,7 +260,7 @@ function getToolInfo(tool: Tool, key: string, index: number, t: any) {
                     {((tool as any).params || (tool as any).arguments) && (
                         <>
                             <Text fontWeight="bold">{t("Parameters")}:</Text>
-                            <LazyRenderer>
+                            <LazyRenderer isVisible={renderVisible}>
                                 {"```json\n" + JSON.stringify((tool as any).params || (tool as any).arguments, null, 2) + "\n```"}
                             </LazyRenderer>
                         </>
