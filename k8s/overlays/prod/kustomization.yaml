@@ -5,4 +5,4 @@ resources:
 images:
 - name: ghcr.io/fhswf/openai-ui
   newName: ghcr.io/fhswf/openai-ui
-  newTag: openai-ui-v0.35.0
+  newTag: openai-ui-v0.36.0
