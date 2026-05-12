@@ -9,7 +9,7 @@ metadata:
       group: "K!mpuls-Chatbot"
       interval: 1m
       conditions:
-        - "[STATUS] == 200"
+        - "[CONNECTED] == true"
 spec:
   ports:
     - name: "http"
