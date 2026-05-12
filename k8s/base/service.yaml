@@ -3,6 +3,13 @@ kind: Service
 metadata:
   name: openai-ui
   namespace: openai-proxy
+  annotations:
+    gatus.home-operations.com/enabled: "true"
+    gatus.home-operations.com/endpoint: |
+      group: "K!mpuls-Chatbot"
+      interval: 1m
+      conditions:
+        - "[STATUS] == 200"
 spec:
   ports:
     - name: "http"
