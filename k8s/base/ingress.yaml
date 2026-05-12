@@ -14,7 +14,7 @@ metadata:
   annotations:
     gatus.home-operations.com/enabled: "true"
     gatus.home-operations.com/endpoint: |
-      group: openai-ui
+      group: "K!mpuls-Chatbot"
       interval: 1m
       conditions:
         - "[STATUS] == 200"
@@ -44,7 +44,7 @@ metadata:
   annotations:
     gatus.home-operations.com/enabled: "true"
     gatus.home-operations.com/endpoint: |
-      group: openai-ui
+      group: "K!mpuls-Chatbot"
       interval: 1m
       conditions:
         - "[STATUS] == 200"
