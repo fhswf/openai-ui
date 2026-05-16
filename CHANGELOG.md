@@ -37,6 +37,24 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.36.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.35.0...openai-ui-v0.36.0) (2026-03-24)
+
+
+### Features
+
+* improve MCP consent flow for server tools ([1ec6a8c](https://github.com/fhswf/openai-ui/commit/1ec6a8c444f1e3d30390d725a7b36565e6f4a1e5))
+* improve MCP consent flow for server tools ([fa9fe24](https://github.com/fhswf/openai-ui/commit/fa9fe246607b1ec10c997e96c2d485905c961620))
+* improve MCP consent flow for server tools ([7aed570](https://github.com/fhswf/openai-ui/commit/7aed570abc867dae5d0807b20ea4a586dc7f59f4))
+* improve MCP consent flow for server tools ([3f9dda8](https://github.com/fhswf/openai-ui/commit/3f9dda8b1f9b9970b53725913056d06d018a5f12))
+* improve MCP consent flow for server tools ([353df81](https://github.com/fhswf/openai-ui/commit/353df813946bbdc48ae47dc111a15dcd021f3e44))
+* improve MCP consent flow for server tools ([446ac7c](https://github.com/fhswf/openai-ui/commit/446ac7c458564074dbd7e9780af9970f99c95073))
+* improve MCP consent flow for server tools ([c551072](https://github.com/fhswf/openai-ui/commit/c5510721955cd0bb93af3462567ae1bfa2831513))
+* improve MCP consent flow for server tools ([220cdb9](https://github.com/fhswf/openai-ui/commit/220cdb92658fe61e3a482348f7dec7efe04dd265))
+* improve MCP consent flow for server tools ([50ab68f](https://github.com/fhswf/openai-ui/commit/50ab68fcf8d7c60b55871c1079d310086d7f1574))
+* improve MCP consent flow for server tools ([33c2ab3](https://github.com/fhswf/openai-ui/commit/33c2ab35283a5af49f7cee6659a19e37ddd2672f))
+* improve MCP consent flow for server tools ([94c8375](https://github.com/fhswf/openai-ui/commit/94c83757b1441796ef148f4b773d8137d37e1274))
+* improve MCP consent flow for server tools ([9c29077](https://github.com/fhswf/openai-ui/commit/9c290777c0dbba0a80b3882dd6c0d4f6e3a38d73))
+
 ## [0.35.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.34.0...openai-ui-v0.35.0) (2026-03-20)
 
 
