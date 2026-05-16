@@ -58,6 +58,9 @@ export const initState: GlobalState = {
       stream: true,
       assistant: "",
       mcpAuthConfigs: new Map<string, McpAuthConfig>(),
+      aiHubEnabled: false,
+      aiHubKeyAlias: "kimpuls",
+      aiHubModels: [],
     },
   },
   is: {

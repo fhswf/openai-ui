@@ -48,6 +48,10 @@ export type OpenAIOptions = {
   tools: Map<string, Tool>;
   toolsEnabled: Set<string>;
   mcpAuthConfigs?: Map<string, McpAuthConfig>;
+  aiHubEnabled?: boolean;
+  aiHubKeyAlias?: string;
+  aiHubKeyName?: string;
+  aiHubModels?: string[];
 };
 
 export type Options = {

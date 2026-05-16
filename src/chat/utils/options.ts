@@ -1,5 +1,6 @@
 import { t } from "i18next";
 import { Tool } from "openai/resources/responses/responses.mjs";
+import { OpenAIOptions } from "../context/types";
 
 export const shortcutKey = "Ctrl+Enter";
 export const keyboard = {
@@ -72,6 +73,24 @@ export const modelOptions = [
     value: "gpt-3.5-turbo",
   },
 ];
+
+export function getModelOptions(openai?: Pick<OpenAIOptions, "aiHubModels" | "model">) {
+  const items = [...modelOptions];
+  const seen = new Set(items.map((item) => item.value));
+
+  openai?.aiHubModels?.forEach((model) => {
+    if (!seen.has(model)) {
+      items.push({ label: model, value: model });
+      seen.add(model);
+    }
+  });
+
+  if (openai?.model && !seen.has(openai.model)) {
+    items.push({ label: openai.model, value: openai.model });
+  }
+
+  return items;
+}
 
 export const toolOptions: Map<string, Tool> = new Map([
   [

@@ -113,6 +113,21 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           download_markdown: "Download Markdown",
           usage_information: "Usage Information",
           "User information": "User Information",
+          logout: "Logout",
+          use_ai_hub_budget: "Use AI-Hub Budget",
+          ai_hub_budget_active: "AI-Hub budget is active.",
+          ai_hub_budget_enabled: "AI-Hub budget enabled",
+          ai_hub_budget_enabled_desc:
+            "The API key was created and {{count}} models were loaded.",
+          ai_hub_budget_error: "AI-Hub budget could not be enabled",
+          ai_hub_budget_error_desc:
+            "The API key could not be created or the models could not be loaded.",
+          ai_hub_key_generation_failed_desc:
+            "The AI-Hub API key could not be created. Status: {{status}}.",
+          ai_hub_key_generation_missing_key_desc:
+            "The AI-Hub response did not contain an API key.",
+          ai_hub_model_list_failed_desc:
+            "The AI-Hub models could not be loaded. Status: {{status}}.",
           chat_history: "Chat History",
           close: "Close",
           empty_chat: "Empty Chat",
@@ -292,6 +307,21 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
 
           About: "Über die Anwendung",
           "User information": "Benutzerinformationen",
+          logout: "Abmelden",
+          use_ai_hub_budget: "AI-Hub-Budget nutzen",
+          ai_hub_budget_active: "AI-Hub-Budget ist aktiv.",
+          ai_hub_budget_enabled: "AI-Hub-Budget aktiviert",
+          ai_hub_budget_enabled_desc:
+            "Der API-Schlüssel wurde erzeugt und {{count}} Modelle wurden geladen.",
+          ai_hub_budget_error: "AI-Hub-Budget konnte nicht aktiviert werden",
+          ai_hub_budget_error_desc:
+            "Der API-Schlüssel konnte nicht erzeugt werden oder die Modelle konnten nicht geladen werden.",
+          ai_hub_key_generation_failed_desc:
+            "Der AI-Hub-API-Schlüssel konnte nicht erzeugt werden. Status: {{status}}.",
+          ai_hub_key_generation_missing_key_desc:
+            "Die AI-Hub-Antwort enthielt keinen API-Schlüssel.",
+          ai_hub_model_list_failed_desc:
+            "Die AI-Hub-Modelle konnten nicht geladen werden. Status: {{status}}.",
 
           Title: "Titel",
           Cancel: "Abbrechen",

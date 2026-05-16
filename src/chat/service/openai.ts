@@ -3,6 +3,7 @@ import {
   Message,
   GlobalActions,
   GlobalState,
+  Options,
 } from "../context/types";
 import OpenAI, { APIError } from "openai";
 
@@ -23,16 +24,20 @@ export const apiBaseUrl =
   import.meta.env.API_BASE_URL ||
   "https://api.openai.com/v1";
 
-const client = new OpenAI({
-  apiKey: "unused",
-  dangerouslyAllowBrowser: true,
-  baseURL: apiBaseUrl,
-  fetch: (input, init: any) => {
-    return fetch(input, { credentials: "include", ...init });
-  },
-});
+function createClient(options?: Options) {
+  return new OpenAI({
+    apiKey: options?.openai.apiKey || "unused",
+    dangerouslyAllowBrowser: true,
+    baseURL: options?.openai.baseUrl || apiBaseUrl,
+    organization: options?.openai.organizationId || undefined,
+    fetch: (input, init: any) => {
+      return fetch(input, { credentials: "include", ...init });
+    },
+  });
+}
 
-export async function getResponse(id: string) {
+export async function getResponse(id: string, options?: Options) {
+  const client = createClient(options);
   const response = await client.responses.retrieve(id);
   return response;
 }
@@ -43,6 +48,7 @@ export async function createResponse(
   explicitInput?: ResponseInput
 ) {
   const { options, chat, currentChat, is, setState, setIs } = global;
+  const client = createClient(options);
 
   console.log("messages: %o", chat[currentChat].messages);
   console.log("parent: %o", parent);

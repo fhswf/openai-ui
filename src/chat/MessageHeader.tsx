@@ -36,7 +36,12 @@ import {
   LuPanelLeftClose,
   LuPanelLeftOpen,
 } from "react-icons/lu";
-import { MdDelete, MdEdit, MdOutlineSimCardDownload } from "react-icons/md";
+import {
+  MdDelete,
+  MdEdit,
+  MdOutlineSimCardDownload,
+  MdVpnKey,
+} from "react-icons/md";
 import { CgOptions } from "react-icons/cg";
 import { RiChatNewLine } from "react-icons/ri";
 import { useGlobal } from "./context";
@@ -45,10 +50,17 @@ import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { MessageMenu } from "./MessageMenu";
-import { modelOptions } from "./utils/options";
+import { getModelOptions } from "./utils/options";
 import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { McpAuthFields } from "./McpAuthFields";
+import {
+  AiHubError,
+  aiHubApiBaseUrl,
+  fetchAiHubModels,
+  generateAiHubKey,
+} from "./service/aiHub";
+import { toaster } from "../components/ui/toaster";
 import { isMcpAuthorizationIncomplete, useMcpAuth } from "./hooks/useMcpAuth";
 import {
   ApprovalOptions,
@@ -135,6 +147,7 @@ interface ModelOptionsGroupProps {
 
 function ModelOptionsGroup({ openai, setOptions }: ModelOptionsGroupProps) {
   const { t } = useTranslation();
+  const options = getModelOptions(openai);
 
   return (
     <Menu.RadioItemGroup
@@ -147,7 +160,7 @@ function ModelOptionsGroup({ openai, setOptions }: ModelOptionsGroupProps) {
       }}
     >
       <Menu.ItemGroupLabel>{t("model_options")}</Menu.ItemGroupLabel>
-      {modelOptions.map((item) => (
+      {options.map((item) => (
         <Menu.RadioItem key={item.value} value={item.value}>
           {item.label}
           <Menu.ItemIndicator />
@@ -1024,11 +1037,83 @@ function DownloadThreadMenu({ downloadThread }: DownloadThreadMenuProps) {
 }
 
 interface UserInformationPopoverProps {
+  openai: OpenAIOptions;
+  setOptions: GlobalActions["setOptions"];
   user: { avatar?: string | null; email?: string; name?: string } | null;
 }
 
-function UserInformationPopover({ user }: UserInformationPopoverProps) {
+function UserInformationPopover({
+  openai,
+  setOptions,
+  user,
+}: UserInformationPopoverProps) {
   const { t } = useTranslation();
+  const [isGeneratingHubKey, setIsGeneratingHubKey] = useState(false);
+
+  function getAiHubErrorDescription(error: unknown) {
+    if (!(error instanceof AiHubError)) {
+      return t("ai_hub_budget_error_desc");
+    }
+
+    switch (error.code) {
+      case "key_generation_failed":
+        return t("ai_hub_key_generation_failed_desc", {
+          status: error.status,
+        });
+      case "key_generation_missing_key":
+        return t("ai_hub_key_generation_missing_key_desc");
+      case "model_list_failed":
+        return t("ai_hub_model_list_failed_desc", {
+          status: error.status,
+        });
+      default:
+        return t("ai_hub_budget_error_desc");
+    }
+  }
+
+  async function useAiHubBudget() {
+    setIsGeneratingHubKey(true);
+
+    try {
+      const key = await generateAiHubKey(openai.aiHubKeyAlias || "kimpuls");
+      const models = await fetchAiHubModels(key.key);
+      const selectedModel = models.includes(openai.model)
+        ? openai.model
+        : models[0] ?? openai.model;
+
+      setOptions({
+        type: OptionActionType.OPENAI,
+        data: {
+          apiKey: key.key,
+          baseUrl: aiHubApiBaseUrl,
+          aiHubEnabled: true,
+          aiHubKeyAlias: key.key_alias || openai.aiHubKeyAlias || "kimpuls",
+          aiHubKeyName: key.key_name,
+          aiHubModels: models,
+          model: selectedModel,
+        },
+      });
+
+      toaster.create({
+        title: t("ai_hub_budget_enabled"),
+        description: t("ai_hub_budget_enabled_desc", {
+          count: models.length,
+        }),
+        duration: 5000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Unable to activate AI-Hub budget:", error);
+      toaster.create({
+        title: t("ai_hub_budget_error"),
+        description: getAiHubErrorDescription(error),
+        duration: 5000,
+        type: "error",
+      });
+    } finally {
+      setIsGeneratingHubKey(false);
+    }
+  }
 
   return (
     <Popover.Root lazyMount>
@@ -1048,8 +1133,21 @@ function UserInformationPopover({ user }: UserInformationPopoverProps) {
             <Stack gap={2}>
               <Text>{user?.name}</Text>
               <Text>{user?.email}</Text>
+              {openai.aiHubEnabled && (
+                <Text fontSize="sm" color="green.600">
+                  {t("ai_hub_budget_active")}
+                </Text>
+              )}
+              <Button
+                colorPalette="green"
+                onClick={useAiHubBudget}
+                loading={isGeneratingHubKey}
+                data-testid="UseAiHubBudgetBtn"
+              >
+                <MdVpnKey /> {t("use_ai_hub_budget")}
+              </Button>
               <Button colorPalette="blue" onClick={logout}>
-                Logout
+                {t("logout")}
               </Button>
             </Stack>
           </Popover.Body>
@@ -1097,7 +1195,11 @@ export function MessageHeader() {
       <DownloadThreadMenu downloadThread={downloadThread} />
       <GitHubMenu />
       <UsageInformationDialog />
-      <UserInformationPopover user={user} />
+      <UserInformationPopover
+        openai={options.openai}
+        setOptions={setOptions}
+        user={user}
+      />
     </HStack>
   );
 }
