@@ -37,6 +37,27 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.37.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.36.0...openai-ui-v0.37.0) (2026-05-17)
+
+
+### Features
+
+* add Gatus monitoring annotations to K8s resources ([2bdb239](https://github.com/fhswf/openai-ui/commit/2bdb2398eba94bc0e4a3dd72c661e787d74d39ad))
+* add Gatus monitoring annotations to K8s resources ([5a196b2](https://github.com/fhswf/openai-ui/commit/5a196b2e8603f894b0a7160be8bfbd448eb47eb1))
+* add gatus monitoring to ingresses ([e0a7bc2](https://github.com/fhswf/openai-ui/commit/e0a7bc270f7b4daa1bb859a0a0d7d3f31c1ae2cd))
+* implement AI-Hub budget functionality and integrate model options ([862ed90](https://github.com/fhswf/openai-ui/commit/862ed90fab97353f486faa2274e314759b0bde8a))
+* update OpenAI API base URL handling and normalize base URL logic ([59f0cf8](https://github.com/fhswf/openai-ui/commit/59f0cf8e7a3ef6755bd67f5fd1c6523eb22ec368))
+
+
+### Bug Fixes
+
+* correct gatus annotations ([6ec0d04](https://github.com/fhswf/openai-ui/commit/6ec0d045b6f7c13bfa41e1e5903f0c519ea204d9))
+* correct gatus annotations ([6d56987](https://github.com/fhswf/openai-ui/commit/6d5698736677ece3ee5d979a6d71cc6d88097228))
+* enhance jwks_uri handling and add consent check for user data mode ([7337088](https://github.com/fhswf/openai-ui/commit/7337088ea1ff0dba365d6fc1b26ecde1d0d2a8d6))
+* normalize legacy MCP service keys before edit/save ([aede4f5](https://github.com/fhswf/openai-ui/commit/aede4f5ae5fdd89222588fdd593f18124dd91e1f))
+* normalize legacy MCP service keys before edit/save ([352c75c](https://github.com/fhswf/openai-ui/commit/352c75c997a7588ad7963989aa657db8c399e88f))
+* refactor MessageInput to use setMessage directly and update state management in action ([2f4a97a](https://github.com/fhswf/openai-ui/commit/2f4a97a49d94888c7d4733d808814dc4c0d9ec18))
+
 ## [0.36.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.35.0...openai-ui-v0.36.0) (2026-03-24)
 
 
