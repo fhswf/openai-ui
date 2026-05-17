@@ -6,6 +6,11 @@ import i18n from "../../i18n/config";
 import { toolOptions } from "../utils";
 const { t } = i18n;
 
+const defaultOpenAIBaseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.API_BASE_URL ||
+  "https://api.openai.com/v1";
+
 export const initState: GlobalState = {
   current: 0,
   chat: [
@@ -44,7 +49,7 @@ export const initState: GlobalState = {
       gravatar: false,
     },
     openai: {
-      baseUrl: "https://openai.ki.fh-swf.de/api",
+      baseUrl: defaultOpenAIBaseUrl,
       organizationId: "",
       temperature: 1,
       mode: "chat",

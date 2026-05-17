@@ -24,11 +24,20 @@ export const apiBaseUrl =
   import.meta.env.API_BASE_URL ||
   "https://api.openai.com/v1";
 
+const legacyProxyBaseUrl = "https://openai.ki.fh-swf.de/api";
+
+function normalizeApiBaseUrl(baseUrl?: string) {
+  if (!baseUrl || baseUrl === legacyProxyBaseUrl) {
+    return apiBaseUrl;
+  }
+  return baseUrl;
+}
+
 function createClient(options?: Options) {
   return new OpenAI({
     apiKey: options?.openai.apiKey || "unused",
     dangerouslyAllowBrowser: true,
-    baseURL: options?.openai.baseUrl || apiBaseUrl,
+    baseURL: normalizeApiBaseUrl(options?.openai.baseUrl),
     organization: options?.openai.organizationId || undefined,
     fetch: (input, init: any) => {
       return fetch(input, { credentials: "include", ...init });
