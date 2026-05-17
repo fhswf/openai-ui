@@ -87,6 +87,38 @@ export function getNormalizedTools(
     }
   }
 
+  let migratedLegacyMcpKey = false;
+  for (const [key, value] of toolOptions) {
+    if (value.type !== "mcp" || !value.server_label || value.server_label === key) {
+      continue;
+    }
+
+    const legacyKey = value.server_label;
+    const legacyTool = openai.tools.get(legacyKey);
+    if (!legacyTool || legacyTool.type !== "mcp") {
+      continue;
+    }
+
+    openai.tools.set(key, legacyTool);
+    openai.tools.delete(legacyKey);
+
+    if (openai.toolsEnabled instanceof Set && openai.toolsEnabled.has(legacyKey)) {
+      openai.toolsEnabled.add(key);
+      openai.toolsEnabled.delete(legacyKey);
+    }
+
+    if (openai.mcpAuthConfigs instanceof Map && openai.mcpAuthConfigs.has(legacyKey)) {
+      openai.mcpAuthConfigs.set(key, openai.mcpAuthConfigs.get(legacyKey));
+      openai.mcpAuthConfigs.delete(legacyKey);
+    }
+
+    migratedLegacyMcpKey = true;
+  }
+
+  if (migratedLegacyMcpKey) {
+    setOptions({ type: OptionActionType.OPENAI, data: { ...openai } });
+  }
+
   return openai.tools;
 }
 

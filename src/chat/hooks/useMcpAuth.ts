@@ -187,7 +187,10 @@ export async function discoverMcpAuthConfig(
   try {
     const discovery = await fetchMcpDiscoveryMetadata(serverUrl);
 
-    if (currentConfig.mode === "user-data") {
+    if (
+      currentConfig.mode === "user-data" &&
+      currentConfig.userData.consentGranted
+    ) {
       resolvePublicKey(await fetchMcpPublicKey(discovery.jwksUri));
     }
 

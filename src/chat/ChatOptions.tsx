@@ -7,7 +7,7 @@ import {
   themeOptions,
   languageOptions,
   sendCommandOptions,
-  modelOptions,
+  getModelOptions,
 } from "./utils/options";
 import {
   Button,
@@ -38,6 +38,7 @@ export function ChatOptions() {
   const { openai, general } = options;
   const { setGeneral, setModel } = useOptions();
   const { setState, setIs, is } = useGlobal();
+  const availableModelOptions = getModelOptions(openai);
 
   const tempMarks = [...new Array(11).keys()].map((i) => ({
     value: 0.2 * i,
@@ -242,7 +243,7 @@ export function ChatOptions() {
 
           <Field.Root mt="4">
             <Select.Root
-              collection={createListCollection({ items: modelOptions })}
+              collection={createListCollection({ items: availableModelOptions })}
               maxWidth="30em"
               onValueChange={(val) => setModel({ model: val.value[0] })}
               data-testid="ChangeAIModelSelect"
@@ -252,7 +253,7 @@ export function ChatOptions() {
                 <Select.ValueText placeholder={openai.model} />
               </Select.Trigger>
               <Select.Content>
-                {modelOptions.map((model) => (
+                {availableModelOptions.map((model) => (
                   <Select.Item item={model} key={model.value}>
                     {model.label}
                   </Select.Item>

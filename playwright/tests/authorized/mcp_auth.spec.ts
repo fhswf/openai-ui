@@ -520,7 +520,7 @@ test.describe("MCP Auth", () => {
       await page.getByTestId("mcp-add-service-btn").click();
 
       await expect(page.getByText("Renamed Service")).toBeVisible();
-      await page.getByTestId("mcp-edit-Renamed Service").click();
+      await page.getByTestId("mcp-edit-Rename Me").click();
       await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
       await waitForDiscoveredScopes(page);
       await expect(getUserDataConsentCheckbox(page)).toBeChecked();

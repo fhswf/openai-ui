@@ -274,7 +274,7 @@ test.describe("MCP Services", () => {
       page.getByText("Updated Service", { exact: true })
     ).toBeVisible();
 
-    await page.getByTestId("mcp-delete-Updated Service").click();
+    await page.getByTestId("mcp-delete-Original Service").click();
     await expect(
       page.getByText("Updated Service", { exact: true })
     ).toHaveCount(0);

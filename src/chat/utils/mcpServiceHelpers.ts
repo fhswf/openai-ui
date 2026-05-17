@@ -177,6 +177,7 @@ export function getAuthorizationResult(args: {
 
 export function persistMcpService(args: PersistMcpServiceArgs): void {
   const nextAuthConfig = normalizeMcpAuthConfig(args.form.authConfig);
+  const targetKey = args.editingKey ?? args.form.label;
 
   if (
     nextAuthConfig.mode === "user-data" &&
@@ -186,13 +187,13 @@ export function persistMcpService(args: PersistMcpServiceArgs): void {
     nextAuthConfig.userData.consentPrompted = true;
   }
 
-  cleanupRenamedTool(args.collections, args.editingKey, args.form.label);
+  cleanupRenamedTool(args.collections, args.editingKey, targetKey);
   args.setEditingKey(null);
   args.collections.tools.set(
-    args.form.label,
+    targetKey,
     createMcpToolDefinition(args.form, args.resultAuthorization)
   );
-  args.collections.mcpAuthConfigs.set(args.form.label, nextAuthConfig);
+  args.collections.mcpAuthConfigs.set(targetKey, nextAuthConfig);
 
   updateOpenAiOptions({
     mcpAuthConfigs: args.collections.mcpAuthConfigs,

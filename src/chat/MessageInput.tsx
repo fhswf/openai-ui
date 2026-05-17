@@ -63,9 +63,6 @@ export function MessageInput() {
 
   const [recognition, setRecognition] = useState(null);
   const [recognitionActive, setRecognitionActive] = useState(false);
-  const [inputMessage, setInputMessage] = useState(
-    typeingMessage?.content || ""
-  );
   useSendKey(sendMessage, options.general.sendCommand);
 
   useEffect(() => {
@@ -337,8 +334,7 @@ export function MessageInput() {
             onDragOver={dragHandler}
             onDragEnter={dragHandler}
             onChange={(ev: BaseSyntheticEvent) => {
-              typeingMessage.content = ev.target.value;
-              setInputMessage(ev.target.value);
+              setMessage(ev.target.value);
             }}
           />
         )}
@@ -435,9 +431,6 @@ export function MessageInput() {
             type="submit"
             disabled={is.thinking || !typeingMessage?.content}
             onClick={() => {
-              typeingMessage.content = inputMessage;
-              typeingMessage.role = "user";
-              setMessage(typeingMessage.content);
               sendMessage();
             }}
             data-testid="SendMessageBtn"

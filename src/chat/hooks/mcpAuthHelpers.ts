@@ -157,7 +157,16 @@ export async function fetchMcpDiscoveryMetadata(
 
   let jwksUri: string;
   try {
-    jwksUri = new URL(discoveryDocument.jwks_uri, serverUrl).toString();
+    const rawUrl = new URL(discoveryDocument.jwks_uri, serverUrl);
+    const wellKnownIndex = rawUrl.pathname.indexOf("/.well-known/");
+
+    if (wellKnownIndex > 0) {
+      // RFC 8615 requires well-known URIs to be at the root of the host.
+      // Strip any invalid path prefixes injected by misconfigured backends.
+      rawUrl.pathname = rawUrl.pathname.substring(wellKnownIndex);
+    }
+
+    jwksUri = rawUrl.toString();
   } catch {
     throw new EndpointInvalidError(
       "OpenID discovery response contains an invalid jwks_uri"

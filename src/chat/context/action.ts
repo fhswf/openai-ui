@@ -98,6 +98,11 @@ export default function action(
       messages.push(newMessage);
       const newChat = [...chat];
       newChat.splice(currentChat, 1, { ...chat[currentChat], messages });
+      setState({
+        chat: newChat,
+        typeingMessage: {},
+        is: { ...state.is, thinking: true, tool: null },
+      });
       createResponse({ ...state, chat: newChat, setState, setIs }, this);
     }
   };
