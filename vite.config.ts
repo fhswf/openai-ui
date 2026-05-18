@@ -1,9 +1,53 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv, type ProxyOptions } from 'vite'
 import react from '@vitejs/plugin-react'
 import IstanbulPlugin from 'vite-plugin-istanbul';
-import { resolve, join } from 'path'
+import { join } from 'path'
 import * as fs from 'fs';
-import { chakra } from '@chakra-ui/react';
+
+function createApiProxy(target: string): ProxyOptions {
+    const targetOrigin = new URL(target).origin;
+
+    const getForwardedProto = (req: { socket: { encrypted?: boolean } }) =>
+        req.socket.encrypted ? "https" : "http";
+
+    return {
+        target: targetOrigin,
+        changeOrigin: true,
+        secure: true,
+        cookieDomainRewrite: { "*": "" },
+        autoRewrite: true,
+        protocolRewrite: "http",
+        configure(proxy) {
+            proxy.on("proxyReq", (proxyReq, req) => {
+                const host = req.headers.host || "localhost:5173";
+                const forwardedProto = getForwardedProto(req);
+                const forwardedPort = host.includes(":") ? host.split(":").pop() : forwardedProto === "https" ? "443" : "80";
+
+                proxyReq.setHeader("X-Forwarded-Host", host);
+                proxyReq.setHeader("X-Forwarded-Proto", forwardedProto);
+                proxyReq.setHeader("X-Forwarded-Port", forwardedPort || "");
+            });
+
+            proxy.on("proxyRes", (proxyRes, req) => {
+                const host = req.headers.host || "localhost:5173";
+                const forwardedProto = getForwardedProto(req);
+                const localOrigin = `${forwardedProto}://${host}`;
+                const location = proxyRes.headers.location;
+
+                if (location?.startsWith(targetOrigin)) {
+                    proxyRes.headers.location = location.replace(targetOrigin, localOrigin);
+                }
+
+                const cookies = proxyRes.headers["set-cookie"];
+                if (!cookies || forwardedProto === "https") return;
+
+                proxyRes.headers["set-cookie"] = cookies.map((cookie) =>
+                    cookie.replace(/;\s*secure/gi, "")
+                );
+            });
+        },
+    };
+}
 
 const redirectToDir = (root = "public") => ({
     name: 'redirect-to-dir',
@@ -25,30 +69,55 @@ const redirectToDir = (root = "public") => ({
 });
 
 // https://vitejs.dev/config/
-export default defineConfig({
-    base: './',
-    build: {
-        rollupOptions: {
-            output: {
-                manualChunks: (id) => {
-                    if (id.includes('node_modules')) {
-                        const parts = id.split('node_modules/');
-                        const name = parts[1].split('/')[0];
-                        return `vendor/${name}`;
+export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, process.cwd(), "");
+    const apiProxyTarget =
+        env.VITE_API_PROXY_TARGET ||
+        env.API_PROXY_TARGET ||
+        "https://openai.ki.fh-swf.de";
+    const apiProxy = createApiProxy(apiProxyTarget);
+
+    return {
+        base: './',
+        build: {
+            rollupOptions: {
+                output: {
+                    manualChunks: (id) => {
+                        if (id.includes('node_modules')) {
+                            const parts = id.split('node_modules/');
+                            const name = parts[1].split('/')[0];
+                            return `vendor/${name}`;
+                        }
                     }
                 }
-            }
+            },
+            sourcemap: true,
         },
-        sourcemap: true,
-    },
-    plugins: [react(), redirectToDir(), IstanbulPlugin({ include: 'src/*' })],
-    css: {
-        preprocessorOptions: {
-            less: {
-                math: "always",
-                relativeUrls: true,
-                javascriptEnabled: true
+        server: {
+            host: "localhost",
+            port: 5173,
+            strictPort: true,
+            proxy: {
+                "/api": apiProxy,
             },
         },
-    }
-}) 
+        preview: {
+            host: "localhost",
+            port: 5173,
+            strictPort: true,
+            proxy: {
+                "/api": apiProxy,
+            },
+        },
+        plugins: [react(), redirectToDir(), IstanbulPlugin({ include: 'src/*' })],
+        css: {
+            preprocessorOptions: {
+                less: {
+                    math: "always",
+                    relativeUrls: true,
+                    javascriptEnabled: true
+                },
+            },
+        }
+    };
+})

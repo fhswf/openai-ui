@@ -10,12 +10,12 @@ on:
 env:
   PLAYWRIGHT_TEST_BASE_URL: http://localhost:5173
   PLAYWRIGHT_PREBUILT_DIST: "1"
-  VITE_LOGIN_URL: https://openai.ki.fh-swf.de/api/login
-  VITE_LOGOUT_URL: https://openai.ki.fh-swf.de/api/logout
-  VITE_API_BASE_URL: https://openai.ki.fh-swf.de/api/v1
-  VITE_USER_URL: https://openai.ki.fh-swf.de/api/user
+  VITE_LOGIN_URL: /api/login
+  VITE_LOGOUT_URL: /api/logout
+  VITE_API_BASE_URL: /api/v1
+  VITE_USER_URL: /api/user
   VITE_PROXY_URL: https://proxy.gawron.cloud/api
-  VITE_DASHBOARD_URL: https://openai.ki.fh-swf.de/api/dashboard
+  VITE_DASHBOARD_URL: /api/dashboard
 
 jobs:
   build:
