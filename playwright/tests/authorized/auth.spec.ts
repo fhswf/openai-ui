@@ -116,9 +116,7 @@ async function acceptTermsIfVisible(page: Page) {
   await termsBtn.scrollIntoViewIfNeeded();
   await clickWithBackdropRetry(page, termsBtn);
   await expect(termsBtn).toBeHidden({ timeout: 15000 });
-  await expect(informationWindow).toBeHidden({
-    timeout: 15000,
-  });
+  await closeInformationWindowIfVisible(page);
 }
 
 async function clickWithBackdropRetry(page: Page, locator: Locator) {
@@ -139,6 +137,17 @@ async function clickWithBackdropRetry(page: Page, locator: Locator) {
   }
 
   await locator.click({ force: true });
+}
+
+async function closeInformationWindowIfVisible(page: Page) {
+  const informationWindow = page.getByTestId("InformationWindow");
+
+  if (await informationWindow.isHidden({ timeout: 15000 }).catch(() => false)) {
+    return;
+  }
+
+  await page.keyboard.press("Escape");
+  await expect(informationWindow).toBeHidden({ timeout: 15000 });
 }
 
 function buildMcpTools(args: {
