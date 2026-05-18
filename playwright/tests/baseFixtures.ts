@@ -23,7 +23,17 @@ export const test = baseTest.extend({
         });
         await use(context);
         for (const page of context.pages()) {
-            await page.evaluate(() => (window as any).collectIstanbulCoverage(JSON.stringify((window as any).__coverage__)))
+            if (page.isClosed()) continue;
+            try {
+                await page.evaluate(() => {
+                    const collectIstanbulCoverage = (window as any).collectIstanbulCoverage;
+                    if (typeof collectIstanbulCoverage === 'function') {
+                        collectIstanbulCoverage(JSON.stringify((window as any).__coverage__));
+                    }
+                });
+            } catch (error) {
+                console.warn('Skipping Istanbul coverage collection after page teardown:', error);
+            }
         }
     }
 });

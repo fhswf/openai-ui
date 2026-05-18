@@ -7,7 +7,14 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const limitedCrossBrowserTests = /.*(auth|chat|ui_settings|no-affiliation)\.spec\.ts/;
+const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:5173';
+const previewCommand =
+  process.env.PLAYWRIGHT_PREBUILT_DIST === '1'
+    ? 'yarn preview --host 127.0.0.1 --port 5173 --strictPort'
+    : 'yarn build && yarn preview --host 127.0.0.1 --port 5173 --strictPort';
+const reporterOutputFile =
+  process.env.PLAYWRIGHT_JSON_OUTPUT || 'playwright-report/results.json';
+const crossBrowserSmokeTests = /.*[\\/](auth|chat|no-affiliation)\.spec\.ts$/;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -28,12 +35,12 @@ export default defineConfig({
   workers: process.env.CI ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI
-    ? [['github'], ['html'], ['json', { outputFile: 'playwright-report/results.json' }]]
+    ? [['github'], ['html'], ['json', { outputFile: reporterOutputFile }]]
     : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'http://localhost:5173',
+    baseURL,
 
     locale: 'de-DE',
 
@@ -61,6 +68,7 @@ export default defineConfig({
         ...devices['Desktop Firefox'],
         storageState: 'playwright/.auth/user.json'
       },
+      testMatch: crossBrowserSmokeTests,
       dependencies: ['setup'],
     },
 
@@ -70,7 +78,7 @@ export default defineConfig({
         ...devices['Desktop Safari'],
         storageState: 'playwright/.auth/user.json'
       },
-      testMatch: limitedCrossBrowserTests,
+      testMatch: crossBrowserSmokeTests,
       dependencies: ['setup'],
     },
 
@@ -81,7 +89,7 @@ export default defineConfig({
         ...devices['Pixel 5'],
         storageState: 'playwright/.auth/user.json'
       },
-      testMatch: limitedCrossBrowserTests,
+      testMatch: crossBrowserSmokeTests,
       dependencies: ['setup'],
     },
     {
@@ -90,7 +98,7 @@ export default defineConfig({
         ...devices['iPhone 12'],
         storageState: 'playwright/.auth/user.json'
       },
-      testMatch: limitedCrossBrowserTests,
+      testMatch: crossBrowserSmokeTests,
       dependencies: ['setup'],
     },
 
@@ -98,21 +106,21 @@ export default defineConfig({
     {
       name: 'Microsoft Edge',
       use: { ...devices['Desktop Edge'], channel: 'msedge', storageState: 'playwright/.auth/user.json' },
-      testMatch: limitedCrossBrowserTests,
+      testMatch: crossBrowserSmokeTests,
       dependencies: ['setup'],
     },
     {
       name: 'Google Chrome',
       use: { ...devices['Desktop Chrome'], channel: 'chrome', storageState: 'playwright/.auth/user.json' },
-      testMatch: limitedCrossBrowserTests,
+      testMatch: crossBrowserSmokeTests,
       dependencies: ['setup'],
     },
   ],
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'yarn build && yarn preview --port 5173',
-    url: 'http://localhost:5173',
+    command: previewCommand,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
   },
 });

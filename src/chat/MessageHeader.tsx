@@ -60,6 +60,7 @@ import {
   fetchAiHubModels,
   generateAiHubKey,
 } from "./service/aiHub";
+import { defaultOpenAIBaseUrl, defaultOpenAIModel } from "./context/initState";
 import { toaster } from "../components/ui/toaster";
 import { isMcpAuthorizationIncomplete, useMcpAuth } from "./hooks/useMcpAuth";
 import {
@@ -1071,11 +1072,50 @@ function UserInformationPopover({
     }
   }
 
+  function stopUsingAiHubBudget() {
+    const aiHubModels = openai.aiHubModels ?? [];
+    const restoredModel =
+      openai.aiHubPreviousModel ||
+      (aiHubModels.includes(openai.model) ? defaultOpenAIModel : openai.model);
+
+    setOptions({
+      type: OptionActionType.OPENAI,
+      data: {
+        apiKey: openai.aiHubPreviousApiKey || "unused",
+        baseUrl: openai.aiHubPreviousBaseUrl || defaultOpenAIBaseUrl,
+        aiHubEnabled: false,
+        aiHubApiKey: openai.aiHubApiKey || openai.apiKey,
+        aiHubModels: [],
+        model: restoredModel,
+      },
+    });
+
+    toaster.create({
+      title: t("ai_hub_budget_disabled"),
+      description: t("ai_hub_budget_disabled_desc"),
+      duration: 5000,
+      type: "success",
+    });
+  }
+
   async function useAiHubBudget() {
+    if (openai.aiHubEnabled) {
+      stopUsingAiHubBudget();
+      return;
+    }
+
     setIsGeneratingHubKey(true);
 
     try {
-      const key = await generateAiHubKey(openai.aiHubKeyAlias || "kimpuls");
+      const keyAlias = openai.aiHubKeyAlias || "kimpuls";
+      const existingAiHubKey = openai.aiHubApiKey;
+      const key = existingAiHubKey
+        ? {
+            key: existingAiHubKey,
+            key_alias: keyAlias,
+            key_name: openai.aiHubKeyName,
+          }
+        : await generateAiHubKey(keyAlias);
       const models = await fetchAiHubModels(key.key);
       const selectedModel = models.includes(openai.model)
         ? openai.model
@@ -1087,9 +1127,13 @@ function UserInformationPopover({
           apiKey: key.key,
           baseUrl: aiHubApiBaseUrl,
           aiHubEnabled: true,
+          aiHubApiKey: key.key,
           aiHubKeyAlias: key.key_alias || openai.aiHubKeyAlias || "kimpuls",
           aiHubKeyName: key.key_name,
           aiHubModels: models,
+          aiHubPreviousApiKey: openai.apiKey,
+          aiHubPreviousBaseUrl: openai.baseUrl,
+          aiHubPreviousModel: openai.model,
           model: selectedModel,
         },
       });
@@ -1144,7 +1188,10 @@ function UserInformationPopover({
                 loading={isGeneratingHubKey}
                 data-testid="UseAiHubBudgetBtn"
               >
-                <MdVpnKey /> {t("use_ai_hub_budget")}
+                <MdVpnKey />{" "}
+                {openai.aiHubEnabled
+                  ? t("stop_using_ai_hub_budget")
+                  : t("use_ai_hub_budget")}
               </Button>
               <Button colorPalette="blue" onClick={logout}>
                 {t("logout")}

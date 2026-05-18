@@ -115,10 +115,14 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           "User information": "User Information",
           logout: "Logout",
           use_ai_hub_budget: "Use AI-Hub Budget",
+          stop_using_ai_hub_budget: "Stop using AI-Hub Budget",
           ai_hub_budget_active: "AI-Hub budget is active.",
+          ai_hub_budget_disabled: "AI-Hub budget disabled",
+          ai_hub_budget_disabled_desc:
+            "Your previous API endpoint settings were restored.",
           ai_hub_budget_enabled: "AI-Hub budget enabled",
           ai_hub_budget_enabled_desc:
-            "The API key was created and {{count}} models were loaded.",
+            "The AI-Hub API key is ready and {{count}} models were loaded.",
           ai_hub_budget_error: "AI-Hub budget could not be enabled",
           ai_hub_budget_error_desc:
             "The API key could not be created or the models could not be loaded.",
@@ -309,10 +313,14 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           "User information": "Benutzerinformationen",
           logout: "Abmelden",
           use_ai_hub_budget: "AI-Hub-Budget nutzen",
+          stop_using_ai_hub_budget: "AI-Hub-Budget nicht mehr nutzen",
           ai_hub_budget_active: "AI-Hub-Budget ist aktiv.",
+          ai_hub_budget_disabled: "AI-Hub-Budget deaktiviert",
+          ai_hub_budget_disabled_desc:
+            "Die vorherigen API-Endpunkt-Einstellungen wurden wiederhergestellt.",
           ai_hub_budget_enabled: "AI-Hub-Budget aktiviert",
           ai_hub_budget_enabled_desc:
-            "Der API-Schlüssel wurde erzeugt und {{count}} Modelle wurden geladen.",
+            "Der AI-Hub-API-Schlüssel ist bereit und {{count}} Modelle wurden geladen.",
           ai_hub_budget_error: "AI-Hub-Budget konnte nicht aktiviert werden",
           ai_hub_budget_error_desc:
             "Der API-Schlüssel konnte nicht erzeugt werden oder die Modelle konnten nicht geladen werden.",

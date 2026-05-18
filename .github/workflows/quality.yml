@@ -7,10 +7,216 @@ on:
     branches: [ main ]
 
 
+env:
+  PLAYWRIGHT_TEST_BASE_URL: http://localhost:5173
+  PLAYWRIGHT_PREBUILT_DIST: "1"
+  VITE_LOGIN_URL: /api/login
+  VITE_LOGOUT_URL: /api/logout
+  VITE_API_BASE_URL: /api/v1
+  VITE_USER_URL: /api/user
+  VITE_PROXY_URL: https://proxy.gawron.cloud/api
+  VITE_DASHBOARD_URL: /api/dashboard
+
 jobs:
-  playwright:
-    timeout-minutes: 60
+  build:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - run: corepack enable && corepack prepare yarn@stable --activate
+    - uses: actions/setup-node@v5
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+        cache-dependency-path: '**/yarn.lock'
+    - name: Install dependencies
+      run: yarn install --immutable
+    - name: Build app
+      run: yarn build
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+        retention-days: 1
+
+  playwright-auth:
+    name: Playwright Auth Setup
+    timeout-minutes: 15
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - run: corepack enable && corepack prepare yarn@stable --activate
+    - uses: actions/setup-node@v5
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+        cache-dependency-path: '**/yarn.lock'
+    - name: Install dependencies
+      run: yarn install --immutable
+    - uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+    - name: Install Chromium
+      run: npx playwright install --with-deps chromium
+    - name: Create authenticated storage state
+      run: npx playwright test --project=setup
+      env:
+        PLAYWRIGHT_JSON_OUTPUT: playwright-report/results-auth.json
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-auth-state
+        path: playwright/.auth/user.json
+        include-hidden-files: true
+        if-no-files-found: error
+        retention-days: 1
+    - uses: actions/upload-artifact@v4
+      if: ${{ failure() }}
+      with:
+        name: playwright-report-auth
+        path: playwright-report/
+        retention-days: 30
+
+  playwright-chromium:
+    name: Playwright Chromium ${{ matrix.shard }}/${{ matrix.total_shards }}
+    timeout-minutes: 35
+    needs: [build, playwright-auth]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+        total_shards: [3]
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - run: corepack enable && corepack prepare yarn@stable --activate
+    - uses: actions/setup-node@v5
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+        cache-dependency-path: '**/yarn.lock'
+    - name: Install dependencies
+      run: yarn install --immutable
+    - uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+    - uses: actions/download-artifact@v4
+      with:
+        name: playwright-auth-state
+        path: playwright/.auth/
+    - name: Install Chromium
+      run: npx playwright install --with-deps chromium
+    - name: Run Chromium shard
+      run: npx playwright test --no-deps --project=chromium --shard=${{ matrix.shard }}/${{ matrix.total_shards }}
+      env:
+        PLAYWRIGHT_JSON_OUTPUT: playwright-report/results-chromium-${{ matrix.shard }}.json
+    - name: Collect Playwright JSON
+      if: ${{ !cancelled() }}
+      run: |
+        mkdir -p playwright-results
+        if [ -f playwright-report/results-chromium-${{ matrix.shard }}.json ]; then
+          cp playwright-report/results-chromium-${{ matrix.shard }}.json playwright-results/chromium-${{ matrix.shard }}.json
+        fi
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report-chromium-${{ matrix.shard }}
+        path: playwright-report/
+        retention-days: 30
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-results-chromium-${{ matrix.shard }}
+        path: playwright-results/
+        retention-days: 30
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: nyc-output-chromium-${{ matrix.shard }}
+        path: .nyc_output/
+        include-hidden-files: true
+        retention-days: 1
+
+  playwright-smoke:
+    name: Playwright Cross-Browser Smoke
+    timeout-minutes: 35
+    needs: [build, playwright-auth]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - run: corepack enable && corepack prepare yarn@stable --activate
+    - uses: actions/setup-node@v5
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+        cache-dependency-path: '**/yarn.lock'
+    - name: Install dependencies
+      run: yarn install --immutable
+    - uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+    - uses: actions/download-artifact@v4
+      with:
+        name: playwright-auth-state
+        path: playwright/.auth/
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps chromium firefox webkit chrome msedge
+    - name: Run cross-browser smoke
+      run: npx playwright test --no-deps --project=firefox --project=webkit --project='Mobile Chrome' --project='Mobile Safari' --project='Microsoft Edge' --project='Google Chrome'
+      env:
+        PLAYWRIGHT_JSON_OUTPUT: playwright-report/results-smoke.json
+    - name: Collect Playwright JSON
+      if: ${{ !cancelled() }}
+      run: |
+        mkdir -p playwright-results
+        if [ -f playwright-report/results-smoke.json ]; then
+          cp playwright-report/results-smoke.json playwright-results/smoke.json
+        fi
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report-smoke
+        path: playwright-report/
+        retention-days: 30
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-results-smoke
+        path: playwright-results/
+        retention-days: 30
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: nyc-output-smoke
+        path: .nyc_output/
+        include-hidden-files: true
+        retention-days: 1
+
+  quality-summary:
+    name: Quality Summary
+    needs: [playwright-chromium, playwright-smoke]
+    runs-on: ubuntu-latest
+    if: ${{ always() && !cancelled() }}
     permissions:
       contents: read
       pull-requests: write
@@ -26,73 +232,84 @@ jobs:
         cache-dependency-path: '**/yarn.lock'
     - name: Install dependencies
       run: yarn install --immutable
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-      env:
-        PLAYWRIGHT_TEST_BASE_URL: http://localhost:5173
-        VITE_LOGIN_URL: https://openai.ki.fh-swf.de/api/login
-        VITE_LOGOUT_URL: https://openai.ki.fh-swf.de/api/logout
-        VITE_API_BASE_URL: https://openai.ki.fh-swf.de/api/v1
-        VITE_USER_URL: https://openai.ki.fh-swf.de/api/user
-        VITE_PROXY_URL: https://proxy.gawron.cloud/api
-        VITE_DASHBOARD_URL: https://openai.ki.fh-swf.de/api/dashboard
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: nyc-output-*
+        path: .nyc_output/
+        merge-multiple: true
     - name: Generate coverage report
       run: npx nyc report --reporter=lcov --report-dir=coverage
-      if: ${{ !cancelled() }}
+    - uses: actions/download-artifact@v4
+      if: github.event_name == 'pull_request'
+      with:
+        pattern: playwright-results-*
+        path: playwright-results/
+        merge-multiple: true
     - name: Comment Test Report on PR
       uses: actions/github-script@v7
-      if: always() && github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request'
       with:
         script: |
           const fs = require('fs');
-          if (!fs.existsSync('playwright-report/results.json')) {
-            console.log('No results.json found.');
+          const path = require('path');
+          const resultsDir = 'playwright-results';
+          if (!fs.existsSync(resultsDir)) {
+            console.log('No Playwright result artifacts found.');
             return;
           }
-          const report = require('./playwright-report/results.json');
-          const stats = report.stats;
-          const duration = (stats.duration / 1000).toFixed(1);
-          
-          let body = `### Playwright Test Results 🎭\n\n`;
-          body += `- **Passed:** ${stats.expected}\n`;
-          body += `- **Failed:** ${stats.unexpected}\n`;
-          body += `- **Flaky:** ${stats.flaky}\n`;
-          body += `- **Skipped:** ${stats.skipped}\n`;
-          body += `- **Duration:** ${duration}s\n\n`;
-          
-          if (stats.unexpected > 0) {
-            body += `<details><summary>Failed Tests Details</summary>\n\n`;
+
+          const totals = {
+            expected: 0,
+            unexpected: 0,
+            flaky: 0,
+            skipped: 0,
+            duration: 0,
+            failed: new Set(),
+          };
+
+          for (const file of fs.readdirSync(resultsDir).filter((name) => name.endsWith('.json'))) {
+            const report = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
+            const stats = report.stats || {};
+            totals.expected += stats.expected || 0;
+            totals.unexpected += stats.unexpected || 0;
+            totals.flaky += stats.flaky || 0;
+            totals.skipped += stats.skipped || 0;
+            totals.duration += stats.duration || 0;
+
             for (const suite of report.suites || []) {
               for (const spec of suite.specs || []) {
                 for (const test of spec.tests || []) {
-                  for (const result of test.results || []) {
-                    if (result.status !== 'passed' && result.status !== 'skipped') {
-                      body += `- ${spec.title}\n`;
-                    }
+                  if ((test.outcome || test.expectedStatus) === 'unexpected') {
+                    totals.failed.add(spec.title);
                   }
                 }
               }
             }
+          }
+
+          let body = `### Playwright Test Results\n\n`;
+          body += `- **Passed:** ${totals.expected}\n`;
+          body += `- **Failed:** ${totals.unexpected}\n`;
+          body += `- **Flaky:** ${totals.flaky}\n`;
+          body += `- **Skipped:** ${totals.skipped}\n`;
+          body += `- **Total Runtime Across Jobs:** ${(totals.duration / 1000).toFixed(1)}s\n\n`;
+
+          if (totals.failed.size > 0) {
+            body += `<details><summary>Failed Tests Details</summary>\n\n`;
+            for (const title of totals.failed) {
+              body += `- ${title}\n`;
+            }
             body += `\n</details>\n`;
           }
-          
+
           await github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: body
+            body,
           });
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
     - name: SonarQube
       uses: sonarsource/sonarqube-scan-action@v6
-      if: ${{ !cancelled() }}
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
