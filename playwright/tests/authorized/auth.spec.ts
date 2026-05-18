@@ -109,7 +109,6 @@ async function waitForAuthenticatedShell(page: Page) {
 
 async function acceptTermsIfVisible(page: Page) {
   const termsBtn = page.getByTestId("accept-terms-btn");
-  const informationWindow = page.getByTestId("InformationWindow");
   if ((await termsBtn.count()) === 0) return;
 
   await expect(termsBtn).toBeVisible({ timeout: 5000 });
@@ -120,8 +119,6 @@ async function acceptTermsIfVisible(page: Page) {
 }
 
 async function clickWithBackdropRetry(page: Page, locator: Locator) {
-  const informationWindow = page.getByTestId("InformationWindow");
-
   for (let attempt = 0; attempt < 6; attempt++) {
     try {
       await locator.click({ timeout: 3000 });
@@ -130,9 +127,10 @@ async function clickWithBackdropRetry(page: Page, locator: Locator) {
       const message = error instanceof Error ? error.message : `${error}`;
       const isBackdropInterception =
         message.includes("intercepts pointer events") &&
-        message.includes("dialog__backdrop");
+        (message.includes("dialog__backdrop") ||
+          message.includes("dialog__positioner"));
       if (!isBackdropInterception) throw error;
-      await expect(informationWindow).toBeHidden({ timeout: 3000 });
+      await waitForDialogLayerToClear(page);
     }
   }
 
@@ -143,11 +141,19 @@ async function closeInformationWindowIfVisible(page: Page) {
   const informationWindow = page.getByTestId("InformationWindow");
 
   if (await informationWindow.isHidden({ timeout: 15000 }).catch(() => false)) {
+    await waitForDialogLayerToClear(page);
     return;
   }
 
   await page.keyboard.press("Escape");
   await expect(informationWindow).toBeHidden({ timeout: 15000 });
+  await waitForDialogLayerToClear(page);
+}
+
+async function waitForDialogLayerToClear(page: Page) {
+  await expect(
+    page.locator('[data-scope="dialog"][data-part="positioner"]')
+  ).toBeHidden({ timeout: 15000 });
 }
 
 function buildMcpTools(args: {
