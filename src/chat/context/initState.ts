@@ -6,10 +6,12 @@ import i18n from "../../i18n/config";
 import { toolOptions } from "../utils";
 const { t } = i18n;
 
-const defaultOpenAIBaseUrl =
+export const defaultOpenAIBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.API_BASE_URL ||
   "https://api.openai.com/v1";
+
+export const defaultOpenAIModel = "gpt-4o-mini";
 
 export const initState: GlobalState = {
   current: 0,
@@ -53,7 +55,7 @@ export const initState: GlobalState = {
       organizationId: "",
       temperature: 1,
       mode: "chat",
-      model: "gpt-4o-mini",
+      model: defaultOpenAIModel,
       apiKey: "unused",
       max_tokens: 2048,
       n: 1,
@@ -64,8 +66,12 @@ export const initState: GlobalState = {
       assistant: "",
       mcpAuthConfigs: new Map<string, McpAuthConfig>(),
       aiHubEnabled: false,
+      aiHubApiKey: "",
       aiHubKeyAlias: "kimpuls",
       aiHubModels: [],
+      aiHubPreviousApiKey: "",
+      aiHubPreviousBaseUrl: "",
+      aiHubPreviousModel: "",
     },
   },
   is: {
