@@ -76,7 +76,9 @@ jobs:
       if: ${{ !cancelled() }}
       with:
         name: playwright-auth-state
-        path: playwright/.auth/
+        path: playwright/.auth/user.json
+        include-hidden-files: true
+        if-no-files-found: error
         retention-days: 1
     - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
@@ -147,6 +149,7 @@ jobs:
       with:
         name: nyc-output-chromium-${{ matrix.shard }}
         path: .nyc_output/
+        include-hidden-files: true
         retention-days: 1
 
   playwright-smoke:
@@ -206,6 +209,7 @@ jobs:
       with:
         name: nyc-output-smoke
         path: .nyc_output/
+        include-hidden-files: true
         retention-days: 1
 
   quality-summary:
