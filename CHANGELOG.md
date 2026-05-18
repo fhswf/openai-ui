@@ -37,6 +37,24 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.38.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.37.0...openai-ui-v0.38.0) (2026-05-18)
+
+
+### Features
+
+* add function to close information window if visible during terms acceptance ([af898ec](https://github.com/fhswf/openai-ui/commit/af898ec083eb10e0575eb4e1ef9e65eb8d3a4281))
+* enhance user endpoint handling and improve terms acceptance in tests ([06e9d7a](https://github.com/fhswf/openai-ui/commit/06e9d7ae820cd8fe6801824327f514e019f6255f))
+* implement AI-Hub budget management and restore previous settings ([ebe1da6](https://github.com/fhswf/openai-ui/commit/ebe1da60dd81fe27dc08e5f68ada4ff1c9162899))
+* refactor information window handling and add wait for dialog layer to clear ([43bdad4](https://github.com/fhswf/openai-ui/commit/43bdad448d2fb58734c5ba488826ca70c1ea5a73))
+* update Playwright configuration and workflow for improved testing and reporting ([0e5c369](https://github.com/fhswf/openai-ui/commit/0e5c369c4fb88eff046af5ee0e409fce6cd2832e))
+* update VITE environment variables for local development and enhance API proxy configuration ([15bcec7](https://github.com/fhswf/openai-ui/commit/15bcec7fee0ae4118cc5b9b3716811cbaaa74300))
+
+
+### Bug Fixes
+
+* improve Istanbul coverage collection handling in tests ([c78331f](https://github.com/fhswf/openai-ui/commit/c78331f24c2d2b0ef21be5cc56cd7fff09595cd1))
+* update artifact upload paths and include hidden files for improved quality checks ([5835a9a](https://github.com/fhswf/openai-ui/commit/5835a9a3c34c1b960081239f87986ccbd5c48317))
+
 ## [0.37.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.36.0...openai-ui-v0.37.0) (2026-05-17)
 
 
