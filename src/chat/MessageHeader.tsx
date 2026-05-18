@@ -1050,6 +1050,10 @@ function UserInformationPopover({
 }: UserInformationPopoverProps) {
   const { t } = useTranslation();
   const [isGeneratingHubKey, setIsGeneratingHubKey] = useState(false);
+  const normalizedOpenAiBaseUrl = openai.baseUrl.replace(/\/$/, "");
+  const normalizedAiHubApiBaseUrl = aiHubApiBaseUrl.replace(/\/$/, "");
+  const isUsingAiHubBudget =
+    openai.aiHubEnabled || normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl;
 
   function getAiHubErrorDescription(error: unknown) {
     if (!(error instanceof AiHubError)) {
@@ -1084,7 +1088,11 @@ function UserInformationPopover({
         apiKey: openai.aiHubPreviousApiKey || "unused",
         baseUrl: openai.aiHubPreviousBaseUrl || defaultOpenAIBaseUrl,
         aiHubEnabled: false,
-        aiHubApiKey: openai.aiHubApiKey || openai.apiKey,
+        aiHubApiKey:
+          openai.aiHubApiKey ||
+          (normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl
+            ? openai.apiKey
+            : ""),
         aiHubModels: [],
         model: restoredModel,
       },
@@ -1099,7 +1107,7 @@ function UserInformationPopover({
   }
 
   async function useAiHubBudget() {
-    if (openai.aiHubEnabled) {
+    if (isUsingAiHubBudget) {
       stopUsingAiHubBudget();
       return;
     }
@@ -1108,7 +1116,11 @@ function UserInformationPopover({
 
     try {
       const keyAlias = openai.aiHubKeyAlias || "kimpuls";
-      const existingAiHubKey = openai.aiHubApiKey;
+      const existingAiHubKey =
+        openai.aiHubApiKey ||
+        (normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl
+          ? openai.apiKey
+          : "");
       const key = existingAiHubKey
         ? {
             key: existingAiHubKey,
@@ -1177,7 +1189,7 @@ function UserInformationPopover({
             <Stack gap={2}>
               <Text>{user?.name}</Text>
               <Text>{user?.email}</Text>
-              {openai.aiHubEnabled && (
+              {isUsingAiHubBudget && (
                 <Text fontSize="sm" color="green.600">
                   {t("ai_hub_budget_active")}
                 </Text>
@@ -1189,7 +1201,7 @@ function UserInformationPopover({
                 data-testid="UseAiHubBudgetBtn"
               >
                 <MdVpnKey />{" "}
-                {openai.aiHubEnabled
+                {isUsingAiHubBudget
                   ? t("stop_using_ai_hub_budget")
                   : t("use_ai_hub_budget")}
               </Button>
