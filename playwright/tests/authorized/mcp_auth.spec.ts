@@ -255,11 +255,13 @@ test.describe("MCP Auth", () => {
 
   async function acceptTermsIfVisible(page: Page) {
     const termsBtn = page.getByTestId("accept-terms-btn");
+    const informationWindow = page.getByTestId("InformationWindow");
     if ((await termsBtn.count()) === 0) return;
 
     await expect(termsBtn).toBeVisible({timeout: APP_READY_TIMEOUT});
     await termsBtn.scrollIntoViewIfNeeded();
     await termsBtn.click();
+    await expect(informationWindow).toBeHidden({timeout: APP_READY_TIMEOUT});
   }
 
   async function fillServiceBase(page: Page, label: string, url: string) {

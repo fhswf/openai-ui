@@ -28,8 +28,13 @@ const legacyProxyBaseUrl = "https://openai.ki.fh-swf.de/api";
 
 function normalizeApiBaseUrl(baseUrl?: string) {
   if (!baseUrl || baseUrl === legacyProxyBaseUrl) {
-    return apiBaseUrl;
+    baseUrl = apiBaseUrl;
   }
+
+  if (baseUrl.startsWith("/")) {
+    return new URL(baseUrl, window.location.origin).toString();
+  }
+
   return baseUrl;
 }
 
