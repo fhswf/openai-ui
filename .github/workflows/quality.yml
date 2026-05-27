@@ -66,6 +66,13 @@ jobs:
       with:
         name: dist
         path: dist/
+    - name: Get Playwright version
+      run: echo "PLAYWRIGHT_VERSION=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_ENV
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-chromium-${{ env.PLAYWRIGHT_VERSION }}
     - name: Install Chromium
       run: npx playwright install --with-deps chromium
     - name: Create authenticated storage state
@@ -119,6 +126,13 @@ jobs:
       with:
         name: playwright-auth-state
         path: playwright/.auth/
+    - name: Get Playwright version
+      run: echo "PLAYWRIGHT_VERSION=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_ENV
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-chromium-${{ env.PLAYWRIGHT_VERSION }}
     - name: Install Chromium
       run: npx playwright install --with-deps chromium
     - name: Run Chromium shard
@@ -179,6 +193,13 @@ jobs:
       with:
         name: playwright-auth-state
         path: playwright/.auth/
+    - name: Get Playwright version
+      run: echo "PLAYWRIGHT_VERSION=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_ENV
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-all-${{ env.PLAYWRIGHT_VERSION }}
     - name: Install Playwright browsers
       run: npx playwright install --with-deps chromium firefox webkit chrome msedge
     - name: Run cross-browser smoke
