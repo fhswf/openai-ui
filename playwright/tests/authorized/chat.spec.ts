@@ -16,12 +16,15 @@ const userEndpointPattern = /\/(?:api\/)?user\/?(?:\?.*)?$/;
 async function acceptTermsIfVisible(page: Page) {
     const termsBtn = page.getByTestId('accept-terms-btn');
     const informationWindow = page.getByTestId('InformationWindow');
-    if ((await termsBtn.count()) === 0) return;
+    const chatTextArea = page.getByTestId('ChatTextArea');
 
-    await expect(termsBtn).toBeVisible();
-    await termsBtn.scrollIntoViewIfNeeded();
-    await termsBtn.click();
-    await expect(informationWindow).toBeHidden();
+    await expect(termsBtn.or(chatTextArea).first()).toBeVisible({ timeout: 15000 });
+
+    if (await termsBtn.isVisible()) {
+        await termsBtn.scrollIntoViewIfNeeded();
+        await termsBtn.click();
+        await expect(informationWindow).toBeHidden({ timeout: 15000 });
+    }
 }
 
 

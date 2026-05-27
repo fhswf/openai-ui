@@ -67,7 +67,7 @@ export const initState: GlobalState = {
       mcpAuthConfigs: new Map<string, McpAuthConfig>(),
       aiHubEnabled: false,
       aiHubApiKey: "",
-      aiHubKeyAlias: "kimpuls",
+      aiHubKeyAlias: "KImpuls",
       aiHubModels: [],
       aiHubPreviousApiKey: "",
       aiHubPreviousBaseUrl: "",

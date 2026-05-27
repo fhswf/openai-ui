@@ -10,6 +10,32 @@ function createApiProxy(target: string): ProxyOptions {
     const getForwardedProto = (req: { socket: { encrypted?: boolean } }) =>
         req.socket.encrypted ? "https" : "http";
 
+    const rewriteLocationHeader = (location: string, localOrigin: string) => {
+        if (location.startsWith(targetOrigin)) {
+            return location.replace(targetOrigin, localOrigin);
+        }
+
+        try {
+            const redirectUrl = new URL(location);
+            let changed = false;
+
+            for (const param of ["post_logout_redirect_uri", "return_url"]) {
+                const value = redirectUrl.searchParams.get(param);
+                if (value?.startsWith(targetOrigin)) {
+                    redirectUrl.searchParams.set(
+                        param,
+                        value.replace(targetOrigin, localOrigin)
+                    );
+                    changed = true;
+                }
+            }
+
+            return changed ? redirectUrl.toString() : location;
+        } catch {
+            return location;
+        }
+    };
+
     return {
         target: targetOrigin,
         changeOrigin: true,
@@ -34,8 +60,8 @@ function createApiProxy(target: string): ProxyOptions {
                 const localOrigin = `${forwardedProto}://${host}`;
                 const location = proxyRes.headers.location;
 
-                if (location?.startsWith(targetOrigin)) {
-                    proxyRes.headers.location = location.replace(targetOrigin, localOrigin);
+                if (typeof location === "string") {
+                    proxyRes.headers.location = rewriteLocationHeader(location, localOrigin);
                 }
 
                 const cookies = proxyRes.headers["set-cookie"];

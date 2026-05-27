@@ -1054,6 +1054,9 @@ function UserInformationPopover({
   const normalizedAiHubApiBaseUrl = aiHubApiBaseUrl.replace(/\/$/, "");
   const isUsingAiHubBudget =
     openai.aiHubEnabled || normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl;
+  const aiHubKeyAlias = user?.email
+    ? `KImpuls-${user.email.trim().toLowerCase()}`
+    : "";
 
   function getAiHubErrorDescription(error: unknown) {
     if (!(error instanceof AiHubError)) {
@@ -1115,7 +1118,10 @@ function UserInformationPopover({
     setIsGeneratingHubKey(true);
 
     try {
-      const keyAlias = openai.aiHubKeyAlias || "kimpuls";
+      if (!aiHubKeyAlias) {
+        throw new Error("AI-Hub key alias requires a user email address.");
+      }
+
       const existingAiHubKey =
         openai.aiHubApiKey ||
         (normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl
@@ -1124,10 +1130,10 @@ function UserInformationPopover({
       const key = existingAiHubKey
         ? {
             key: existingAiHubKey,
-            key_alias: keyAlias,
+            key_alias: aiHubKeyAlias,
             key_name: openai.aiHubKeyName,
           }
-        : await generateAiHubKey(keyAlias);
+        : await generateAiHubKey(aiHubKeyAlias);
       const models = await fetchAiHubModels(key.key);
       const selectedModel = models.includes(openai.model)
         ? openai.model
@@ -1140,7 +1146,7 @@ function UserInformationPopover({
           baseUrl: aiHubApiBaseUrl,
           aiHubEnabled: true,
           aiHubApiKey: key.key,
-          aiHubKeyAlias: key.key_alias || openai.aiHubKeyAlias || "kimpuls",
+          aiHubKeyAlias: key.key_alias || aiHubKeyAlias,
           aiHubKeyName: key.key_name,
           aiHubModels: models,
           aiHubPreviousApiKey: openai.apiKey,
