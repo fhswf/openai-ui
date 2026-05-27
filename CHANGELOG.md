@@ -37,6 +37,23 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.39.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.38.0...openai-ui-v0.39.0) (2026-05-27)
+
+
+### Features
+
+* add gpt-5.4-mini and gpt-5.4-nano model options to modelOptions ([5986abe](https://github.com/fhswf/openai-ui/commit/5986abe2bcf025717729433c3cbd132feddf4fd9))
+* **dev:** enhance location header rewriting in API proxy for improved redirect handling ([43cc397](https://github.com/fhswf/openai-ui/commit/43cc3971bdb0ea9b411ad3180ac76ba1a085e652))
+* normalize OpenAI and AI Hub API base URLs and improve budget ha… ([9bcdcd1](https://github.com/fhswf/openai-ui/commit/9bcdcd130245ebfc77cde3589e6eadab4b321313))
+* normalize OpenAI and AI Hub API base URLs and improve budget handling logic ([61bea0a](https://github.com/fhswf/openai-ui/commit/61bea0a14794d2dad10885c2558bb2c820a93c8b))
+* update AI-Hub key alias format and enhance user email handling in UserInformationPopover ([0511635](https://github.com/fhswf/openai-ui/commit/05116355e650e2ea15486a9295e14bad54599ea8))
+* update AI-Hub key alias format and enhance user email handling in UserInformationPopover ([7e32d26](https://github.com/fhswf/openai-ui/commit/7e32d26d7d79a00eea219775e68eecec5da7aa00))
+
+
+### Bug Fixes
+
+* add check to skip coverage report generation when .nyc_output is empty ([4b752f5](https://github.com/fhswf/openai-ui/commit/4b752f55cdc3b871a91cc858b248374929edf511))
+
 ## [0.38.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.37.0...openai-ui-v0.38.0) (2026-05-18)
 
 
