@@ -109,13 +109,17 @@ async function waitForAuthenticatedShell(page: Page) {
 
 async function acceptTermsIfVisible(page: Page) {
   const termsBtn = page.getByTestId("accept-terms-btn");
-  if ((await termsBtn.count()) === 0) return;
+  const informationWindow = page.getByTestId("InformationWindow");
+  const userInformationBtn = page.getByTestId("UserInformationBtn");
 
-  await expect(termsBtn).toBeVisible({ timeout: 5000 });
-  await termsBtn.scrollIntoViewIfNeeded();
-  await clickWithBackdropRetry(page, termsBtn);
-  await expect(termsBtn).toBeHidden({ timeout: 15000 });
-  await closeInformationWindowIfVisible(page);
+  await expect(termsBtn.or(userInformationBtn).first()).toBeVisible({ timeout: APP_READY_TIMEOUT });
+
+  if (await termsBtn.isVisible()) {
+    await termsBtn.scrollIntoViewIfNeeded();
+    await clickWithBackdropRetry(page, termsBtn);
+    await expect(termsBtn).toBeHidden({ timeout: 15000 });
+    await closeInformationWindowIfVisible(page);
+  }
 }
 
 async function clickWithBackdropRetry(page: Page, locator: Locator) {

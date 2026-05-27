@@ -256,13 +256,16 @@ test.describe("MCP Auth", () => {
   async function acceptTermsIfVisible(page: Page) {
     const termsBtn = page.getByTestId("accept-terms-btn");
     const informationWindow = page.getByTestId("InformationWindow");
-    if ((await termsBtn.count()) === 0) return;
+    const chatTextArea = page.getByTestId("ChatTextArea");
 
-    await expect(termsBtn).toBeVisible({timeout: APP_READY_TIMEOUT});
-    await termsBtn.scrollIntoViewIfNeeded();
-    await termsBtn.click();
-    await expect(termsBtn).toBeHidden({timeout: APP_READY_TIMEOUT});
-    await closeInformationWindowIfVisible(page);
+    await expect(termsBtn.or(chatTextArea).first()).toBeVisible({ timeout: APP_READY_TIMEOUT });
+
+    if (await termsBtn.isVisible()) {
+      await termsBtn.scrollIntoViewIfNeeded();
+      await termsBtn.click();
+      await expect(informationWindow).toBeHidden({ timeout: APP_READY_TIMEOUT });
+      await closeInformationWindowIfVisible(page);
+    }
   }
 
   async function closeInformationWindowIfVisible(page: Page) {
