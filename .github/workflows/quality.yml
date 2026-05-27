@@ -259,7 +259,12 @@ jobs:
         path: .nyc_output/
         merge-multiple: true
     - name: Generate coverage report
-      run: npx nyc report --reporter=lcov --report-dir=coverage
+      run: |
+        if [ -d .nyc_output ] && [ "$(ls -A .nyc_output)" ]; then
+          npx nyc report --reporter=lcov --report-dir=coverage
+        else
+          echo "No coverage files found in .nyc_output, skipping report generation."
+        fi
     - uses: actions/download-artifact@v4
       if: github.event_name == 'pull_request'
       with:
