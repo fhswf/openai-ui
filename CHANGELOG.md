@@ -37,6 +37,13 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.40.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.39.0...openai-ui-v0.40.0) (2026-05-28)
+
+
+### Features
+
+* implement markdown sanitization using rehype-sanitize and add corresponding XSS security tests ([43ad80a](https://github.com/fhswf/openai-ui/commit/43ad80a6a97e2220ead5365a6f40a066e5ca47fd))
+
 ## [0.39.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.38.0...openai-ui-v0.39.0) (2026-05-27)
 
 
