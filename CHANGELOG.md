@@ -37,6 +37,13 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.41.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.40.0...openai-ui-v0.41.0) (2026-05-28)
+
+
+### Features
+
+* add user request distribution chart to dashboard with internationalized labels ([44d28d0](https://github.com/fhswf/openai-ui/commit/44d28d08d2b08830ccb4dd8fe30723d4db485834))
+
 ## [0.40.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.39.0...openai-ui-v0.40.0) (2026-05-28)
 
 
