@@ -217,6 +217,29 @@ const DashboardChart = () => {
       fill: COLORS[index % COLORS.length],
     }));
 
+  const userCounts = data[0].byUser || [];
+  const bins = [
+    { label: "1", min: 1, max: 1 },
+    { label: "2 - 5", min: 2, max: 5 },
+    { label: "6 - 10", min: 6, max: 10 },
+    { label: "11 - 20", min: 11, max: 20 },
+    { label: "21 - 50", min: 21, max: 50 },
+    { label: "51 - 100", min: 51, max: 100 },
+    { label: "101 - 200", min: 101, max: 200 },
+    { label: "201 - 500", min: 201, max: 500 },
+    { label: "501+", min: 501, max: Infinity },
+  ];
+
+  const userChartData = bins.map((bin) => {
+    const count = userCounts.filter(
+      (val: number) => val >= bin.min && val <= bin.max
+    ).length;
+    return {
+      name: bin.label,
+      value: count,
+    };
+  });
+
   const RADIAN = Math.PI / 180;
   const renderPieLabel =
     (data) =>
@@ -245,7 +268,7 @@ const DashboardChart = () => {
       );
     };
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: any; payload?: any; label?: any }) => {
     if (active && payload && payload.length) {
       const { name, longName, count, value } = payload[0].payload;
       const percentage = value.toFixed(1);
@@ -283,6 +306,9 @@ const DashboardChart = () => {
         </Tabs.Trigger>
         <Tabs.Trigger value="role_breakdown">
           {t("role_breakdown_title")}
+        </Tabs.Trigger>
+        <Tabs.Trigger value="user_breakdown">
+          {t("user_breakdown_title")}
         </Tabs.Trigger>
         <Tabs.Indicator />
       </Tabs.List>
@@ -351,6 +377,42 @@ const DashboardChart = () => {
             </Pie>
             <Tooltip content={<CustomTooltip />} />
           </PieChart>
+        </ResponsiveContainer>
+      </Tabs.Content>
+      <Tabs.Content value="user_breakdown" className={styles.chart_container}>
+        <div style={{ marginBottom: "10px", fontSize: "14px", fontWeight: "600", opacity: 0.8 }}>
+          {t("unique_users_count", { count: userCounts.length })}
+        </div>
+        <ResponsiveContainer width="100%" height="90%">
+          <BarChart
+            data={userChartData}
+            margin={{ top: 15, right: 15, left: 20, bottom: 20 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              dataKey="name"
+              label={{ value: t("requests_axis_label"), position: "insideBottom", offset: -5 }}
+              height={50}
+            />
+            <YAxis
+              label={{ value: t("users_axis_label"), angle: -90, position: "insideLeft", offset: 15 }}
+            />
+            <Tooltip
+              labelFormatter={(label) => {
+                if (label === "1") {
+                  return `${label} ${t("request_label_single")}`;
+                }
+                return `${label} ${t("request_label_plural")}`;
+              }}
+              formatter={(value) => [value, t("user_count_label")]}
+            />
+            <Legend verticalAlign="top" />
+            <Bar
+              dataKey="value"
+              name={t("user_count_label")}
+              fill="rgba(76, 175, 80, 0.8)"
+            />
+          </BarChart>
         </ResponsiveContainer>
       </Tabs.Content>
     </Tabs.Root>

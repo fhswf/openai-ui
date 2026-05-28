@@ -207,6 +207,13 @@ You can find the full privacy notice in the app's info menu (?).
           please_fill_in_all_required_fields:
             "Please fill in all required fields",
           understood: "Understood",
+          user_breakdown_title: "Requests per User",
+          user_count_label: "Users",
+          unique_users_count: "Number of unique users: {{count}}",
+          request_label_single: "request",
+          request_label_plural: "requests",
+          requests_axis_label: "Requests",
+          users_axis_label: "Users",
         },
       }, // German
       de: {
@@ -399,6 +406,13 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Hier finden Sie eine Übersicht über die Nutzung des Chatbots.",
           scope_breakdown_title: "Aufschlüsselung der Zugriffe nach Bereichen",
           role_breakdown_title: "Aufschlüsselung der Zugriffe nach Rollen",
+          user_breakdown_title: "Aufrufe pro Nutzer*in",
+          user_count_label: "Nutzer*innen",
+          unique_users_count: "Anzahl der Nutzer*innen: {{count}}",
+          request_label_single: "Aufruf",
+          request_label_plural: "Aufrufe",
+          requests_axis_label: "Aufrufe",
+          users_axis_label: "Nutzer*innen",
 
           import_export: "Import/Export",
           import_export_description:
