@@ -23,6 +23,7 @@ import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import "./style/markdown.less";
 import "katex/dist/katex.min.css";
 import { useTranslation } from "react-i18next";
@@ -65,7 +66,23 @@ export const MessageRender = (props) => {
       <MarkdownHooks
         children={props.children}
         remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
-        rehypePlugins={[rehypeKatex, rehypeRaw]}
+        rehypePlugins={[
+          rehypeRaw,
+          [
+            rehypeSanitize,
+            {
+              ...defaultSchema,
+              attributes: {
+                ...defaultSchema.attributes,
+                code: [
+                  ...(defaultSchema.attributes?.code || []),
+                  ["className", /^language-./, "math-inline", "math-display"],
+                ],
+              },
+            },
+          ],
+          rehypeKatex,
+        ]}
         components={{
           code({ node, inline, className, children, ...rest }) {
             const match = /language-(\w+)/.exec(className || "");

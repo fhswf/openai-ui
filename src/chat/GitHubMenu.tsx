@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { useGlobal } from "./context";
 
 export function GitHubMenu() {
@@ -63,7 +64,23 @@ export function GitHubMenu() {
                     <div className="z-ui-markdown">
                       <Markdown
                         remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
-                        rehypePlugins={[rehypeKatex, rehypeRaw]}
+                        rehypePlugins={[
+                          rehypeRaw,
+                          [
+                            rehypeSanitize,
+                            {
+                              ...defaultSchema,
+                              attributes: {
+                                ...defaultSchema.attributes,
+                                code: [
+                                  ...(defaultSchema.attributes?.code || []),
+                                  ["className", /^language-./, "math-inline", "math-display"],
+                                ],
+                              },
+                            },
+                          ],
+                          rehypeKatex,
+                        ]}
                       >
                         {release?.body}
                       </Markdown>

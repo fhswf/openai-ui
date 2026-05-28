@@ -4,7 +4,7 @@ import IstanbulPlugin from 'vite-plugin-istanbul';
 import { join } from 'path'
 import * as fs from 'fs';
 
-function createApiProxy(target: string): ProxyOptions {
+function createApiProxy(target: string, devJwtToken?: string): ProxyOptions {
     const targetOrigin = new URL(target).origin;
 
     const getForwardedProto = (req: { socket: { encrypted?: boolean } }) =>
@@ -52,6 +52,15 @@ function createApiProxy(target: string): ProxyOptions {
                 proxyReq.setHeader("X-Forwarded-Host", host);
                 proxyReq.setHeader("X-Forwarded-Proto", forwardedProto);
                 proxyReq.setHeader("X-Forwarded-Port", forwardedPort || "");
+
+                if (devJwtToken) {
+                    const existingCookie = req.headers.cookie;
+                    const tokenCookie = `token=${devJwtToken}`;
+                    proxyReq.setHeader(
+                        "Cookie",
+                        existingCookie ? `${existingCookie}; ${tokenCookie}` : tokenCookie
+                    );
+                }
             });
 
             proxy.on("proxyRes", (proxyRes, req) => {
@@ -101,7 +110,8 @@ export default defineConfig(({ mode }) => {
         env.VITE_API_PROXY_TARGET ||
         env.API_PROXY_TARGET ||
         "https://openai.ki.fh-swf.de";
-    const apiProxy = createApiProxy(apiProxyTarget);
+    const devJwtToken = env.DEV_JWT_TOKEN;
+    const apiProxy = createApiProxy(apiProxyTarget, devJwtToken);
 
     return {
         base: './',
