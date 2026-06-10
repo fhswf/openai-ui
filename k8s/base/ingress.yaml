@@ -8,6 +8,17 @@ spec:
     scheme: https
     permanent: true
 ---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: hsts
+spec:
+  headers:
+    stsSeconds: 86400
+    stsIncludeSubdomains: false
+    stsPreload: false
+    forceSTSHeader: true
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -23,6 +34,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "10"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.middlewares: hsts@kubernetescrd
   name: openai.fh-swf.cloud-frontend
   namespace: openai-proxy
 spec:
@@ -53,6 +65,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "10"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.middlewares: hsts@kubernetescrd
   name: openai.ki.fh-swf.de-frontend
   namespace: openai-proxy
 spec:
