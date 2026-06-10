@@ -17,8 +17,12 @@ patches:
       path: /spec/rules/0/host
       value: openai.gawron.dev
   target:
-    kind: Ingress
-images:
+    kind: Ingress- patch: |-
+    - op: replace
+      path: /metadata/annotations/traefik.ingress.kubernetes.io~1router.middlewares
+      value: staging-hsts@kubernetescrd
+  target:
+    kind: Ingressimages:
 - name: ghcr.io/fhswf/openai-ui
   newName: ghcr.io/fhswf/openai-ui
   newTag: sha-2fb0860
