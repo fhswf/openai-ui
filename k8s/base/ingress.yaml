@@ -36,7 +36,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "10"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-    traefik.ingress.kubernetes.io/router.middlewares: hsts@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: openai-proxy-hsts@kubernetescrd
   name: openai.fh-swf.cloud-frontend
   namespace: openai-proxy
 spec:
@@ -67,7 +67,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "10"
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-    traefik.ingress.kubernetes.io/router.middlewares: hsts@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: openai-proxy-hsts@kubernetescrd
   name: openai.ki.fh-swf.de-frontend
   namespace: openai-proxy
 spec:

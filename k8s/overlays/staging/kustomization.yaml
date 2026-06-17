@@ -21,10 +21,10 @@ patches:
 - patch: |-
     - op: replace
       path: /metadata/annotations/traefik.ingress.kubernetes.io~1router.middlewares
-      value: staging-hsts@kubernetescrd
+      value: staging-openai-proxy-staging-hsts@kubernetescrd
   target:
     kind: Ingress
 images:
 - name: ghcr.io/fhswf/openai-ui
   newName: ghcr.io/fhswf/openai-ui
-  newTag: sha-2fb0860
+  newTag: sha-7bc6dad
