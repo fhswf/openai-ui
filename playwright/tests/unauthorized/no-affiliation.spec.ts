@@ -25,7 +25,7 @@ test('No Affiliation Access Denied', async ({ browser }) => {
     const userResponse = page.waitForResponse(userEndpointPattern);
     await page.goto("", { waitUntil: 'domcontentloaded' });
     await userResponse;
-    const noAccessMessage = page.getByTestId('no-access-messag');
+    const noAccessMessage = page.getByTestId('no-access-message');
 
     await expect(noAccessMessage).toBeVisible();
     await expect(noAccessMessage).toContainText(noAffiliationUser.preferred_username);
