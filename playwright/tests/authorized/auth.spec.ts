@@ -267,6 +267,9 @@ async function routeMcpUserAndJwks(
       await route.fulfill({
         status: 200,
         contentType: "application/json",
+        headers: {
+          "access-control-allow-origin": "*",
+        },
         body: JSON.stringify(jwks),
       });
     }
@@ -277,6 +280,9 @@ async function routeMcpUserAndJwks(
       await route.fulfill({
         status: 200,
         contentType: "application/json",
+        headers: {
+          "access-control-allow-origin": "*",
+        },
         body: JSON.stringify(openIdConfiguration),
       });
     }
@@ -287,6 +293,9 @@ async function routeMcpUserAndJwks(
       await route.fulfill({
         status: 404,
         contentType: "text/plain",
+        headers: {
+          "access-control-allow-origin": "*",
+        },
         body: "missing",
       });
     }
@@ -404,8 +413,10 @@ test.describe("Authentication (fetchAndGetUser)", () => {
     await acceptTermsIfVisible(page);
 
     const popover = page.getByTestId("UserInformation");
-    await clickWithBackdropRetry(page, page.getByTestId("UserInformationBtn"));
-    await expect(popover).toBeVisible();
+    await expect(async () => {
+      await clickWithBackdropRetry(page, page.getByTestId("UserInformationBtn"));
+      await expect(popover).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 10000, intervals: [500, 1000] });
     await expect(popover.getByText(mockUser.name)).toBeVisible();
     await expect(popover.getByText(mockUser.email)).toBeVisible();
   });

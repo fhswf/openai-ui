@@ -85,11 +85,19 @@ test.describe("MCP Services", () => {
     const informationWindow = page.getByTestId("InformationWindow");
 
     if (await informationWindow.isHidden({ timeout: APP_READY_TIMEOUT }).catch(() => false)) {
+      await waitForDialogLayerToClear(page);
       return;
     }
 
     await page.keyboard.press("Escape");
     await expect(informationWindow).toBeHidden({ timeout: APP_READY_TIMEOUT });
+    await waitForDialogLayerToClear(page);
+  }
+
+  async function waitForDialogLayerToClear(page: Page) {
+    await expect(
+      page.locator('[data-scope="dialog"][data-part="positioner"]')
+    ).toBeHidden({ timeout: APP_READY_TIMEOUT });
   }
 
   async function waitForDiscoveredScopes(page: Page) {

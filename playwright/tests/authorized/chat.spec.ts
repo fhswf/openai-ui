@@ -26,6 +26,10 @@ async function acceptTermsIfVisible(page: Page) {
             await termsBtn.click();
             await expect(informationWindow).toBeHidden({ timeout: 1000 });
         }).toPass({ timeout: 15000, intervals: [500, 1000] });
+
+        await expect(
+            page.locator('[data-scope="dialog"][data-part="positioner"]')
+        ).toBeHidden({ timeout: 15000 });
     }
 }
 
