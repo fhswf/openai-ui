@@ -138,6 +138,7 @@ export function MessageMenu() {
                       onClick={(e) => {
                         console.log("Clicking on chat %o", c.id);
                         setState({ currentChat: index });
+                        setMenuOpen(false);
                       }}
                     >
                       <Card.Header>
@@ -177,7 +178,10 @@ export function MessageMenu() {
                             size="xs"
                             focusRing="none"
                             title={t("delete_chat")}
-                            onClick={() => deleteChat(c.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteChat(c.id);
+                            }}
                           >
                             <MdOutlineDeleteOutline />
                           </IconButton>
@@ -215,7 +219,7 @@ export function MessageMenu() {
                 {t("new_chat")}
               </Button>
               <Spacer />
-              <Button type="primary" onClick={() => setMenuOpen(false)}>
+              <Button type={"primary" as any} onClick={() => setMenuOpen(false)}>
                 {t("close")}
               </Button>
             </HStack>
