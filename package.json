@@ -30,6 +30,7 @@
     "@opentelemetry/sdk-logs": "^0.200.0",
     "@opentelemetry/sdk-trace-web": "^2.0.0",
     "@opentelemetry/semantic-conventions": "^1.30.0",
+    "@sentry/react": "^10.56.0",
     "@uiw/react-textarea-code-editor": "^3.0.2",
     "classnames": "^2.5.1",
     "dotenv": "^16.4.5",

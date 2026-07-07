@@ -14,6 +14,7 @@ import {
     ATTR_EXCEPTION_MESSAGE,
     ATTR_EXCEPTION_STACKTRACE,
 } from "@opentelemetry/semantic-conventions";
+import * as Sentry from "@sentry/react";
 
 export interface ErrorFallbackProps {
     error: Error;
@@ -22,6 +23,7 @@ export interface ErrorFallbackProps {
 
 export function ErrorFallback({ error, resetErrorBoundary }: Readonly<ErrorFallbackProps>) {
     console.log("error: %o %s", error.stack, typeof error.stack);
+    Sentry.captureException(error);
 
     const stackTrace = error.stack ? error.stack.split("\n").map((line, index) => ({
         id: `trace-${index}`,

@@ -35,5 +35,7 @@ spec:
           env:
             - name: VITE_RELEASE
               value: 0.34.0
+            - name: VITE_SENTRY_DSN
+              value: "https://c11b3c80071c404faa4ce3530db48e8e@bugsink.fh-swf.cloud/1"
       restartPolicy: Always
 status: {}

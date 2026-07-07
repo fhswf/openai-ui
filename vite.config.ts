@@ -122,6 +122,9 @@ export default defineConfig(({ mode }) => {
                         if (id.includes('node_modules')) {
                             const parts = id.split('node_modules/');
                             const name = parts[1].split('/')[0];
+                            if (name === '@sentry' || name === '@sentry-internal') {
+                                return 'vendor/sentry';
+                            }
                             return `vendor/${name}`;
                         }
                     }
