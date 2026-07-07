@@ -261,9 +261,11 @@ test.describe("MCP Auth", () => {
     await expect(termsBtn.or(chatTextArea).first()).toBeVisible({ timeout: APP_READY_TIMEOUT });
 
     if (await termsBtn.isVisible()) {
-      await termsBtn.scrollIntoViewIfNeeded();
-      await termsBtn.click();
-      await expect(informationWindow).toBeHidden({ timeout: APP_READY_TIMEOUT });
+      await expect(async () => {
+        await termsBtn.scrollIntoViewIfNeeded();
+        await termsBtn.click();
+        await expect(informationWindow).toBeHidden({ timeout: 1000 });
+      }).toPass({ timeout: 15000, intervals: [500, 1000] });
       await closeInformationWindowIfVisible(page);
     }
   }

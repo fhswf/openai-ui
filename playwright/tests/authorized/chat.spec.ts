@@ -21,9 +21,11 @@ async function acceptTermsIfVisible(page: Page) {
     await expect(termsBtn.or(chatTextArea).first()).toBeVisible({ timeout: 15000 });
 
     if (await termsBtn.isVisible()) {
-        await termsBtn.scrollIntoViewIfNeeded();
-        await termsBtn.click();
-        await expect(informationWindow).toBeHidden({ timeout: 15000 });
+        await expect(async () => {
+            await termsBtn.scrollIntoViewIfNeeded();
+            await termsBtn.click();
+            await expect(informationWindow).toBeHidden({ timeout: 1000 });
+        }).toPass({ timeout: 15000, intervals: [500, 1000] });
     }
 }
 

@@ -109,15 +109,16 @@ async function waitForAuthenticatedShell(page: Page) {
 
 async function acceptTermsIfVisible(page: Page) {
   const termsBtn = page.getByTestId("accept-terms-btn");
-  const informationWindow = page.getByTestId("InformationWindow");
   const userInformationBtn = page.getByTestId("UserInformationBtn");
 
   await expect(termsBtn.or(userInformationBtn).first()).toBeVisible({ timeout: APP_READY_TIMEOUT });
 
   if (await termsBtn.isVisible()) {
-    await termsBtn.scrollIntoViewIfNeeded();
-    await clickWithBackdropRetry(page, termsBtn);
-    await expect(termsBtn).toBeHidden({ timeout: 15000 });
+    await expect(async () => {
+      await termsBtn.scrollIntoViewIfNeeded();
+      await clickWithBackdropRetry(page, termsBtn);
+      await expect(termsBtn).toBeHidden({ timeout: 1000 });
+    }).toPass({ timeout: 15000, intervals: [500, 1000] });
     await closeInformationWindowIfVisible(page);
   }
 }
@@ -134,7 +135,7 @@ async function clickWithBackdropRetry(page: Page, locator: Locator) {
         (message.includes("dialog__backdrop") ||
           message.includes("dialog__positioner"));
       if (!isBackdropInterception) throw error;
-      await waitForDialogLayerToClear(page);
+      await page.waitForTimeout(500);
     }
   }
 
