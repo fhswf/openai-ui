@@ -1,5 +1,6 @@
 import { test, expect } from '../baseFixtures';
 import type { Page } from '@playwright/test';
+import { acceptTermsIfVisible } from '../testHelpers';
 
 const mockUser = {
     name: 'Playwright Chat',
@@ -13,25 +14,7 @@ const mockUser = {
 
 const userEndpointPattern = /\/(?:api\/)?user\/?(?:\?.*)?$/;
 
-async function acceptTermsIfVisible(page: Page) {
-    const termsBtn = page.getByTestId('accept-terms-btn');
-    const informationWindow = page.getByTestId('InformationWindow');
-    const chatTextArea = page.getByTestId('ChatTextArea');
 
-    await expect(termsBtn.or(chatTextArea).first()).toBeVisible({ timeout: 15000 });
-
-    if (await termsBtn.isVisible()) {
-        await expect(async () => {
-            await termsBtn.scrollIntoViewIfNeeded();
-            await termsBtn.click();
-            await expect(informationWindow).toBeHidden({ timeout: 1000 });
-        }).toPass({ timeout: 15000, intervals: [500, 1000] });
-
-        await expect(
-            page.locator('[data-scope="dialog"][data-part="positioner"]')
-        ).toBeHidden({ timeout: 15000 });
-    }
-}
 
 
 

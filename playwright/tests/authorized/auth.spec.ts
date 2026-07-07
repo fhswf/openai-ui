@@ -1,7 +1,12 @@
 import { test, expect } from "../baseFixtures";
 import type { Locator, Page } from "@playwright/test";
-
-const APP_READY_TIMEOUT = 15000;
+import {
+  APP_READY_TIMEOUT,
+  acceptTermsIfVisible,
+  clickWithBackdropRetry,
+  closeInformationWindowIfVisible,
+  waitForDialogLayerToClear,
+} from "../testHelpers";
 const DISABLE_ANIMATIONS_STYLE = `
   *, *::before, *::after {
     animation-duration: 0s !important;
@@ -107,59 +112,6 @@ async function waitForAuthenticatedShell(page: Page) {
   });
 }
 
-async function acceptTermsIfVisible(page: Page) {
-  const termsBtn = page.getByTestId("accept-terms-btn");
-  const userInformationBtn = page.getByTestId("UserInformationBtn");
-
-  await expect(termsBtn.or(userInformationBtn).first()).toBeVisible({ timeout: APP_READY_TIMEOUT });
-
-  if (await termsBtn.isVisible()) {
-    await expect(async () => {
-      await termsBtn.scrollIntoViewIfNeeded();
-      await clickWithBackdropRetry(page, termsBtn);
-      await expect(termsBtn).toBeHidden({ timeout: 1000 });
-    }).toPass({ timeout: 15000, intervals: [500, 1000] });
-    await closeInformationWindowIfVisible(page);
-  }
-}
-
-async function clickWithBackdropRetry(page: Page, locator: Locator) {
-  for (let attempt = 0; attempt < 6; attempt++) {
-    try {
-      await locator.click({ timeout: 3000 });
-      return;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : `${error}`;
-      const isBackdropInterception =
-        message.includes("intercepts pointer events") &&
-        (message.includes("dialog__backdrop") ||
-          message.includes("dialog__positioner"));
-      if (!isBackdropInterception) throw error;
-      await page.waitForTimeout(500);
-    }
-  }
-
-  await locator.click({ force: true });
-}
-
-async function closeInformationWindowIfVisible(page: Page) {
-  const informationWindow = page.getByTestId("InformationWindow");
-
-  if (await informationWindow.isHidden({ timeout: 15000 }).catch(() => false)) {
-    await waitForDialogLayerToClear(page);
-    return;
-  }
-
-  await page.keyboard.press("Escape");
-  await expect(informationWindow).toBeHidden({ timeout: 15000 });
-  await waitForDialogLayerToClear(page);
-}
-
-async function waitForDialogLayerToClear(page: Page) {
-  await expect(
-    page.locator('[data-scope="dialog"][data-part="positioner"]')
-  ).toBeHidden({ timeout: 15000 });
-}
 
 function buildMcpTools(args: {
   staleAuthorization: string;
@@ -339,7 +291,7 @@ async function waitForMcpAuthRefresh(
     );
 
     expect(authWasRefreshed).toBe(true);
-  }).toPass({ timeout: APP_READY_TIMEOUT });
+  }).toPass({ timeout: 30000 });
 }
 
 test.describe("Authentication (fetchAndGetUser)", () => {

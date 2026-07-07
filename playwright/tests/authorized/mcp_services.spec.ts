@@ -1,12 +1,16 @@
 import { test, expect } from "../baseFixtures";
 import type { Locator, Page } from "@playwright/test";
+import {
+  APP_READY_TIMEOUT,
+  acceptTermsIfVisible,
+  closeInformationWindowIfVisible,
+  waitForDialogLayerToClear,
+} from "../testHelpers";
 
 test.skip(
   ({ isMobile }) => isMobile,
   "Tests depend on the desktop toolbar layout"
 );
-
-const APP_READY_TIMEOUT = 15000;
 const DISABLE_ANIMATIONS_STYLE = `
   *, *::before, *::after {
     animation-duration: 0s !important;
@@ -64,41 +68,7 @@ test.describe("MCP Services", () => {
     });
   }
 
-  async function acceptTermsIfVisible(page: Page) {
-    const termsBtn = page.getByTestId("accept-terms-btn");
-    const informationWindow = page.getByTestId("InformationWindow");
-    const chatTextArea = page.getByTestId("ChatTextArea");
 
-    await expect(termsBtn.or(chatTextArea).first()).toBeVisible({ timeout: APP_READY_TIMEOUT });
-
-    if (await termsBtn.isVisible()) {
-      await expect(async () => {
-        await termsBtn.scrollIntoViewIfNeeded();
-        await termsBtn.click();
-        await expect(informationWindow).toBeHidden({ timeout: 1000 });
-      }).toPass({ timeout: 15000, intervals: [500, 1000] });
-      await closeInformationWindowIfVisible(page);
-    }
-  }
-
-  async function closeInformationWindowIfVisible(page: Page) {
-    const informationWindow = page.getByTestId("InformationWindow");
-
-    if (await informationWindow.isHidden({ timeout: APP_READY_TIMEOUT }).catch(() => false)) {
-      await waitForDialogLayerToClear(page);
-      return;
-    }
-
-    await page.keyboard.press("Escape");
-    await expect(informationWindow).toBeHidden({ timeout: APP_READY_TIMEOUT });
-    await waitForDialogLayerToClear(page);
-  }
-
-  async function waitForDialogLayerToClear(page: Page) {
-    await expect(
-      page.locator('[data-scope="dialog"][data-part="positioner"]')
-    ).toBeHidden({ timeout: APP_READY_TIMEOUT });
-  }
 
   async function waitForDiscoveredScopes(page: Page) {
     await expect(page.getByTestId("mcp-auth-scope-name")).toBeVisible();
