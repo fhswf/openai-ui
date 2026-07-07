@@ -47,25 +47,46 @@ export async function acceptTermsIfVisible(page: Page) {
   const userInformationBtn = page.getByTestId("UserInformationBtn");
   const chatTextArea = page.getByTestId("ChatTextArea");
 
+  // 1. Wait for redirects and network requests to settle
+  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+
+  // 2. Wait for the app to stabilize (either terms modal or authenticated elements are visible)
   await expect(termsBtn.or(chatTextArea).or(userInformationBtn).first()).toBeVisible({ timeout: APP_READY_TIMEOUT });
 
-  if (await termsBtn.isVisible()) {
-    await expect(async () => {
-      await termsBtn.scrollIntoViewIfNeeded();
-      await clickWithBackdropRetry(page, termsBtn);
-      
-      const count = await informationWindow.count();
-      if (count === 0) {
-        expect(true).toBe(true);
-        return;
-      }
+  // 2. Read up-to-date terms acceptance status from localStorage
+  const termsAccepted = await page.evaluate(() => {
+    const raw = localStorage.getItem("SESSIONS");
+    if (!raw) return false;
+    try {
+      const session = JSON.parse(raw);
+      return !!session?.options?.account?.terms;
+    } catch {
+      return false;
+    }
+  }).catch(() => false);
 
-      const state = await informationWindow.getAttribute("data-state");
-      const isHidden = await informationWindow.isHidden();
-      expect(isHidden || state === "closed").toBe(true);
-    }).toPass({ timeout: 15000, intervals: [500, 1000] });
-    
-    await expect(informationWindow).toBeHidden({ timeout: 10000 });
-    await closeInformationWindowIfVisible(page);
+  if (termsAccepted) {
+    return;
   }
+
+  // 3. Terms are not accepted, wait for termsBtn to be fully visible and click it
+  await expect(termsBtn).toBeVisible({ timeout: 5000 });
+
+  await expect(async () => {
+    await termsBtn.scrollIntoViewIfNeeded();
+    await clickWithBackdropRetry(page, termsBtn);
+    
+    const count = await informationWindow.count();
+    if (count === 0) {
+      expect(true).toBe(true);
+      return;
+    }
+
+    const state = await informationWindow.getAttribute("data-state");
+    const isHidden = await informationWindow.isHidden();
+    expect(isHidden || state === "closed").toBe(true);
+  }).toPass({ timeout: 15000, intervals: [500, 1000] });
+  
+  await expect(informationWindow).toBeHidden({ timeout: 10000 });
+  await closeInformationWindowIfVisible(page);
 }
