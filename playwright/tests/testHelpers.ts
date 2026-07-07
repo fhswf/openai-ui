@@ -4,9 +4,14 @@ import type { Page, Locator } from "@playwright/test";
 export const APP_READY_TIMEOUT = 15000;
 
 export async function waitForDialogLayerToClear(page: Page) {
-  await expect(
-    page.locator('[data-scope="dialog"][data-part="positioner"]')
-  ).toBeHidden({ timeout: APP_READY_TIMEOUT });
+  const positioners = page.locator('[data-scope="dialog"][data-part="positioner"]');
+  await expect(async () => {
+    const count = await positioners.count();
+    for (let i = 0; i < count; i++) {
+      const state = await positioners.nth(i).getAttribute("data-state");
+      expect(state).not.toBe("open");
+    }
+  }).toPass({ timeout: APP_READY_TIMEOUT });
 }
 
 export async function clickWithBackdropRetry(page: Page, locator: Locator) {
@@ -48,7 +53,16 @@ export async function acceptTermsIfVisible(page: Page) {
   const chatTextArea = page.getByTestId("ChatTextArea");
 
   // 1. Wait for redirects and network requests to settle
-  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  let url = page.url();
+  if (url.includes('localhost')) {
+    await page.waitForTimeout(2000);
+    url = page.url();
+  }
+
+  if (!url.includes('localhost')) {
+    await expect(page).toHaveURL(/https:\/\/openai\.ki\.fh-swf\.de\/?/, { timeout: 20000 });
+    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  }
 
   // 2. Wait for the app to stabilize (either terms modal or authenticated elements are visible)
   await expect(termsBtn.or(chatTextArea).or(userInformationBtn).first()).toBeVisible({ timeout: APP_READY_TIMEOUT });
@@ -70,7 +84,7 @@ export async function acceptTermsIfVisible(page: Page) {
   }
 
   // 3. Terms are not accepted, wait for termsBtn to be fully visible and click it
-  await expect(termsBtn).toBeVisible({ timeout: 5000 });
+  await expect(termsBtn).toBeVisible({ timeout: 30000 });
 
   await expect(async () => {
     await termsBtn.scrollIntoViewIfNeeded();

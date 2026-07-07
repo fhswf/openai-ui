@@ -36,14 +36,54 @@ setup('Cluster Login Test', async ({ page }, testInfo) => {
 
     const termsButton = page.getByTestId('accept-terms-btn');
     const chatTextArea = page.getByTestId('ChatTextArea');
-    await expect(termsButton.or(chatTextArea).first()).toBeVisible({ timeout: 30000 });
-
-    if (await termsButton.isVisible()) {
-        await expect(page.getByRole('heading', { name: 'Datenschutzhinweise' })).toBeVisible();
-        await termsButton.click();
-    }
+    
+    // Terms are guaranteed to show up because localStorage is empty on a fresh setup run
+    await expect(termsButton).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole('heading', { name: 'Datenschutzhinweise' })).toBeVisible();
+    await termsButton.click();
+    
+    // Wait for terms status to be saved in localStorage SESSIONS
+    await expect(async () => {
+        const terms = await page.evaluate(() => {
+            const raw = localStorage.getItem("SESSIONS");
+            if (!raw) return false;
+            try {
+                const session = JSON.parse(raw);
+                return !!session?.options?.account?.terms;
+            } catch {
+                return false;
+            }
+        });
+        expect(terms).toBe(true);
+    }).toPass({ timeout: 10000 });
 
     await expect(chatTextArea).toBeVisible();
+
+    // Navigate back to localhost to write terms: true to the localhost origin as well
+    await page.goto('');
+    await page.evaluate(() => {
+        const raw = localStorage.getItem("SESSIONS");
+        if (raw) {
+            try {
+                const session = JSON.parse(raw);
+                if (session.options) {
+                    if (!session.options.account) session.options.account = {};
+                    session.options.account.terms = true;
+                    localStorage.setItem("SESSIONS", JSON.stringify(session));
+                }
+            } catch (e) {
+                // Ignore
+            }
+        } else {
+            localStorage.setItem("SESSIONS", JSON.stringify({
+                options: {
+                    account: {
+                        terms: true
+                    }
+                }
+            }));
+        }
+    });
 
     await page.context().storageState({ path: authFile });
 });
