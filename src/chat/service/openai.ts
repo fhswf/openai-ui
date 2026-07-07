@@ -18,6 +18,7 @@ import {
 } from "openai/resources/responses/responses.mjs";
 import { toaster } from "../../components/ui/toaster";
 import { showMcpApprovalToast } from "../component/McpToast";
+import * as Sentry from "@sentry/react";
 
 export const apiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
@@ -193,6 +194,7 @@ export async function createResponse(
 
   function handleStreamError(error, eventProcessor) {
     console.log("Stream error: %o", error);
+    Sentry.captureException(error);
     eventProcessor.stop();
     setIs({ ...is, thinking: false });
     setState({ eventProcessor: null });
@@ -206,6 +208,7 @@ export async function createResponse(
 
   function handleError(error) {
     console.log("Error: %o %s", error, typeof error);
+    Sentry.captureException(error);
     if (error && error instanceof APIError) {
       const apiError = error as APIError;
       console.log("APIError: %o %o", apiError, apiError?.status);
@@ -350,6 +353,7 @@ class EventProcessor {
       })
       .catch((error) => {
         console.error("Error writing file: ", error);
+        Sentry.captureException(error);
         toaster.create({
           title: t("error_occurred"),
           description: error.message || "",

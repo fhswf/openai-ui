@@ -67,6 +67,7 @@ export default function Chat() {
         },
       });
       console.log("window.onerror: %o %o", error, error?.stack);
+      Sentry.captureException(error);
       toaster.create({
         type: "error",
         title: "An Error Occurred",
