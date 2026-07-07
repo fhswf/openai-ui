@@ -3,6 +3,12 @@ import { test, expect } from '../baseFixtures';
 test('send message via keyboard shortcut', async ({ page }) => {
     await page.goto('/');
 
+    // Conditionally accept terms
+    const termsBtn = page.getByTestId("accept-terms-btn");
+    if (await termsBtn.isVisible()) {
+        await termsBtn.click();
+    }
+
     // Wait for the chat input to be visible
     const chatInput = page.getByTestId('ChatTextArea');
     await expect(chatInput).toBeVisible();

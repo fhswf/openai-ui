@@ -5,6 +5,12 @@ test.describe("Message Editing", () => {
         test.skip(browserName === 'webkit', "Skipping Webkit due to issues with OPFS");
         await page.goto("/");
 
+        // Conditionally accept terms
+        const termsBtn = page.getByTestId("accept-terms-btn");
+        if (await termsBtn.isVisible()) {
+            await termsBtn.click();
+        }
+
         // Ensure chat is ready
         await expect(page.getByTestId('ChatTextArea')).toBeVisible();
 

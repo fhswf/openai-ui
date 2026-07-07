@@ -78,6 +78,12 @@ test('Tool Usage Popup', async ({ page }) => {
 
     await page.goto("");
 
+    // Conditionally accept terms
+    const termsBtn = page.getByTestId("accept-terms-btn");
+    if (await termsBtn.isVisible()) {
+        await termsBtn.click();
+    }
+
     // Send a message to trigger the mocked response
     await page.getByTestId('ChatTextArea').click();
     await page.getByTestId('ChatTextArea').fill('What is the weather?');

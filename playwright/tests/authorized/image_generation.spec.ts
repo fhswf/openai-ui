@@ -46,6 +46,12 @@ test('Image Generation', async ({ page, browserName }) => {
 
     await page.goto("");
 
+    // Conditionally accept terms
+    const termsBtn = page.getByTestId("accept-terms-btn");
+    if (await termsBtn.isVisible()) {
+        await termsBtn.click();
+    }
+
     // Ensure chat is ready
     await expect(page.getByTestId('ChatTextArea')).toBeVisible();
 
