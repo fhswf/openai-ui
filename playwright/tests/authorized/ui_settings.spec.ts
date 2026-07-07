@@ -51,7 +51,9 @@ test.describe("User Interface", () => {
 
   test("Show infos", async ({ page }) => {
     await expect(page.getByTestId("InformationWindow")).not.toBeVisible();
-    await page.getByTestId("aboutBtn").click();
+    const aboutBtn = page.getByTestId("aboutBtn");
+    await expect(aboutBtn).toBeVisible({ timeout: 10000 });
+    await aboutBtn.click();
     await expect(page.getByTestId("InformationWindow")).toBeVisible();
   });
 });
@@ -96,15 +98,19 @@ test.describe("Dark Mode", () => {
     );
     await expect(html).toHaveAttribute("data-theme", "light");
 
-    await page.getByTestId("OptionDarkModeSelect").click();
+    const optionDarkModeSelect = page.getByTestId("OptionDarkModeSelect");
+    await expect(optionDarkModeSelect).toBeVisible({ timeout: 10000 });
+    await optionDarkModeSelect.click();
     await expect(html).toHaveAttribute("data-theme", "dark");
 
-    await page.getByTestId("OptionDarkModeSelect").click();
+    await optionDarkModeSelect.click();
     await expect(html).toHaveAttribute("data-theme", "light");
   });
 
   test("In Settings", async ({ page }) => {
-    await page.getByTestId("OpenConfigBtn").click();
+    const configBtn = page.getByTestId("OpenConfigBtn");
+    await expect(configBtn).toBeVisible({ timeout: 10000 });
+    await configBtn.click();
     const html = page.locator("html");
 
     // Force light to start
@@ -154,9 +160,11 @@ test.describe("User Information", () => {
 
   test("Open and close user information", async ({ page }) => {
     await expect(page.getByTestId("UserInformation")).not.toBeVisible();
-    await page.getByTestId("UserInformationBtn").click();
+    const userInfoBtn = page.getByTestId("UserInformationBtn");
+    await expect(userInfoBtn).toBeVisible({ timeout: 10000 });
+    await userInfoBtn.click();
     await expect(page.getByTestId("UserInformation")).toBeVisible();
-    await page.getByTestId("UserInformationBtn").click();
+    await userInfoBtn.click();
     await expect(page.getByTestId("UserInformation")).not.toBeVisible();
   });
 });
@@ -190,7 +198,9 @@ test.describe("Config Menu", () => {
       await termsBtn.click();
     }
 
-    await page.getByTestId("OpenConfigBtn").click();
+    const configBtn = page.getByTestId("OpenConfigBtn");
+    await expect(configBtn).toBeVisible({ timeout: 10000 });
+    await configBtn.click();
   });
 
   test("Set api base url input", async ({ page }) => {
