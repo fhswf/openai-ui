@@ -37,7 +37,7 @@ jobs:
       run: yarn install --immutable
     - name: Build app
       run: yarn build
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: dist
         path: dist/
@@ -62,14 +62,14 @@ jobs:
         cache-dependency-path: '**/yarn.lock'
     - name: Install dependencies
       run: yarn install --immutable
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: dist
         path: dist/
     - name: Get Playwright version
       run: echo "PLAYWRIGHT_VERSION=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_ENV
     - name: Cache Playwright browsers
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/ms-playwright
         key: ${{ runner.os }}-playwright-chromium-${{ env.PLAYWRIGHT_VERSION }}
@@ -79,7 +79,7 @@ jobs:
       run: npx playwright test --project=setup
       env:
         PLAYWRIGHT_JSON_OUTPUT: playwright-report/results-auth.json
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: playwright-auth-state
@@ -87,7 +87,7 @@ jobs:
         include-hidden-files: true
         if-no-files-found: error
         retention-days: 1
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ failure() }}
       with:
         name: playwright-report-auth
@@ -146,19 +146,19 @@ jobs:
         if [ -f playwright-report/results-chromium-${{ matrix.shard }}.json ]; then
           cp playwright-report/results-chromium-${{ matrix.shard }}.json playwright-results/chromium-${{ matrix.shard }}.json
         fi
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: playwright-report-chromium-${{ matrix.shard }}
         path: playwright-report/
         retention-days: 30
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: playwright-results-chromium-${{ matrix.shard }}
         path: playwright-results/
         retention-days: 30
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: nyc-output-chromium-${{ matrix.shard }}
@@ -213,19 +213,19 @@ jobs:
         if [ -f playwright-report/results-smoke.json ]; then
           cp playwright-report/results-smoke.json playwright-results/smoke.json
         fi
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: playwright-report-smoke
         path: playwright-report/
         retention-days: 30
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: playwright-results-smoke
         path: playwright-results/
         retention-days: 30
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: nyc-output-smoke

@@ -1,4 +1,5 @@
 import { test, expect } from '../baseFixtures';
+import { acceptTermsIfVisible } from '../testHelpers';
 
 test('Image Delete', async ({ page, browserName }) => {
     test.skip(browserName === 'webkit', "Skipping Webkit due to issues with OPFS");
@@ -6,10 +7,7 @@ test('Image Delete', async ({ page, browserName }) => {
     await page.goto("");
 
     // Conditionally accept terms
-    const termsBtn = page.getByTestId("accept-terms-btn");
-    if (await termsBtn.isVisible()) {
-        await termsBtn.click();
-    }
+    await acceptTermsIfVisible(page);
 
     // Ensure chat is ready
     await expect(page.getByTestId('ChatTextArea')).toBeVisible();

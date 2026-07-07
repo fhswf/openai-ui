@@ -1,4 +1,5 @@
 import { test, expect } from '../baseFixtures';
+import { acceptTermsIfVisible } from '../testHelpers';
 
 test.describe("Message Editing", () => {
     test("should populate input when editing a message with text and image", async ({ page, browserName }) => {
@@ -6,10 +7,7 @@ test.describe("Message Editing", () => {
         await page.goto("/");
 
         // Conditionally accept terms
-        const termsBtn = page.getByTestId("accept-terms-btn");
-        if (await termsBtn.isVisible()) {
-            await termsBtn.click();
-        }
+        await acceptTermsIfVisible(page);
 
         // Ensure chat is ready
         await expect(page.getByTestId('ChatTextArea')).toBeVisible();

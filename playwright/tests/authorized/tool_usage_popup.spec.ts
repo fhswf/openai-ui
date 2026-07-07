@@ -1,4 +1,5 @@
 import { test, expect } from '../baseFixtures';
+import { acceptTermsIfVisible } from '../testHelpers';
 
 test('Tool Usage Popup', async ({ page }) => {
 
@@ -79,10 +80,7 @@ test('Tool Usage Popup', async ({ page }) => {
     await page.goto("");
 
     // Conditionally accept terms
-    const termsBtn = page.getByTestId("accept-terms-btn");
-    if (await termsBtn.isVisible()) {
-        await termsBtn.click();
-    }
+    await acceptTermsIfVisible(page);
 
     // Send a message to trigger the mocked response
     await page.getByTestId('ChatTextArea').click();

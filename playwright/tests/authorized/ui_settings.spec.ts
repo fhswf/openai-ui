@@ -1,4 +1,5 @@
 import { test, expect } from "../baseFixtures";
+import { acceptTermsIfVisible } from "../testHelpers";
 
 test.skip(
   ({ isMobile, browserName }) => isMobile || browserName === "webkit",
@@ -39,10 +40,7 @@ test.describe("User Interface", () => {
     });
 
     // Conditionally accept terms (if not already accepted in storage state)
-    const termsBtn = page.getByTestId("accept-terms-btn");
-    if (await termsBtn.isVisible()) {
-      await termsBtn.click();
-    }
+    await acceptTermsIfVisible(page);
   });
 
   test("Check the headline", async ({ page }) => {
@@ -193,10 +191,7 @@ test.describe("Config Menu", () => {
     });
 
     // Conditionally accept terms
-    const termsBtn = page.getByTestId("accept-terms-btn");
-    if (await termsBtn.isVisible()) {
-      await termsBtn.click();
-    }
+    await acceptTermsIfVisible(page);
 
     const configBtn = page.getByTestId("OpenConfigBtn");
     await expect(configBtn).toBeVisible({ timeout: 10000 });
