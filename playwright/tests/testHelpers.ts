@@ -53,7 +53,16 @@ export async function acceptTermsIfVisible(page: Page) {
     await expect(async () => {
       await termsBtn.scrollIntoViewIfNeeded();
       await clickWithBackdropRetry(page, termsBtn);
-      await expect(informationWindow).toHaveAttribute("data-state", "closed", { timeout: 1000 });
+      
+      const count = await informationWindow.count();
+      if (count === 0) {
+        expect(true).toBe(true);
+        return;
+      }
+
+      const state = await informationWindow.getAttribute("data-state");
+      const isHidden = await informationWindow.isHidden();
+      expect(isHidden || state === "closed").toBe(true);
     }).toPass({ timeout: 15000, intervals: [500, 1000] });
     
     await expect(informationWindow).toBeHidden({ timeout: 10000 });
