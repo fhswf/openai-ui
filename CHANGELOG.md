@@ -37,6 +37,27 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.42.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.41.0...openai-ui-v0.42.0) (2026-07-08)
+
+
+### Features
+
+* add HSTS middleware to Ingress configurations ([2fb0860](https://github.com/fhswf/openai-ui/commit/2fb086063abad18cc0cb6ec8ebc477b12445a8ed))
+* improve chat menu UX by adding pointer cursor, auto-closing on selection, and fixing click event propagation on delete buttons ([cb50c61](https://github.com/fhswf/openai-ui/commit/cb50c6144ed471398226705a96543169a4fcfd2d))
+* integrate Sentry for error tracking and reporting across the application ([73841dc](https://github.com/fhswf/openai-ui/commit/73841dcaf6772616302c6d28cd35069a75d6e289))
+* integrate Sentry for error tracking and reporting across the application ([6ffb31a](https://github.com/fhswf/openai-ui/commit/6ffb31a8f79a9013cc079c7fb1e516d8d0a28fba))
+
+
+### Bug Fixes
+
+* add missing namespace to Middleware definitions in ingress.yaml ([28411dc](https://github.com/fhswf/openai-ui/commit/28411dc11d4a99e1f49ca85f8aa958c609323526))
+* correct Ingress kind formatting and ensure proper patch structure ([a0b34e3](https://github.com/fhswf/openai-ui/commit/a0b34e3c95a25c6a13b8d6461d2e89ee3ec41b30))
+* correct Ingress patch formatting and add missing middleware annotation ([841e286](https://github.com/fhswf/openai-ui/commit/841e2863e9ffcfc8d8e05898a3ad2d7d210a34aa))
+* correct typo in test ID for no access message ([70b7c8d](https://github.com/fhswf/openai-ui/commit/70b7c8df3a93a486e15abbb7cc36a3bd1cb7a24d))
+* group Sentry packages into a dedicated vendor/sentry bundle in Vite configuration ([2e7a329](https://github.com/fhswf/openai-ui/commit/2e7a3294f5e79af1640178238bd526f4413b1d98))
+* improve test stability by updating auth checks and dialog polling, and upgrade GitHub Actions dependencies ([7fea57d](https://github.com/fhswf/openai-ui/commit/7fea57de9ac254dab16173c42a8492d2af265635))
+* update middleware references in ingress annotations for consistency ([7bc6dad](https://github.com/fhswf/openai-ui/commit/7bc6dad7efc60368a752ad0845daa9fd62341a4d))
+
 ## [0.41.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.40.0...openai-ui-v0.41.0) (2026-05-28)
 
 
