@@ -37,6 +37,14 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.43.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.43.0...openai-ui-v0.43.1) (2026-07-16)
+
+
+### Bug Fixes
+
+* add missing i18n keys for ai_hub_not_supported_title and ENTER keyboard shortcut ([255b13c](https://github.com/fhswf/openai-ui/commit/255b13c09110d7e217fa3de7200a379c397cdb73))
+* add missing i18n keys for ai_hub_not_supported_title and ENTER keyboard shortcut ([30ee330](https://github.com/fhswf/openai-ui/commit/30ee330f909752cfeb1cd6bd5274a11ea1ce0b0b)), closes [#131](https://github.com/fhswf/openai-ui/issues/131)
+
 ## [0.43.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.42.0...openai-ui-v0.43.0) (2026-07-16)
 
 
