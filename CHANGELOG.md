@@ -37,6 +37,20 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.43.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.42.0...openai-ui-v0.43.0) (2026-07-16)
+
+
+### Features
+
+* Add 'Reset to Default' action button in error toast ([1e63a30](https://github.com/fhswf/openai-ui/commit/1e63a301761b47d96533bda3a34ccc23f71c560e))
+
+
+### Bug Fixes
+
+* promote setOptions to a standalone function and inject into createResponse context ([aa11e5f](https://github.com/fhswf/openai-ui/commit/aa11e5f9f31b08a829fec44baaa87c3181eb19da))
+* Show user-friendly error for 'Unknown parameter: model' issue ([21f64a5](https://github.com/fhswf/openai-ui/commit/21f64a598d7e771d7a106f71c222eb5913ac7c0d)), closes [#127](https://github.com/fhswf/openai-ui/issues/127)
+* Show user-friendly error for AI Hub 'Unknown parameter: model' issue ([4bf3585](https://github.com/fhswf/openai-ui/commit/4bf358503fc5546101be4dffb22725d853ed07c4))
+
 ## [0.42.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.41.0...openai-ui-v0.42.0) (2026-07-08)
 
 
