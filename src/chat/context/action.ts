@@ -56,6 +56,23 @@ export default function action(
     setState({ is: { ...is, ...arg } });
   };
 
+  const setOptions = ({ type, data }: OptionAction) => {
+    console.log("set options: ", type, data);
+    const options = { ...state.options };
+    if (type === OptionActionType.OPENAI) {
+      options[type] = { ...options[type], ...data };
+    } else if (type === OptionActionType.GENERAL) {
+      options[type] = { ...options[type], ...data };
+      if (data.language) {
+        i18next.changeLanguage(data.language);
+      }
+    } else if (type === OptionActionType.ACCOUNT) {
+      options[type] = { ...options[type], ...data };
+    }
+    console.log("set options: ", options);
+    setState({ options });
+  };
+
   const startChat = (chat: Chat[], currentChat: number) =>
     dispatch({
       type: GlobalActionType.START_CHAT,
@@ -103,7 +120,7 @@ export default function action(
         typeingMessage: {},
         is: { ...state.is, thinking: true, tool: null },
       });
-      createResponse({ ...state, chat: newChat, setState, setIs }, this);
+      createResponse({ ...state, chat: newChat, setState, setIs, setOptions }, this);
     }
   };
 
@@ -180,7 +197,7 @@ export default function action(
       const _chat: Chat[] = chatList;
       if (newApp.botStarts) {
         console.log("botStarts");
-        createResponse({ ...state, chat: _chat, setState, setIs }, this);
+        createResponse({ ...state, chat: _chat, setState, setIs, setOptions }, this);
       } else {
         console.debug("starting chat: %o", _chat);
         startChat(_chat, 0);
@@ -305,22 +322,7 @@ export default function action(
       });
     },
 
-    setOptions({ type, data }: OptionAction) {
-      console.log("set options: ", type, data);
-      const options = { ...state.options };
-      if (type === OptionActionType.OPENAI) {
-        options[type] = { ...options[type], ...data };
-      } else if (type === OptionActionType.GENERAL) {
-        options[type] = { ...options[type], ...data };
-        if (data.language) {
-          i18next.changeLanguage(data.language);
-        }
-      } else if (type === OptionActionType.ACCOUNT) {
-        options[type] = { ...options[type], ...data };
-      }
-      console.log("set options: ", options);
-      setState({ options });
-    },
+    setOptions,
 
     currentList() {
       return state.chat[state.currentChat];
