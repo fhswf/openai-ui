@@ -27,6 +27,7 @@ import { MdOutlineDarkMode } from "react-icons/md";
 import { MdOutlineLightMode } from "react-icons/md";
 import { TbArrowsMinimize } from "react-icons/tb";
 import { TbArrowsMaximize } from "react-icons/tb";
+import { LuMonitor } from "react-icons/lu";
 import { useGlobal } from "./context";
 import { classnames } from "../components/utils";
 import { useOptions } from "./hooks";
@@ -48,6 +49,7 @@ const ICONS = {
   config: IoSettingsOutline,
   dark: MdOutlineDarkMode,
   light: MdOutlineLightMode,
+  auto: LuMonitor,
   "min-screen": TbArrowsMinimize,
   "full-screen": TbArrowsMaximize,
 };
