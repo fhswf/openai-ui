@@ -37,6 +37,14 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.43.2](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.43.1...openai-ui-v0.43.2) (2026-07-16)
+
+
+### Bug Fixes
+
+* add 'auto' theme icon to resolve 'Icon auto not found' error ([e21d8c3](https://github.com/fhswf/openai-ui/commit/e21d8c36dffb68cdb16fce1ef104bf23f57c1276))
+* add 'auto' theme icon to resolve 'Icon auto not found' error ([571cf82](https://github.com/fhswf/openai-ui/commit/571cf822a9c0c98cc2f6864cd93588ab7d0274a6))
+
 ## [0.43.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.43.0...openai-ui-v0.43.1) (2026-07-16)
 
 
