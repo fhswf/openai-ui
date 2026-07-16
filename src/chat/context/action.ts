@@ -120,7 +120,7 @@ export default function action(
         typeingMessage: {},
         is: { ...state.is, thinking: true, tool: null },
       });
-      createResponse({ ...state, chat: newChat, setState, setIs, setOptions }, this);
+      void createResponse({ ...state, chat: newChat, setState, setIs, setOptions }, this);
     }
   };
 
@@ -197,7 +197,7 @@ export default function action(
       const _chat: Chat[] = chatList;
       if (newApp.botStarts) {
         console.log("botStarts");
-        createResponse({ ...state, chat: _chat, setState, setIs, setOptions }, this);
+        void createResponse({ ...state, chat: _chat, setState, setIs, setOptions }, this);
       } else {
         console.debug("starting chat: %o", _chat);
         startChat(_chat, 0);

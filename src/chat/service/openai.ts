@@ -230,7 +230,7 @@ export async function createResponse(
           error.message?.includes("Unknown parameter") &&
           error.message?.includes("'model'")) {
         // Check if using a Chat Completions endpoint with Responses API
-        const baseUrl = options?.openai?.baseUrl || "";
+        const baseUrl = options?.openai.baseUrl ?? "";
         const isChatCompletionsEndpoint = baseUrl.includes("/chat/completions");
         const isLegacyProxy = baseUrl.includes("openai.ki.fh-swf.de/api");
 

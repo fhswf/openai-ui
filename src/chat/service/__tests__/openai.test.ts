@@ -19,9 +19,9 @@ vi.mock("i18next", () => ({
       login_required_description: "Please log in to continue.",
     };
     if (params) {
-      return translations[key] || key;
+      return Object.prototype.hasOwnProperty.call(translations, key) ? translations[key] : key;
     }
-    return translations[key] || key;
+    return Object.prototype.hasOwnProperty.call(translations, key) ? translations[key] : key;
   },
 }));
 
@@ -58,7 +58,7 @@ describe("Incompatible endpoint error detection", () => {
   it("should identify 'Unknown parameter: model' error", () => {
     const isModelParameterError = (message: string | undefined) => {
       return (
-        message?.includes("Unknown parameter") && message?.includes("'model'")
+        message?.includes("Unknown parameter") && message.includes("'model'")
       );
     };
 
@@ -100,7 +100,7 @@ describe("Incompatible endpoint error detection", () => {
 describe("Incompatible endpoint error handling logic", () => {
   it("should trigger specific error for model parameter error with Chat Completions endpoint", () => {
     const shouldShowIncompatibleEndpointError = (
-      error: APIError | null,
+      error: any,
       baseUrl: string | undefined
     ) => {
       if (
@@ -108,7 +108,7 @@ describe("Incompatible endpoint error handling logic", () => {
         error.message?.includes("Unknown parameter") &&
         error.message?.includes("'model'")
       ) {
-        const normalizedBaseUrl = baseUrl || "";
+        const normalizedBaseUrl = baseUrl ?? "";
         const isChatCompletionsEndpoint = normalizedBaseUrl.includes("/chat/completions");
         const isLegacyProxy = normalizedBaseUrl.includes("openai.ki.fh-swf.de/api");
 
@@ -134,7 +134,7 @@ describe("Incompatible endpoint error handling logic", () => {
 
   it("should trigger for legacy proxy endpoint", () => {
     const shouldShowIncompatibleEndpointError = (
-      error: APIError | null,
+      error: any,
       baseUrl: string | undefined
     ) => {
       if (
@@ -142,7 +142,7 @@ describe("Incompatible endpoint error handling logic", () => {
         error.message?.includes("Unknown parameter") &&
         error.message?.includes("'model'")
       ) {
-        const normalizedBaseUrl = baseUrl || "";
+        const normalizedBaseUrl = baseUrl ?? "";
         const isChatCompletionsEndpoint = normalizedBaseUrl.includes("/chat/completions");
         const isLegacyProxy = normalizedBaseUrl.includes("openai.ki.fh-swf.de/api");
 
@@ -165,7 +165,7 @@ describe("Incompatible endpoint error handling logic", () => {
 
   it("should not trigger for non-400 errors", () => {
     const shouldShowIncompatibleEndpointError = (
-      error: APIError | null,
+      error: any,
       baseUrl: string | undefined
     ) => {
       if (
@@ -173,7 +173,7 @@ describe("Incompatible endpoint error handling logic", () => {
         error.message?.includes("Unknown parameter") &&
         error.message?.includes("'model'")
       ) {
-        const normalizedBaseUrl = baseUrl || "";
+        const normalizedBaseUrl = baseUrl ?? "";
         const isChatCompletionsEndpoint = normalizedBaseUrl.includes("/chat/completions");
         const isLegacyProxy = normalizedBaseUrl.includes("openai.ki.fh-swf.de/api");
 
@@ -196,7 +196,7 @@ describe("Incompatible endpoint error handling logic", () => {
 
   it("should not trigger for other 'Unknown parameter' errors", () => {
     const shouldShowIncompatibleEndpointError = (
-      error: APIError | null,
+      error: any,
       baseUrl: string | undefined
     ) => {
       if (
@@ -204,7 +204,7 @@ describe("Incompatible endpoint error handling logic", () => {
         error.message?.includes("Unknown parameter") &&
         error.message?.includes("'model'")
       ) {
-        const normalizedBaseUrl = baseUrl || "";
+        const normalizedBaseUrl = baseUrl ?? "";
         const isChatCompletionsEndpoint = normalizedBaseUrl.includes("/chat/completions");
         const isLegacyProxy = normalizedBaseUrl.includes("openai.ki.fh-swf.de/api");
 
