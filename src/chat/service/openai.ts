@@ -4,6 +4,7 @@ import {
   GlobalActions,
   GlobalState,
   Options,
+  OptionActionType,
 } from "../context/types";
 import OpenAI, { APIError } from "openai";
 
@@ -62,7 +63,7 @@ export async function createResponse(
   parent,
   explicitInput?: ResponseInput
 ) {
-  const { options, chat, currentChat, is, setState, setIs } = global;
+  const { options, chat, currentChat, is, setState, setIs, setOptions } = global;
   const client = createClient(options);
 
   console.log("messages: %o", chat[currentChat].messages);
@@ -238,8 +239,21 @@ export async function createResponse(
             title: t("ai_hub_not_supported_title") || t("error_occurred"),
             description: t("ai_hub_responses_api_not_supported") ||
               "The Responses API requires a compatible endpoint. Please check your Base URL setting or reset to the default OpenAI API endpoint.",
-            duration: 8000,
+            duration: 10000,
             type: "error",
+            action: {
+              label: t("reset_to_default") || "Reset to Default",
+              onClick: () => {
+                if (setOptions) {
+                  setOptions({
+                    type: OptionActionType.OPENAI,
+                    data: {
+                      baseUrl: apiBaseUrl,
+                    },
+                  });
+                }
+              },
+            },
           });
           return;
         }
