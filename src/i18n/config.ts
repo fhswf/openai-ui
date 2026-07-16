@@ -132,6 +132,8 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "The AI-Hub response did not contain an API key.",
           ai_hub_model_list_failed_desc:
             "The AI-Hub models could not be loaded. Status: {{status}}.",
+          ai_hub_responses_api_not_supported:
+            "The Responses API requires a compatible endpoint. Your current Base URL appears to be configured for the Chat Completions API. Please check your Base URL setting or reset to the default OpenAI API endpoint.",
           chat_history: "Chat History",
           close: "Close",
           empty_chat: "Empty Chat",
@@ -337,6 +339,8 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Die AI-Hub-Antwort enthielt keinen API-Schlüssel.",
           ai_hub_model_list_failed_desc:
             "Die AI-Hub-Modelle konnten nicht geladen werden. Status: {{status}}.",
+          ai_hub_responses_api_not_supported:
+            "Die Responses API erfordert einen kompatiblen Endpunkt. Ihre aktuelle Base-URL scheint für die Chat Completions API konfiguriert zu sein. Bitte überprüfen Sie Ihre Base-URL-Einstellung oder setzen Sie sie auf den Standard-OpenAI-API-Endpunkt zurück.",
 
           Title: "Titel",
           Cancel: "Abbrechen",
