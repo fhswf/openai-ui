@@ -125,6 +125,43 @@ test.describe("Dark Mode", () => {
     await page.getByTestId("themeSelectlight").click({ force: true });
     await expect(html).toHaveAttribute("data-theme", "light");
   });
+
+  test("Auto theme in Settings should not show console error", async ({ page }) => {
+    const configBtn = page.getByTestId("OpenConfigBtn");
+    await expect(configBtn).toBeVisible({ timeout: 10000 });
+    await configBtn.click();
+    const html = page.locator("html");
+
+    // Force light to start
+    await page.evaluate(() =>
+      document.documentElement.setAttribute("data-theme", "light")
+    );
+    await expect(html).toHaveAttribute("data-theme", "light");
+
+    // Collect console errors
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrors.push(msg.text());
+      }
+    });
+
+    // Select Auto in settings (Radio Group)
+    await page.getByTestId("themeSelectauto").click({ force: true });
+
+    // Wait a moment for any potential console errors to be logged
+    await page.waitForTimeout(500);
+
+    // Verify no "Icon auto not found" error is logged
+    const iconErrors = consoleErrors.filter((err) =>
+      err.includes("Icon auto not found")
+    );
+    expect(iconErrors).toHaveLength(0);
+
+    // Verify the theme button is visible (showing the auto icon)
+    const optionDarkModeSelect = page.getByTestId("OptionDarkModeSelect");
+    await expect(optionDarkModeSelect).toBeVisible({ timeout: 5000 });
+  });
 });
 
 test.describe("User Information", () => {
