@@ -37,6 +37,14 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.44.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.43.2...openai-ui-v0.44.0) (2026-08-04)
+
+
+### Features
+
+* add gpt-5.6-luna model to options ([b1b23b6](https://github.com/fhswf/openai-ui/commit/b1b23b6127a6a07a1ba77ebdc532bddb719c10a6))
+* add gpt-5.6-luna model to options ([636071e](https://github.com/fhswf/openai-ui/commit/636071e071e72ae4fa9044dc484a633586c8af99))
+
 ## [0.43.2](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.43.1...openai-ui-v0.43.2) (2026-07-16)
 
 
