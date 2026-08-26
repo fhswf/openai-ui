@@ -1,6 +1,8 @@
 // Regex to check if the processed content contains any potential LaTeX patterns
+// Note: block-level delimiters (\[...\], \begin{equation}...\end{equation})
+// may span multiple lines, so they need to match newlines as well.
 const containsLatexRegex =
-  /\\\(.*?\\\)|\\\[.*?\\\]|\$.*?\$|\\begin\{equation\}.*?\\end\{equation\}/;
+  /\\\(.*?\\\)|\\\[[\s\S]*?\\\]|\$.*?\$|\\begin\{equation\}[\s\S]*?\\end\{equation\}/;
 
 // Regex for inline and block LaTeX expressions
 const inlineLatex = new RegExp(/\\\((.+?)\\\)/, "g");
