@@ -37,6 +37,18 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.44.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.44.0...openai-ui-v0.44.1) (2026-08-26)
+
+
+### Bug Fixes
+
+* recognize multi-line \[...\] blocks as LaTeX ([d0173ce](https://github.com/fhswf/openai-ui/commit/d0173cedc122781244d2d211494c459c4b37b9f3))
+* recognize multi-line \[...\] blocks as LaTeX ([86956f3](https://github.com/fhswf/openai-ui/commit/86956f37dbdf9d8a5b92942187d5808be8bc6a73)), closes [#142](https://github.com/fhswf/openai-ui/issues/142)
+* Update checkout action version to v6 ([e4ddcfa](https://github.com/fhswf/openai-ui/commit/e4ddcfaa3b0fed51363852a6b49bb436566bae83))
+* Update checkout action version to v6 ([49c5acb](https://github.com/fhswf/openai-ui/commit/49c5acb7ec5f48db86654af96a112c3df860dca2))
+* Upgrade actions and release-please version ([4bc282e](https://github.com/fhswf/openai-ui/commit/4bc282e37080b7ae815b4b64ab5e0d2fd1ce9c53))
+* Upgrade actions and release-please version ([a5b5be7](https://github.com/fhswf/openai-ui/commit/a5b5be70c0aa3098ee93f7974699211c1b89d853))
+
 ## [0.44.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.43.2...openai-ui-v0.44.0) (2026-08-04)
 
 
