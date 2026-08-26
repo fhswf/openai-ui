@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Release Please
         id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5
         with:
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
@@ -39,7 +39,7 @@ jobs:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ steps.cicd.outputs.token }}
