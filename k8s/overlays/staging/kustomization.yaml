@@ -27,4 +27,4 @@ patches:
 images:
 - name: ghcr.io/fhswf/openai-ui
   newName: ghcr.io/fhswf/openai-ui
-  newTag: sha-d6c34a7
+  newTag: sha-1792534
