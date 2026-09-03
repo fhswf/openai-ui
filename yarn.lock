@@ -6662,9 +6662,9 @@ __metadata:
   linkType: hard
 
 "fast-uri@npm:^3.0.1":
-  version: 3.1.5
-  resolution: "fast-uri@npm:3.1.5"
-  checksum: 10c0/2bf60eb800dd610c65e17be436425dcb21c92aff3a87d442a8bccab0b7b071e88cf1a5d7d1ea946370b937e6fc0375c405c0296c10587e57de4f78be4646d1d0
+  version: 3.1.7
+  resolution: "fast-uri@npm:3.1.7"
+  checksum: 10c0/ca2baa4bde48fc7322bdc692c6636975943ebe4f6dd97e07d70b14e0ab85af2ff30de90f550f5ec2956684fe208e150d85d6cb5f3c74438c8ac1bf86bd435c13
   languageName: node
   linkType: hard
 
@@ -9781,7 +9781,7 @@ __metadata:
     typescript: "npm:^5.8.2"
     typescript-eslint: "npm:^8.48.0"
     url-loader: "npm:^4.1.1"
-    uuid: "npm:^14.0.1"
+    uuid: "npm:^14.0.2"
     vite: "npm:^7.3.5"
     vite-plugin-compression2: "npm:^2.4.0"
     vite-plugin-istanbul: "npm:^7.2.1"
@@ -13125,12 +13125,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^14.0.1":
-  version: 14.0.1
-  resolution: "uuid@npm:14.0.1"
+"uuid@npm:^14.0.2":
+  version: 14.0.2
+  resolution: "uuid@npm:14.0.2"
   bin:
     uuid: dist-node/bin/uuid
-  checksum: 10c0/2d961289097cb68c37d93d1da0b5c3aafc1eb9948a455cca8d0ae53a099b2fe583b8933254a84097f700e6bac2e23033364904df0467c22551d5d9611febcaf6
+  checksum: 10c0/88906237004db370b013129c8372a2149f6fa1aad7a5f78fa65ddf2ba0a8663097022300d81fa01f551efee9d6bbe8c7ab140dc6d49f1b03d289f855096990c9
   languageName: node
   linkType: hard
 
