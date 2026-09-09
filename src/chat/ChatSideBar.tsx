@@ -282,7 +282,7 @@ export function ChatSideBar() {
                   <Link
                     target="blank"
                     href={
-                      "https://github.com/fhswf/openai-ui/releases/tag/v" +
+                      "https://github.com/fhswf/openai-ui/releases/tag/openai-ui-v" +
                       metadata?.release
                     }
                   >
