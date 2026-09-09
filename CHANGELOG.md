@@ -37,6 +37,13 @@
 * **mcp:** implement encrypted sensitive data sharing ([772ee2b](https://github.com/fhswf/openai-ui/commit/772ee2b142f1f0be520b857be76b94953f3da379))
 * **mcp:** implement encrypted sensitive data sharing ([fd8a7c3](https://github.com/fhswf/openai-ui/commit/fd8a7c32c2ad0963f70f0b43787deb16bf8859c9))
 
+## [0.45.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.44.1...openai-ui-v0.45.0) (2026-09-09)
+
+
+### Features
+
+* update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
+
 ## [0.44.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.44.0...openai-ui-v0.44.1) (2026-08-26)
 
 
