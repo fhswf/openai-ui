@@ -126,7 +126,7 @@
     "vite": "^7.3.5",
     "vite-plugin-compression2": "^2.4.0",
     "vite-plugin-istanbul": "^7.2.1",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.0"
   },
   "packageManager": "yarn@4.11.0"
 }
