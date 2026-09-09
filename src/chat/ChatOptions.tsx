@@ -8,6 +8,7 @@ import {
   languageOptions,
   sendCommandOptions,
   getModelOptions,
+  groupModelOptions,
 } from "./utils/options";
 import {
   Button,
@@ -21,6 +22,7 @@ import {
 } from "@chakra-ui/react";
 
 import { Select } from "@chakra-ui/react";
+import { SelectItemGroup } from "../components/ui/select";
 import { FileUpload } from "@chakra-ui/react";
 import { Slider } from "@chakra-ui/react";
 
@@ -253,11 +255,27 @@ export function ChatOptions() {
                 <Select.ValueText placeholder={openai.model} />
               </Select.Trigger>
               <Select.Content>
-                {availableModelOptions.map((model) => (
-                  <Select.Item item={model} key={model.value}>
-                    {model.label}
-                  </Select.Item>
-                ))}
+                {(() => {
+                  const groups = groupModelOptions(availableModelOptions);
+                  if (groups.length === 0) {
+                    return availableModelOptions.map((model) => (
+                      <Select.Item item={model} key={model.value}>
+                        {model.label}
+                        <Select.ItemIndicator />
+                      </Select.Item>
+                    ));
+                  }
+                  return groups.map(([group, items]) => (
+                    <SelectItemGroup key={group} label={group}>
+                      {items.map((model) => (
+                        <Select.Item item={model} key={model.value}>
+                          {model.label}
+                          <Select.ItemIndicator />
+                        </Select.Item>
+                      ))}
+                    </SelectItemGroup>
+                  ));
+                })()}
               </Select.Content>
             </Select.Root>
             <Field.HelperText>{t("openai_model_help")}</Field.HelperText>
