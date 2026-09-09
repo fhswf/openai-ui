@@ -5,6 +5,13 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.45.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.45.0...openai-ui-v0.45.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* update version references in ChatSideBar component ([dfd90d1](https://github.com/fhswf/openai-ui/commit/dfd90d124cfec3c11e105cac9544150522e4b1a8))
+
 ## [0.44.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.44.0...openai-ui-v0.44.1) (2026-08-26)
 
 
