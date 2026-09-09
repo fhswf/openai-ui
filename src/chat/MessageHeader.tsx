@@ -50,7 +50,7 @@ import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { MessageMenu } from "./MessageMenu";
-import { getModelOptions } from "./utils/options";
+import { getModelOptions, groupModelOptions } from "./utils/options";
 import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { McpAuthFields } from "./McpAuthFields";
@@ -149,25 +149,47 @@ interface ModelOptionsGroupProps {
 function ModelOptionsGroup({ openai, setOptions }: ModelOptionsGroupProps) {
   const { t } = useTranslation();
   const options = getModelOptions(openai);
+  const groups = groupModelOptions(options);
+
+  const setModel = (value: string) => {
+    setOptions({
+      type: OptionActionType.OPENAI,
+      data: { ...openai, model: value },
+    });
+  };
+
+  if (groups.length <= 1) {
+    return (
+      <Menu.RadioItemGroup value={openai.model} onValueChange={(event) => { setModel(event.value); }}>
+        <Menu.ItemGroupLabel>{t("model_options")}</Menu.ItemGroupLabel>
+        {options.map((item) => (
+          <Menu.RadioItem key={item.value} value={item.value}>
+            {item.label}
+            <Menu.ItemIndicator />
+          </Menu.RadioItem>
+        ))}
+      </Menu.RadioItemGroup>
+    );
+  }
 
   return (
-    <Menu.RadioItemGroup
-      value={openai.model}
-      onValueChange={(event) => {
-        setOptions({
-          type: OptionActionType.OPENAI,
-          data: { ...openai, model: event.value },
-        });
-      }}
-    >
-      <Menu.ItemGroupLabel>{t("model_options")}</Menu.ItemGroupLabel>
-      {options.map((item) => (
-        <Menu.RadioItem key={item.value} value={item.value}>
-          {item.label}
-          <Menu.ItemIndicator />
-        </Menu.RadioItem>
+    <>
+      {groups.map(([group, items]) => (
+        <Menu.RadioItemGroup
+          key={group}
+          value={openai.model}
+          onValueChange={(event) => { setModel(event.value); }}
+        >
+          <Menu.ItemGroupLabel>{group}</Menu.ItemGroupLabel>
+          {items.map((item) => (
+            <Menu.RadioItem key={item.value} value={item.value}>
+              {item.label}
+              <Menu.ItemIndicator />
+            </Menu.RadioItem>
+          ))}
+        </Menu.RadioItemGroup>
       ))}
-    </Menu.RadioItemGroup>
+    </>
   );
 }
 
