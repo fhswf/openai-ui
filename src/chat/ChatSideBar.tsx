@@ -79,7 +79,7 @@ const text = `
 ## Datenschutzhinweise
 
 Diese Anwendung ermöglicht den Zugriff auf die Chat-Funktion von
-[OpenAI](https://openai.com) (inklusive *gpt-4o-mini*) **ohne Übertragung von personenbezogenen Daten des Benutzers
+[OpenAI](https://openai.com) (inklusive *gpt-5.6-luna*) **ohne Übertragung von personenbezogenen Daten des Benutzers
 an OpenAI**. 
 
 Technisch wird dies durch die Verwendung eines API-Schlüssels erreicht, der in der Anwendung hinterlegt ist.
@@ -205,7 +205,7 @@ export function ChatSideBar() {
           console.log("New release: %s", data.release);
           setNewRelease(true);
           setState({ version: data.release });
-          fetch(`${data.repo_url}/releases/tags/v${data.release}`)
+          fetch(`${data.repo_url}/releases/tags/openai-ui-v${data.release}`)
             .then((response) => response.json())
             .then((data) => {
               console.log("release data: %j", data);
