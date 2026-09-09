@@ -106,7 +106,7 @@ export const toolOptions: Map<string, Tool> = new Map([
     "Image Generation",
     {
       type: "image_generation",
-      partial_images: 2,
+      model: "gpt-image-2.5-sunburst"
     },
   ],
   [

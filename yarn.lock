@@ -9751,7 +9751,7 @@ __metadata:
     less-loader: "npm:^11.1.0"
     mini-css-extract-plugin: "npm:^2.7.5"
     next-themes: "npm:^0.4.4"
-    openai: "npm:^6.0.1"
+    openai: "npm:^7.12.1"
     pa11y: "npm:^8.0.0"
     postcss-flexbugs-fixes: "npm:^5.0.2"
     postcss-loader: "npm:^7.2.3"
@@ -9789,14 +9789,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"openai@npm:^6.0.1":
-  version: 6.49.0
-  resolution: "openai@npm:6.49.0"
+"openai@npm:^7.12.1":
+  version: 7.12.1
+  resolution: "openai@npm:7.12.1"
   peerDependencies:
     "@aws-sdk/credential-provider-node": ">=3.972.0 <4"
     "@smithy/hash-node": ">=4.3.0 <5"
     "@smithy/signature-v4": ">=5.4.0 <6"
-    ws: ^8.18.0
+    undici: ">=5 <9"
+    ws: ^8.21.0
     zod: ^3.25 || ^4.0
   peerDependenciesMeta:
     "@aws-sdk/credential-provider-node":
@@ -9805,11 +9806,13 @@ __metadata:
       optional: true
     "@smithy/signature-v4":
       optional: true
+    undici:
+      optional: true
     ws:
       optional: true
     zod:
       optional: true
-  checksum: 10c0/c9e748e8a813f948ed925949e857d758505d246d7ec7e939f79cc2ab3383083ccdefff953479afb9dcb0f634cfddb0d442fcf02b6203cc9d6b7c95d3ddbc20ef
+  checksum: 10c0/40c4be9f8ccf96566539dd51effc805d7709718ad4b8ff9b4cf8f4c304885f89a24905d104e3c22fd183f158d72540dae27389b6b1ddf76fcad273d631471711
   languageName: node
   linkType: hard
 
