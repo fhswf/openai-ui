@@ -14,6 +14,7 @@ import {
   HStack,
   Stack,
   Text,
+  Progress,
   IconButton,
   Button,
   Menu,
@@ -56,7 +57,9 @@ import { UsageInformationDialog } from "./UsageInformationDialog";
 import { McpAuthFields } from "./McpAuthFields";
 import {
   AiHubError,
+  AiHubBudget,
   aiHubApiBaseUrl,
+  fetchAiHubBudget,
   fetchAiHubModels,
   generateAiHubKey,
 } from "./service/aiHub";
@@ -1072,6 +1075,9 @@ function UserInformationPopover({
 }: UserInformationPopoverProps) {
   const { t } = useTranslation();
   const [isGeneratingHubKey, setIsGeneratingHubKey] = useState(false);
+  const [aiHubBudget, setAiHubBudget] = useState<AiHubBudget | null>(null);
+  const [isLoadingAiHubBudget, setIsLoadingAiHubBudget] = useState(false);
+  const [aiHubBudgetError, setAiHubBudgetError] = useState(false);
   const normalizedOpenAiBaseUrl = openai.baseUrl.replace(/\/$/, "");
   const normalizedAiHubApiBaseUrl = aiHubApiBaseUrl.replace(/\/$/, "");
   const isUsingAiHubBudget =
@@ -1079,6 +1085,38 @@ function UserInformationPopover({
   const aiHubKeyAlias = user?.email
     ? `KImpuls-${user.email.trim().toLowerCase()}`
     : "";
+
+  async function loadAiHubBudget() {
+    setIsLoadingAiHubBudget(true);
+    setAiHubBudgetError(false);
+
+    try {
+      setAiHubBudget(await fetchAiHubBudget());
+    } catch (error) {
+      console.warn("Unable to load AI-Hub budget:", error);
+      setAiHubBudgetError(true);
+    } finally {
+      setIsLoadingAiHubBudget(false);
+    }
+  }
+
+  function formatAiHubCurrency(value: number) {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "USD",
+    }).format(value);
+  }
+
+  const aiHubBudgetUsagePercentage =
+    aiHubBudget && aiHubBudget.max_budget_in_team > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            (aiHubBudget.spend / aiHubBudget.max_budget_in_team) * 100
+          )
+        )
+      : 0;
 
   function getAiHubErrorDescription(error: unknown) {
     if (!(error instanceof AiHubError)) {
@@ -1186,6 +1224,7 @@ function UserInformationPopover({
         duration: 5000,
         type: "success",
       });
+      void loadAiHubBudget();
     } catch (error) {
       console.error("Unable to activate AI-Hub budget:", error);
       toaster.create({
@@ -1200,7 +1239,14 @@ function UserInformationPopover({
   }
 
   return (
-    <Popover.Root lazyMount>
+    <Popover.Root
+      lazyMount
+      onOpenChange={(event) => {
+        if (event.open) {
+          void loadAiHubBudget();
+        }
+      }}
+    >
       <Popover.Trigger data-testid="UserInformationBtn">
         <Avatar.Root size="sm">
           <Avatar.Fallback name={user?.name} />
@@ -1218,9 +1264,55 @@ function UserInformationPopover({
               <Text>{user?.name}</Text>
               <Text>{user?.email}</Text>
               {isUsingAiHubBudget && (
-                <Text fontSize="sm" color="green.600">
-                  {t("ai_hub_budget_active")}
-                </Text>
+                <Stack
+                  gap={1}
+                  borderTopWidth="1px"
+                  borderTopColor="gray.200"
+                  paddingTop={2}
+                  data-testid="AiHubBudget"
+                >
+                  <Text fontSize="sm" color="green.600">
+                    {t("ai_hub_budget_active")}
+                  </Text>
+                  <Text fontSize="sm" fontWeight="semibold">
+                    {t("ai_hub_budget_usage")}
+                  </Text>
+                  {isLoadingAiHubBudget ? (
+                    <Text fontSize="sm">{t("ai_hub_budget_loading")}</Text>
+                  ) : aiHubBudgetError ? (
+                    <Text fontSize="sm" color="red.600">
+                      {t("ai_hub_budget_unavailable")}
+                    </Text>
+                  ) : aiHubBudget ? (
+                    <>
+                      <Text fontSize="sm">
+                        {t("ai_hub_budget_spent", {
+                          spend: formatAiHubCurrency(aiHubBudget.spend),
+                          budget: formatAiHubCurrency(
+                            aiHubBudget.max_budget_in_team
+                          ),
+                        })}
+                      </Text>
+                      <Progress.Root
+                        size="sm"
+                        value={aiHubBudgetUsagePercentage}
+                        colorPalette="blue"
+                        aria-label={t("ai_hub_budget_usage")}
+                      >
+                        <Progress.Track>
+                          <Progress.Range />
+                        </Progress.Track>
+                      </Progress.Root>
+                      <Text fontSize="sm">
+                        {t("ai_hub_budget_remaining", {
+                          available: formatAiHubCurrency(
+                            aiHubBudget.available
+                          ),
+                        })}
+                      </Text>
+                    </>
+                  ) : null}
+                </Stack>
               )}
               <Button
                 colorPalette="green"

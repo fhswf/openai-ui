@@ -17,10 +17,19 @@ interface ModelListResponse {
   data?: Array<{ id?: string; name?: string } | string>;
 }
 
+export interface AiHubBudget {
+  max_budget_in_team: number;
+  spend: number;
+  available: number;
+  team_id?: string | null;
+  spend_by_team?: Record<string, number>;
+}
+
 export type AiHubErrorCode =
   | "key_generation_failed"
   | "key_generation_missing_key"
-  | "model_list_failed";
+  | "model_list_failed"
+  | "budget_fetch_failed";
 
 export class AiHubError extends Error {
   code: AiHubErrorCode;
@@ -80,4 +89,14 @@ export async function fetchAiHubModels(apiKey: string) {
     )
     .filter((model): model is string => Boolean(model))
     .sort((left, right) => left.localeCompare(right));
+}
+
+export async function fetchAiHubBudget() {
+  const response = await fetch(`${normalizedAiHubBaseUrl}/api/user/budget`, {
+    credentials: "include",
+  });
+
+  assertOk(response, "budget_fetch_failed");
+
+  return (await response.json()) as AiHubBudget;
 }
