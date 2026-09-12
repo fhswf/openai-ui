@@ -5,6 +5,14 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.46.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.45.2...openai-ui-v0.46.0) (2026-09-12)
+
+
+### Features
+
+* implement AI-Hub budget tracking and display ([96f99ac](https://github.com/fhswf/openai-ui/commit/96f99aca5e4cd1ff4b31ef44d643e5e8cb863676))
+* implement AI-Hub budget tracking and display ([5638071](https://github.com/fhswf/openai-ui/commit/5638071f52d1abcc63eaf63f8b1dbd60a2afe54a))
+
 ## [0.45.2](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.45.1...openai-ui-v0.45.2) (2026-09-09)
 
 
