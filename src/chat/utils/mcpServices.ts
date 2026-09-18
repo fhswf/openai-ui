@@ -19,6 +19,10 @@ import {
   persistMcpService,
   updateToolSelection,
 } from "./mcpServiceHelpers";
+import {
+  isValidMcpToolName,
+  mergeServerLabelOnNameChange,
+} from "./mcpToolName";
 import type {
   ApprovalOptions,
   CheckedChange,
@@ -51,6 +55,7 @@ export type {
 export function createEmptyMcpToolForm(): McpToolFormState {
   return {
     label: "",
+    server_label: "",
     server_url: "",
     require_approval: "never",
     allowed_tools_input: "",
@@ -155,12 +160,17 @@ export function validateMcpToolForm(
   form: McpToolFormState,
   t: TFunction
 ): boolean {
-  if (form.label && form.server_url) {
-    return true;
+  if (!form.label || !form.server_label || !form.server_url) {
+    alert(t("Please fill in all required fields"));
+    return false;
   }
 
-  alert(t("Please fill in all required fields"));
-  return false;
+  if (!isValidMcpToolName(form.server_label)) {
+    alert(t("mcp_invalid_tool_name"));
+    return false;
+  }
+
+  return true;
 }
 
 export function updateFormField(
@@ -170,8 +180,20 @@ export function updateFormField(
 ): void {
   setForm((current) => {
     switch (field) {
-      case "label":
-        return { ...current, label: String(value) };
+      case "label": {
+        const label = String(value);
+        return {
+          ...current,
+          label,
+          server_label: mergeServerLabelOnNameChange({
+            currentLabel: current.label,
+            currentServerLabel: current.server_label,
+            nextLabel: label,
+          }),
+        };
+      }
+      case "server_label":
+        return { ...current, server_label: String(value) };
       case "server_url":
         return { ...current, server_url: String(value) };
       case "require_approval":
@@ -209,7 +231,8 @@ function getStoredMcpAuthConfig(
 export function openEditMcpEditor(args: OpenEditMcpEditorArgs): void {
   args.setEditingKey(args.key);
   args.setForm({
-    label: args.tool.server_label || args.key,
+    label: args.key,
+    server_label: args.tool.server_label || args.key,
     server_url: args.tool.server_url || "",
     require_approval:
       args.tool.require_approval === "always" ? "always" : "never",

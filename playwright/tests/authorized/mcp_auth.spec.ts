@@ -165,7 +165,8 @@ test.describe("MCP Auth", () => {
     await loadAuthorizedPage(page);
   });
 
-  const labelFieldPattern = /Label|Bezeichnung/i;
+  const labelFieldPattern = /^Label$|^Bezeichnung$/i;
+  const serverLabelFieldPattern = /^Server Label$|^Server-Label$/i;
   const serverUrlFieldPattern = /Server URL|Server-URL/i;
 
   async function openMcpDialog(page: Page) {
@@ -246,6 +247,10 @@ test.describe("MCP Auth", () => {
     return page.getByLabel(labelFieldPattern);
   }
 
+  function getServerLabelInput(page: Page) {
+    return page.getByLabel(serverLabelFieldPattern);
+  }
+
   function getServerUrlInput(page: Page) {
     return page.getByLabel(serverUrlFieldPattern);
   }
@@ -261,6 +266,7 @@ test.describe("MCP Auth", () => {
 
   async function fillServiceBase(page: Page, label: string, url: string) {
     await focusAndFill(getLabelInput(page), label);
+    await expect(getServerLabelInput(page)).not.toHaveValue("");
     await focusAndFill(getServerUrlInput(page), url);
   }
 
@@ -517,7 +523,7 @@ test.describe("MCP Auth", () => {
       await page.getByTestId("mcp-add-service-btn").click();
 
       await expect(page.getByText("Renamed Service")).toBeVisible();
-      await page.getByTestId("mcp-edit-Rename Me").click();
+      await page.getByTestId("mcp-edit-Renamed Service").click();
       await expect(page.getByTestId("mcp-auth-fields-container")).toBeVisible();
       await waitForDiscoveredScopes(page);
       await expect(getUserDataConsentCheckbox(page)).toBeChecked();

@@ -20,7 +20,8 @@ const DISABLE_ANIMATIONS_STYLE = `
 `;
 
 test.describe("MCP Services", () => {
-  const labelFieldPattern = /Label|Bezeichnung/i;
+  const labelFieldPattern = /^Label$|^Bezeichnung$/i;
+  const serverLabelFieldPattern = /^Server Label$|^Server-Label$/i;
   const serverUrlFieldPattern = /Server URL|Server-URL/i;
   const allowedToolsFieldPattern = /Allowed Tools|Erlaubte Werkzeuge/i;
   const discoveredScopes = {
@@ -108,6 +109,10 @@ test.describe("MCP Services", () => {
     return page.getByLabel(labelFieldPattern);
   }
 
+  function getServerLabelInput(page: Page) {
+    return page.getByLabel(serverLabelFieldPattern);
+  }
+
   function getServerUrlInput(page: Page) {
     return page.getByLabel(serverUrlFieldPattern);
   }
@@ -180,12 +185,68 @@ test.describe("MCP Services", () => {
     await openMcpDialog(page);
 
     await expect(getLabelInput(page)).toBeVisible();
+    await expect(getServerLabelInput(page)).toBeVisible();
     await expect(getServerUrlInput(page)).toBeVisible();
     await expect(
       page.getByTestId("mcp-require-approval-trigger")
     ).toBeVisible();
     await expect(getAllowedToolsInput(page)).toBeVisible();
     await expect(page.getByTestId("mcp-auth-mode-group")).toBeVisible();
+  });
+
+  test("should derive the server label from the display name", async ({
+    page,
+  }) => {
+    await openMcpDialog(page);
+
+    await focusAndFill(getLabelInput(page), "My New Service");
+    await expect(getServerLabelInput(page)).toHaveValue("My_New_Service");
+
+    await getLabelInput(page).clear();
+    await focusAndFill(getLabelInput(page), "another.name/v2");
+    await expect(getServerLabelInput(page)).toHaveValue("another_name_v2");
+  });
+
+  test("should keep a manually edited server label", async ({ page }) => {
+    await openMcpDialog(page);
+
+    await focusAndFill(getLabelInput(page), "Original Service");
+    await getServerLabelInput(page).clear();
+    await focusAndFill(getServerLabelInput(page), "custom_label");
+    await getLabelInput(page).clear();
+    await focusAndFill(getLabelInput(page), "Renamed Service");
+
+    await expect(getServerLabelInput(page)).toHaveValue("custom_label");
+  });
+
+  test("should reject an illegal server label before adding a service", async ({
+    page,
+  }) => {
+    const messages: string[] = [];
+    page.on("dialog", async (dialog) => {
+      messages.push(dialog.message());
+      await dialog.accept();
+    });
+
+    await openMcpDialog(page);
+
+    await fillServiceBase(page, {
+      label: "Illegal Server Label",
+      url: "https://illegal.example.com",
+    });
+    await getServerLabelInput(page).clear();
+    await focusAndFill(getServerLabelInput(page), "has spaces!");
+
+    await expect(
+      page.getByText(/server label may only contain|Server-Label darf nur/i)
+    ).toBeVisible();
+    await page.getByTestId("mcp-add-service-btn").click();
+    await expect
+      .poll(() => messages.join("\n"))
+      .toMatch(/server label|Server-Label|64/i);
+    await expect(page.getByTestId("mcp-edit-Illegal Server Label")).toHaveCount(
+      0
+    );
   });
 
   test("should show user-data consent after switching auth modes", async ({
@@ -271,7 +332,7 @@ test.describe("MCP Services", () => {
       page.getByText("Updated Service", { exact: true })
     ).toBeVisible();
 
-    await page.getByTestId("mcp-delete-Original Service").click();
+    await page.getByTestId("mcp-delete-Updated Service").click();
     await expect(
       page.getByText("Updated Service", { exact: true })
     ).toHaveCount(0);
