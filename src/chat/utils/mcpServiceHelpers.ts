@@ -131,8 +131,11 @@ function cleanupRenamedTool(
 ): void {
   if (oldKey && oldKey !== newKey) {
     collections.tools.delete(oldKey);
-    collections.toolsEnabled.delete(oldKey);
     collections.mcpAuthConfigs.delete(oldKey);
+
+    if (collections.toolsEnabled.delete(oldKey)) {
+      collections.toolsEnabled.add(newKey);
+    }
   }
 }
 
@@ -144,7 +147,7 @@ function createMcpToolDefinition(
 
   return {
     type: "mcp",
-    server_label: form.label,
+    server_label: form.server_label,
     server_url: form.server_url,
     require_approval: form.require_approval,
     ...(authorization ? { authorization } : {}),
@@ -177,7 +180,9 @@ export function getAuthorizationResult(args: {
 
 export function persistMcpService(args: PersistMcpServiceArgs): void {
   const nextAuthConfig = normalizeMcpAuthConfig(args.form.authConfig);
-  const targetKey = args.editingKey ?? args.form.label;
+  // The display name is the human-readable key; renaming it moves the tool
+  // (and its auth config / enabled flag) to the new key.
+  const targetKey = args.form.label;
 
   if (
     nextAuthConfig.mode === "user-data" &&

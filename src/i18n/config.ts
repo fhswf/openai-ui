@@ -102,6 +102,11 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           "Add/Remove MCP Services": "Add/Remove MCP Services",
           "Edit MCP Services": "Edit MCP Services",
           Label: "Label",
+          "Server Label": "Server Label",
+          mcp_server_label_helper:
+            "Server label used towards the API. Defaults to a sanitized version of the name and can be edited.",
+          mcp_invalid_tool_name:
+            "The server label may only contain letters, numbers, underscores and hyphens, and must not exceed 64 characters.",
           "Server URL": "Server URL",
           "Require Approval": "Require Approval",
           "Allowed Tools": "Allowed Tools",
@@ -484,6 +489,11 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           "Add Service": "Dienst hinzufügen",
           "Save Service": "Dienst speichern",
           Label: "Bezeichnung",
+          "Server Label": "Server-Label",
+          mcp_server_label_helper:
+            "Server-Label für die API. Wird standardmäßig aus der Bezeichnung abgeleitet und kann bearbeitet werden.",
+          mcp_invalid_tool_name:
+            "Das Server-Label darf nur Buchstaben, Ziffern, Unterstriche und Bindestriche enthalten und höchstens 64 Zeichen lang sein.",
           "Server URL": "Server-URL",
           "Allowed Tools": "Erlaubte Werkzeuge",
           "Comma separated": "Kommagetrennt",

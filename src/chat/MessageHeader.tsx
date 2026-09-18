@@ -86,6 +86,7 @@ import {
   ToolChangeRequest,
   updateFormField,
 } from "./utils/mcpServices";
+import { isValidMcpToolName } from "./utils/mcpToolName";
 
 import "../assets/icon/style.css";
 
@@ -215,7 +216,7 @@ function ToolOptionsGroup({
       {Array.from(tools.entries()).map(([key, value]) => (
         <Menu.CheckboxItem
           key={key}
-          value={value.type === "mcp" ? value.server_label : value.type}
+          value={value.type === "mcp" ? key : value.type}
           checked={toolsEnabled.has(key)}
           onCheckedChange={(event) => {
             onToolChange({ key, tool: value, checkedChange: event });
@@ -254,7 +255,7 @@ function McpServicesMenu({
           <Menu.Content>
             {Array.from(mcpTools.entries()).map(([key, tool]) => (
               <Menu.CheckboxItem
-                key={tool.server_label}
+                key={key}
                 value={key}
                 checked={toolsEnabled.has(key)}
                 onCheckedChange={(event) => {
@@ -262,7 +263,7 @@ function McpServicesMenu({
                 }}
               >
                 <Menu.ItemIndicator />
-                {tool.server_label || key}
+                {key}
               </Menu.CheckboxItem>
             ))}
             <Menu.Item
@@ -287,8 +288,10 @@ interface McpServiceFormFieldsProps {
 }
 
 interface McpTextFieldProps {
+  errorText?: string;
   field: McpTextFieldName;
   form: McpToolFormState;
+  helperText?: string;
   id: string;
   label: string;
   placeholder?: string;
@@ -304,6 +307,8 @@ function getTextFieldValue(
   switch (field) {
     case "label":
       return form.label;
+    case "server_label":
+      return form.server_label;
     case "server_url":
       return form.server_url;
     case "allowed_tools_input":
@@ -314,8 +319,10 @@ function getTextFieldValue(
 }
 
 function McpTextField({
+  errorText,
   field,
   form,
+  helperText,
   id,
   label,
   placeholder,
@@ -324,7 +331,7 @@ function McpTextField({
   type,
 }: McpTextFieldProps) {
   return (
-    <Field.Root>
+    <Field.Root invalid={Boolean(errorText)}>
       <Field.Label htmlFor={id}>{label}</Field.Label>
       <Input
         id={id}
@@ -338,6 +345,10 @@ function McpTextField({
           updateFormField(setForm, field, event.target.value);
         }}
       />
+      {helperText && !errorText && (
+        <Field.HelperText>{helperText}</Field.HelperText>
+      )}
+      {errorText && <Field.ErrorText>{errorText}</Field.ErrorText>}
     </Field.Root>
   );
 }
@@ -403,6 +414,10 @@ function McpServiceFormFields({
   setForm,
 }: McpServiceFormFieldsProps) {
   const { t } = useTranslation();
+  const serverLabelError =
+    form.server_label && !isValidMcpToolName(form.server_label)
+      ? t("mcp_invalid_tool_name")
+      : undefined;
 
   return (
     <Stack gap={4}>
@@ -411,6 +426,16 @@ function McpServiceFormFields({
         form={form}
         id="label"
         label={t("Label")}
+        required
+        setForm={setForm}
+      />
+      <McpTextField
+        errorText={serverLabelError}
+        field="server_label"
+        form={form}
+        id="server_label"
+        label={t("Server Label")}
+        helperText={t("mcp_server_label_helper")}
         required
         setForm={setForm}
       />
@@ -446,7 +471,6 @@ interface McpServiceRowProps {
   onDelete: VoidFunction;
   onEdit: VoidFunction;
   onToggle: React.Dispatch<CheckedChange>;
-  tool: Tool.Mcp;
   toolKey: string;
 }
 
@@ -455,7 +479,6 @@ function McpServiceRow({
   onDelete,
   onEdit,
   onToggle,
-  tool,
   toolKey,
 }: McpServiceRowProps) {
   return (
@@ -470,7 +493,7 @@ function McpServiceRow({
           <Checkbox.HiddenInput />
           <Checkbox.Control />
         </Checkbox.Root>
-        <Text>{tool.server_label || toolKey}</Text>
+        <Text>{toolKey}</Text>
       </HStack>
       <HStack gap={1} alignItems="center">
         <Button
@@ -524,7 +547,6 @@ function McpServicesList({
           <McpServiceRow
             key={key}
             toolKey={key}
-            tool={tool}
             checked={toolsEnabled.has(key)}
             onEdit={() => {
               onEditTool({ key, tool });

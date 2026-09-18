@@ -10,6 +10,7 @@ import {
 
 export interface McpToolFormState {
   label: string;
+  server_label: string;
   server_url: string;
   require_approval: "always" | "never";
   allowed_tools_input: string;
@@ -17,10 +18,15 @@ export interface McpToolFormState {
 }
 
 export type CheckedChange = boolean | { checked: boolean | "indeterminate" };
-export type McpTextFieldName = "label" | "server_url" | "allowed_tools_input";
+export type McpTextFieldName =
+  | "label"
+  | "server_label"
+  | "server_url"
+  | "allowed_tools_input";
 export type McpToolMap = Map<string, Tool.Mcp>;
-export type McpAuthorizationGetter =
-  ReturnType<typeof import("../hooks/useMcpAuth").useMcpAuth>["getAuthorization"];
+export type McpAuthorizationGetter = ReturnType<
+  typeof import("../hooks/useMcpAuth").useMcpAuth
+>["getAuthorization"];
 
 export interface EditToolRequest {
   key: string;
