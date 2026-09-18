@@ -5,6 +5,14 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.46.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.46.0...openai-ui-v0.46.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* validate MCP server_label in the Add MCP Tool dialog ([852bf62](https://github.com/fhswf/openai-ui/commit/852bf622c62940c9ffc34b1f02bb6f4023fb295d)), closes [#158](https://github.com/fhswf/openai-ui/issues/158)
+* validate MCP tool name / server_label in the Add MCP Tool dialog ([#158](https://github.com/fhswf/openai-ui/issues/158)) ([eeabc8b](https://github.com/fhswf/openai-ui/commit/eeabc8b27790dc515ddbcbc0fdbc41c38610ade5))
+
 ## [0.46.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.45.2...openai-ui-v0.46.0) (2026-09-12)
 
 
