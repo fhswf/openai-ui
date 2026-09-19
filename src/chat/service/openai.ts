@@ -222,7 +222,7 @@ export async function createResponse(
           duration: 2000,
           type: "info",
         });
-        window.location.href = beginLoginRedirect({ retry: true });
+        window.location.assign(beginLoginRedirect({ retry: true }));
         return;
       }
 

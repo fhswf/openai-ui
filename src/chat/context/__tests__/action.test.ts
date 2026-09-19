@@ -14,7 +14,7 @@ vi.mock("i18next", () => ({
 
 import { createResponse } from "../../service/openai";
 
-function buildState(messages: Array<{ role: string; content: string }>) {
+function buildState(messages: { role: string; content: string }[]) {
   return {
     chat: [{ id: "chat-1", messages }],
     currentChat: 0,
