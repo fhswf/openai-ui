@@ -402,4 +402,78 @@ test.describe("Authentication (fetchAndGetUser)", () => {
 
     await expect.poll(() => jwksRequestCount.count).toBeGreaterThan(0);
   });
+
+  test("retries the last chat message after a login redirect", async ({
+    page,
+  }) => {
+    // The storage state is empty, so no explicit cleanup is needed here. Note
+    // that addInitScript runs on every navigation and would also wipe the
+    // pending-retry flag set before the login redirect.
+
+    await page.route(userEndpointPattern, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockUser),
+      });
+    });
+
+    await page.route(loginEndpointPattern, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/html",
+        body: '<html lang=""><body>Login</body></html>',
+      });
+    });
+
+    let responseCalls = 0;
+
+    await page.route("**/v1/responses", async (route) => {
+      responseCalls += 1;
+      if (responseCalls === 1) {
+        await route.fulfill({
+          status: 401,
+          contentType: "application/json",
+          body: JSON.stringify({ error: { message: "Unauthorized" } }),
+        });
+        return;
+      }
+
+      const events = [
+        { type: "response.created", response: { id: "resp_retry_mock" } },
+        {
+          type: "response.completed",
+          response: {
+            usage: { total_tokens: 2, input_tokens: 1, output_tokens: 1 },
+          },
+        },
+      ];
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(""),
+      });
+    });
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await acceptTermsIfVisible(page);
+
+    await page.getByTestId("ChatTextArea").click();
+    await page.getByTestId("ChatTextArea").fill("Bitte wiederholen");
+    await page.getByTestId("SendMessageBtn").click();
+
+    // Expired session redirects to the login page
+    await expect(page).toHaveURL(loginEndpointPattern, {
+      timeout: APP_READY_TIMEOUT,
+    });
+
+    // Simulate a successful login by returning to the application
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    // The interrupted message is retried automatically without user input
+    await expect(page.getByTestId("ChatMessage-2")).toBeVisible({
+      timeout: APP_READY_TIMEOUT,
+    });
+    await expect.poll(() => responseCalls).toBe(2);
+  });
 });

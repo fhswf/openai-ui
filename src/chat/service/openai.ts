@@ -19,6 +19,7 @@ import {
 } from "openai/resources/responses/responses.mjs";
 import { toaster } from "../../components/ui/toaster";
 import { showMcpApprovalToast } from "../component/McpToast";
+import { beginLoginRedirect } from "../utils/loginRetry";
 import * as Sentry from "@sentry/react";
 
 export const apiBaseUrl =
@@ -221,7 +222,7 @@ export async function createResponse(
           duration: 2000,
           type: "info",
         });
-        window.location.href = import.meta.env.VITE_LOGIN_URL;
+        window.location.href = beginLoginRedirect({ retry: true });
         return;
       }
 

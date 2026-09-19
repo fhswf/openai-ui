@@ -19,6 +19,7 @@ import {
   isMcpAuthorizationIncomplete,
   normalizeMcpAuthConfig,
 } from "../hooks/useMcpAuth";
+import { getLoginUrl } from "./loginRetry";
 
 export * from "./options";
 
@@ -116,7 +117,8 @@ export function fetchAndGetUser(
     general: Pick<GeneralOptions, "gravatar">;
     openai: OpenAIOptions | undefined;
   },
-  setOptions?: Dispatch<OptionAction>
+  setOptions?: Dispatch<OptionAction>,
+  onAuthenticated?: () => void
 ) {
   const userUrl = import.meta.env.VITE_USER_URL || "/api/user";
 
@@ -124,7 +126,7 @@ export function fetchAndGetUser(
     .then((res) => {
       console.log("getting user: ", res.status);
       if (res.status === 401) {
-        const loginUrl = import.meta.env.VITE_LOGIN_URL || "/api/login";
+        const loginUrl = getLoginUrl();
         console.log("unauthorized, redirecting to login: %s", loginUrl);
         window.location.assign(loginUrl);
         throw new Error("unauthorized");
@@ -140,6 +142,10 @@ export function fetchAndGetUser(
       user.avatar = null;
       console.log("updating user: ", user);
       dispatch({ type: GlobalActionType.SET_STATE, payload: { user } });
+
+      // The session is valid again, so any request interrupted by an expired
+      // token can be resumed.
+      onAuthenticated?.();
 
       // Discover MCP auth configs for all configured servers
       if (setOptions && currentOptions.openai?.tools instanceof Map) {

@@ -23,6 +23,7 @@ import {
   SESSION_KEY,
   CHAT_HISTORY_KEY,
 } from "../utils/settings";
+import { consumeLoginRetry } from "../utils/loginRetry";
 
 export const ChatContext = createContext(null);
 export const MessagesContext = createContext<Dispatch<GlobalAction>>(null);
@@ -62,9 +63,11 @@ export const ChatProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, init);
   const actionList = action(state, dispatch);
   const latestState = useRef(state);
+  const latestActions = useRef(actionList);
 
   useEffect(() => {
     latestState.current = state;
+    latestActions.current = actionList;
   }, [state]);
 
   useEffect(() => {
@@ -90,7 +93,16 @@ export const ChatProvider = ({ children }) => {
     fetchAndGetUser(
       dispatch,
       () => latestState.current.options,
-      actionList.setOptions
+      actionList.setOptions,
+      () => {
+        // Resume the request that triggered the login redirect now that the
+        // session is valid again. Use the latest actions so the retry sees the
+        // hydrated chat state instead of the initial render's snapshot.
+        if (consumeLoginRetry()) {
+          console.log("resuming interrupted message after login");
+          latestActions.current.retryPendingMessage();
+        }
+      }
     );
   }, []);
 
