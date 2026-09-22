@@ -71,7 +71,7 @@ describe("sendMessage", () => {
     vi.clearAllMocks();
   });
 
-  function buildSendState(files: unknown[]) {
+  function buildSendState(files: { name: string; type?: string }[]) {
     return {
       chat: [{ id: "chat-1", messages: [] }],
       currentChat: 0,
@@ -94,7 +94,7 @@ describe("sendMessage", () => {
 
     expect(createResponse).toHaveBeenCalledTimes(1);
     const [global] = vi.mocked(createResponse).mock.calls[0];
-    const message = (global as any).chat[0].messages[0];
+    const message = global.chat[0].messages[0];
 
     expect(message.content).toEqual([
       { type: "input_text", text: "Summarize the document" },
@@ -111,7 +111,7 @@ describe("sendMessage", () => {
     await actions.sendMessage();
 
     const [global] = vi.mocked(createResponse).mock.calls[0];
-    const message = (global as any).chat[0].messages[0];
+    const message = global.chat[0].messages[0];
     expect(message.content).toBe("Summarize the document");
   });
 });

@@ -425,7 +425,9 @@ export function MessageInput() {
                     right={0}
                     colorPalette="red"
                     variant="solid"
-                    onClick={() => handleDeleteFile(index)}
+                    onClick={() => {
+                      handleDeleteFile(index);
+                    }}
                     style={{ transform: "translate(50%, -50%)" }}
                     rounded="full"
                   >

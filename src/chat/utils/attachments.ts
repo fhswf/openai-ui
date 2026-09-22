@@ -1,17 +1,17 @@
 export const PDF_MIME_TYPE = "application/pdf";
 
-export type AttachmentLike = {
+export interface AttachmentLike {
   name?: string;
   type?: string;
-};
+}
 
-export type Attachment = {
+export interface Attachment {
   id?: string;
   name: string;
   type?: string;
   size?: number;
   lastModified?: number;
-};
+}
 
 /**
  * A file is treated as a PDF when its MIME type says so or, as a fallback for
@@ -42,9 +42,12 @@ export function isSupportedFile(
 export function fileToDataUrl(file: Blob): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () =>
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = () => {
       reject(reader.error ?? new Error("Failed to read file"));
+    };
     reader.readAsDataURL(file);
   });
 }

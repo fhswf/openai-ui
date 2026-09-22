@@ -8,6 +8,7 @@ import {
   GlobalAction,
   GlobalActionType,
   OptionActionType,
+  MessageAttachment,
 } from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
@@ -43,7 +44,7 @@ async function processImages(images: any[], opfs: FileSystemDirectoryHandle | nu
   );
 }
 
-async function processFiles(files: any[]) {
+function processFiles(files: MessageAttachment[]) {
   console.log("transform files: %o", files);
   // Files stay in OPFS and are referenced by name only. The request builder
   // resolves each `input_file` to base64 `file_data` per request, so PDFs are
@@ -135,7 +136,7 @@ export default function action(
           ? await processImages(typeingMessage.images, opfs)
           : [];
         const files = typeingMessage.files?.length
-          ? await processFiles(typeingMessage.files)
+          ? processFiles(typeingMessage.files)
           : [];
         console.log("sendMessage: images: %o files: %o", images, files);
 
