@@ -228,6 +228,11 @@ You can find the full privacy notice in the app's info menu (?).
           request_label_plural: "requests",
           requests_axis_label: "Requests",
           users_axis_label: "Users",
+          not_supported_file: "Unsupported file",
+          not_supported_file_description:
+            "You can only upload images and PDF files.",
+          upload_file: "Upload file",
+          upload_file_desc: "Upload file",
         },
       }, // German
       de: {
@@ -418,6 +423,9 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           error_occurred: "Ein Fehler ist aufgetreten",
           not_image: "Kein Bild",
           not_image_description: "Sie können nur Bilder hochladen.",
+          not_supported_file: "Nicht unterstützte Datei",
+          not_supported_file_description:
+            "Sie können nur Bilder und PDF-Dateien hochladen.",
 
           total_requests: "Gesamtzahl der Aufrufe (fh-swf.de) über die Monate",
           total_requests_title: "Gesamtzahl der Aufrufe",

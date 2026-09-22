@@ -126,6 +126,7 @@ export type GlobalActions = {
 
 export type Message = {
   images?: any;
+  files?: any;
   content: string;
   sentTime?: number;
   startTime?: number;

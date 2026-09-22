@@ -65,3 +65,53 @@ describe("retryPendingMessage", () => {
     expect(createResponse).not.toHaveBeenCalled();
   });
 });
+
+describe("sendMessage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function buildSendState(files: unknown[]) {
+    return {
+      chat: [{ id: "chat-1", messages: [] }],
+      currentChat: 0,
+      options: {
+        account: {},
+        general: {},
+        openai: {},
+      },
+      is: { thinking: false, tool: null },
+      typeingMessage: { content: "Summarize the document", files },
+    };
+  }
+
+  it("sends PDFs inline as base64 input_file items, not via the files API", async () => {
+    const dispatch = vi.fn();
+    const state = buildSendState([{ name: "document.pdf", type: "application/pdf" }]);
+
+    const actions = action(state, dispatch);
+    await actions.sendMessage();
+
+    expect(createResponse).toHaveBeenCalledTimes(1);
+    const [global] = vi.mocked(createResponse).mock.calls[0];
+    const message = (global as any).chat[0].messages[0];
+
+    expect(message.content).toEqual([
+      { type: "input_text", text: "Summarize the document" },
+      { type: "input_file", filename: "document.pdf" },
+    ]);
+    expect(message.files).toHaveLength(1);
+  });
+
+  it("sends text only when there are no attachments", async () => {
+    const dispatch = vi.fn();
+    const state = buildSendState([]);
+
+    const actions = action(state, dispatch);
+    await actions.sendMessage();
+
+    const [global] = vi.mocked(createResponse).mock.calls[0];
+    const message = (global as any).chat[0].messages[0];
+    expect(message.content).toBe("Summarize the document");
+  });
+});

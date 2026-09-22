@@ -28,7 +28,10 @@ import { MdOutlineCancel, MdOutlineFileUpload } from "react-icons/md";
 import { CiMicrophoneOff, CiMicrophoneOn } from "react-icons/ci";
 import { toaster } from "../components/ui/toaster";
 import classNames from "classnames";
-import { OPFSImage } from "./component";
+import { FilePreview, OPFSImage } from "./component";
+import { isImageFile, isPdfFile, isSupportedFile, PDF_MIME_TYPE } from "./utils/attachments";
+
+const ACCEPTED_FILE_TYPES = "image/*,application/pdf";
 
 
 
@@ -143,8 +146,11 @@ export function MessageInput() {
     if (!newMessage.images) {
       newMessage.images = [];
     }
+    if (!newMessage.files) {
+      newMessage.files = [];
+    }
     files.forEach(async (file) => {
-      if (file.type.startsWith("image/")) {
+      if (isImageFile(file)) {
         try {
           const opfs = await navigator.storage.getDirectory();
           const fileHandle = await opfs.getFileHandle(file.name, {
@@ -172,6 +178,43 @@ export function MessageInput() {
           id: uuidv7(),
         });
         setState({ typeingMessage: newMessage });
+      } else if (isPdfFile(file)) {
+        try {
+          // PDFs are stored locally in OPFS and sent inline per request as
+          // base64 encoded `input_file` data, not via the files API.
+          const opfs = await navigator.storage.getDirectory();
+          const fileHandle = await opfs.getFileHandle(file.name, {
+            create: true,
+          });
+          const writable = await fileHandle.createWritable();
+          const buffer = await file.arrayBuffer();
+          await writable.write(buffer);
+          await writable.close();
+          newMessage.files.push({
+            name: file.name,
+            url: `opfs://${file.name}`,
+            size: file.size,
+            lastModified: file.lastModified,
+            type: PDF_MIME_TYPE,
+            id: uuidv7(),
+          });
+          setState({ typeingMessage: newMessage });
+        } catch (error) {
+          console.error("Error writing PDF file to OPFS: %o", error);
+          toaster.create({
+            title: t("error_occurred"),
+            description: error instanceof Error ? error.message : String(error),
+            duration: 5000,
+            type: "error",
+          });
+        }
+      } else {
+        toaster.create({
+          title: t("not_supported_file"),
+          description: t("not_supported_file_description"),
+          duration: 5000,
+          type: "warning",
+        });
       }
     });
   };
@@ -191,16 +234,23 @@ export function MessageInput() {
     }
   };
 
+  const handleDeleteFile = (index: number) => {
+    if (typeingMessage.files) {
+      typeingMessage.files.splice(index, 1);
+      setState({ typeingMessage: { ...typeingMessage } });
+    }
+  };
+
   const handleDrop = (
     event: React.DragEvent<HTMLElement>,
     isLink: boolean,
-    isImage: boolean
+    isFile: boolean
   ) => {
     event.preventDefault();
     dropRef.current?.classList.remove(styles.dragover);
 
-    if (!isLink && !isImage) {
-      console.warn("Drop event does not contain a link or image");
+    if (!isLink && !isFile) {
+      console.warn("Drop event does not contain a link or file");
       return;
     }
 
@@ -208,9 +258,7 @@ export function MessageInput() {
       const url = event.dataTransfer.getData("text/uri-list");
       handleLinkDrop(url);
     } else {
-      // Handle image drop
-
-      // Upload file and store in OPFS
+      // Handle file drop (images are stored in OPFS, PDFs are read inline)
       const files = Array.from(event.dataTransfer.files);
       handleFileDrop(files);
     }
@@ -219,22 +267,22 @@ export function MessageInput() {
   const dragHandler = (event: React.DragEvent<HTMLElement>) => {
     event.stopPropagation();
     const isLink = event.dataTransfer.types.includes("text/uri-list");
-    const isImage =
+    const isFile =
       event.dataTransfer.types.includes("Files") &&
       Array.from(event.dataTransfer.items).some((item) =>
-        item.type.startsWith("image/")
+        isSupportedFile({ type: item.type })
       );
 
     switch (event.type) {
       case "dragenter":
-        if (isLink || isImage) {
+        if (isLink || isFile) {
           event.preventDefault();
           dropRef.current?.classList.add(styles.dragover);
         }
         break;
 
       case "dragover":
-        if (isLink || isImage) {
+        if (isLink || isFile) {
           event.preventDefault();
         }
         break;
@@ -244,7 +292,7 @@ export function MessageInput() {
         break;
 
       case "drop":
-        handleDrop(event, isLink, isImage);
+        handleDrop(event, isLink, isFile);
         break;
     }
   };
@@ -260,7 +308,7 @@ export function MessageInput() {
         <input
           type="file"
           multiple
-          accept="image/*"
+          accept={ACCEPTED_FILE_TYPES}
           style={{
             position: "absolute",
             width: "100%",
@@ -357,6 +405,27 @@ export function MessageInput() {
                     colorPalette="red"
                     variant="solid"
                     onClick={() => handleDeleteImage(index)}
+                    style={{ transform: "translate(50%, -50%)" }}
+                    rounded="full"
+                  >
+                    <MdOutlineCancel />
+                  </IconButton>
+                </Box>
+              );
+            })}
+            {typeingMessage?.files?.map((file, index) => {
+              return (
+                <Box key={file.id || index} position="relative">
+                  <FilePreview name={file.name} />
+                  <IconButton
+                    aria-label="Delete file"
+                    size="xs"
+                    position="absolute"
+                    top={0}
+                    right={0}
+                    colorPalette="red"
+                    variant="solid"
+                    onClick={() => handleDeleteFile(index)}
                     style={{ transform: "translate(50%, -50%)" }}
                     rounded="full"
                   >
