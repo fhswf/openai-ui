@@ -11,6 +11,7 @@ import {
 } from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
+import { isRetryableMessage } from "../utils/loginRetry";
 import { v7 as uuidv7 } from "uuid";
 
 
@@ -79,6 +80,23 @@ export default function action(
       payload: { chat, currentChat },
     });
 
+  const retryPendingMessage = () => {
+    const { chat, currentChat } = state;
+    // `at()` avoids dynamic computed member access on the chat array, which
+    // static analysis flags as a generic object-injection sink.
+    const messages = chat?.at(currentChat)?.messages;
+    const lastMessage = messages?.at(-1);
+
+    if (!isRetryableMessage(lastMessage)) {
+      console.log("retryPendingMessage: last message is not from the user");
+      return;
+    }
+
+    console.log("retryPendingMessage: resending last user message");
+    setIs({ ...state.is, thinking: true, tool: null });
+    void createResponse({ ...state, setState, setIs, setOptions }, this);
+  };
+
   const sendMessage = async () => {
     const { typeingMessage, chat, currentChat } = state;
 
@@ -137,6 +155,8 @@ export default function action(
     },
 
     sendMessage,
+
+    retryPendingMessage,
 
     setApp(app) {
       console.log("setApp", app);

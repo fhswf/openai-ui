@@ -107,6 +107,7 @@ export type GlobalActions = {
   doLogin: () => void;
   clearTypeing: () => void;
   sendMessage: () => Promise<void>;
+  retryPendingMessage: () => void;
   setApp: (app: any) => void;
   showSettings: () => void;
   newChat: (app: any) => void;
