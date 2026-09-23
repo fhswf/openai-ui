@@ -110,8 +110,51 @@ function providerGroupOf(model: string): string {
 }
 
 function gptVersionOf(model: string): number[] | undefined {
-  const version = /gpt-(\d+(?:\.\d+)*)/i.exec(model)?.[1];
-  return version?.split(".").map(Number);
+  let marker = -1;
+  for (let candidate = 0; candidate + 4 < model.length; candidate += 1) {
+    const firstDigit = model.charCodeAt(candidate + 4);
+    if (
+      model.slice(candidate, candidate + 4).toLowerCase() === "gpt-" &&
+      firstDigit >= 48 &&
+      firstDigit <= 57
+    ) {
+      marker = candidate;
+      break;
+    }
+  }
+  if (marker < 0) {
+    return undefined;
+  }
+
+  const version: number[] = [];
+  let cursor = marker + 4;
+  while (cursor < model.length) {
+    const componentStart = cursor;
+    while (cursor < model.length) {
+      const characterCode = model.charCodeAt(cursor);
+      if (characterCode < 48 || characterCode > 57) {
+        break;
+      }
+      cursor += 1;
+    }
+
+    if (cursor === componentStart) {
+      return version.length > 0 ? version : undefined;
+    }
+    version.push(Number(model.slice(componentStart, cursor)));
+
+    if (
+      model.charAt(cursor) !== "." ||
+      cursor + 1 >= model.length ||
+      model.charCodeAt(cursor + 1) < 48 ||
+      model.charCodeAt(cursor + 1) > 57
+    ) {
+      break;
+    }
+    cursor += 1;
+  }
+
+  return version.length > 0 ? version : undefined;
 }
 
 export function supportsReasoningEffort(model: string): boolean {
@@ -151,8 +194,14 @@ function modelTiebreakKey(model: string): number {
 
 function compareVersionsDescending(left: number[], right: number[]): number {
   const componentCount = Math.max(left.length, right.length);
+  const leftComponents = left.values();
+  const rightComponents = right.values();
   for (let index = 0; index < componentCount; index += 1) {
-    const difference = (right[index] ?? 0) - (left[index] ?? 0);
+    const leftComponent = leftComponents.next();
+    const rightComponent = rightComponents.next();
+    const difference =
+      (rightComponent.done ? 0 : rightComponent.value) -
+      (leftComponent.done ? 0 : leftComponent.value);
     if (difference !== 0) {
       return difference;
     }

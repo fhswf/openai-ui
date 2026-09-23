@@ -184,8 +184,8 @@ export async function createResponse(
     // TODO: Handle general case of new messages + parent.
   }
   if (supportsReasoningEffort(options.openai.model)) {
-    response_options["reasoning"] = {
-      effort: options.openai.reasoningEffort ?? "medium",
+    response_options.reasoning = {
+      effort: options.openai.reasoningEffort,
       summary: "detailed",
     };
   }

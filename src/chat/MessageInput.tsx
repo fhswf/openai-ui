@@ -447,13 +447,13 @@ export function MessageInput() {
         >
           <ModelSelector
             openai={options.openai}
-            effort={options.openai.reasoningEffort ?? "medium"}
-            onModelChange={(model) =>
-              setModel({ ...options.openai, model })
-            }
-            onEffortChange={(reasoningEffort) =>
-              setModel({ ...options.openai, reasoningEffort })
-            }
+            effort={options.openai.reasoningEffort}
+            onModelChange={(model) => {
+              setModel({ ...options.openai, model });
+            }}
+            onEffortChange={(reasoningEffort) => {
+              setModel({ ...options.openai, reasoningEffort });
+            }}
           />
           <Switch
             size="sm"

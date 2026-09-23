@@ -20,8 +20,8 @@ import type { ModelOption } from "./utils/options";
 interface ModelSelectorProps {
   openai: OpenAIOptions;
   effort: ReasoningEffort;
-  onModelChange: (model: string) => void;
-  onEffortChange: (effort: ReasoningEffort) => void;
+  onModelChange: (_model: string) => void;
+  onEffortChange: (_effort: ReasoningEffort) => void;
 }
 
 const reasoningEfforts: ReasoningEffort[] = ["low", "medium", "high"];
@@ -67,9 +67,7 @@ export function ModelSelector({
             value={[effortIndex >= 0 ? effortIndex : 1]}
             onValueChange={(event) => {
               const nextEffort = reasoningEfforts[event.value[0]];
-              if (nextEffort) {
-                onEffortChange(nextEffort);
-              }
+              onEffortChange(nextEffort);
             }}
           >
             <Slider.Label>
@@ -125,7 +123,9 @@ export function ModelSelector({
           {groups.length <= 1 ? (
             <Menu.RadioItemGroup
               value={openai.model}
-              onValueChange={(event) => onModelChange(event.value)}
+              onValueChange={(event) => {
+                onModelChange(event.value);
+              }}
             >
               <Menu.ItemGroupLabel>{t("model_options")}</Menu.ItemGroupLabel>
               {options.map(renderModel)}
@@ -135,7 +135,9 @@ export function ModelSelector({
               <Menu.RadioItemGroup
                 key={group}
                 value={openai.model}
-                onValueChange={(event) => onModelChange(event.value)}
+                onValueChange={(event) => {
+                  onModelChange(event.value);
+                }}
               >
                 <Menu.ItemGroupLabel>{group}</Menu.ItemGroupLabel>
                 {items.map(renderModel)}
