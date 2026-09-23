@@ -50,7 +50,7 @@ function processFiles(files: MessageAttachment[]) {
   // resolves each `input_file` to base64 `file_data` per request, so PDFs are
   // never uploaded through the files API.
   return files
-    .filter((file) => Boolean(file?.name))
+    .filter((file) => Boolean(file.name))
     .map((file) => buildInputFile(file));
 }
 

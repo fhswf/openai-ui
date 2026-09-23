@@ -124,14 +124,14 @@ export type GlobalActions = {
   stopResponse: () => void;
 };
 
-export type MessageAttachment = {
+export interface MessageAttachment {
   id?: string;
   name: string;
   type?: string;
   url?: string;
   size?: number;
   lastModified?: number;
-};
+}
 
 export type Message = {
   images?: any;
