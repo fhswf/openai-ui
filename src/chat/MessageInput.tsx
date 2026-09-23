@@ -29,6 +29,7 @@ import { CiMicrophoneOff, CiMicrophoneOn } from "react-icons/ci";
 import { toaster } from "../components/ui/toaster";
 import classNames from "classnames";
 import { FilePreview, OPFSImage } from "./component";
+import { ModelSelector } from "./ModelSelector";
 import { isImageFile, isPdfFile, isSupportedFile, PDF_MIME_TYPE } from "./utils/attachments";
 
 const ACCEPTED_FILE_TYPES = "image/*,application/pdf";
@@ -59,7 +60,7 @@ export function MessageInput() {
     typeingMessage,
     clearTypeing,
   } = useGlobal();
-  const { setGeneral } = useOptions();
+  const { setGeneral, setModel } = useOptions();
   const { t } = useTranslation();
   const dropRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -442,7 +443,18 @@ export function MessageInput() {
           justify={"flex-end"}
           paddingInlineStart={2}
           paddingInlineEnd={2}
+          flexWrap="wrap"
         >
+          <ModelSelector
+            openai={options.openai}
+            effort={options.openai.reasoningEffort}
+            onModelChange={(model) => {
+              setModel({ ...options.openai, model });
+            }}
+            onEffortChange={(reasoningEffort) => {
+              setModel({ ...options.openai, reasoningEffort });
+            }}
+          />
           <Switch
             size="sm"
             colorScheme="blue"

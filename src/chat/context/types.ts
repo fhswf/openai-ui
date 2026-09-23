@@ -4,6 +4,7 @@ import {
 } from "openai/resources/responses/responses.mjs";
 
 export type { Tool, ToolChoiceTypes };
+export type ReasoningEffort = "low" | "medium" | "high";
 
 export enum GlobalActionType {
   SET_STATE = "SET_STATE",
@@ -40,6 +41,7 @@ export type OpenAIOptions = {
   top_p: number;
   mode: string;
   model: string;
+  reasoningEffort: ReasoningEffort;
   assistant: string;
   apiKey: string;
   max_tokens: number;

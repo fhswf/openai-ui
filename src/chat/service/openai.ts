@@ -21,6 +21,7 @@ import { toaster } from "../../components/ui/toaster";
 import { showMcpApprovalToast } from "../component/McpToast";
 import { beginLoginRedirect } from "../utils/loginRetry";
 import { readOpfsFileAsDataUrl } from "../utils/attachments";
+import { supportsReasoningEffort } from "../utils/options";
 import * as Sentry from "@sentry/react";
 
 export const apiBaseUrl =
@@ -182,8 +183,11 @@ export async function createResponse(
     // }
     // TODO: Handle general case of new messages + parent.
   }
-  if (options.openai.model.startsWith("gpt-5")) {
-    response_options["reasoning"] = { effort: "medium", summary: "detailed" };
+  if (supportsReasoningEffort(options.openai.model)) {
+    response_options.reasoning = {
+      effort: options.openai.reasoningEffort,
+      summary: "detailed",
+    };
   }
 
   client.responses
