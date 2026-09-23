@@ -5,6 +5,19 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.48.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.47.1...openai-ui-v0.48.0) (2026-09-23)
+
+
+### Features
+
+* implement model selection and reasoning effort features ([af15aec](https://github.com/fhswf/openai-ui/commit/af15aec8ce123160acac4368a76d2e729fdb7afc))
+* implement model selection and reasoning effort features ([819a2fa](https://github.com/fhswf/openai-ui/commit/819a2fab352f454d891e8fa36a5ec6fb52686310))
+
+
+### Bug Fixes
+
+* update comments for clarity in ModelSelectorProps interface ([56b0000](https://github.com/fhswf/openai-ui/commit/56b0000dd7b6bd2aef92b832b17b4128ee138c0f))
+
 ## [0.47.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.47.0...openai-ui-v0.47.1) (2026-09-23)
 
 
