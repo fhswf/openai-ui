@@ -5,6 +5,23 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.47.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.46.1...openai-ui-v0.47.0) (2026-09-23)
+
+
+### Features
+
+* Add new model option 'gpt-6-luna' ([8dec51e](https://github.com/fhswf/openai-ui/commit/8dec51e2746bdd53d1f2d4affc33161d16231ae1))
+* support PDF uploads as inline input_file requests ([72c6b91](https://github.com/fhswf/openai-ui/commit/72c6b913d6a202593845c5be2e7ed42e1c98888e))
+* support PDF uploads as inline input_file requests ([d4c3231](https://github.com/fhswf/openai-ui/commit/d4c32314679dff2e3fbfe67778d53d1722aee4ed)), closes [#164](https://github.com/fhswf/openai-ui/issues/164)
+
+
+### Bug Fixes
+
+* address Codacy security and style findings ([7f1b426](https://github.com/fhswf/openai-ui/commit/7f1b42699a47c0217f39e2f99955f100accd4d7a))
+* make PDF upload e2e test hermetic and clear Codacy findings ([36fda2e](https://github.com/fhswf/openai-ui/commit/36fda2e69b3acaded81d808805c3e199c53003dc))
+* retry last chat message automatically after login ([9845e0a](https://github.com/fhswf/openai-ui/commit/9845e0a3bcbe6746521d0305c42b76b1a8c65e33))
+* retry last chat message automatically after login ([e3adfbc](https://github.com/fhswf/openai-ui/commit/e3adfbc8f20bb14076b2600caf0b9f44ac46a356))
+
 ## [0.46.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.46.0...openai-ui-v0.46.1) (2026-09-18)
 
 
