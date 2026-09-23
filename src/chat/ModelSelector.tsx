@@ -20,7 +20,10 @@ import type { ModelOption } from "./utils/options";
 interface ModelSelectorProps {
   openai: OpenAIOptions;
   effort: ReasoningEffort;
+  // Callback argument labels document the public signature; they are type-only.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   onModelChange: (_model: string) => void;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   onEffortChange: (_effort: ReasoningEffort) => void;
 }
 
