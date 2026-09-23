@@ -22,6 +22,7 @@ import {
 import { getLoginUrl } from "./loginRetry";
 
 export * from "./options";
+export * from "./attachments";
 
 export function formatNumber(n) {
   return n < 10 ? `0${n}` : n;

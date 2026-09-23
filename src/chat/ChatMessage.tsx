@@ -23,7 +23,7 @@ import {
 import { classnames } from "../components/utils";
 
 import { useGlobal } from "./context";
-import { CopyIcon, ScrollView, OPFSImage, ToolUsagePopup } from "./component";
+import { CopyIcon, ScrollView, OPFSImage, ToolUsagePopup, FilePreview } from "./component";
 import { LazyRenderer } from "./MessageRender";
 import { useMessage } from "./hooks/useMessage";
 import { dateFormat } from "./utils";
@@ -176,6 +176,7 @@ export function MessageItem(props) {
   let message = "";
   let image_url = null;
   let image_name = null;
+  const file_attachments: string[] = [];
   if (typeof content == "string") {
     message = processLaTeX(content);
   } else {
@@ -185,6 +186,8 @@ export function MessageItem(props) {
       } else if (item.type === "input_image") {
         image_url = item.image_url;
         image_name = item.name;
+      } else if (item.type === "input_file") {
+        file_attachments.push(item.filename || "document.pdf");
       } else if (item.type === "mcp_approval_response") {
         message += item.approve ? "Approved" : "Denied";
       }
@@ -261,6 +264,13 @@ export function MessageItem(props) {
               data-testid="included-image"
             />
           ))}
+        {file_attachments.length > 0 && (
+          <HStack wrap="wrap">
+            {file_attachments.map((name, index) => (
+              <FilePreview key={`${name}-${index}`} name={name} />
+            ))}
+          </HStack>
+        )}
       </Card.Body>
       <Card.Footer>
         <HStack width={"100%"} justifyContent="space-between">

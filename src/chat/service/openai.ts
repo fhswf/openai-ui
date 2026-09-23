@@ -20,6 +20,7 @@ import {
 import { toaster } from "../../components/ui/toaster";
 import { showMcpApprovalToast } from "../component/McpToast";
 import { beginLoginRedirect } from "../utils/loginRetry";
+import { readOpfsFileAsDataUrl } from "../utils/attachments";
 import * as Sentry from "@sentry/react";
 
 export const apiBaseUrl =
@@ -116,6 +117,23 @@ export async function createResponse(
                   }
                 }
                 return { ...rest };
+              }
+              if (item.type === "input_file" && !item.file_data && !item.file_id) {
+                // PDFs are stored in OPFS and sent inline as base64 `input_file`
+                // `file_data` per request instead of via the files API.
+                try {
+                  const filename = item.filename;
+                  const fileData = await readOpfsFileAsDataUrl(filename);
+                  console.log(
+                    "Converted OPFS file to base64 input_file: %s (%d bytes)",
+                    filename,
+                    fileData.length
+                  );
+                  return { ...item, file_data: fileData };
+                } catch (error) {
+                  console.error("Error reading OPFS file for OpenAI API:", error);
+                  return item;
+                }
               }
               return item;
             })

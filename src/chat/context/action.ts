@@ -8,10 +8,12 @@ import {
   GlobalAction,
   GlobalActionType,
   OptionActionType,
+  MessageAttachment,
 } from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
 import { isRetryableMessage } from "../utils/loginRetry";
+import { buildInputFile } from "../utils/attachments";
 import { v7 as uuidv7 } from "uuid";
 
 
@@ -40,6 +42,16 @@ async function processImages(images: any[], opfs: FileSystemDirectoryHandle | nu
       }
     })
   );
+}
+
+function processFiles(files: MessageAttachment[]) {
+  console.log("transform files: %o", files);
+  // Files stay in OPFS and are referenced by name only. The request builder
+  // resolves each `input_file` to base64 `file_data` per request, so PDFs are
+  // never uploaded through the files API.
+  return files
+    .filter((file) => Boolean(file.name))
+    .map((file) => buildInputFile(file));
 }
 
 export default function action(
@@ -116,13 +128,22 @@ export default function action(
         id: uuidv7(),
       };
 
-      if (typeingMessage.images && typeingMessage.images.length > 0) {
-        const images = await processImages(typeingMessage.images, opfs);
-        console.log("sendMessage: images: %o", images);
+      if (
+        (typeingMessage.images && typeingMessage.images.length > 0) ||
+        (typeingMessage.files && typeingMessage.files.length > 0)
+      ) {
+        const images = typeingMessage.images?.length
+          ? await processImages(typeingMessage.images, opfs)
+          : [];
+        const files = typeingMessage.files?.length
+          ? processFiles(typeingMessage.files)
+          : [];
+        console.log("sendMessage: images: %o files: %o", images, files);
 
         newMessage.content = [
           { type: "input_text", text: typeingMessage.content },
           ...images,
+          ...files,
         ];
       }
       let messages: Messages = [];
@@ -311,6 +332,7 @@ export default function action(
       if (Array.isArray(message.content)) {
         let textContent = "";
         const images = [];
+        const files = [];
 
         for (const item of message.content) {
           if (item.type === "input_text") {
@@ -330,10 +352,21 @@ export default function action(
               lastModified: Date.now(),
               id: uuidv7(),
             });
+          } else if (item.type === "input_file") {
+            const name = item.filename || "document.pdf";
+            files.push({
+              name,
+              url: `opfs://${name}`,
+              size: 0,
+              type: "application/pdf",
+              lastModified: Date.now(),
+              id: uuidv7(),
+            });
           }
         }
         newMessage.content = textContent;
         newMessage.images = images;
+        newMessage.files = files;
       }
 
       console.log("editMessage: new", newMessage);

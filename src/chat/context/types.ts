@@ -124,8 +124,18 @@ export type GlobalActions = {
   stopResponse: () => void;
 };
 
+export interface MessageAttachment {
+  id?: string;
+  name: string;
+  type?: string;
+  url?: string;
+  size?: number;
+  lastModified?: number;
+}
+
 export type Message = {
   images?: any;
+  files?: MessageAttachment[];
   content: string;
   sentTime?: number;
   startTime?: number;
