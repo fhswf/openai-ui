@@ -91,12 +91,13 @@ const PROVIDER_PATTERNS: readonly { group: string; pattern: RegExp }[] = [
 ];
 
 const GENERATION_RANK: Map<string, number> = new Map([
-  ["5.6", 0],
-  ["5.4", 1],
-  ["5",  2],
-  ["4.1",  3],
-  ["4",  4],
-  ["3.5",  5],
+  ["6", 0],
+  ["5.6", 1],
+  ["5.4", 2],
+  ["5",  3],
+  ["4.1",  4],
+  ["4",  5],
+  ["3.5",  6],
 ]);
 
 const PROVIDER_ORDER: Map<string, number> = new Map([
