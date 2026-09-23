@@ -9,11 +9,12 @@ describe("modelOptions", () => {
   });
 
   it("should have gpt-5.6-luna as the first option", () => {
-    expect(modelOptions[0].value).toBe("gpt-5.6-luna");
+    expect(modelOptions[0].value).toBe("gpt-6-luna");
   });
 
   it("should include all expected GPT models", () => {
     const expectedModels = [
+      "gpt-6-luna",
       "gpt-5.6-luna",
       "gpt-5.4-mini",
       "gpt-5.4-nano",
@@ -41,6 +42,7 @@ describe("getModelOptions", () => {
   it("should sort recommended models by generation when no AI Hub models are configured", () => {
     const options = getModelOptions();
     expect(options.map((opt) => opt.value)).toEqual([
+      "gpt-6-luna",
       "gpt-5.6-luna",
       "gpt-5.4-mini",
       "gpt-5.4-nano",

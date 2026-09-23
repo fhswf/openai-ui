@@ -51,7 +51,6 @@ import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { MessageMenu } from "./MessageMenu";
-import { getModelOptions, groupModelOptions } from "./utils/options";
 import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { McpAuthFields } from "./McpAuthFields";
@@ -142,58 +141,6 @@ function HeaderTitleBlock({ messages, title }: HeaderTitleBlockProps) {
       </Heading>
       <Text textStyle="xs">{t("count_messages", { count })}</Text>
     </Stack>
-  );
-}
-
-interface ModelOptionsGroupProps {
-  openai: OpenAIOptions;
-  setOptions: GlobalActions["setOptions"];
-}
-
-function ModelOptionsGroup({ openai, setOptions }: ModelOptionsGroupProps) {
-  const { t } = useTranslation();
-  const options = getModelOptions(openai);
-  const groups = groupModelOptions(options);
-
-  const setModel = (value: string) => {
-    setOptions({
-      type: OptionActionType.OPENAI,
-      data: { ...openai, model: value },
-    });
-  };
-
-  if (groups.length <= 1) {
-    return (
-      <Menu.RadioItemGroup value={openai.model} onValueChange={(event) => { setModel(event.value); }}>
-        <Menu.ItemGroupLabel>{t("model_options")}</Menu.ItemGroupLabel>
-        {options.map((item) => (
-          <Menu.RadioItem key={item.value} value={item.value}>
-            {item.label}
-            <Menu.ItemIndicator />
-          </Menu.RadioItem>
-        ))}
-      </Menu.RadioItemGroup>
-    );
-  }
-
-  return (
-    <>
-      {groups.map(([group, items]) => (
-        <Menu.RadioItemGroup
-          key={group}
-          value={openai.model}
-          onValueChange={(event) => { setModel(event.value); }}
-        >
-          <Menu.ItemGroupLabel>{group}</Menu.ItemGroupLabel>
-          {items.map((item) => (
-            <Menu.RadioItem key={item.value} value={item.value}>
-              {item.label}
-              <Menu.ItemIndicator />
-            </Menu.RadioItem>
-          ))}
-        </Menu.RadioItemGroup>
-      ))}
-    </>
   );
 }
 
@@ -805,7 +752,6 @@ function ChatOptionsMenuContent({
       </Menu.Trigger>
       <Menu.Positioner>
         <Menu.Content>
-          <ModelOptionsGroup openai={openai} setOptions={setOptions} />
           <ToolOptionsGroup
             tools={tools}
             toolsEnabled={toolsEnabled}

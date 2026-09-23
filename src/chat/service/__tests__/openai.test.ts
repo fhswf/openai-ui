@@ -87,7 +87,7 @@ describe("Incompatible endpoint error detection", () => {
 
   it("should handle error with missing message", () => {
     const isModelParameterError = (message: string | undefined) => {
-      return (
+      return Boolean(
         message?.includes("Unknown parameter") && message?.includes("'model'")
       );
     };

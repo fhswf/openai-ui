@@ -90,16 +90,6 @@ const PROVIDER_PATTERNS: readonly { group: string; pattern: RegExp }[] = [
   { group: "Google", pattern: /^(?:google|gemini)[/:-]/i },
 ];
 
-const GENERATION_RANK: Map<string, number> = new Map([
-  ["6", 0],
-  ["5.6", 1],
-  ["5.4", 2],
-  ["5",  3],
-  ["4.1",  4],
-  ["4",  5],
-  ["3.5",  6],
-]);
-
 const PROVIDER_ORDER: Map<string, number> = new Map([
   ["OpenAI",  0],
   ["Anthropic",  1],
@@ -119,40 +109,105 @@ function providerGroupOf(model: string): string {
   return fallback ? fallback[0].toUpperCase() + fallback.slice(1) : "";
 }
 
-function gptGenerationOf(model: string): string {
-  const value = model.toLowerCase();
-  const generation = /(5\.6|5\.4|5|4\.1|4|3\.5)/.exec(value)?.[1];
-  return generation && GENERATION_RANK.has(generation) ? generation : "";
+function gptVersionOf(model: string): number[] | undefined {
+  const version = /gpt-(\d+(?:\.\d+)*)/i.exec(model)?.[1];
+  return version?.split(".").map(Number);
 }
 
-function modelSortKey(model: string): string {
+export function supportsReasoningEffort(model: string): boolean {
+  const gptVersion = gptVersionOf(model);
+  return (
+    (gptVersion !== undefined && gptVersion[0] >= 5) ||
+    /^(?:openai[/:])?o[1-9]\d*(?:$|[-/:])/i.test(model)
+  );
+}
+
+interface ModelSortKey {
+  providerRank: number;
+  version?: number[];
+  variantRank: number;
+  model: string;
+}
+
+function modelSortKey(model: string): ModelSortKey {
   const provider = providerGroupOf(model);
-  const providerRank = (PROVIDER_ORDER.get(provider) ?? 99).toString().padStart(2, "0");
-  const gptGeneration = gptGenerationOf(model);
-  if (!gptGeneration) {
-    return providerRank + "::" + model;
-  }
-  const generationRank = (GENERATION_RANK.get(gptGeneration) ?? 99).toString().padStart(2, "0");
-  return providerRank + "::" + generationRank + "::" + modelTiebreakKey(model);
+  return {
+    providerRank: PROVIDER_ORDER.get(provider) ?? 99,
+    version: gptVersionOf(model),
+    variantRank: modelTiebreakKey(model),
+    model,
+  };
 }
 
-function modelTiebreakKey(model: string): string {
+function modelTiebreakKey(model: string): number {
   const value = model.toLowerCase();
-  if (value.includes("luna")) return "0";
-  if (value.includes("turbo")) return "1";
-  if (value.includes("o-mini") || value.includes("o-nano")) return "2";
-  if (value.includes("mini")) return "3";
-  if (value.includes("nano")) return "4";
-  return "5";
+  if (value.includes("luna")) return 0;
+  if (value.includes("turbo")) return 1;
+  if (value.includes("o-mini") || value.includes("o-nano")) return 2;
+  if (value.includes("mini")) return 3;
+  if (value.includes("nano")) return 4;
+  return 5;
+}
+
+function compareVersionsDescending(left: number[], right: number[]): number {
+  const componentCount = Math.max(left.length, right.length);
+  for (let index = 0; index < componentCount; index += 1) {
+    const difference = (right[index] ?? 0) - (left[index] ?? 0);
+    if (difference !== 0) {
+      return difference;
+    }
+  }
+  return 0;
+}
+
+function compareModelSortKeys(left: ModelSortKey, right: ModelSortKey): number {
+  const providerDifference = left.providerRank - right.providerRank;
+  if (providerDifference !== 0) {
+    return providerDifference;
+  }
+
+  if (left.version && right.version) {
+    const versionDifference = compareVersionsDescending(left.version, right.version);
+    if (versionDifference !== 0) {
+      return versionDifference;
+    }
+    return left.variantRank - right.variantRank;
+  }
+
+  if (left.version) return -1;
+  if (right.version) return 1;
+  return left.model.localeCompare(right.model);
+}
+
+export function getNewerModelIds(
+  options: ModelOption[],
+  activeModel: string,
+): Set<string> {
+  const activeVersion = gptVersionOf(activeModel);
+  if (!activeVersion) {
+    return new Set();
+  }
+
+  const activeProvider = providerGroupOf(activeModel);
+  return new Set(
+    options
+      .filter((option) => {
+        const version = gptVersionOf(option.value);
+        return (
+          providerGroupOf(option.value) === activeProvider &&
+          version !== undefined &&
+          compareVersionsDescending(activeVersion, version) > 0
+        );
+      })
+      .map((option) => option.value),
+  );
 }
 
 function groupModelsByIds(ids: string[]): ModelOption[] {
   const sorted = [...ids];
-  sorted.sort((left, right) => {
-    const leftKey = modelSortKey(left);
-    const rightKey = modelSortKey(right);
-    return leftKey.localeCompare(rightKey);
-  });
+  sorted.sort((left, right) =>
+    compareModelSortKeys(modelSortKey(left), modelSortKey(right)),
+  );
   return sorted.map((entry) => ({ label: entry, value: entry }));
 }
 

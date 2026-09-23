@@ -60,6 +60,13 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           send_help: "Select a button for sending messages.",
           fontsize_help: "Select the font size of the user interface.",
           openai_model_help: "Select a model for AI support.",
+          newer_model_available: "A newer model is available.",
+          reasoning_effort: "Reasoning",
+          reasoning_effort_current: "Reasoning effort: {{effort}}",
+          reasoning_effort_low: "Low",
+          reasoning_effort_medium: "Medium",
+          reasoning_effort_high: "High",
+
           custom_endpoint_desc:
             "If you don't want to use our proxy server, you can configure a different endpoint, e.g. api.openai.com",
           chat_settings: "Chat Settings",
@@ -271,6 +278,13 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Wählen Sie die Schriftgröße der Benutzeroberfläche aus.",
           openai_model_help:
             "Wählen Sie ein Modell für die KI-Unterstützung aus.",
+          newer_model_available: "Ein neueres Modell ist verfügbar.",
+          reasoning_effort: "Reasoning-Aufwand",
+          reasoning_effort_current: "Reasoning-Aufwand: {{effort}}",
+          reasoning_effort_low: "Niedrig",
+          reasoning_effort_medium: "Mittel",
+          reasoning_effort_high: "Hoch",
+
           custom_endpoint_desc:
             "Wenn Sie unseren Proxy-Server nicht verwenden möchten, können Sie einen anderen Endpunkt konfigurieren, z.B. api.openai.com",
           about: "Infos",

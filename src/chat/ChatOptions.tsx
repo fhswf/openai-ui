@@ -7,8 +7,6 @@ import {
   themeOptions,
   languageOptions,
   sendCommandOptions,
-  getModelOptions,
-  groupModelOptions,
 } from "./utils/options";
 import {
   Button,
@@ -18,11 +16,10 @@ import {
   Heading,
   Input,
   Stack,
+  Select,
   createListCollection,
 } from "@chakra-ui/react";
 
-import { Select } from "@chakra-ui/react";
-import { SelectItemGroup } from "../components/ui/select";
 import { FileUpload } from "@chakra-ui/react";
 import { Slider } from "@chakra-ui/react";
 
@@ -40,8 +37,6 @@ export function ChatOptions() {
   const { openai, general } = options;
   const { setGeneral, setModel } = useOptions();
   const { setState, setIs, is } = useGlobal();
-  const availableModelOptions = getModelOptions(openai);
-
   const tempMarks = [...new Array(11).keys()].map((i) => ({
     value: 0.2 * i,
     label: (0.2 * i).toFixed(1),
@@ -242,44 +237,6 @@ export function ChatOptions() {
           <Heading size="md" paddingBlockStart="2em">
             {t("Global OpenAI Config")}
           </Heading>
-
-          <Field.Root mt="4">
-            <Select.Root
-              collection={createListCollection({ items: availableModelOptions })}
-              maxWidth="30em"
-              onValueChange={(val) => setModel({ model: val.value[0] })}
-              data-testid="ChangeAIModelSelect"
-            >
-              <Select.Label>{t("openai_model_help")}</Select.Label>
-              <Select.Trigger>
-                <Select.ValueText placeholder={openai.model} />
-              </Select.Trigger>
-              <Select.Content>
-                {(() => {
-                  const groups = groupModelOptions(availableModelOptions);
-                  if (groups.length === 0) {
-                    return availableModelOptions.map((model) => (
-                      <Select.Item item={model} key={model.value}>
-                        {model.label}
-                        <Select.ItemIndicator />
-                      </Select.Item>
-                    ));
-                  }
-                  return groups.map(([group, items]) => (
-                    <SelectItemGroup key={group} label={group}>
-                      {items.map((model) => (
-                        <Select.Item item={model} key={model.value}>
-                          {model.label}
-                          <Select.ItemIndicator />
-                        </Select.Item>
-                      ))}
-                    </SelectItemGroup>
-                  ));
-                })()}
-              </Select.Content>
-            </Select.Root>
-            <Field.HelperText>{t("openai_model_help")}</Field.HelperText>
-          </Field.Root>
 
           <Field.Root mt="4">
             <Slider.Root

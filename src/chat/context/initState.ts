@@ -56,6 +56,7 @@ export const initState: GlobalState = {
       temperature: 1,
       mode: "chat",
       model: defaultOpenAIModel,
+      reasoningEffort: "medium",
       apiKey: "unused",
       max_tokens: 2048,
       n: 1,
