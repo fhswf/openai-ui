@@ -5,6 +5,14 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.47.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.47.0...openai-ui-v0.47.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* Update GENERATION_RANK mapping for version numbers ([de3d13e](https://github.com/fhswf/openai-ui/commit/de3d13e0286cf8ad227e8d391642747fe49559f5))
+* Update GENERATION_RANK mapping for version numbers ([3ed3aba](https://github.com/fhswf/openai-ui/commit/3ed3abad0a58c3133b3e0edace239cd2d955b119))
+
 ## [0.47.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.46.1...openai-ui-v0.47.0) (2026-09-23)
 
 
