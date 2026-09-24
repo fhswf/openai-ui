@@ -63,9 +63,13 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           newer_model_available: "A newer model is available.",
           reasoning_effort: "Reasoning",
           reasoning_effort_current: "Reasoning effort: {{effort}}",
+          reasoning_effort_none: "None",
+          reasoning_effort_minimal: "Minimal",
           reasoning_effort_low: "Low",
           reasoning_effort_medium: "Medium",
           reasoning_effort_high: "High",
+          reasoning_effort_xhigh: "Extra high",
+          reasoning_effort_max: "Maximum",
 
           custom_endpoint_desc:
             "If you don't want to use our proxy server, you can configure a different endpoint, e.g. api.openai.com",
@@ -281,9 +285,13 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           newer_model_available: "Ein neueres Modell ist verfügbar.",
           reasoning_effort: "Reasoning-Aufwand",
           reasoning_effort_current: "Reasoning-Aufwand: {{effort}}",
+          reasoning_effort_none: "Keine",
+          reasoning_effort_minimal: "Minimal",
           reasoning_effort_low: "Niedrig",
           reasoning_effort_medium: "Mittel",
           reasoning_effort_high: "Hoch",
+          reasoning_effort_xhigh: "Extra hoch",
+          reasoning_effort_max: "Maximum",
 
           custom_endpoint_desc:
             "Wenn Sie unseren Proxy-Server nicht verwenden möchten, können Sie einen anderen Endpunkt konfigurieren, z.B. api.openai.com",
