@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { LuChevronDown } from "react-icons/lu";
-import type { OpenAIOptions, ReasoningEffort } from "./context/types";
+import type { OpenAIOptions } from "./context/types";
 import {
   getModelOptions,
   getNewerModelIds,
@@ -19,15 +19,23 @@ import type { ModelOption } from "./utils/options";
 
 interface ModelSelectorProps {
   openai: OpenAIOptions;
-  effort: ReasoningEffort;
+  effort: OpenAIOptions["reasoningEffort"];
   // Callback argument labels document the public signature; they are type-only.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   onModelChange: (_model: string) => void;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  onEffortChange: (_effort: ReasoningEffort) => void;
+  onEffortChange: (_effort: OpenAIOptions["reasoningEffort"]) => void;
 }
 
-const reasoningEfforts: ReasoningEffort[] = ["low", "medium", "high"];
+const reasoningEfforts: OpenAIOptions["reasoningEffort"][] = [
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+];
 
 export function ModelSelector({
   openai,
@@ -67,7 +75,7 @@ export function ModelSelector({
             min={0}
             max={reasoningEfforts.length - 1}
             step={1}
-            value={[effortIndex >= 0 ? effortIndex : 1]}
+            value={[effortIndex >= 0 ? effortIndex : 3]}
             onValueChange={(event) => {
               const nextEffort = reasoningEfforts[event.value[0]];
               onEffortChange(nextEffort);
@@ -122,7 +130,7 @@ export function ModelSelector({
         </Button>
       </Menu.Trigger>
       <Menu.Positioner>
-        <Menu.Content minW="18rem">
+        <Menu.Content minW={{ base: "calc(100vw - 2rem)", sm: "24rem" }}>
           {groups.length <= 1 ? (
             <Menu.RadioItemGroup
               value={openai.model}
