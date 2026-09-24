@@ -5,6 +5,14 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.48.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.48.0...openai-ui-v0.48.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* update reasoning effort types and improve i18n support ([8d66c44](https://github.com/fhswf/openai-ui/commit/8d66c44a0fecd77434dba098d8fc05281e273e56))
+* update reasoning effort types and improve i18n support ([8a1946e](https://github.com/fhswf/openai-ui/commit/8a1946e69093f6f52b8c033ae6b42774ebda64bf))
+
 ## [0.48.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.47.1...openai-ui-v0.48.0) (2026-09-23)
 
 
