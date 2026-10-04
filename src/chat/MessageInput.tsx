@@ -30,7 +30,14 @@ import { toaster } from "../components/ui/toaster";
 import classNames from "classnames";
 import { FilePreview, OPFSImage } from "./component";
 import { ModelSelector } from "./ModelSelector";
-import { isImageFile, isPdfFile, isSupportedFile, PDF_MIME_TYPE } from "./utils/attachments";
+import {
+  ensureFileName,
+  extractFiles,
+  isImageFile,
+  isPdfFile,
+  isSupportedFile,
+  PDF_MIME_TYPE,
+} from "./utils/attachments";
 
 const ACCEPTED_FILE_TYPES = "image/*,application/pdf";
 
@@ -150,11 +157,12 @@ export function MessageInput() {
     if (!newMessage.files) {
       newMessage.files = [];
     }
-    files.forEach(async (file) => {
+    files.forEach(async (file, index) => {
+      const name = ensureFileName(file, index);
       if (isImageFile(file)) {
         try {
           const opfs = await navigator.storage.getDirectory();
-          const fileHandle = await opfs.getFileHandle(file.name, {
+          const fileHandle = await opfs.getFileHandle(name, {
             create: true,
           });
           const writable = await fileHandle.createWritable();
@@ -171,8 +179,8 @@ export function MessageInput() {
           });
         }
         newMessage.images.push({
-          name: file.name,
-          url: `opfs://${file.name}`,
+          name,
+          url: `opfs://${name}`,
           size: file.size,
           lastModified: file.lastModified,
           type: file.type,
@@ -184,7 +192,7 @@ export function MessageInput() {
           // PDFs are stored locally in OPFS and sent inline per request as
           // base64 encoded `input_file` data, not via the files API.
           const opfs = await navigator.storage.getDirectory();
-          const fileHandle = await opfs.getFileHandle(file.name, {
+          const fileHandle = await opfs.getFileHandle(name, {
             create: true,
           });
           const writable = await fileHandle.createWritable();
@@ -192,8 +200,8 @@ export function MessageInput() {
           await writable.write(buffer);
           await writable.close();
           newMessage.files.push({
-            name: file.name,
-            url: `opfs://${file.name}`,
+            name,
+            url: `opfs://${name}`,
             size: file.size,
             lastModified: file.lastModified,
             type: PDF_MIME_TYPE,
@@ -260,9 +268,19 @@ export function MessageInput() {
       handleLinkDrop(url);
     } else {
       // Handle file drop (images are stored in OPFS, PDFs are read inline)
-      const files = Array.from(event.dataTransfer.files);
-      handleFileDrop(files);
+      handleFileDrop(extractFiles(event.dataTransfer));
     }
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLElement>) => {
+    const files = extractFiles(event.clipboardData);
+    if (files.length === 0) {
+      return;
+    }
+    // Let the text (if any) be pasted normally, but stop the browser from
+    // also inserting a duplicate copy of the pasted image.
+    event.preventDefault();
+    handleFileDrop(files);
   };
 
   const dragHandler = (event: React.DragEvent<HTMLElement>) => {
@@ -360,6 +378,7 @@ export function MessageInput() {
             onBlur={() => setIs({ inputing: false })}
             value={typeingMessage?.content || ""}
             placeholder={t("Please enter Python code.")}
+            onPaste={handlePaste}
             onChange={(ev) => setMessage(ev.target.value)}
             style={{
               backgroundColor: "var(--chakra-colors-bg)",
@@ -382,6 +401,7 @@ export function MessageInput() {
             className={styles.textarea}
             onDragOver={dragHandler}
             onDragEnter={dragHandler}
+            onPaste={handlePaste}
             onChange={(ev: BaseSyntheticEvent) => {
               setMessage(ev.target.value);
             }}
