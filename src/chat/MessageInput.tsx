@@ -31,6 +31,7 @@ import classNames from "classnames";
 import { FilePreview, OPFSImage } from "./component";
 import { ModelSelector } from "./ModelSelector";
 import {
+  ACCEPTED_FILE_TYPES,
   ensureFileName,
   extractFiles,
   isImageFile,
@@ -40,12 +41,22 @@ import {
 } from "./utils/attachments";
 import type { Attachment } from "./utils/attachments";
 
-const ACCEPTED_FILE_TYPES = "image/*,application/pdf";
 
-function useDebounce(cb, delay) {
-  const timeoutId = useRef(null);
+interface DebounceCallback<TArgs extends unknown[]> {
+  (...args: TArgs): void;
+}
 
-  return function (...args) {
+interface DebouncedFunction<TArgs extends unknown[]> {
+  (...args: TArgs): void;
+}
+
+function useDebounce<TArgs extends unknown[]>(
+  cb: DebounceCallback<TArgs>,
+  delay: number,
+): DebouncedFunction<TArgs> {
+  const timeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  return function (...args: TArgs): void {
     if (timeoutId.current) {
       // This check is not strictly necessary
       clearTimeout(timeoutId.current);
@@ -275,7 +286,7 @@ export function MessageInput() {
     const isFile =
       event.dataTransfer.types.includes("Files") &&
       Array.from(event.dataTransfer.items).some((item) =>
-        isSupportedFile({ type: item.type })
+        isSupportedFile(item.getAsFile() ?? { type: item.type })
       );
 
     switch (event.type) {
