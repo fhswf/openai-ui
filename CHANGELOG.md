@@ -5,6 +5,21 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.50.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.49.0...openai-ui-v0.50.0) (2026-10-05)
+
+
+### Features
+
+* implement draft persistence for chat messages and refactor debounce logic ([6a517eb](https://github.com/fhswf/openai-ui/commit/6a517eb5c2aaa90caca94e395cab4aacd134375e))
+* support document and spreadsheet uploads ([54be780](https://github.com/fhswf/openai-ui/commit/54be78083bd45ac0e712074db82d83cdb22aa725))
+* support document and spreadsheet uploads ([ba03aba](https://github.com/fhswf/openai-ui/commit/ba03aba9f5376a92615e0ec23f2f4c30cfba7295))
+* support document and spreadsheet uploads ([e85fdfb](https://github.com/fhswf/openai-ui/commit/e85fdfb183b57771ce3abe77a0fc7c3c782f25e0))
+
+
+### Bug Fixes
+
+* refactor MIME type handling to use Map for better performance and security ([ca151cc](https://github.com/fhswf/openai-ui/commit/ca151ccdae35e50694c686ece7583ab2cde18070))
+
 ## [0.49.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.48.1...openai-ui-v0.49.0) (2026-10-05)
 
 
