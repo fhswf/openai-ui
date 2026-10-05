@@ -17,7 +17,7 @@ vi.mock("../../service/openai", () => ({
 vi.mock("../../utils/settings", () => ({
   CHAT_HISTORY_KEY: "CHAT_HISTORY",
   SESSION_KEY: "SESSIONS",
-  loadState: vi.fn(async () => ({})),
+  loadState: vi.fn(() => Promise.resolve({})),
   reviver: (_key: string, value: unknown) => value,
   saveState: vi.fn(),
 }));
@@ -32,14 +32,14 @@ describe("ChatProvider draft persistence", () => {
     return null;
   }
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.useFakeTimers();
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     localStorage.clear();
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
-    await act(async () => {
+    act(() => {
       root.render(
         <ChatProvider>
           <Probe />
@@ -50,23 +50,35 @@ describe("ChatProvider draft persistence", () => {
   });
 
   afterEach(() => {
-    act(() => root.unmount());
+    act(() => {
+      root.unmount();
+    });
     container.remove();
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
   it("keeps the draft current but saves once after typing stops", () => {
-    act(() => latest.setMessage("h"));
+    act(() => {
+      latest.setMessage("h");
+    });
     expect(latest.typeingMessage.content).toBe("h");
     expect(saveState).not.toHaveBeenCalled();
 
-    act(() => vi.advanceTimersByTime(200));
-    act(() => latest.setMessage("hello"));
-    act(() => vi.advanceTimersByTime(299));
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    act(() => {
+      latest.setMessage("hello");
+    });
+    act(() => {
+      vi.advanceTimersByTime(299);
+    });
     expect(saveState).not.toHaveBeenCalled();
 
-    act(() => vi.advanceTimersByTime(1));
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
     expect(saveState).toHaveBeenCalledTimes(1);
     expect(vi.mocked(saveState).mock.lastCall?.[0].typeingMessage.content).toBe(
       "hello"
@@ -74,12 +86,18 @@ describe("ChatProvider draft persistence", () => {
   });
 
   it("saves other state changes immediately and cancels a pending draft save", () => {
-    act(() => latest.setMessage("hello"));
-    act(() => latest.clearTypeing());
+    act(() => {
+      latest.setMessage("hello");
+    });
+    act(() => {
+      latest.clearTypeing();
+    });
 
     expect(saveState).toHaveBeenCalledTimes(1);
     expect(vi.mocked(saveState).mock.lastCall?.[0].typeingMessage).toEqual({});
-    act(() => vi.advanceTimersByTime(300));
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(saveState).toHaveBeenCalledTimes(1);
   });
 
@@ -94,14 +112,20 @@ describe("ChatProvider draft persistence", () => {
   });
 
   it("flushes a pending draft save when the page closes", () => {
-    act(() => latest.setMessage("unfinished"));
-    act(() => window.dispatchEvent(new Event("pagehide")));
+    act(() => {
+      latest.setMessage("unfinished");
+    });
+    act(() => {
+      window.dispatchEvent(new Event("pagehide"));
+    });
 
     expect(saveState).toHaveBeenCalledTimes(1);
     expect(vi.mocked(saveState).mock.lastCall?.[0].typeingMessage.content).toBe(
       "unfinished"
     );
-    act(() => vi.advanceTimersByTime(300));
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(saveState).toHaveBeenCalledTimes(1);
   });
 });

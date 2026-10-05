@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 /** Debounce a callback, with explicit controls for pending work. */
 export function useDebounce<TArgs extends unknown[]>(
-  callback: (...args: TArgs) => void,
+  callback: (..._args: TArgs) => void,
   delay: number,
   flushOnUnmount = false
 ) {

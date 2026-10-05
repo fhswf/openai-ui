@@ -74,7 +74,9 @@ export const ChatProvider = ({ children }) => {
   }, []);
   const actionList = action(state, dispatch);
   const debouncedSave = useDebounce(
-    (stateToSave: GlobalState) => saveState({ ...stateToSave }),
+    (stateToSave: GlobalState) => {
+      saveState({ ...stateToSave });
+    },
     DRAFT_PERSIST_DELAY_MS,
     true
   );
@@ -100,7 +102,7 @@ export const ChatProvider = ({ children }) => {
         });
       }
     };
-    fetchState();
+    void fetchState();
   }, []);
 
   // get user
@@ -136,7 +138,9 @@ export const ChatProvider = ({ children }) => {
 
   useEffect(() => {
     window.addEventListener("pagehide", debouncedSave.flush);
-    return () => window.removeEventListener("pagehide", debouncedSave.flush);
+    return () => {
+      window.removeEventListener("pagehide", debouncedSave.flush);
+    };
   }, [debouncedSave.flush]);
 
   return (

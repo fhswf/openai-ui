@@ -1,10 +1,4 @@
-import React, {
-  BaseSyntheticEvent,
-  SyntheticEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { BaseSyntheticEvent, useEffect, useRef, useState } from "react";
 import { v7 as uuidv7 } from "uuid";
 import { useTranslation } from "react-i18next";
 import { useOptions, useSendKey } from "./hooks";
@@ -17,8 +11,6 @@ import {
   Kbd,
   Progress,
   Stack,
-  StepsStatus,
-  Text,
   Textarea,
 } from "@chakra-ui/react";
 import { Switch } from "../components/ui/switch";
@@ -32,7 +24,6 @@ import { FilePreview, OPFSImage } from "./component";
 import { ModelSelector } from "./ModelSelector";
 import {
   ACCEPTED_FILE_TYPES,
-  getInputFileMimeType,
   ensureFileName,
   extractFiles,
   isImageFile,
@@ -348,12 +339,18 @@ export function MessageInput() {
           <CodeEditor
             language="Python"
             minHeight="6lh"
-            onFocus={() => setIs({ inputing: true })}
-            onBlur={() => setIs({ inputing: false })}
+            onFocus={() => {
+              setIs({ inputing: true });
+            }}
+            onBlur={() => {
+              setIs({ inputing: false });
+            }}
             value={typeingMessage?.content || ""}
             placeholder={t("Please enter Python code.")}
             onPaste={handlePaste}
-            onChange={(ev) => setMessage(ev.target.value)}
+            onChange={(ev) => {
+              setMessage(ev.target.value);
+            }}
             style={{
               backgroundColor: "var(--chakra-colors-bg)",
               fontFamily:
@@ -365,8 +362,12 @@ export function MessageInput() {
           <Textarea
             data-testid="ChatTextArea"
             value={typeingMessage?.content || ""}
-            onFocus={() => setIs({ inputing: true })}
-            onBlur={() => setIs({ inputing: false })}
+            onFocus={() => {
+              setIs({ inputing: true });
+            }}
+            onBlur={() => {
+              setIs({ inputing: false });
+            }}
             variant="outline"
             autoresize
             borderWidth={0}
@@ -399,7 +400,9 @@ export function MessageInput() {
                     right={0}
                     colorPalette="red"
                     variant="solid"
-                    onClick={() => handleDeleteImage(index)}
+                    onClick={() => {
+                      handleDeleteImage(index);
+                    }}
                     style={{ transform: "translate(50%, -50%)" }}
                     rounded="full"
                   >
@@ -455,14 +458,18 @@ export function MessageInput() {
             className={styles.editorToggle}
             marginInlineEnd="auto"
             checked={options.general.codeEditor}
-            onCheckedChange={(ev) => setGeneral({ codeEditor: ev.checked })}
+            onCheckedChange={(ev) => {
+              setGeneral({ codeEditor: ev.checked });
+            }}
           >
             {t("Code Editor")}
           </Switch>
           <IconButton
             variant="outline"
             aria-label={t("upload_file") || "Upload file"}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              fileInputRef.current?.click();
+            }}
             data-testid="UploadFileBtn"
           >
             <MdOutlineFileUpload />
@@ -508,7 +515,7 @@ export function MessageInput() {
             type="submit"
             disabled={is.thinking || !typeingMessage?.content}
             onClick={() => {
-              sendMessage();
+              void sendMessage();
             }}
             data-testid="SendMessageBtn"
           >
