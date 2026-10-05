@@ -104,6 +104,13 @@ describe("isSpreadsheetFile / getInputFileMimeType", () => {
     expect(getInputFileMimeType("unknown.bin")).toBe(
       "application/octet-stream"
     );
+    expect(getInputFileMimeType("data.csv")).toBe("text/csv");
+    expect(getInputFileMimeType("data.tsv")).toBe(
+      "text/tab-separated-values"
+    );
+    expect(getInputFileMimeType("unknown.bin")).toBe(
+      "application/octet-stream"
+    );
   });
 });
 

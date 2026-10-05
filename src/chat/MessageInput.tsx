@@ -32,6 +32,7 @@ import { FilePreview, OPFSImage } from "./component";
 import { ModelSelector } from "./ModelSelector";
 import {
   ACCEPTED_FILE_TYPES,
+  getInputFileMimeType, 
   ensureFileName,
   extractFiles,
   isImageFile,
