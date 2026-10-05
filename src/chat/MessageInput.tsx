@@ -30,9 +30,13 @@ import { toaster } from "../components/ui/toaster";
 import classNames from "classnames";
 import { FilePreview, OPFSImage } from "./component";
 import { ModelSelector } from "./ModelSelector";
-import { isImageFile, isPdfFile, isSupportedFile, PDF_MIME_TYPE } from "./utils/attachments";
-
-const ACCEPTED_FILE_TYPES = "image/*,application/pdf";
+import {
+  ACCEPTED_FILE_TYPES,
+  getInputFileMimeType,
+  isImageFile,
+  isInputFile,
+  isSupportedFile,
+} from "./utils/attachments";
 
 
 
@@ -179,10 +183,10 @@ export function MessageInput() {
           id: uuidv7(),
         });
         setState({ typeingMessage: newMessage });
-      } else if (isPdfFile(file)) {
+      } else if (isInputFile(file)) {
         try {
-          // PDFs are stored locally in OPFS and sent inline per request as
-          // base64 encoded `input_file` data, not via the files API.
+          // Input files are stored locally in OPFS and sent inline per request
+          // as base64 `input_file` data, not via the files API.
           const opfs = await navigator.storage.getDirectory();
           const fileHandle = await opfs.getFileHandle(file.name, {
             create: true,
@@ -196,12 +200,12 @@ export function MessageInput() {
             url: `opfs://${file.name}`,
             size: file.size,
             lastModified: file.lastModified,
-            type: PDF_MIME_TYPE,
+            type: getInputFileMimeType(file.name),
             id: uuidv7(),
           });
           setState({ typeingMessage: newMessage });
         } catch (error) {
-          console.error("Error writing PDF file to OPFS: %o", error);
+          console.error("Error writing input file to OPFS: %o", error);
           toaster.create({
             title: t("error_occurred"),
             description: error instanceof Error ? error.message : String(error),
@@ -259,7 +263,7 @@ export function MessageInput() {
       const url = event.dataTransfer.getData("text/uri-list");
       handleLinkDrop(url);
     } else {
-      // Handle file drop (images are stored in OPFS, PDFs are read inline)
+      // Handle file drop; supported images and input files are stored locally.
       const files = Array.from(event.dataTransfer.files);
       handleFileDrop(files);
     }
@@ -271,7 +275,7 @@ export function MessageInput() {
     const isFile =
       event.dataTransfer.types.includes("Files") &&
       Array.from(event.dataTransfer.items).some((item) =>
-        isSupportedFile({ type: item.type })
+        isSupportedFile(item.getAsFile() ?? { type: item.type })
       );
 
     switch (event.type) {

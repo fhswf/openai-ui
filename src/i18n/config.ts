@@ -241,7 +241,7 @@ You can find the full privacy notice in the app's info menu (?).
           users_axis_label: "Users",
           not_supported_file: "Unsupported file",
           not_supported_file_description:
-            "You can only upload images and PDF files.",
+            "Upload images, PDFs, documents, spreadsheets, and supported text or code files.",
           upload_file: "Upload file",
           upload_file_desc: "Upload file",
         },
@@ -447,7 +447,7 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           not_image_description: "Sie können nur Bilder hochladen.",
           not_supported_file: "Nicht unterstützte Datei",
           not_supported_file_description:
-            "Sie können nur Bilder und PDF-Dateien hochladen.",
+            "Unterstützt werden Bilder, PDFs, Dokumente, Tabellen sowie unterstützte Text- und Codedateien.",
 
           total_requests: "Gesamtzahl der Aufrufe (fh-swf.de) über die Monate",
           total_requests_title: "Gesamtzahl der Aufrufe",

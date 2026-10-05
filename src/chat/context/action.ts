@@ -13,7 +13,7 @@ import {
 import React from "react";
 import { createResponse } from "../service/openai";
 import { isRetryableMessage } from "../utils/loginRetry";
-import { buildInputFile } from "../utils/attachments";
+import { buildInputFile, getInputFileMimeType } from "../utils/attachments";
 import { v7 as uuidv7 } from "uuid";
 
 
@@ -47,7 +47,7 @@ async function processImages(images: any[], opfs: FileSystemDirectoryHandle | nu
 function processFiles(files: MessageAttachment[]) {
   console.log("transform files: %o", files);
   // Files stay in OPFS and are referenced by name only. The request builder
-  // resolves each `input_file` to base64 `file_data` per request, so PDFs are
+  // resolves each `input_file` to base64 `file_data` per request, so files are
   // never uploaded through the files API.
   return files
     .filter((file) => Boolean(file.name))
@@ -353,12 +353,12 @@ export default function action(
               id: uuidv7(),
             });
           } else if (item.type === "input_file") {
-            const name = item.filename || "document.pdf";
+            const name = item.filename || "document";
             files.push({
               name,
               url: `opfs://${name}`,
               size: 0,
-              type: "application/pdf",
+              type: getInputFileMimeType(name),
               lastModified: Date.now(),
               id: uuidv7(),
             });
