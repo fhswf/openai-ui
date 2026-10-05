@@ -216,7 +216,7 @@ export function MessageInput() {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (event.target.files) {
-      handleFileDrop(Array.from(event.target.files));
+      void handleFileDrop(Array.from(event.target.files));
     }
     // Reset the input value so the same file can be selected again
     event.target.value = "";
@@ -254,7 +254,7 @@ export function MessageInput() {
       handleLinkDrop(url);
     } else {
       // Handle file drop (images are stored in OPFS, PDFs are read inline)
-      handleFileDrop(extractFiles(event.dataTransfer));
+      void handleFileDrop(extractFiles(event.dataTransfer));
     }
   };
 
@@ -266,7 +266,7 @@ export function MessageInput() {
     // Let the text (if any) be pasted normally, but stop the browser from
     // also inserting a duplicate copy of the pasted image.
     event.preventDefault();
-    handleFileDrop(files);
+    void handleFileDrop(files);
   };
 
   const dragHandler = (event: React.DragEvent<HTMLElement>) => {
