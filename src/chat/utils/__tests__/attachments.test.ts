@@ -4,6 +4,8 @@ import {
   isPdfFile,
   isImageFile,
   isSupportedFile,
+  ensureFileName,
+  extractFiles,
   fileToDataUrl,
   buildInputFile,
 } from "../attachments";
@@ -42,6 +44,77 @@ describe("isImageFile / isSupportedFile", () => {
     expect(isSupportedFile({ name: "notes.txt", type: "text/plain" })).toBe(
       false
     );
+  });
+});
+
+describe("ensureFileName", () => {
+  it("keeps the original name when present", () => {
+    expect(ensureFileName({ name: "screenshot.png", type: "image/png" })).toBe(
+      "screenshot.png"
+    );
+  });
+
+  it("generates a name for pasted files without one", () => {
+    expect(ensureFileName({ name: "", type: "image/png" }, 0, 123)).toBe(
+      "pasted-image-123.png"
+    );
+    expect(ensureFileName({ type: "image/jpeg" }, 0, 123)).toBe(
+      "pasted-image-123.jpg"
+    );
+  });
+
+  it("disambiguates multiple pasted files with the same timestamp", () => {
+    expect(ensureFileName({ type: "image/png" }, 1, 123)).toBe(
+      "pasted-image-123-1.png"
+    );
+  });
+
+  it("falls back to the mime subtype and then png", () => {
+    expect(ensureFileName({ type: "image/tiff" }, 0, 1)).toBe(
+      "pasted-image-1.tiff"
+    );
+    expect(ensureFileName(undefined, 0, 1)).toBe("pasted-image-1.png");
+  });
+
+  it("sanitizes unsafe mime subtypes", () => {
+    expect(ensureFileName({ type: "image/png;charset=utf-8" }, 0, 1)).toBe(
+      "pasted-image-1.png"
+    );
+    expect(ensureFileName({ type: "image/../../etc/passwd" }, 0, 1)).toBe(
+      "pasted-image-1.png"
+    );
+  });
+});
+
+describe("extractFiles", () => {
+  it("returns the files from the data transfer", () => {
+    const file = new File(["x"], "photo.png", { type: "image/png" });
+    const dataTransfer = {
+      files: [file],
+      items: [],
+    } as unknown as DataTransfer;
+
+    expect(extractFiles(dataTransfer)).toEqual([file]);
+  });
+
+  it("falls back to clipboard items when files are empty", () => {
+    const file = new File(["x"], "pasted.png", { type: "image/png" });
+    const dataTransfer = {
+      files: [],
+      items: [
+        { kind: "file", type: "image/png", getAsFile: () => file },
+        { kind: "string", type: "text/plain", getAsFile: () => null },
+      ],
+    } as unknown as DataTransfer;
+
+    expect(extractFiles(dataTransfer)).toEqual([file]);
+  });
+
+  it("returns an empty list when there is nothing to extract", () => {
+    expect(extractFiles(null)).toEqual([]);
+    expect(
+      extractFiles({ files: [], items: [] } as unknown as DataTransfer)
+    ).toEqual([]);
   });
 });
 

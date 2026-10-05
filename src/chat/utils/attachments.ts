@@ -39,6 +39,67 @@ export function isSupportedFile(
   return isImageFile(file) || isPdfFile(file);
 }
 
+const EXTENSION_BY_MIME_TYPE = new Map<string, string>([
+  ["image/png", "png"],
+  ["image/jpeg", "jpg"],
+  ["image/gif", "gif"],
+  ["image/webp", "webp"],
+  ["image/bmp", "bmp"],
+  ["image/svg+xml", "svg"],
+]);
+
+/** Returns a simple, safe extension, or `undefined` when none can be derived. */
+function sanitizeExtension(value: string | undefined): string | undefined {
+  if (!value || !/^[a-z0-9]+$/i.test(value)) {
+    return undefined;
+  }
+  return value.toLowerCase();
+}
+
+/**
+ * Returns a usable filename for a file. Screenshots pasted from the clipboard
+ * often arrive with an empty name, so fall back to a generated one derived from
+ * the MIME type. `index` keeps multiple pasted files from colliding and `now`
+ * is injectable to keep the result deterministic in tests.
+ */
+export function ensureFileName(
+  file: AttachmentLike | null | undefined,
+  index = 0,
+  now = Date.now()
+): string {
+  if (file?.name && file.name.trim().length > 0) {
+    return file.name;
+  }
+  const type = file?.type ?? "";
+  const extension =
+    EXTENSION_BY_MIME_TYPE.get(type) ??
+    sanitizeExtension(type.split("/")[1]) ??
+    "png";
+  const suffix = index > 0 ? `-${index}` : "";
+  return `pasted-image-${now}${suffix}.${extension}`;
+}
+
+/**
+ * Collects files from a paste or drop `DataTransfer`. Some browsers expose
+ * pasted clipboard images only through `items`, so fall back to that when the
+ * `files` list is empty.
+ */
+export function extractFiles(
+  dataTransfer: DataTransfer | null | undefined
+): File[] {
+  if (!dataTransfer) {
+    return [];
+  }
+  const files = Array.from(dataTransfer.files);
+  if (files.length > 0) {
+    return files;
+  }
+  return Array.from(dataTransfer.items)
+    .filter((item) => item.kind === "file")
+    .map((item) => item.getAsFile())
+    .filter((file): file is File => file !== null);
+}
+
 export function fileToDataUrl(file: Blob): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
