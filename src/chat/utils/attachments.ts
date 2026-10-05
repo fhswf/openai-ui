@@ -1,5 +1,82 @@
 export const PDF_MIME_TYPE = "application/pdf";
 
+export const INPUT_FILE_EXTENSIONS = [
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".pptx",
+  ".txt",
+  ".md",
+  ".html",
+  ".json",
+  ".xml",
+  ".yaml",
+  ".yml",
+  ".c",
+  ".cpp",
+  ".cs",
+  ".css",
+  ".go",
+  ".java",
+  ".js",
+  ".php",
+  ".py",
+  ".rb",
+  ".sh",
+  ".tex",
+  ".ts",
+  ".xlsx",
+  ".xls",
+  ".csv",
+  ".tsv",
+  ".iif",
+] as const;
+
+export const ACCEPTED_FILE_TYPES = ["image/*", ...INPUT_FILE_EXTENSIONS].join(
+  ","
+);
+
+const MIME_TYPE_BY_EXTENSION = new Map<string, string>([
+  [".pdf", PDF_MIME_TYPE],
+  [".doc", "application/msword"],
+  [
+    ".docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ],
+  [
+    ".pptx",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ],
+  [".txt", "text/plain"],
+  [".md", "text/markdown"],
+  [".html", "text/html"],
+  [".json", "application/json"],
+  [".xml", "application/xml"],
+  [".yaml", "text/yaml"],
+  [".yml", "text/yaml"],
+  [".c", "text/plain"],
+  [".cpp", "text/plain"],
+  [".cs", "text/plain"],
+  [".css", "text/css"],
+  [".go", "text/plain"],
+  [".java", "text/plain"],
+  [".js", "text/javascript"],
+  [".php", "text/plain"],
+  [".py", "text/x-python"],
+  [".rb", "text/plain"],
+  [".sh", "text/plain"],
+  [".tex", "text/plain"],
+  [".ts", "text/plain"],
+  [
+    ".xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ],
+  [".xls", "application/vnd.ms-excel"],
+  [".csv", "text/csv"],
+  [".tsv", "text/tab-separated-values"],
+  [".iif", "text/plain"],
+]);
+
 export interface AttachmentLike {
   name?: string;
   type?: string;
@@ -29,6 +106,32 @@ export function isPdfFile(file: AttachmentLike | null | undefined): boolean {
   );
 }
 
+export function isInputFile(file: AttachmentLike | null | undefined): boolean {
+  if (isPdfFile(file)) {
+    return true;
+  }
+  if (!file || typeof file.name !== "string") {
+    return false;
+  }
+  const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+  return (INPUT_FILE_EXTENSIONS as readonly string[]).includes(extension);
+}
+
+export function isSpreadsheetFile(
+  file: AttachmentLike | null | undefined
+): boolean {
+  if (!file || typeof file.name !== "string") {
+    return false;
+  }
+  const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+  return [".xlsx", ".xls", ".csv", ".tsv", ".iif"].includes(extension);
+}
+
+export function getInputFileMimeType(filename: string): string {
+  const extension = filename.slice(filename.lastIndexOf(".")).toLowerCase();
+  return MIME_TYPE_BY_EXTENSION.get(extension) ?? "application/octet-stream";
+}
+
 export function isImageFile(file: AttachmentLike | null | undefined): boolean {
   return Boolean(file?.type?.startsWith("image/"));
 }
@@ -36,7 +139,7 @@ export function isImageFile(file: AttachmentLike | null | undefined): boolean {
 export function isSupportedFile(
   file: AttachmentLike | null | undefined
 ): boolean {
-  return isImageFile(file) || isPdfFile(file);
+  return isImageFile(file) || isInputFile(file);
 }
 
 const EXTENSION_BY_MIME_TYPE = new Map<string, string>([
@@ -121,7 +224,11 @@ export async function readOpfsFileAsDataUrl(filename: string): Promise<string> {
   const opfs = await navigator.storage.getDirectory();
   const fileHandle = await opfs.getFileHandle(filename);
   const file = await fileHandle.getFile();
-  return fileToDataUrl(file);
+  // OPFS does not preserve the original File MIME type. Restore it from the
+  // filename so the data URL carries a useful MIME type for input_file.
+  return fileToDataUrl(
+    new Blob([file], { type: getInputFileMimeType(filename) })
+  );
 }
 
 /**
