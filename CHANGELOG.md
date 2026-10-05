@@ -5,6 +5,21 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.49.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.48.1...openai-ui-v0.49.0) (2026-10-05)
+
+
+### Features
+
+* support file upload via copy/paste ([36cfe80](https://github.com/fhswf/openai-ui/commit/36cfe8045e7195b393cf611a93964856b0d842ff))
+* support file upload via copy/paste ([58043d0](https://github.com/fhswf/openai-ui/commit/58043d0b162cf34ba4fda6d1c1421bf146c74bcb))
+
+
+### Bug Fixes
+
+* address Codacy findings for paste upload ([0421df0](https://github.com/fhswf/openai-ui/commit/0421df099f03ff1bed4615c7e6b14d574f9988e3))
+* mark fire-and-forget handleFileDrop calls as void ([a0fce91](https://github.com/fhswf/openai-ui/commit/a0fce914937bf25af8e6fb10ca1b5a581ee4de7c))
+* use nullish coalescing in extension fallback ([3aff7e3](https://github.com/fhswf/openai-ui/commit/3aff7e319611542a4f6c1ae93fc6b794905c6773))
+
 ## [0.48.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.48.0...openai-ui-v0.48.1) (2026-09-24)
 
 
