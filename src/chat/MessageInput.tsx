@@ -147,10 +147,11 @@ export function MessageInput() {
       return;
     }
     const name = ensureFileName(file, index);
-    const isPdf = !isImageFile(file) && isPdfFile(file);
+    const isImage = isImageFile(file);
+    const isPdf = !isImage && isPdfFile(file);
     try {
-      // Images and PDFs are stored locally in OPFS and sent inline per request
-      // as base64 encoded data, not via the files API.
+      // Images and input files are stored locally in OPFS and sent inline per
+      // request as base64 encoded data, not via the files API.
       await persistToOpfs(name, file);
     } catch (error) {
       console.error("Error writing file to OPFS: %o", error);
@@ -170,7 +171,7 @@ export function MessageInput() {
       type: isPdf ? PDF_MIME_TYPE : file.type,
       id: uuidv7(),
     };
-    (isPdf ? newMessage.files : newMessage.images).push(attachment);
+    (isImage ? newMessage.images : newMessage.files).push(attachment);
     setState({ typeingMessage: newMessage });
   };
 
@@ -215,25 +216,18 @@ export function MessageInput() {
     }
   };
 
-  const handleDrop = (
-    event: React.DragEvent<HTMLElement>,
-    isLink: boolean,
-    isFile: boolean
-  ) => {
+  const handleDrop = (event: React.DragEvent<HTMLElement>) => {
     event.preventDefault();
     dropRef.current?.classList.remove(styles.dragover);
 
-    if (!isLink && !isFile) {
-      console.warn("Drop event does not contain a link or file");
-      return;
-    }
-
-    if (isLink) {
+    const files = extractFiles(event.dataTransfer);
+    if (files.length > 0) {
+      void handleFileDrop(files);
+    } else if (event.dataTransfer.types.includes("text/uri-list")) {
       const url = event.dataTransfer.getData("text/uri-list");
       handleLinkDrop(url);
     } else {
-      // Handle file drop (images are stored in OPFS, PDFs are read inline)
-      void handleFileDrop(extractFiles(event.dataTransfer));
+      console.warn("Drop event does not contain a link or file");
     }
   };
 
@@ -251,11 +245,8 @@ export function MessageInput() {
   const dragHandler = (event: React.DragEvent<HTMLElement>) => {
     event.stopPropagation();
     const isLink = event.dataTransfer.types.includes("text/uri-list");
-    const isFile =
-      event.dataTransfer.types.includes("Files") &&
-      Array.from(event.dataTransfer.items).some((item) =>
-        isSupportedFile(item.getAsFile() ?? { type: item.type })
-      );
+    // The filename may be unavailable until drop; validate the files then.
+    const isFile = event.dataTransfer.types.includes("Files");
 
     switch (event.type) {
       case "dragenter":
@@ -276,7 +267,7 @@ export function MessageInput() {
         break;
 
       case "drop":
-        handleDrop(event, isLink, isFile);
+        handleDrop(event);
         break;
     }
   };
