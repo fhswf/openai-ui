@@ -32,45 +32,50 @@ export const INPUT_FILE_EXTENSIONS = [
   ".iif",
 ] as const;
 
-export const ACCEPTED_FILE_TYPES = [
-  "image/*",
-  ...INPUT_FILE_EXTENSIONS,
-].join(",");
+export const ACCEPTED_FILE_TYPES = ["image/*", ...INPUT_FILE_EXTENSIONS].join(
+  ","
+);
 
-const MIME_TYPE_BY_EXTENSION: Record<string, string> = {
-  ".pdf": PDF_MIME_TYPE,
-  ".doc": "application/msword",
-  ".docx":
+const MIME_TYPE_BY_EXTENSION = new Map<string, string>([
+  [".pdf", PDF_MIME_TYPE],
+  [".doc", "application/msword"],
+  [
+    ".docx",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ".pptx":
+  ],
+  [
+    ".pptx",
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  ".txt": "text/plain",
-  ".md": "text/markdown",
-  ".html": "text/html",
-  ".json": "application/json",
-  ".xml": "application/xml",
-  ".yaml": "text/yaml",
-  ".yml": "text/yaml",
-  ".c": "text/plain",
-  ".cpp": "text/plain",
-  ".cs": "text/plain",
-  ".css": "text/css",
-  ".go": "text/plain",
-  ".java": "text/plain",
-  ".js": "text/javascript",
-  ".php": "text/plain",
-  ".py": "text/x-python",
-  ".rb": "text/plain",
-  ".sh": "text/plain",
-  ".tex": "text/plain",
-  ".ts": "text/plain",
-  ".xlsx":
+  ],
+  [".txt", "text/plain"],
+  [".md", "text/markdown"],
+  [".html", "text/html"],
+  [".json", "application/json"],
+  [".xml", "application/xml"],
+  [".yaml", "text/yaml"],
+  [".yml", "text/yaml"],
+  [".c", "text/plain"],
+  [".cpp", "text/plain"],
+  [".cs", "text/plain"],
+  [".css", "text/css"],
+  [".go", "text/plain"],
+  [".java", "text/plain"],
+  [".js", "text/javascript"],
+  [".php", "text/plain"],
+  [".py", "text/x-python"],
+  [".rb", "text/plain"],
+  [".sh", "text/plain"],
+  [".tex", "text/plain"],
+  [".ts", "text/plain"],
+  [
+    ".xlsx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ".xls": "application/vnd.ms-excel",
-  ".csv": "text/csv",
-  ".tsv": "text/tab-separated-values",
-  ".iif": "text/plain",
-};
+  ],
+  [".xls", "application/vnd.ms-excel"],
+  [".csv", "text/csv"],
+  [".tsv", "text/tab-separated-values"],
+  [".iif", "text/plain"],
+]);
 
 export interface AttachmentLike {
   name?: string;
@@ -124,7 +129,7 @@ export function isSpreadsheetFile(
 
 export function getInputFileMimeType(filename: string): string {
   const extension = filename.slice(filename.lastIndexOf(".")).toLowerCase();
-  return MIME_TYPE_BY_EXTENSION[extension] ?? "application/octet-stream";
+  return MIME_TYPE_BY_EXTENSION.get(extension) ?? "application/octet-stream";
 }
 
 export function isImageFile(file: AttachmentLike | null | undefined): boolean {
