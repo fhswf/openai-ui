@@ -5,6 +5,14 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.50.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.50.0...openai-ui-v0.50.1) (2026-10-05)
+
+
+### Bug Fixes
+
+* add drag-and-drop support for Excel file uploads and improve file handling logic ([699f71e](https://github.com/fhswf/openai-ui/commit/699f71e1f42e4fca8f7f3bc3e5af99ce7c258ac8))
+* add drag-and-drop support for Excel file uploads and improve file handling logic ([5f7558e](https://github.com/fhswf/openai-ui/commit/5f7558e07ef4c9334bc83e3880f7a08677eb71cd))
+
 ## [0.50.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.49.0...openai-ui-v0.50.0) (2026-10-05)
 
 
