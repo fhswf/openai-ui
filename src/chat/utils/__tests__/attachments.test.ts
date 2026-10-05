@@ -75,6 +75,15 @@ describe("ensureFileName", () => {
     );
     expect(ensureFileName(undefined, 0, 1)).toBe("pasted-image-1.png");
   });
+
+  it("sanitizes unsafe mime subtypes", () => {
+    expect(ensureFileName({ type: "image/png;charset=utf-8" }, 0, 1)).toBe(
+      "pasted-image-1.png"
+    );
+    expect(ensureFileName({ type: "image/../../etc/passwd" }, 0, 1)).toBe(
+      "pasted-image-1.png"
+    );
+  });
 });
 
 describe("extractFiles", () => {

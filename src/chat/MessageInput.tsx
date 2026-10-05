@@ -38,10 +38,9 @@ import {
   isSupportedFile,
   PDF_MIME_TYPE,
 } from "./utils/attachments";
+import type { Attachment } from "./utils/attachments";
 
 const ACCEPTED_FILE_TYPES = "image/*,application/pdf";
-
-
 
 function useDebounce(cb, delay) {
   const timeoutId = useRef(null);
@@ -145,7 +144,58 @@ export function MessageInput() {
       });
   };
 
-  const handleFileDrop = (files: File[]) => {
+  const persistToOpfs = async (name: string, file: File) => {
+    const opfs = await navigator.storage.getDirectory();
+    const fileHandle = await opfs.getFileHandle(name, { create: true });
+    const writable = await fileHandle.createWritable();
+    const buffer = await file.arrayBuffer();
+    await writable.write(buffer);
+    await writable.close();
+  };
+
+  const attachFile = async (
+    newMessage: { images: Attachment[]; files: Attachment[] },
+    file: File,
+    index: number
+  ) => {
+    if (!isSupportedFile(file)) {
+      toaster.create({
+        title: t("not_supported_file"),
+        description: t("not_supported_file_description"),
+        duration: 5000,
+        type: "warning",
+      });
+      return;
+    }
+    const name = ensureFileName(file, index);
+    const isPdf = !isImageFile(file) && isPdfFile(file);
+    try {
+      // Images and PDFs are stored locally in OPFS and sent inline per request
+      // as base64 encoded data, not via the files API.
+      await persistToOpfs(name, file);
+    } catch (error) {
+      console.error("Error writing file to OPFS: %o", error);
+      toaster.create({
+        title: t("error_occurred"),
+        description: error instanceof Error ? error.message : String(error),
+        duration: 5000,
+        type: "error",
+      });
+      return;
+    }
+    const attachment = {
+      name,
+      url: `opfs://${name}`,
+      size: file.size,
+      lastModified: file.lastModified,
+      type: isPdf ? PDF_MIME_TYPE : file.type,
+      id: uuidv7(),
+    };
+    (isPdf ? newMessage.files : newMessage.images).push(attachment);
+    setState({ typeingMessage: newMessage });
+  };
+
+  const handleFileDrop = async (files: File[]) => {
     if (files.length === 0) {
       console.warn("No files dropped");
       return;
@@ -157,78 +207,14 @@ export function MessageInput() {
     if (!newMessage.files) {
       newMessage.files = [];
     }
-    files.forEach(async (file, index) => {
-      const name = ensureFileName(file, index);
-      if (isImageFile(file)) {
-        try {
-          const opfs = await navigator.storage.getDirectory();
-          const fileHandle = await opfs.getFileHandle(name, {
-            create: true,
-          });
-          const writable = await fileHandle.createWritable();
-          const buffer = await file.arrayBuffer();
-          await writable.write(buffer);
-          await writable.close();
-        } catch (error) {
-          console.error("Error writing file to OPFS: %o", error);
-          toaster.create({
-            title: t("error_occurred"),
-            description: error instanceof Error ? error.message : String(error),
-            duration: 5000,
-            type: "error",
-          });
-        }
-        newMessage.images.push({
-          name,
-          url: `opfs://${name}`,
-          size: file.size,
-          lastModified: file.lastModified,
-          type: file.type,
-          id: uuidv7(),
-        });
-        setState({ typeingMessage: newMessage });
-      } else if (isPdfFile(file)) {
-        try {
-          // PDFs are stored locally in OPFS and sent inline per request as
-          // base64 encoded `input_file` data, not via the files API.
-          const opfs = await navigator.storage.getDirectory();
-          const fileHandle = await opfs.getFileHandle(name, {
-            create: true,
-          });
-          const writable = await fileHandle.createWritable();
-          const buffer = await file.arrayBuffer();
-          await writable.write(buffer);
-          await writable.close();
-          newMessage.files.push({
-            name,
-            url: `opfs://${name}`,
-            size: file.size,
-            lastModified: file.lastModified,
-            type: PDF_MIME_TYPE,
-            id: uuidv7(),
-          });
-          setState({ typeingMessage: newMessage });
-        } catch (error) {
-          console.error("Error writing PDF file to OPFS: %o", error);
-          toaster.create({
-            title: t("error_occurred"),
-            description: error instanceof Error ? error.message : String(error),
-            duration: 5000,
-            type: "error",
-          });
-        }
-      } else {
-        toaster.create({
-          title: t("not_supported_file"),
-          description: t("not_supported_file_description"),
-          duration: 5000,
-          type: "warning",
-        });
-      }
-    });
+    for (const [index, file] of files.entries()) {
+      await attachFile(newMessage, file, index);
+    }
   };
 
-  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (event.target.files) {
       handleFileDrop(Array.from(event.target.files));
     }

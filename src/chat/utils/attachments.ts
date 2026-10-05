@@ -39,14 +39,19 @@ export function isSupportedFile(
   return isImageFile(file) || isPdfFile(file);
 }
 
-const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/gif": "gif",
-  "image/webp": "webp",
-  "image/bmp": "bmp",
-  "image/svg+xml": "svg",
-};
+const EXTENSION_BY_MIME_TYPE = new Map<string, string>([
+  ["image/png", "png"],
+  ["image/jpeg", "jpg"],
+  ["image/gif", "gif"],
+  ["image/webp", "webp"],
+  ["image/bmp", "bmp"],
+  ["image/svg+xml", "svg"],
+]);
+
+/** Keeps only simple, safe extension characters. */
+function sanitizeExtension(value: string | undefined): string {
+  return value && /^[a-z0-9]+$/i.test(value) ? value.toLowerCase() : "";
+}
 
 /**
  * Returns a usable filename for a file. Screenshots pasted from the clipboard
@@ -63,7 +68,10 @@ export function ensureFileName(
     return file.name;
   }
   const type = file?.type ?? "";
-  const extension = EXTENSION_BY_MIME_TYPE[type] || type.split("/")[1] || "png";
+  const extension =
+    EXTENSION_BY_MIME_TYPE.get(type) ||
+    sanitizeExtension(type.split("/")[1]) ||
+    "png";
   const suffix = index > 0 ? `-${index}` : "";
   return `pasted-image-${now}${suffix}.${extension}`;
 }
@@ -79,11 +87,11 @@ export function extractFiles(
   if (!dataTransfer) {
     return [];
   }
-  const files = Array.from(dataTransfer.files ?? []);
+  const files = Array.from(dataTransfer.files);
   if (files.length > 0) {
     return files;
   }
-  return Array.from(dataTransfer.items ?? [])
+  return Array.from(dataTransfer.items)
     .filter((item) => item.kind === "file")
     .map((item) => item.getAsFile())
     .filter((file): file is File => file !== null);
