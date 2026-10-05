@@ -48,9 +48,12 @@ const EXTENSION_BY_MIME_TYPE = new Map<string, string>([
   ["image/svg+xml", "svg"],
 ]);
 
-/** Keeps only simple, safe extension characters. */
-function sanitizeExtension(value: string | undefined): string {
-  return value && /^[a-z0-9]+$/i.test(value) ? value.toLowerCase() : "";
+/** Returns a simple, safe extension, or `undefined` when none can be derived. */
+function sanitizeExtension(value: string | undefined): string | undefined {
+  if (!value || !/^[a-z0-9]+$/i.test(value)) {
+    return undefined;
+  }
+  return value.toLowerCase();
 }
 
 /**
@@ -69,8 +72,8 @@ export function ensureFileName(
   }
   const type = file?.type ?? "";
   const extension =
-    EXTENSION_BY_MIME_TYPE.get(type) ||
-    sanitizeExtension(type.split("/")[1]) ||
+    EXTENSION_BY_MIME_TYPE.get(type) ??
+    sanitizeExtension(type.split("/")[1]) ??
     "png";
   const suffix = index > 0 ? `-${index}` : "";
   return `pasted-image-${now}${suffix}.${extension}`;
