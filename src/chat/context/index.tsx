@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useRef,
   useEffect,
   useReducer,
@@ -24,6 +25,9 @@ import {
   CHAT_HISTORY_KEY,
 } from "../utils/settings";
 import { consumeLoginRetry } from "../utils/loginRetry";
+import { useDebounce } from "../hooks/useDebounce";
+
+const DRAFT_PERSIST_DELAY_MS = 300;
 
 export const ChatContext = createContext(null);
 export const MessagesContext = createContext<Dispatch<GlobalAction>>(null);
@@ -60,8 +64,20 @@ export const ChatProvider = ({ children }) => {
     console.error("error parsing state: %s", e);
   }
 
-  const [state, dispatch] = useReducer(reducer, init);
+  const [state, reducerDispatch] = useReducer(reducer, init);
+  const pendingTypingOnly = useRef<boolean | null>(null);
+  const dispatch = useCallback<Dispatch<GlobalAction>>((nextAction) => {
+    pendingTypingOnly.current =
+      (pendingTypingOnly.current ?? true) &&
+      nextAction.type === GlobalActionType.CHANGE_MESSAGE;
+    reducerDispatch(nextAction);
+  }, []);
   const actionList = action(state, dispatch);
+  const debouncedSave = useDebounce(
+    (stateToSave: GlobalState) => saveState({ ...stateToSave }),
+    DRAFT_PERSIST_DELAY_MS,
+    true
+  );
   const latestState = useRef(state);
   const latestActions = useRef(actionList);
 
@@ -107,10 +123,21 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    // Persist the current reducer state directly so MCP auth/tool changes are
-    // saved immediately instead of lagging one render behind the ref.
-    saveState({ ...state });
-  }, [state]);
+    const typingOnly = pendingTypingOnly.current === true;
+    pendingTypingOnly.current = null;
+    if (typingOnly) {
+      debouncedSave.run(state);
+    } else {
+      // Sending, attachment changes, and other state updates must be saved now.
+      debouncedSave.cancel();
+      saveState({ ...state });
+    }
+  }, [state, debouncedSave.run, debouncedSave.cancel]);
+
+  useEffect(() => {
+    window.addEventListener("pagehide", debouncedSave.flush);
+    return () => window.removeEventListener("pagehide", debouncedSave.flush);
+  }, [debouncedSave.flush]);
 
   return (
     <ChatContext.Provider value={{ ...state, ...actionList }}>

@@ -278,7 +278,10 @@ export default function action(
         id: uuidv7(),
       };
       typeingMessage.content = content;
-      setState({ is: { ...state.is, typeing: true }, typeingMessage });
+      dispatch({
+        type: GlobalActionType.CHANGE_MESSAGE,
+        payload: { is: { ...state.is, typeing: true }, typeingMessage },
+      });
     },
 
     downloadThread(format = "json") {

@@ -32,7 +32,7 @@ import { FilePreview, OPFSImage } from "./component";
 import { ModelSelector } from "./ModelSelector";
 import {
   ACCEPTED_FILE_TYPES,
-  getInputFileMimeType, 
+  getInputFileMimeType,
   ensureFileName,
   extractFiles,
   isImageFile,
@@ -41,30 +41,6 @@ import {
   PDF_MIME_TYPE,
 } from "./utils/attachments";
 import type { Attachment } from "./utils/attachments";
-
-
-interface DebounceCallback<TArgs extends unknown[]> {
-  (...args: TArgs): void;
-}
-
-interface DebouncedFunction<TArgs extends unknown[]> {
-  (...args: TArgs): void;
-}
-
-function useDebounce<TArgs extends unknown[]>(
-  cb: DebounceCallback<TArgs>,
-  delay: number,
-): DebouncedFunction<TArgs> {
-  const timeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  return function (...args: TArgs): void {
-    if (timeoutId.current) {
-      // This check is not strictly necessary
-      clearTimeout(timeoutId.current);
-    }
-    timeoutId.current = setTimeout(() => cb(...args), delay);
-  };
-}
 
 export function MessageInput() {
   const {
