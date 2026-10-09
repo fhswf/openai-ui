@@ -60,11 +60,11 @@ function normalizeApiBaseUrl(baseUrl?: string) {
   return baseUrl;
 }
 
-function createClient(options?: Options) {
+export function createClient(options?: Options, baseURL?: string) {
   return new OpenAI({
     apiKey: options?.openai.apiKey ?? "unused",
     dangerouslyAllowBrowser: true,
-    baseURL: normalizeApiBaseUrl(options?.openai.baseUrl),
+    baseURL: baseURL || normalizeApiBaseUrl(options?.openai.baseUrl),
     organization: options?.openai.organizationId || undefined,
     fetch: (input, init: any) => {
       return fetch(input, { credentials: "include", ...init });

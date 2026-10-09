@@ -72,6 +72,7 @@ export type OpenAIOptions = {
   stream: boolean;
   tools: Map<string, Tool>;
   toolsEnabled: Set<string>;
+  vectorStoreBaseUrl?: string;
   mcpAuthConfigs?: Map<string, McpAuthConfig>;
   aiHubEnabled?: boolean;
   aiHubApiKey?: string;

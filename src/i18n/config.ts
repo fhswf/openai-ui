@@ -231,6 +231,9 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           chat_options: "Chat Options",
           model_options: "Model Options",
           tool_options: "Tool Options",
+          vector_store_base_url: "Vector Store API URL",
+          vector_store_base_url_help:
+            "Endpoint of the vector store service (litellm-pgvector) used to manage your vector stores and files.",
           "MCP Services": "MCP Services",
           mcp_approval_request: "MCP Approval Request",
           mcp_approval_request_description:
@@ -623,6 +626,9 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Hier können Sie eine eigene API-Basis-URL eingeben.",
           api_key: "API-Schlüssel",
           api_key_help: "Hier können Sie einen eigenen API-Schlüssel eingeben.",
+          vector_store_base_url: "Vector-Store-API-URL",
+          vector_store_base_url_help:
+            "Endpunkt des Vector-Store-Dienstes (litellm-pgvector), über den Ihre Vector Stores und Dateien verwaltet werden.",
           organization_id: "Organisations-ID",
           organization_id_help:
             "Hier können Sie eine eigene Organisations-ID eingeben.",
