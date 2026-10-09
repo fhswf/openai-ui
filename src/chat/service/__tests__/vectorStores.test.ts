@@ -64,7 +64,10 @@ describe("vectorStores service", () => {
 
     await listVectorStores(options);
 
-    expect(createClient).toHaveBeenCalledWith(options, "https://custom.example/v1");
+    expect(createClient).toHaveBeenCalledWith(
+      options,
+      "https://custom.example/v1"
+    );
   });
 
   it("falls back to the default base url for persisted settings without one", async () => {
@@ -73,11 +76,16 @@ describe("vectorStores service", () => {
 
     await listVectorStores(options);
 
-    expect(createClient).toHaveBeenCalledWith(options, "https://pgvector.example/v1");
+    expect(createClient).toHaveBeenCalledWith(
+      options,
+      "https://pgvector.example/v1"
+    );
   });
 
   it("collects all vector stores from the paginated list", async () => {
-    client.vectorStores.list.mockReturnValue(iterate([{ id: "a" }, { id: "b" }]));
+    client.vectorStores.list.mockReturnValue(
+      iterate([{ id: "a" }, { id: "b" }])
+    );
 
     const stores = await listVectorStores(makeOptions());
 
@@ -96,10 +104,15 @@ describe("vectorStores service", () => {
     await renameVectorStore(options, "vs1", "Skript 2");
     await deleteVectorStore(options, "vs1");
 
-    expect(client.post).toHaveBeenCalledWith("https://pgvector.example/vector_stores/vs1/", {
-      body: { name: "Skript 2" },
-    });
-    expect(client.delete).toHaveBeenCalledWith("https://pgvector.example/vector_stores/vs1/");
+    expect(client.post).toHaveBeenCalledWith(
+      "https://pgvector.example/vector_stores/vs1/",
+      {
+        body: { name: "Skript 2" },
+      }
+    );
+    expect(client.delete).toHaveBeenCalledWith(
+      "https://pgvector.example/vector_stores/vs1/"
+    );
   });
 
   it("adds file names to the attached files", async () => {
@@ -127,7 +140,10 @@ describe("vectorStores service", () => {
 
     await uploadFileToVectorStore(makeOptions(), "vs1", file);
 
-    expect(client.vectorStores.files.uploadAndPoll).toHaveBeenCalledWith("vs1", file);
+    expect(client.vectorStores.files.uploadAndPoll).toHaveBeenCalledWith(
+      "vs1",
+      file
+    );
   });
 
   it("distinguishes removing an attachment from deleting the file", async () => {
@@ -144,7 +160,9 @@ describe("vectorStores service", () => {
 
   it("searches a vector store", async () => {
     client.vectorStores.search.mockResolvedValue({
-      data: [{ file_id: "file-1", filename: "skript.pdf", score: 0.9, content: [] }],
+      data: [
+        { file_id: "file-1", filename: "skript.pdf", score: 0.9, content: [] },
+      ],
     });
 
     const results = await searchVectorStore(makeOptions(), "vs1", "Klausur", 3);

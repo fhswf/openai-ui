@@ -36,7 +36,9 @@ function legacyVectorStoreUrl(options: Options, vectorStoreId: string) {
 
 export type VectorStoreFileWithName = VectorStoreFile & { filename?: string };
 
-export async function listVectorStores(options: Options): Promise<VectorStore[]> {
+export async function listVectorStores(
+  options: Options
+): Promise<VectorStore[]> {
   const client = createVectorStoreClient(options);
   const stores: VectorStore[] = [];
   for await (const store of client.vectorStores.list({ limit: 100 })) {
@@ -56,12 +58,18 @@ export async function renameVectorStore(
   name: string
 ) {
   const client = createVectorStoreClient(options);
-  return client.post<VectorStore>(legacyVectorStoreUrl(options, vectorStoreId), {
-    body: { name },
-  });
+  return client.post<VectorStore>(
+    legacyVectorStoreUrl(options, vectorStoreId),
+    {
+      body: { name },
+    }
+  );
 }
 
-export async function deleteVectorStore(options: Options, vectorStoreId: string) {
+export async function deleteVectorStore(
+  options: Options,
+  vectorStoreId: string
+) {
   const client = createVectorStoreClient(options);
   return client.delete<VectorStoreDeleted>(
     legacyVectorStoreUrl(options, vectorStoreId)
