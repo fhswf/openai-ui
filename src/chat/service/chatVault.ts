@@ -181,6 +181,23 @@ export const chatVault = {
     );
   },
 
+  /** Resolve a recipient's public key by identity for sharing. */
+  lookupKeyByEmail(
+    email: string,
+    options?: RequestOptions
+  ): Promise<VaultPublicKey> {
+    return request(
+      `/keys/lookup?email=${encodeURIComponent(email)}`,
+      {},
+      options
+    );
+  },
+
+  /** Opt out of central storage by removing the server-side key material. */
+  deleteMyKey(options?: RequestOptions): Promise<void> {
+    return request("/keys/me", { method: "DELETE" }, options);
+  },
+
   listChats(options?: RequestOptions): Promise<VaultChatSummary[]> {
     return request("/chats", {}, options);
   },

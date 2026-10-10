@@ -19,6 +19,9 @@ Ziele
 - Kein Klartext-Private-Key verlässt jemals das Gerät.
 - Wiederherstellung des eigenen Schlüssels auf einem neuen Gerät über den
   Passkey (WebAuthn PRF).
+- **Opt-in:** Die zentrale Speicherung ist standardmäßig aus. Schlüsselpaar,
+  Passkey und Upload passieren erst, wenn der Nutzer dies im Benutzer-Menü
+  aktiv explizit einschaltet. Ohne Opt-in bleibt alles wie bisher lokal.
 
 Nicht-Ziele (bewusste Grenzen)
 
@@ -70,18 +73,40 @@ Pro Chat:            K_chat                  (AES-GCM-256, zufällig)
 
 ## 4. Client-Flow (Frontend, dieses Repo)
 
-### 4.1 Registrierung / erstes Gerät
+### 4.0 Aktivierung: wann entstehen die Schlüssel?
 
-1. OIDC-Login ist bereits erfolgt.
+Es gibt **keine** automatische Schlüsselerzeugung. Ohne ausdrückliches Opt-in
+passiert gar nichts: kein Passkey, kein Schlüsselpaar, kein Upload. Der Nutzer
+aktiviert die Funktion selbst im Benutzer-Menü (Option `general.zkStorage`,
+Toggle „Verschlüsselte geräteübergreifende Speicherung“). Erst beim Umlegen
+dieses Schalters läuft der Registrierungs-Flow (4.1). Das vermeidet einen
+unerwarteten Biometrie-Dialog beim Login und hält das Default-Verhalten
+unverändert lokal.
+
+Zustände:
+
+| Zustand | Bedeutung | Verhalten |
+| --- | --- | --- |
+| `disabled` | Default, kein Opt-in | nur lokale Speicherung |
+| `enabled-unlocked` | Opt-in + `SK_user` im IndexedDB vorhanden | Vault aktiv, Klartext-Chats verschlüsselt hoch/runter |
+| `enabled-locked` | Opt-in, aber `SK_user` fehlt (neues Gerät) | fragt beim Sitzungsstart nach Passkey (4.2) |
+
+### 4.1 Registrierung / erstes Gerät (nach Opt-in)
+
+1. OIDC-Login ist bereits erfolgt; der Nutzer hat die Funktion im Menü
+   aktiviert.
 2. Frontend prüft IndexedDB auf `SK_user`. Fehlt er, wird die Einrichtung
-   angeboten.
+   gestartet.
 3. Passkey via `navigator.credentials.create()` mit `extensions.prf.eval.first
    = prfSalt` (fester, konfigurierbarer Salt, 32 Byte) anlegen.
 4. PRF-Output (`ikm`) via HKDF zu `K_pass` ableiten.
 5. `PK_user/SK_user` (RSA-OAEP-4096) erzeugen.
 6. `SK_user` (pkcs8) mit `K_pass` (AES-GCM, zufälliger IV) verschlüsseln.
 7. `{credentialId, publicKey(spki), encryptedSK, iv}` an das Backend senden.
-8. `SK_user` in IndexedDB cachen.
+8. `SK_user` in IndexedDB cachen, Zustand -> `enabled-unlocked`.
+
+Beim Deaktivieren (Toggle aus) wird `DELETE /api/zk/keys/me` angeboten und der
+IndexedDB-Cache via `clearPrivateKey()` geleert.
 
 ### 4.2 Login auf neuem Gerät
 
@@ -109,10 +134,28 @@ Pro Chat:            K_chat                  (AES-GCM-256, zufällig)
 
 ### 4.5 Chat teilen
 
-1. `GET /zk/keys/{userId}/public-key` für den Empfänger.
+Zum Verpacken von `K_chat` braucht der Absender den **Public Key des
+Empfängers**. Da Public Keys nicht geheim sind, ist das ein reines
+Discovery-Problem: der Absender muss die stabile `userId` des Empfängers
+kennen. Zwei Modelle:
+
+**A. Discovery über den Server (Default, passend zu OIDC/SSO).** Der Server
+bietet eine authentifizierte Lookup-Route (siehe 6.1). Ablauf:
+
+1. `GET /zk/keys/lookup?email=<adresse>` -> `{ userId, publicKey }`.
 2. `K_chat` lokal mit eigenem `SK_user` entpacken.
-3. `K_chat` mit `PK_empf` verpacken.
+3. `K_chat` mit `PK_empf` verpacken (`wrapChatKey`).
 4. `POST /zk/chats/{id}/share` mit der neuen Hülle.
+
+Der Lookup muss rate-limitiert und auf bekannte Domains beschränkt sein, damit
+keine Nutzer-Enumeration möglich ist. Public Keys sind öffentlich; geschützt
+wird, *wer registriert ist*.
+
+**B. Empfänger-initiert (datensparsam).** Ohne globales Verzeichnis teilt der
+Empfänger seinen eigenen Public Key, z. B. über einen Teilen-Link
+`https://…/#pk=<base64url>` oder durch Einfügen. Der Absender importiert ihn
+mit `importPublicKey()` und verpackt `K_chat`. Kein Lookup, keine Enumeration,
+aber ein zusätzlicher manueller Schritt.
 
 ### 4.6 Migration bestehender lokaler Chats
 
@@ -194,8 +237,22 @@ sondern nur Größen, IDs und Berechtigungen.
 `GET /api/zk/keys/{userId}/public-key`
 -> `{ userId, publicKey }`
 
+`GET /api/zk/keys/lookup?email=<adresse>` (Discovery zum Teilen)
+-> `{ userId, publicKey }`
+-> `404 not_found`, wenn die Identität nicht registriert ist
+
 Hinweis: `encryptedSk` wird nur an den Eigentümer ausgeliefert. Andere erhalten
-ausschließlich `publicKey`, damit sie einen Chat teilen können.
+ausschließlich `publicKey`, damit sie einen Chat teilen können. Der Lookup ist
+rate-limitiert und auf die eigene(n) OIDC-Domain(s) beschränkt (keine
+Nutzer-Enumeration). Alternativ kann auf den Lookup verzichtet und der Public
+Key empfänger-initiiert geteilt werden (siehe 4.5 B).
+
+`GET /api/zk/keys/me` liefert `{ registered: false }` mit Status `404`, solange
+der Nutzer noch kein Opt-in durchgeführt hat.
+
+`DELETE /api/zk/keys/me`
+-> `204` (Opt-out: entfernt Schlüsselmaterial; Vault-Daten bleiben bis zur
+expliziten Löschung bestehen und werden dann unzugänglich)
 
 ### 6.2 Chats
 
@@ -275,9 +332,16 @@ ausschließlich `publicKey`, damit sie einen Chat teilen können.
      `clearPrivateKey`).
 4. **Vault-Client** `src/chat/service/chatVault.ts`
    - typisierter API-Client für `/api/zk/...` mit CSRF/Credentials.
-5. **Integration** in Chat-Provider/History (Upload beim Speichern, Download
-   beim Laden, Share-Aktion) – als Folgeschritt, hier vorbereitet.
-6. **Tests** unter `src/chat/utils/__tests__` und `src/chat/service/__tests__`
+5. **Opt-in-Schalter** in `src/chat/ChatOptions.tsx` (Benutzer-Menü)
+   - neue Option `general.zkStorage` (Default `false`) in
+     `context/types.ts` + `initState.ts` + `utils/options.ts`.
+   - Toggle „Verschlüsselte geräteübergreifende Speicherung“: beim Einschalten
+     Registrierung/enable, beim Ausschalten Opt-out + `clearPrivateKey()`.
+   - Zustandsanzeige des `enabled-locked`-Falls („entsperren“).
+6. **Integration** in Chat-Provider/History (Upload beim Speichern, Download
+   beim Laden, Share-Aktion mit Public-Key-Discovery) – als Folgeschritt, hier
+   vorbereitet.
+7. **Tests** unter `src/chat/utils/__tests__` und `src/chat/service/__tests__`
    (Roundtrips, Fehlerfälle, Envelope-Sharing, API-Vertrag).
 
 ## 9. Offene Fragen an den Auftraggeber
@@ -287,6 +351,8 @@ ausschließlich `publicKey`, damit sie einen Chat teilen können.
 - Teilen synchron (Empfänger bereits registriert) oder asynchron via
   Einladungslink? (Design deckt beide ab; nur der Empfänger-Public-Key muss
   vorliegen.)
+- Public-Key-Discovery: Server-Lookup (4.5 A, Default) oder empfänger-initiiert
+  (4.5 B)? Hängt davon ab, ob ein zentrales Verzeichnis gewünscht ist.
 - Optimaler `SK_user`-Algorithmus: RSA-OAEP-4096 (im Kommentar vorgeschlagen)
   oder ECDH P-256/kurvenbasiert (kleinere Hüllen)? Aktuell: RSA-OAEP-4096.
 - Aufbewahrung/Recovery bei Passkey-Verlust.
