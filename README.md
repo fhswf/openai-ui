@@ -16,3 +16,10 @@ This project is based on
 - Single Sign-On (SSO) via OpenID Connect (OIDC) for authentication.
 - Markdown support for chat messages.
 - Code editor for chat messages.
+
+## Zero-knowledge chat persistence (planned)
+
+Design and implementation plan for device-independent, server-blind chat storage
+(with sharing) lives in [docs/zero-knowledge-chat.md](docs/zero-knowledge-chat.md).
+The client cryptography is implemented in `src/chat/utils/zeroKnowledgeCrypto.ts`
+and the backend contract in `src/chat/service/chatVault.ts`.
