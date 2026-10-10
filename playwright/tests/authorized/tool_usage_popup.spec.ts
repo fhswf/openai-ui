@@ -1,7 +1,9 @@
 import { test, expect } from '../baseFixtures';
-import { acceptTermsIfVisible } from '../testHelpers';
+import { acceptTermsIfVisible, mockUserEndpoint } from '../testHelpers';
 
 test('Tool Usage Popup', async ({ page }) => {
+
+    await mockUserEndpoint(page);
 
     // Mock the OpenAI API response
     await page.route('**/v1/responses', async route => {

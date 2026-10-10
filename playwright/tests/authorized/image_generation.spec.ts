@@ -1,8 +1,10 @@
 import { test, expect } from '../baseFixtures';
-import { acceptTermsIfVisible } from '../testHelpers';
+import { acceptTermsIfVisible, mockUserEndpoint } from '../testHelpers';
 
 test('Image Generation', async ({ page, browserName }) => {
     test.skip(browserName === 'webkit', "Skipping Webkit due to issues with OPFS");
+
+    await mockUserEndpoint(page);
 
     // Mock the OpenAI API response
     await page.route('**/v1/responses', async route => {

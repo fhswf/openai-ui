@@ -3,6 +3,60 @@ import type { Page, Locator } from "@playwright/test";
 
 export const APP_READY_TIMEOUT = 15000;
 
+export const DEFAULT_MOCK_USER = {
+  name: "Playwright User",
+  email: "playwright@fh-swf.de",
+  sub: "playwright",
+  preferred_username: "playwright",
+  affiliations: {
+    "fh-swf.de": ["member"],
+  },
+};
+
+/**
+ * Serve `/api/user` from a local mock so a spec exercises the locally built
+ * bundle. On CI the auth cookie is scoped to the deployed host, so the proxied
+ * `/api/user` returns 401 on localhost and the app redirects to the login page,
+ * where none of the chat controls render.
+ */
+export async function mockUserEndpoint(
+  page: Page,
+  user: typeof DEFAULT_MOCK_USER = DEFAULT_MOCK_USER
+) {
+  await page.route(/\/(?:api\/)?user\/?(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(user),
+    });
+  });
+}
+
+/**
+ * Keep the send flow hermetic by answering the streaming request locally
+ * instead of hitting the deployed backend. Returns a created/completed pair,
+ * which is enough for specs that only assert on the user's own message.
+ */
+export async function mockResponsesEndpoint(page: Page) {
+  const events = [
+    { type: "response.created", response: { id: "resp_mock_1" } },
+    {
+      type: "response.completed",
+      response: {
+        usage: { total_tokens: 2, input_tokens: 1, output_tokens: 1 },
+      },
+    },
+  ];
+
+  await page.route("**/v1/responses", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(""),
+    });
+  });
+}
+
 export async function waitForDialogLayerToClear(page: Page) {
   const positioners = page.locator('[data-scope="dialog"][data-part="positioner"]');
   await expect(async () => {
