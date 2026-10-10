@@ -1,10 +1,16 @@
 import { test, expect } from '../baseFixtures';
-import { acceptTermsIfVisible } from '../testHelpers';
+import {
+    acceptTermsIfVisible,
+    mockUserEndpoint,
+    mockResponsesEndpoint,
+} from '../testHelpers';
 
 
 test('Image Drop', async ({ page, browserName }) => {
     test.skip(browserName === 'webkit', "Skipping Webkit due to issues with OPFS");
 
+    await mockUserEndpoint(page);
+    await mockResponsesEndpoint(page);
     await page.goto("");
 
     // Conditionally accept terms
