@@ -79,6 +79,25 @@ describe("chatVault API client", () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain("a%2Fb");
   });
 
+  it("resolves a recipient public key by email for sharing", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ userId: "u2", publicKey: "pk2" })
+    );
+    const key = await chatVault.lookupKeyByEmail("bob@example.com");
+    expect(key.publicKey).toBe("pk2");
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain("/keys/lookup?email=bob%40example.com");
+    expect(init.method ?? "GET").toBe("GET");
+  });
+
+  it("deletes the caller's key material on opt-out", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    await expect(chatVault.deleteMyKey()).resolves.toBeUndefined();
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain("/api/zk/keys/me");
+    expect(init.method).toBe("DELETE");
+  });
+
   it("lists chats and gets a single chat", async () => {
     fetchMock
       .mockResolvedValueOnce(jsonResponse([{ id: "c1" }]))
