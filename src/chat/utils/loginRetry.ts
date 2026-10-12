@@ -1,6 +1,22 @@
 export const LOGIN_RETRY_KEY = "LOGIN_RETRY_PENDING";
 
 export function getLoginUrl(): string {
+  const isLocalOrigin =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
+  // Playwright serves the production build with `vite preview`, where DEV is
+  // false even though the app is still running on localhost.
+  if (import.meta.env.DEV || isLocalOrigin) {
+    const origin = window.location.origin;
+    const params = new URLSearchParams({
+      return_url: `${origin}/`,
+      callback_uri: `${origin}/api/callback`,
+    });
+
+    return `/api/login?${params.toString()}`;
+  }
+
   return import.meta.env.VITE_LOGIN_URL || "/api/login";
 }
 

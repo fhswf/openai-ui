@@ -12,7 +12,7 @@ import {
 } from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
-import { isRetryableMessage } from "../utils/loginRetry";
+import { getLoginUrl, isRetryableMessage } from "../utils/loginRetry";
 import { buildInputFile, getInputFileMimeType } from "../utils/attachments";
 import { v7 as uuidv7 } from "uuid";
 
@@ -168,7 +168,7 @@ export default function action(
     setIs,
     doLogin(): void {
       console.log("doLogin");
-      globalThis.location.href = import.meta.env.VITE_LOGIN_URL;
+      globalThis.location.href = getLoginUrl();
     },
     clearTypeing() {
       console.log("clear");
