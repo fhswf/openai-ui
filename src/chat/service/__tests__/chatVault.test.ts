@@ -40,9 +40,11 @@ describe("chatVault API client", () => {
     await chatVault.registerKey({
       credentialId: "cid",
       publicKey: "pk",
+      publicKeyAlgorithm: "ECDH-P256",
       encryptedSk: "esk",
       encryptedSkIv: "iv",
       challenge: "ch",
+      credentialPublicKey: "credential-pk",
     });
 
     const [, init] = fetchMock.mock.calls[0];
@@ -163,6 +165,7 @@ describe("chatVault API client", () => {
     await expect(
       chatVault.submitAssertion({
         credentialId: "cid",
+        challenge: "ch",
         authenticatorData: "ad",
         clientDataJSON: "cd",
         signature: "sig",

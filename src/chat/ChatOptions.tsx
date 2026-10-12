@@ -31,6 +31,7 @@ import { Trans } from "react-i18next";
 import { exportSettings, importSettings } from "./utils/settings";
 import { HiUpload } from "react-icons/hi";
 import { toaster } from "../components/ui/toaster";
+import { ZeroKnowledgeStorageSetting } from "./ZeroKnowledgeStorageSetting";
 
 export function ChatOptions() {
   const { options } = useGlobal();
@@ -233,6 +234,8 @@ export function ChatOptions() {
               <Trans t={t}>help_gravatar</Trans>
             </Field.HelperText>
           </Field.Root>
+
+          <ZeroKnowledgeStorageSetting />
 
           <Heading size="md" paddingBlockStart="2em">
             {t("Global OpenAI Config")}

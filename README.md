@@ -17,9 +17,9 @@ This project is based on
 - Markdown support for chat messages.
 - Code editor for chat messages.
 
-## Zero-knowledge chat persistence (planned)
+## Zero-knowledge chat persistence
 
-Design and implementation plan for device-independent, server-blind chat storage
-(with sharing) lives in [docs/zero-knowledge-chat.md](docs/zero-knowledge-chat.md).
-The client cryptography is implemented in `src/chat/utils/zeroKnowledgeCrypto.ts`
-and the backend contract in `src/chat/service/chatVault.ts`.
+Encrypted cross-device chat storage is opt-in from **Settings → General**. The
+browser encrypts chats before syncing them through the `/api/zk` vault API; a
+passkey with WebAuthn PRF support is required. The proxy backend must implement
+the API contract described in [docs/zero-knowledge-chat.md](docs/zero-knowledge-chat.md).

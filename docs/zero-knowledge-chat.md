@@ -1,7 +1,9 @@
 # Zero-Knowledge, geräteübergreifende Chats
 
-Status: Implementierungsplan (Frontend in diesem Repo, Backend-API-Design zur
-Umsetzung im Proxy-Backend `fhswf/openai-proxy`).
+Status: Frontend-Opt-in, Schlüsselverwaltung und verschlüsselte Chat-Synchronisierung
+sind in diesem Repo implementiert. Das Proxy-Backend `fhswf/openai-proxy` muss die
+unten beschriebene `/api/zk`-API bereitstellen, einschließlich Prüfung von
+WebAuthn-Assertions und getrennter Speicherung der beiden Public Keys.
 
 Dieses Dokument beschreibt, wie Chatverläufe so gespeichert werden, dass der
 Server sie **niemals** im Klartext sieht (Zero Knowledge), geräteübergreifend
@@ -37,7 +39,7 @@ Nicht-Ziele (bewusste Grenzen)
 
 | Angreifer | Kann lesen? | Begründung |
 | --- | --- | --- |
-| Server-/DB-Betreiber | nein | sieht nur AES-GCM-Chiffrat und RSA-OAEP-Hüllen |
+| Server-/DB-Betreiber | nein | sieht nur AES-GCM-Chiffrat und verschlüsselte Schlüssel-Hüllen |
 | Netzwerk (TLS-terminierender Proxy) | nein | Klartext existiert nur im Browser |
 | Anderer Nutzer ohne Freigabe | nein | besitzt keine Hülle für `K_chat` |
 | Nutzer mit Freigabe | ja | besitzt `Enc(PK_empf, K_chat)` |
@@ -54,12 +56,12 @@ Sitzungs-Login des OIDC).
 Passkey (Hardware)  --WebAuthn PRF(salt)-->  IKM (32 Byte)
 IKM                 --HKDF-SHA256--------->  K_pass  (AES-GCM-256, KEK)
 K_pass              --AES-GCM-------------->  (K_pass schützt SK)
-Nutzer-Schlüsselpaar:  PK_user / SK_user     (RSA-OAEP-4096)
+Nutzer-Schlüsselpaar:  PK_user / SK_user     (ECDH P-256; bestehende RSA-OAEP-Schlüssel bleiben unterstützt)
                         PK_user  -> Klartext auf Server
                         SK_user  -> mit K_pass verschlüsselt auf Server
 Pro Chat:            K_chat                  (AES-GCM-256, zufällig)
                         Chiffrat der Nachrichten mit K_chat
-                        Key-Header: Enc(PK_user, K_chat) je Empfänger
+                        Key-Header: ECDH + HKDF + AES-GCM je Empfänger
 ```
 
 - `K_pass` ist die Key-Encryption-Key. Sie wird bei jeder Sitzung neu aus dem
@@ -100,9 +102,13 @@ Zustände:
 3. Passkey via `navigator.credentials.create()` mit `extensions.prf.eval.first
    = prfSalt` (fester, konfigurierbarer Salt, 32 Byte) anlegen.
 4. PRF-Output (`ikm`) via HKDF zu `K_pass` ableiten.
-5. `PK_user/SK_user` (RSA-OAEP-4096) erzeugen.
+5. `PK_user/SK_user` (ECDH P-256) erzeugen.
 6. `SK_user` (pkcs8) mit `K_pass` (AES-GCM, zufälliger IV) verschlüsseln.
-7. `{credentialId, publicKey(spki), encryptedSK, iv}` an das Backend senden.
+7. `{credentialId, credentialPublicKey(spki), publicKey(spki), encryptedSK,
+   iv, challenge}` an das Backend senden. `credentialPublicKey` ist der
+   WebAuthn-Schlüssel für Assertions; `publicKey` ist der ECDH-Schlüssel zum
+   Ableiten des Chat-Schlüssel-Wrappings. `publicKeyAlgorithm` wird als
+   `ECDH-P256` gespeichert. Ältere Schlüssel ohne dieses Feld gelten als RSA.
 8. `SK_user` in IndexedDB cachen, Zustand -> `enabled-unlocked`.
 
 Beim Deaktivieren (Toggle aus) wird `DELETE /api/zk/keys/me` angeboten und der
@@ -111,18 +117,24 @@ IndexedDB-Cache via `clearPrivateKey()` geleert.
 ### 4.2 Login auf neuem Gerät
 
 1. OIDC-Login.
-2. IndexedDB ist leer -> `GET /zk/keys/me` liefert
-   `{credentialId, encryptedSK, iv}`.
-3. `navigator.credentials.get()` mit demselben `prfSalt`.
-4. PRF-Output -> `K_pass` (identisch zu 4.1).
-5. `encryptedSK` mit `K_pass` entschlüsseln -> `SK_user`.
+2. IndexedDB ist leer -> `GET /zk/keys/me` liefert die Credential-ID und den
+   Public Key und Algorithmus, aber noch nicht `encryptedSK`.
+3. `POST /zk/keys/assertion-challenge` anfordern und
+   `navigator.credentials.get()` mit demselben `prfSalt` aufrufen.
+4. Die Assertion einschließlich des Challenges an `POST /zk/keys/assertion`
+   senden. Nach erfolgreicher Prüfung liefert ein erneutes `GET /zk/keys/me`
+   auch `encryptedSK` und IV.
+5. PRF-Output -> `K_pass` (identisch zu 4.1) und `encryptedSK` damit
+   entschlüsseln -> `SK_user`.
 6. `SK_user` in IndexedDB cachen, Chat entsperren.
 
 ### 4.3 Chat speichern
 
 1. `K_chat` zufällig erzeugen.
 2. `chat`-Objekt serialisieren und mit `K_chat` (AES-GCM) verschlüsseln.
-3. `K_chat` mit `PK_user` verpacken -> Hülle für sich selbst.
+3. `K_chat` mit ephemerem ECDH, HKDF-SHA256 und AES-GCM verpacken -> Hülle
+   für sich selbst. Das ephemere P-256 Public Key, der 12-Byte-IV und das
+   Chiffrat werden als getrennte Envelope-Felder gespeichert.
 4. `{id, ciphertext, iv, envelopes:[{recipient, wrappedKey, iv}], metadata}`
    per `PUT /zk/chats/{id}` hochladen.
 
@@ -161,8 +173,8 @@ aber ein zusätzlicher manueller Schritt.
 
 Beim ersten Entsperren werden vorhandene `CHAT_HISTORY`-Einträge aus
 `localStorage` gelesen, verschlüsselt und in den Vault hochgeladen. Erst nach
-erfolgreichem Upload werden die Klartext-Einträge entfernt (Feature-Flag,
-Opt-in).
+erfolgreichem Upload bleiben sie außerdem lokal im Browser erhalten. Die
+Verschlüsselung schützt die zentrale Speicherung und den Transport zum Vault.
 
 ## 5. Datenmodell (Server)
 
@@ -172,6 +184,7 @@ Der Server kennt nur Chiffrat und öffentliche Schlüssel.
 user_keys
   user_id           string  PK
   credential_id     bytes   unique
+  credential_public_key bytes (WebAuthn credential, from attestation)
   public_key        bytes   (SPKI, Klartext)
   encrypted_sk      bytes   (AES-GCM)
   encrypted_sk_iv   bytes
@@ -191,8 +204,10 @@ chats
 chat_keys                       -- Multi-Recipient Key Header
   chat_id           uuid  FK
   recipient_id      string FK
-  wrapped_key       blob  (RSA-OAEP(PK_recipient, K_chat))
-  wrapped_key_iv    bytes (nur falls ein AEAD-Wrap verwendet wird)
+  envelope_algorithm string (RSA legacy oder ECDH-P256-HKDF-SHA256-AES-256-GCM)
+  ephemeral_public_key bytes (nur bei ECDH)
+  wrapped_key       blob  (RSA-OAEP legacy oder AES-GCM(K_chat))
+  wrapped_key_iv    bytes (12 Byte bei ECDH)
   is_owner          bool
   created_at        ts
   PK (chat_id, recipient_id)
@@ -206,8 +221,9 @@ Autorisierung, nicht zur Entschlüsselung.
 
 Alle Endpunkte unter `/api/zk`. Authentifizierung per OIDC-Bearer-Token bzw.
 Session-Cookie (wie der bestehende Proxy). Inhaltstyp `application/json`,
-Binärdaten base64url-kodiert. Der Server validiert **niemals** Krypto-Inhalte,
-sondern nur Größen, IDs und Berechtigungen.
+Binärdaten base64url-kodiert. Der Server prüft WebAuthn-Assertions, aber
+niemals die Verschlüsselung von Chats oder privaten Schlüsseln. Er validiert
+Größen, IDs und Berechtigungen.
 
 ### 6.1 Nutzerschlüssel
 
@@ -217,7 +233,8 @@ sondern nur Größen, IDs und Berechtigungen.
 `POST /api/zk/keys`
 
 ```
-{ credentialId, publicKey, encryptedSk, encryptedSkIv, challenge }
+{ credentialId, credentialPublicKey, publicKeyAlgorithm, publicKey,
+  encryptedSk, encryptedSkIv, challenge }
 -> 201 { userId, createdAt }
 ```
 
@@ -227,18 +244,19 @@ sondern nur Größen, IDs und Berechtigungen.
 `POST /api/zk/keys/assertion`
 
 ```
-{ credentialId, authenticatorData, clientDataJSON, signature }
+{ credentialId, challenge, authenticatorData, clientDataJSON, signature }
 -> 204
 ```
 
 `GET /api/zk/keys/me`
--> `{ userId, credentialId, publicKey, encryptedSk, encryptedSkIv }`
+-> `{ userId, credentialId, publicKeyAlgorithm, publicKey }`; after a fresh
+   WebAuthn assertion it also includes `{ encryptedSk, encryptedSkIv }`.
 
 `GET /api/zk/keys/{userId}/public-key`
--> `{ userId, publicKey }`
+-> `{ userId, publicKeyAlgorithm, publicKey }`
 
 `GET /api/zk/keys/lookup?email=<adresse>` (Discovery zum Teilen)
--> `{ userId, publicKey }`
+-> `{ userId, publicKeyAlgorithm, publicKey }`
 -> `404 not_found`, wenn die Identität nicht registriert ist
 
 Hinweis: `encryptedSk` wird nur an den Eigentümer ausgeliefert. Andere erhalten
@@ -260,12 +278,12 @@ expliziten Löschung bestehen und werden dann unzugänglich)
 -> `[{ id, ownerId, updatedAt, rev }]` (ohne Chiffrat)
 
 `GET /api/zk/chats/{id}`
--> `{ id, ownerId, rev, ciphertext, iv, metadataCt, metadataIv, envelopes:[{recipientId, wrappedKey, wrappedKeyIv}] }`
+-> `{ id, ownerId, rev, ciphertext, iv, metadataCt, metadataIv, envelopes:[{recipientId, envelopeAlgorithm, ephemeralPublicKey, wrappedKey, wrappedKeyIv}] }`
 
 `PUT /api/zk/chats/{id}`
 
 ```
-{ ciphertext, iv, metadataCt, metadataIv, selfEnvelope:{wrappedKey, wrappedKeyIv}, baseRev? }
+{ ciphertext, iv, metadataCt, metadataIv, selfEnvelope:{envelopeAlgorithm, ephemeralPublicKey, wrappedKey, wrappedKeyIv}, baseRev? }
 -> 201 neu / 200 aktualisiert
 -> 409 { currentRev } bei Konflikt (Last-Write-Wins oder Client-Merge)
 ```
@@ -273,7 +291,7 @@ expliziten Löschung bestehen und werden dann unzugänglich)
 `POST /api/zk/chats/{id}/share`
 
 ```
-{ recipientId, wrappedKey, wrappedKeyIv }
+{ recipientId, envelopeAlgorithm, ephemeralPublicKey, wrappedKey, wrappedKeyIv }
 -> 201
 -> 403 wenn der Aufrufer selbst keine Hülle besitzt
 ```
@@ -297,7 +315,10 @@ expliziten Löschung bestehen und werden dann unzugänglich)
 
 - Max. Chiffratgröße z. B. 5 MB pro Chat; größere Inhalte chunked
   (`/chats/{id}/blobs/{n}`).
-- `wrappedKey` 256 Byte (RSA-4096), `iv` 12 Byte, `credentialId` < 1024 Byte.
+- ECDH-Hüllen verwenden einen etwa 91 Byte großen P-256-SPKI-Public-Key,
+  12 Byte IV und 48 Byte Chiffrat.
+  RSA-OAEP bleibt für vorhandene Schlüssel lesbar und darf bis zu 1024 Byte groß
+  sein. `credentialId` bleibt < 1024 Byte.
 - Rate Limit je Nutzer für Schreibzugriffe.
 - Kein serverseitiges Logging von Request-Bodies.
 
@@ -334,25 +355,27 @@ expliziten Löschung bestehen und werden dann unzugänglich)
    - typisierter API-Client für `/api/zk/...` mit CSRF/Credentials.
 5. **Opt-in-Schalter** in `src/chat/ChatOptions.tsx` (Benutzer-Menü)
    - neue Option `general.zkStorage` (Default `false`) in
-     `context/types.ts` + `initState.ts` + `utils/options.ts`.
+     `context/types.ts` + `initState.ts`.
    - Toggle „Verschlüsselte geräteübergreifende Speicherung“: beim Einschalten
      Registrierung/enable, beim Ausschalten Opt-out + `clearPrivateKey()`.
    - Zustandsanzeige des `enabled-locked`-Falls („entsperren“).
-6. **Integration** in Chat-Provider/History (Upload beim Speichern, Download
-   beim Laden, Share-Aktion mit Public-Key-Discovery) – als Folgeschritt, hier
-   vorbereitet.
+6. **Integration** in Chat-Provider/History: Beim Aktivieren werden vorhandene
+   lokale Chats verschlüsselt hochgeladen. Remote-Chats werden beim Entsperren
+   geladen; spätere Änderungen und lokale Löschungen werden synchronisiert.
+   Bei gleichen IDs ersetzt beim Wiederherstellen der Vault die lokale Version;
+   lokale Chats ohne Remote-Gegenstück werden migriert. Gleichzeitige Änderungen
+   werden mit `rev` nach dem Last-Write-Wins-Prinzip aufgelöst. Teilen ist noch
+   nicht in der Oberfläche integriert.
 7. **Tests** unter `src/chat/utils/__tests__` und `src/chat/service/__tests__`
    (Roundtrips, Fehlerfälle, Envelope-Sharing, API-Vertrag).
 
 ## 9. Offene Fragen an den Auftraggeber
 
-- Sync-Verhalten: Server als Source of Truth oder Merge mit lokalem
-  `localStorage`? (Vorschlag: Server führend, `rev`-basiert.)
 - Teilen synchron (Empfänger bereits registriert) oder asynchron via
   Einladungslink? (Design deckt beide ab; nur der Empfänger-Public-Key muss
   vorliegen.)
 - Public-Key-Discovery: Server-Lookup (4.5 A, Default) oder empfänger-initiiert
   (4.5 B)? Hängt davon ab, ob ein zentrales Verzeichnis gewünscht ist.
-- Optimaler `SK_user`-Algorithmus: RSA-OAEP-4096 (im Kommentar vorgeschlagen)
-  oder ECDH P-256/kurvenbasiert (kleinere Hüllen)? Aktuell: RSA-OAEP-4096.
+- Neue Nutzerschlüssel verwenden ECDH P-256. Vorhandene RSA-OAEP-Schlüssel
+  werden anhand des gespeicherten Algorithmus weiter unterstützt.
 - Aufbewahrung/Recovery bei Passkey-Verlust.

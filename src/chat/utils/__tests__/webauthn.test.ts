@@ -10,6 +10,13 @@ function makeCredential(prfOutput?: ArrayBuffer) {
   const rawId = crypto.getRandomValues(new Uint8Array(16)).buffer;
   return {
     rawId,
+    response: {
+      attestationObject: new ArrayBuffer(1),
+      clientDataJSON: new ArrayBuffer(1),
+      authenticatorData: new ArrayBuffer(1),
+      signature: new ArrayBuffer(1),
+      getPublicKey: () => new ArrayBuffer(1),
+    },
     getClientExtensionResults: () =>
       prfOutput ? { prf: { results: { first: prfOutput } } } : {},
   };

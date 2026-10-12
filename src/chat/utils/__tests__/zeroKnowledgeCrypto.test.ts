@@ -13,6 +13,7 @@ import {
   generateUserKeyPair,
   getPrfSalt,
   importPublicKey,
+  LEGACY_RSA_KEY_ALGORITHM,
   unwrapChatKey,
   wrapChatKey,
 } from "../zeroKnowledgeCrypto";
@@ -73,7 +74,11 @@ describe("private key wrapping with K_pass", () => {
     const encrypted = await encryptPrivateKey(pair.privateKey, kPass);
     expect(encrypted.encryptedKey).toBeTruthy();
 
-    const restored = await decryptPrivateKey(encrypted, kPass);
+    const restored = await decryptPrivateKey(
+      encrypted,
+      kPass,
+      LEGACY_RSA_KEY_ALGORITHM
+    );
     const chatKey = await generateChatKey();
     const wrapped = await wrapChatKey(chatKey, pair.publicKey);
     const unwrapped = await unwrapChatKey(wrapped, restored);
@@ -90,7 +95,9 @@ describe("private key wrapping with K_pass", () => {
     const wrongKey = await deriveKeyFromPrf(
       crypto.getRandomValues(new Uint8Array(32))
     );
-    await expect(decryptPrivateKey(encrypted, wrongKey)).rejects.toThrow();
+    await expect(
+      decryptPrivateKey(encrypted, wrongKey, LEGACY_RSA_KEY_ALGORITHM)
+    ).rejects.toThrow();
   });
 });
 
@@ -120,8 +127,13 @@ describe("chat encryption and sharing", () => {
       {
         recipientId: "alice",
         publicKey: await exportPublicKey(alice.publicKey),
+        keyAlgorithm: LEGACY_RSA_KEY_ALGORITHM,
       },
-      { recipientId: "bob", publicKey: await exportPublicKey(bob.publicKey) },
+      {
+        recipientId: "bob",
+        publicKey: await exportPublicKey(bob.publicKey),
+        keyAlgorithm: LEGACY_RSA_KEY_ALGORITHM,
+      },
     ]);
     expect(envelopes.map((e) => e.recipientId)).toEqual(["alice", "bob"]);
 
@@ -139,7 +151,8 @@ describe("chat encryption and sharing", () => {
     const chatKey = await generateChatKey();
     const wrapped = await wrapChatKey(
       chatKey,
-      await exportPublicKey(alice.publicKey)
+      await exportPublicKey(alice.publicKey),
+      LEGACY_RSA_KEY_ALGORITHM
     );
     await expect(unwrapChatKey(wrapped, mallory.privateKey)).rejects.toThrow();
   });
@@ -147,7 +160,8 @@ describe("chat encryption and sharing", () => {
   it("imports an exported public key so an owner can share", async () => {
     const recipient = await generateUserKeyPair(TEST_MODULUS);
     const imported = await importPublicKey(
-      await exportPublicKey(recipient.publicKey)
+      await exportPublicKey(recipient.publicKey),
+      LEGACY_RSA_KEY_ALGORITHM
     );
     const chatKey = await generateChatKey();
     const wrapped = await wrapChatKey(chatKey, imported);
