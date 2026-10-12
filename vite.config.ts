@@ -52,6 +52,7 @@ function createApiProxy(target: string, devJwtToken?: string): ProxyOptions {
                 proxyReq.setHeader("X-Forwarded-Host", host);
                 proxyReq.setHeader("X-Forwarded-Proto", forwardedProto);
                 proxyReq.setHeader("X-Forwarded-Port", forwardedPort || "");
+                proxyReq.setHeader("X-Forwarded-Prefix", "/api");
 
                 if (devJwtToken) {
                     const existingCookie = req.headers.cookie;

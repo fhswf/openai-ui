@@ -1,6 +1,16 @@
 export const LOGIN_RETRY_KEY = "LOGIN_RETRY_PENDING";
 
 export function getLoginUrl(): string {
+  if (import.meta.env.DEV) {
+    const origin = window.location.origin;
+    const params = new URLSearchParams({
+      return_url: `${origin}/`,
+      callback_uri: `${origin}/api/callback`,
+    });
+
+    return `/api/login?${params.toString()}`;
+  }
+
   return import.meta.env.VITE_LOGIN_URL || "/api/login";
 }
 
