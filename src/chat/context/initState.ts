@@ -49,6 +49,7 @@ export const initState: GlobalState = {
       size: "normal",
       codeEditor: false,
       gravatar: false,
+      zkStorage: false,
     },
     openai: {
       baseUrl: defaultOpenAIBaseUrl,

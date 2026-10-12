@@ -26,6 +26,7 @@ export type GeneralOptions = {
   sendCommand: string;
   size: string;
   codeEditor: boolean;
+  zkStorage: boolean;
 };
 
 export type AccountOptions = {

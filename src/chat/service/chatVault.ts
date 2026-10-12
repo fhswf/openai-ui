@@ -10,13 +10,16 @@ export type VaultUserKey = {
   userId: string;
   credentialId: string;
   publicKey: string;
-  encryptedSk: string;
-  encryptedSkIv: string;
+  /** Missing metadata identifies legacy RSA keys stored before algorithm tags. */
+  publicKeyAlgorithm?: "RSA-OAEP-SHA256" | "ECDH-P256";
+  encryptedSk?: string;
+  encryptedSkIv?: string;
 };
 
 export type VaultPublicKey = {
   userId: string;
   publicKey: string;
+  publicKeyAlgorithm?: "RSA-OAEP-SHA256" | "ECDH-P256";
 };
 
 export type VaultChatSummary = {
@@ -28,8 +31,12 @@ export type VaultChatSummary = {
 
 export type VaultEnvelope = {
   recipientId: string;
+  envelopeAlgorithm?:
+    | "RSA-OAEP-SHA256"
+    | "ECDH-P256-HKDF-SHA256-AES-256-GCM";
   wrappedKey: string;
   wrappedKeyIv?: string;
+  ephemeralPublicKey?: string;
 };
 
 export type VaultChat = {
@@ -53,18 +60,26 @@ export type PutChatPayload = {
 };
 
 export type VaultErrorBody = {
-  error?: { code?: string; message?: string };
+  currentRev?: number;
+  error?: { code?: string; message?: string; currentRev?: number };
 };
 
 export class VaultError extends Error {
   readonly status: number;
   readonly code?: string;
+  readonly currentRev?: number;
 
-  constructor(status: number, code: string | undefined, message: string) {
+  constructor(
+    status: number,
+    code: string | undefined,
+    message: string,
+    currentRev?: number
+  ) {
     super(message);
     this.name = "VaultError";
     this.status = status;
     this.code = code;
+    this.currentRev = currentRev;
   }
 }
 
@@ -97,14 +112,16 @@ async function request<T>(
   if (!response.ok) {
     let code: string | undefined;
     let message = response.statusText;
+    let currentRev: number | undefined;
     try {
       const body = (await response.json()) as VaultErrorBody;
       code = body.error?.code;
       message = body.error?.message ?? message;
+      currentRev = body.currentRev ?? body.error?.currentRev;
     } catch {
       // Non-JSON error body; keep the status text.
     }
-    throw new VaultError(response.status, code, message);
+    throw new VaultError(response.status, code, message, currentRev);
   }
 
   const text = await response.text();
@@ -126,9 +143,11 @@ export const chatVault = {
     payload: {
       credentialId: string;
       publicKey: string;
+      publicKeyAlgorithm: "RSA-OAEP-SHA256" | "ECDH-P256";
       encryptedSk: string;
       encryptedSkIv: string;
       challenge: string;
+      credentialPublicKey: string;
     },
     options?: RequestOptions
   ): Promise<{ userId: string; createdAt: string }> {
@@ -153,6 +172,7 @@ export const chatVault = {
   submitAssertion(
     payload: {
       credentialId: string;
+      challenge: string;
       authenticatorData: string;
       clientDataJSON: string;
       signature: string;

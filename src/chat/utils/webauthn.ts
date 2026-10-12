@@ -29,6 +29,14 @@ export function isPrfSupported(): boolean {
 export type RegisteredPasskey = {
   credentialId: string;
   prfOutput: ArrayBuffer;
+  credentialPublicKey: string;
+};
+
+export type AssertedPasskey = {
+  prfOutput: ArrayBuffer;
+  authenticatorData: string;
+  clientDataJSON: string;
+  signature: string;
 };
 
 function extractPrfOutput(credential: Credential | null): ArrayBuffer {
@@ -85,9 +93,21 @@ export async function registerPasskey(params: {
     },
   })) as PublicKeyCredential | null;
 
+  if (!credential) {
+    throw new Error("Passkey creation was cancelled");
+  }
+  const response = credential.response as AuthenticatorAttestationResponse;
+  const credentialPublicKey = response.getPublicKey();
+  if (!credentialPublicKey) {
+    throw new Error(
+      "This browser cannot export the passkey public key required by the chat vault"
+    );
+  }
+
   return {
-    credentialId: bufferToBase64Url(credential!.rawId),
+    credentialId: bufferToBase64Url(credential.rawId),
     prfOutput: extractPrfOutput(credential),
+    credentialPublicKey: bufferToBase64Url(credentialPublicKey),
   };
 }
 
@@ -95,6 +115,41 @@ export async function registerPasskey(params: {
  * Assert an existing passkey and re-derive the PRF output. The same fixed salt
  * yields byte-identical output for the same credential.
  */
+export async function assertPasskeyWithResponse(params: {
+  credentialId: string;
+  challenge: ArrayBuffer;
+  rpId?: string;
+}): Promise<AssertedPasskey> {
+  const assertion = (await navigator.credentials.get({
+    publicKey: {
+      challenge: params.challenge,
+      rpId: params.rpId ?? window.location.hostname,
+      allowCredentials: [
+        {
+          id: base64UrlToBuffer(params.credentialId),
+          type: "public-key",
+        },
+      ],
+      userVerification: "required",
+      extensions: {
+        prf: { eval: { first: getPrfSalt() } },
+      },
+    },
+  })) as PublicKeyCredential | null;
+
+  if (!assertion) {
+    throw new Error("Passkey authentication was cancelled");
+  }
+
+  const response = assertion.response as AuthenticatorAssertionResponse;
+  return {
+    prfOutput: extractPrfOutput(assertion),
+    authenticatorData: bufferToBase64Url(response.authenticatorData),
+    clientDataJSON: bufferToBase64Url(response.clientDataJSON),
+    signature: bufferToBase64Url(response.signature),
+  };
+}
+
 export async function assertPasskey(params: {
   credentialId: string;
   challenge: ArrayBuffer;

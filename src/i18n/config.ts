@@ -57,6 +57,28 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "Temperature is a parameter that controls the randomness in the model's output by scaling the logits before applying softmax.",
           theme_help: "Select a color scheme for the user interface.",
           language_help: "Select a language for the user interface.",
+          zk_storage_label: "Encrypted cross-device chat storage",
+          zk_storage_help:
+            "Chats are encrypted in this browser before they are synced. A passkey with WebAuthn PRF support is required.",
+          zk_storage_enabled: "Encrypted chat storage enabled",
+          zk_storage_enabled_help:
+            "Your chats will now be synced in encrypted form. The server cannot read their contents.",
+          zk_storage_disabled: "Encrypted chat storage disabled",
+          zk_storage_disabled_help:
+            "The recovery key was removed. Existing server copies remain encrypted and can no longer be opened; chats already stored in this browser remain available locally.",
+          zk_storage_disable_confirm:
+            "Turn off encrypted chat storage? This deletes your recovery key from the server. Server chat copies will remain encrypted but become inaccessible. Chats already stored in this browser remain available locally.",
+          zk_storage_checking: "Checking this device's recovery key…",
+          zk_storage_unlocked: "This device can open your encrypted chats.",
+          zk_storage_locked_help:
+            "Use the passkey created when you enabled this feature to unlock chats stored on your account.",
+          zk_storage_locked:
+            "Unlock with your passkey to access your encrypted chats on this device.",
+          zk_storage_sync_error: "Encrypted chat sync failed",
+          zk_storage_unlock: "Unlock this device",
+          zk_storage_unlocking: "Unlocking…",
+          zk_storage_error: "Encrypted chat storage could not be changed",
+          unknown_error: "An unexpected error occurred.",
           send_help: "Select a button for sending messages.",
           fontsize_help: "Select the font size of the user interface.",
           openai_model_help: "Select a model for AI support.",
@@ -332,6 +354,28 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           help_gravatar:
             "Falls Sie bei Gravatar registriert sind, aktivieren Sie diese Option, um Ihr Profilbild anzuzeigen. Gravatar ist ein Dienst, der Ihr Profilbild anhand Ihrer E-Mail-Adresse erkennt. <strong>Achtung</strong>: Ihre IP-Adresse wird an Gravatar übertragen.",
           gravatar: "Gravatar",
+          zk_storage_label: "Verschlüsselte geräteübergreifende Chatspeicherung",
+          zk_storage_help:
+            "Chats werden in diesem Browser verschlüsselt, bevor sie synchronisiert werden. Erforderlich ist ein Passkey mit WebAuthn-PRF-Unterstützung.",
+          zk_storage_enabled: "Verschlüsselte Chatspeicherung aktiviert",
+          zk_storage_enabled_help:
+            "Ihre Chats werden jetzt verschlüsselt synchronisiert. Der Server kann ihre Inhalte nicht lesen.",
+          zk_storage_disabled: "Verschlüsselte Chatspeicherung deaktiviert",
+          zk_storage_disabled_help:
+            "Der Wiederherstellungsschlüssel wurde entfernt. Vorhandene Serverkopien bleiben verschlüsselt und können nicht mehr geöffnet werden. Chats, die bereits in diesem Browser gespeichert sind, bleiben lokal verfügbar.",
+          zk_storage_disable_confirm:
+            "Verschlüsselte Chatspeicherung ausschalten? Dadurch wird Ihr Wiederherstellungsschlüssel vom Server gelöscht. Vorhandene Serverkopien bleiben verschlüsselt und sind nicht mehr zugänglich. Chats, die bereits in diesem Browser gespeichert sind, bleiben lokal verfügbar.",
+          zk_storage_checking: "Wiederherstellungsschlüssel auf diesem Gerät wird geprüft …",
+          zk_storage_unlocked: "Dieses Gerät kann Ihre verschlüsselten Chats öffnen.",
+          zk_storage_locked_help:
+            "Verwenden Sie den bei der Aktivierung erstellten Passkey, um die Chats Ihres Kontos zu entsperren.",
+          zk_storage_locked:
+            "Entsperren Sie Ihre verschlüsselten Chats auf diesem Gerät mit Ihrem Passkey.",
+          zk_storage_sync_error: "Synchronisierung der verschlüsselten Chats fehlgeschlagen",
+          zk_storage_unlock: "Dieses Gerät entsperren",
+          zk_storage_unlocking: "Wird entsperrt …",
+          zk_storage_error: "Die verschlüsselte Chatspeicherung konnte nicht geändert werden",
+          unknown_error: "Ein unerwarteter Fehler ist aufgetreten.",
           open_issue: "Melde einen Verbesserungswunsch",
           theme_style: "Farbschema",
           language: "Sprache",
