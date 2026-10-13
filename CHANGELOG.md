@@ -5,6 +5,27 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.51.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.50.1...openai-ui-v0.51.0) (2026-10-13)
+
+
+### Features
+
+* add citation metadata for OpenAI-UI ([61bf9c7](https://github.com/fhswf/openai-ui/commit/61bf9c7f6d2608eca90b38d91b64a74d5499e89f))
+* implement zero-knowledge storage for encrypted chat synchronization ([43f814d](https://github.com/fhswf/openai-ui/commit/43f814d160f7cdcd5f0aff2b341e49e51d9b0582))
+* zero-knowledge chat persistence (client crypto, vault client, plan) ([c32eb4f](https://github.com/fhswf/openai-ui/commit/c32eb4f034fb6830b592c80184d9070c5203e7ac))
+* zero-knowledge chat persistence (client crypto, vault client, plan) ([7a62727](https://github.com/fhswf/openai-ui/commit/7a62727ffeec27951aab70bf12c06a47b9c15349))
+* zero-knowledge, device-independent chat persistence (plan + client crypto) ([adbd5ef](https://github.com/fhswf/openai-ui/commit/adbd5ef4203318185e096763b35c8cb20403bbec))
+
+
+### Bug Fixes
+
+* **e2e:** make authorized specs hermetic by stubbing /api/user ([a31c7c4](https://github.com/fhswf/openai-ui/commit/a31c7c4d78d287f477d846921fd24225100c3e4e))
+* **e2e:** make authorized specs hermetic by stubbing /api/user ([0ca0e22](https://github.com/fhswf/openai-ui/commit/0ca0e22b1b38b2268ba301971c53d6977a3555e7))
+* improve login URL handling for local environments ([dae150f](https://github.com/fhswf/openai-ui/commit/dae150faa2fbd0b0f164abbc29771babbbf7be22))
+* update login URL handling and add X-Forwarded-Prefix header ([54cdcda](https://github.com/fhswf/openai-ui/commit/54cdcda4c81cefb3cc3179697b327575f272445e))
+* update login URL handling and add X-Forwarded-Prefix header ([2ee2270](https://github.com/fhswf/openai-ui/commit/2ee22704a466cea166ed4257ecba862a9043f480))
+* update VITE_API_BASE_URL to relative path ([346f579](https://github.com/fhswf/openai-ui/commit/346f579cb414f2acdcd5ec729e688c47964da560))
+
 ## [0.50.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.50.0...openai-ui-v0.50.1) (2026-10-05)
 
 
