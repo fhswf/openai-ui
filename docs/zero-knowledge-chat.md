@@ -117,16 +117,22 @@ IndexedDB-Cache via `clearPrivateKey()` geleert.
 ### 4.2 Login auf neuem Gerät
 
 1. OIDC-Login.
-2. IndexedDB ist leer -> `GET /zk/keys/me` liefert die Credential-ID und den
-   Public Key und Algorithmus, aber noch nicht `encryptedSK`.
-3. `POST /zk/keys/assertion-challenge` anfordern und
+2. Die App fragt `GET /zk/keys/me` ab. Wenn für das Konto bereits ein
+   Vault-Schlüssel existiert, bietet sie an, die verschlüsselten Chats auf
+   diesem Gerät zu entsperren und zu synchronisieren. Die lokale Einstellung
+   wird erst nach erfolgreichem Entsperren aktiviert.
+3. Nach Zustimmung: Ist IndexedDB leer, liefert `GET /zk/keys/me` die
+   Credential-ID und den Public Key und Algorithmus, aber noch nicht
+   `encryptedSK`.
+4. `POST /zk/keys/assertion-challenge` anfordern und
    `navigator.credentials.get()` mit demselben `prfSalt` aufrufen.
-4. Die Assertion einschließlich des Challenges an `POST /zk/keys/assertion`
+5. Die Assertion einschließlich des Challenges an `POST /zk/keys/assertion`
    senden. Nach erfolgreicher Prüfung liefert ein erneutes `GET /zk/keys/me`
    auch `encryptedSK` und IV.
-5. PRF-Output -> `K_pass` (identisch zu 4.1) und `encryptedSK` damit
+6. PRF-Output -> `K_pass` (identisch zu 4.1) und `encryptedSK` damit
    entschlüsseln -> `SK_user`.
-6. `SK_user` in IndexedDB cachen, Chat entsperren.
+7. `SK_user` in IndexedDB cachen, Chat entsperren und die Synchronisierung
+   starten.
 
 ### 4.3 Chat speichern
 
