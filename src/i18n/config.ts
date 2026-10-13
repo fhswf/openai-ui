@@ -74,6 +74,11 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "Use the passkey created when you enabled this feature to unlock chats stored on your account.",
           zk_storage_locked:
             "Unlock with your passkey to access your encrypted chats on this device.",
+          zk_storage_sync_prompt_title: "Encrypted chats are available",
+          zk_storage_sync_prompt_description:
+            "You enabled encrypted chat storage before. Unlock it with your passkey to sync your chats on this device.",
+          zk_storage_sync_prompt_action: "Unlock and sync chats",
+          zk_storage_sync_prompt_later: "Not now",
           zk_storage_sync_error: "Encrypted chat sync failed",
           zk_storage_unlock: "Unlock this device",
           zk_storage_unlocking: "Unlocking…",
@@ -371,6 +376,11 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Verwenden Sie den bei der Aktivierung erstellten Passkey, um die Chats Ihres Kontos zu entsperren.",
           zk_storage_locked:
             "Entsperren Sie Ihre verschlüsselten Chats auf diesem Gerät mit Ihrem Passkey.",
+          zk_storage_sync_prompt_title: "Verschlüsselte Chats sind verfügbar",
+          zk_storage_sync_prompt_description:
+            "Sie haben die verschlüsselte Chatspeicherung bereits aktiviert. Entsperren Sie sie mit Ihrem Passkey, um Ihre Chats auf diesem Gerät zu synchronisieren.",
+          zk_storage_sync_prompt_action: "Chats entsperren und synchronisieren",
+          zk_storage_sync_prompt_later: "Später",
           zk_storage_sync_error: "Synchronisierung der verschlüsselten Chats fehlgeschlagen",
           zk_storage_unlock: "Dieses Gerät entsperren",
           zk_storage_unlocking: "Wird entsperrt …",
