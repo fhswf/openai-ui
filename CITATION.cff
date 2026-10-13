@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using this metadata."
+type: software
+title: "OpenAI-UI: A simple UI for OpenAI's Chat API"
+abstract: >-
+  A privacy-focused web interface for OpenAI APIs, with optional proxy access,
+  single sign-on, and encrypted cross-device chat storage.
+authors:
+  - family-names: Gawron
+    given-names: Christian
+    affiliation: Fachhochschule Südwestfalen
+    orcid: "https://orcid.org/0000-0001-7139-7920"
+  - family-names: Saul
+    given-names: Nina
+  - family-names: Lewicki
+    given-names: Bryan
+  - family-names: Janson
+    given-names: Lennart
+version: 0.50.1
+repository-code: "https://github.com/fhswf/openai-ui"
+license: MIT

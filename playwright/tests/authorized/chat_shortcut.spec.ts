@@ -1,7 +1,13 @@
 import { test, expect } from '../baseFixtures';
-import { acceptTermsIfVisible } from '../testHelpers';
+import {
+    acceptTermsIfVisible,
+    mockUserEndpoint,
+    mockResponsesEndpoint,
+} from '../testHelpers';
 
 test('send message via keyboard shortcut', async ({ page }) => {
+    await mockUserEndpoint(page);
+    await mockResponsesEndpoint(page);
     await page.goto('/');
 
     // Conditionally accept terms

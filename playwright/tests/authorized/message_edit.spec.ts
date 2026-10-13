@@ -1,9 +1,15 @@
 import { test, expect } from '../baseFixtures';
-import { acceptTermsIfVisible } from '../testHelpers';
+import {
+    acceptTermsIfVisible,
+    mockUserEndpoint,
+    mockResponsesEndpoint,
+} from '../testHelpers';
 
 test.describe("Message Editing", () => {
     test("should populate input when editing a message with text and image", async ({ page, browserName }) => {
         test.skip(browserName === 'webkit', "Skipping Webkit due to issues with OPFS");
+        await mockUserEndpoint(page);
+        await mockResponsesEndpoint(page);
         await page.goto("/");
 
         // Conditionally accept terms

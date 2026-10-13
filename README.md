@@ -16,3 +16,10 @@ This project is based on
 - Single Sign-On (SSO) via OpenID Connect (OIDC) for authentication.
 - Markdown support for chat messages.
 - Code editor for chat messages.
+
+## Zero-knowledge chat persistence
+
+Encrypted cross-device chat storage is opt-in from **Settings → General**. The
+browser encrypts chats before syncing them through the `/api/zk` vault API; a
+passkey with WebAuthn PRF support is required. The proxy backend must implement
+the API contract described in [docs/zero-knowledge-chat.md](docs/zero-knowledge-chat.md).
