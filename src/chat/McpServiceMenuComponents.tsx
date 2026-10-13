@@ -21,19 +21,22 @@ export function ToolOptionsGroup({
   return (
     <Menu.ItemGroup>
       <Menu.ItemGroupLabel>{t("tool_options")}</Menu.ItemGroupLabel>
-      {Array.from(tools.entries()).map(([key, value]) => (
-        <Menu.CheckboxItem
-          key={key}
-          value={value.type === "mcp" ? key : value.type}
-          checked={toolsEnabled.has(key)}
-          onCheckedChange={(event) => {
-            onToolChange({ key, tool: value, checkedChange: event });
-          }}
-        >
-          <Menu.ItemIndicator />
-          {key}
-        </Menu.CheckboxItem>
-      ))}
+      {Array.from(tools.entries())
+        // Document collections are listed in their own submenu.
+        .filter(([, value]) => value.type !== "file_search")
+        .map(([key, value]) => (
+          <Menu.CheckboxItem
+            key={key}
+            value={value.type === "mcp" ? key : value.type}
+            checked={toolsEnabled.has(key)}
+            onCheckedChange={(event) => {
+              onToolChange({ key, tool: value, checkedChange: event });
+            }}
+          >
+            <Menu.ItemIndicator />
+            {key}
+          </Menu.CheckboxItem>
+        ))}
     </Menu.ItemGroup>
   );
 }
@@ -60,7 +63,10 @@ export function McpServicesMenu({
       </Menu.TriggerItem>
       <Portal>
         <Menu.Positioner>
-          <Menu.Content>
+          <Menu.Content
+            _open={{ animation: "none" }}
+            _closed={{ animation: "none" }}
+          >
             {Array.from(mcpTools.entries()).map(([key, tool]) => (
               <Menu.CheckboxItem
                 key={key}

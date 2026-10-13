@@ -11,6 +11,7 @@ import OpenAI, { APIError } from "openai";
 import { t } from "i18next";
 import { Stream } from "openai/streaming.mjs";
 import {
+  ResponseFileSearchToolCall,
   ResponseIncludable,
   ResponseInput,
   ResponseInputItem,
@@ -25,6 +26,12 @@ import {
   readOpfsFileAsDataUrl,
 } from "../utils/attachments";
 import { supportsReasoningEffort } from "../utils/options";
+import {
+  getLastUserQuery,
+  injectFileSearchContext,
+  retrieveFileSearchContext,
+  splitFileSearchTools,
+} from "../utils/fileSearch";
 import * as Sentry from "@sentry/react";
 
 export const apiBaseUrl =
@@ -183,12 +190,38 @@ export async function createResponse(
     );
   }
 
-  const tools: Tool[] = [];
+  const enabledTools: Tool[] = [];
 
   options.openai.toolsEnabled.forEach((tool) => {
-    tools.push(options.openai.tools.get(tool));
+    enabledTools.push(options.openai.tools.get(tool));
   });
+  const { tools, vectorStoreIds } = splitFileSearchTools(enabledTools);
   console.log("createResponse: tools: %o", tools);
+
+  // Approval responses (explicitInput) continue a previous turn; only search
+  // the vector stores for new user messages.
+  const initialToolsUsed: ResponseFileSearchToolCall[] = [];
+  const query = explicitInput ? "" : getLastUserQuery(input);
+  if (vectorStoreIds.length > 0 && query) {
+    setIs({ ...is, thinking: true, tool: "file_search" });
+    const retrieval = await retrieveFileSearchContext(
+      options,
+      vectorStoreIds,
+      query
+    );
+    if (retrieval.failedStoreIds.length > 0) {
+      toaster.create({
+        title: t("file_search_failed"),
+        description: t("file_search_failed_description"),
+        duration: 5000,
+        type: "warning",
+      });
+    }
+    if (retrieval.context) {
+      input = injectFileSearchContext(input, retrieval.context);
+    }
+    initialToolsUsed.push(retrieval.toolCall);
+  }
 
   const response_options = {
     model: options.openai.model,
@@ -233,7 +266,11 @@ export async function createResponse(
       setIs({ ...is, thinking: true });
       console.log("stream: %o", stream);
 
-      const eventProcessor = new EventProcessor(stream, global);
+      const eventProcessor = new EventProcessor(
+        stream,
+        global,
+        initialToolsUsed
+      );
       setState({ eventProcessor });
 
       const processStream = async () => {
@@ -339,12 +376,16 @@ class EventProcessor {
   global: Partial<GlobalState> & Partial<GlobalActions>;
   responseId?: string;
   approvalRequests: Map<string, { item: any; decision?: boolean }> = new Map();
+  // Tool calls made before the request, e.g. the client-side file search.
+  initialToolsUsed: any[];
   static opfs: FileSystemDirectoryHandle = null;
 
   constructor(
     stream: Stream<ResponseStreamEvent>,
-    global: Partial<GlobalState> & Partial<GlobalActions>
+    global: Partial<GlobalState> & Partial<GlobalActions>,
+    initialToolsUsed: any[] = []
   ) {
+    this.initialToolsUsed = initialToolsUsed;
     const { chat, currentChat, setState, setIs } = global;
     this.stream = stream;
     this.chat = chat;
@@ -505,6 +546,9 @@ class EventProcessor {
           startTime: Date.now(),
           id: event.response.id,
         };
+        if (this.initialToolsUsed.length > 0) {
+          message.toolsUsed = [...this.initialToolsUsed];
+        }
         this.responseId = event.response.id;
         this.approvalRequests.clear();
         this.setState({ typeingMessage: {} });

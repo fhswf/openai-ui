@@ -8,6 +8,7 @@ import React, {
 import {
   Badge,
   Button,
+  Checkbox,
   CloseButton,
   Dialog,
   Field,
@@ -32,6 +33,10 @@ import {
 } from "react-icons/md";
 import { useGlobal } from "./context";
 import { Options } from "./context/types";
+import {
+  RegistryUpdate,
+  useFileSearchRegistry,
+} from "./hooks/useFileSearchRegistry";
 import { toaster } from "../components/ui/toaster";
 import {
   INPUT_FILE_EXTENSIONS,
@@ -49,6 +54,10 @@ import {
   renameVectorStore,
   uploadFileToVectorStore,
 } from "./service/vectorStores";
+import {
+  renameVectorStoreInChat,
+  setVectorStoreInChat,
+} from "./utils/fileSearch";
 
 function showError(title: string, error: unknown) {
   console.error(title, error);
@@ -301,12 +310,20 @@ function VectorStoreFiles({
 }
 
 interface VectorStoreRowProps {
+  inChat: boolean;
   onChanged: VoidFunction;
+  onRegistryChange: React.Dispatch<RegistryUpdate>;
   options: Options;
   store: VectorStore;
 }
 
-function VectorStoreRow({ onChanged, options, store }: VectorStoreRowProps) {
+function VectorStoreRow({
+  inChat,
+  onChanged,
+  onRegistryChange,
+  options,
+  store,
+}: VectorStoreRowProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -321,6 +338,9 @@ function VectorStoreRow({ onChanged, options, store }: VectorStoreRowProps) {
     }
     try {
       await renameVectorStore(options, store.id, trimmed);
+      onRegistryChange((registry) =>
+        renameVectorStoreInChat(registry, { id: store.id, name: trimmed })
+      );
       setEditing(false);
       onChanged();
     } catch (error) {
@@ -331,6 +351,9 @@ function VectorStoreRow({ onChanged, options, store }: VectorStoreRowProps) {
   const handleDelete = async () => {
     try {
       await deleteVectorStore(options, store.id);
+      onRegistryChange((registry) =>
+        setVectorStoreInChat(registry, store, false)
+      );
       onChanged();
     } catch (error) {
       showError(t("vector_store_delete_error"), error);
@@ -358,7 +381,10 @@ function VectorStoreRow({ onChanged, options, store }: VectorStoreRowProps) {
               onChange={(event) => setName(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") void handleRename();
-                if (event.key === "Escape") setEditing(false);
+                if (event.key === "Escape") {
+                  setName(store.name);
+                  setEditing(false);
+                }
               }}
             />
           ) : (
@@ -369,6 +395,24 @@ function VectorStoreRow({ onChanged, options, store }: VectorStoreRowProps) {
           </Text>
         </HStack>
         <HStack gap={1}>
+          <Checkbox.Root
+            size="sm"
+            variant="outline"
+            marginInlineEnd={2}
+            checked={inChat}
+            onCheckedChange={(event) =>
+              onRegistryChange((registry) =>
+                setVectorStoreInChat(registry, store, event.checked === true)
+              )
+            }
+            data-testid={`vector-store-in-chat-${store.id}`}
+          >
+            <Checkbox.HiddenInput />
+            <Checkbox.Control />
+            <Checkbox.Label fontSize="sm" whiteSpace="nowrap">
+              {t("vector_store_use_in_chat")}
+            </Checkbox.Label>
+          </Checkbox.Root>
           {editing ? (
             <>
               <IconButton
@@ -541,6 +585,7 @@ export function VectorStoresDialog({
 }: VectorStoresDialogProps) {
   const { t } = useTranslation();
   const { options: globalOptions } = useGlobal();
+  const { updateRegistry, isInChat } = useFileSearchRegistry();
   const { apiKey, organizationId, vectorStoreBaseUrl } = globalOptions.openai;
   // Only reload when the connection settings change, not on every state update.
   const options = useMemo(
@@ -589,6 +634,8 @@ export function VectorStoresDialog({
                     store={store}
                     options={options}
                     onChanged={handleChanged}
+                    inChat={isInChat(store.id)}
+                    onRegistryChange={updateRegistry}
                   />
                 ))}
               </Stack>

@@ -77,6 +77,7 @@ import {
   McpToolMap,
   ToolChangeRequest,
 } from "./utils/mcpServices";
+import { DocumentsMenu } from "./DocumentsMenu";
 
 import "../assets/icon/style.css";
 
@@ -301,13 +302,7 @@ function ChatOptionsMenuContent({
             onEditMcp={onEditMcp}
             onToolChange={onToolChange}
           />
-          <Menu.Item
-            value="manage_vector_stores"
-            onClick={onManageVectorStores}
-            data-testid="vector-stores-manage"
-          >
-            {t("vector_stores_manage")}
-          </Menu.Item>
+          <DocumentsMenu onManage={onManageVectorStores} />
         </Menu.Content>
       </Menu.Positioner>
     </Menu.Root>

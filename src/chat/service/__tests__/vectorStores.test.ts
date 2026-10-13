@@ -167,10 +167,27 @@ describe("vectorStores service", () => {
 
     const results = await searchVectorStore(makeOptions(), "vs1", "Klausur", 3);
 
-    expect(client.vectorStores.search).toHaveBeenCalledWith("vs1", {
-      query: "Klausur",
-      max_num_results: 3,
-    });
+    expect(client.vectorStores.search).toHaveBeenCalledWith(
+      "vs1",
+      { query: "Klausur", max_num_results: 3 },
+      { timeout: 15_000, maxRetries: 1 }
+    );
     expect(results).toHaveLength(1);
+  });
+
+  it("looks up each file name only once", async () => {
+    client.vectorStores.files.list.mockImplementation(() =>
+      iterate([{ id: "file-cached", status: "completed" }])
+    );
+    client.files.retrieve.mockResolvedValue({
+      id: "file-cached",
+      filename: "cached.pdf",
+    });
+
+    await listVectorStoreFiles(makeOptions(), "vs1");
+    const files = await listVectorStoreFiles(makeOptions(), "vs1");
+
+    expect(files[0].filename).toBe("cached.pdf");
+    expect(client.files.retrieve).toHaveBeenCalledTimes(1);
   });
 });

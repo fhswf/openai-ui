@@ -223,6 +223,24 @@ function getToolInfo(
                 </VStack>
             );
             break;
+        case "file_search_call":
+            info.title = (tool as any).queries?.join(", ") || t("file_search_call_title");
+            info.items = (tool as any).results?.length ? (
+                <VStack alignItems="flex-start" gap={3}>
+                    {(tool as any).results.map((result: any, index: number) => (
+                        <Box key={index}>
+                            <Text fontWeight="medium">
+                                [{index + 1}] {result.filename}{" "}
+                                <Badge size="sm">{result.score?.toFixed(2)}</Badge>
+                            </Text>
+                            <Text fontSize="sm" color="fg.muted" lineClamp={4}>
+                                {result.text}
+                            </Text>
+                        </Box>
+                    ))}
+                </VStack>
+            ) : t("file_search_no_results");
+            break;
         case "code_interpreter_call":
             info.title = t("Code Interpreter Step") + " " + (index + 1);
             info.items = (

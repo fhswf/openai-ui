@@ -36,6 +36,17 @@ function legacyVectorStoreUrl(options: Options, vectorStoreId: string) {
 
 export type VectorStoreFileWithName = VectorStoreFile & { filename?: string };
 
+// The search runs before every chat request, so fail fast instead of using
+// the SDK default of a 10 minute timeout with two retries.
+const SEARCH_REQUEST_OPTIONS = { timeout: 15_000, maxRetries: 1 };
+
+// File names never change, so look each one up only once per session.
+const filenameCache = new Map<string, string>();
+
+function filenameCacheKey(options: Options, fileId: string) {
+  return `${getVectorStoreBaseUrl(options)}|${fileId}`;
+}
+
 export async function listVectorStores(
   options: Options
 ): Promise<VectorStore[]> {
@@ -91,8 +102,14 @@ export async function listVectorStoreFiles(
   // Attachments only carry the file id, so look up the original file names.
   return Promise.all(
     files.map(async (file) => {
+      const cacheKey = filenameCacheKey(options, file.id);
+      const cached = filenameCache.get(cacheKey);
+      if (cached) {
+        return { ...file, filename: cached };
+      }
       try {
         const original = await client.files.retrieve(file.id);
+        filenameCache.set(cacheKey, original.filename);
         return { ...file, filename: original.filename };
       } catch {
         return file;
@@ -129,6 +146,7 @@ export async function removeFileFromVectorStore(
 /** Deletes the uploaded file together with all of its attachments. */
 export async function deleteFile(options: Options, fileId: string) {
   const client = createVectorStoreClient(options);
+  filenameCache.delete(filenameCacheKey(options, fileId));
   return client.files.delete(fileId);
 }
 
@@ -139,9 +157,10 @@ export async function searchVectorStore(
   maxResults = 5
 ): Promise<VectorStoreSearchResponse[]> {
   const client = createVectorStoreClient(options);
-  const page = await client.vectorStores.search(vectorStoreId, {
-    query,
-    max_num_results: maxResults,
-  });
+  const page = await client.vectorStores.search(
+    vectorStoreId,
+    { query, max_num_results: maxResults },
+    SEARCH_REQUEST_OPTIONS
+  );
   return page.data;
 }
