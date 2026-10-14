@@ -100,10 +100,18 @@ export async function restoreVaultChats(
       (item) => item.recipientId === userKey.userId
     );
     if (!envelope) {
-      console.warn("No decryption key is available for vault chat %s", summary.id);
       if (summary.ownerId === userKey.userId && localById.has(summary.id)) {
         cache.revisions.set(summary.id, summary.rev);
         cache.owners.set(summary.id, summary.ownerId);
+        console.info(
+          "Vault chat %s has no envelope for the current key; re-encrypting from its local copy.",
+          summary.id
+        );
+      } else {
+        console.warn(
+          "No decryption key is available for vault chat %s",
+          summary.id
+        );
       }
       continue;
     }
@@ -114,10 +122,15 @@ export async function restoreVaultChats(
       chatKey = await unwrapChatKey(envelope, privateKey);
       chat = await decryptChatData<Chat>(encrypted, chatKey);
     } catch (error) {
-      console.warn("Could not decrypt vault chat %s:", summary.id, error);
       if (summary.ownerId === userKey.userId && localById.has(summary.id)) {
         cache.revisions.set(summary.id, summary.rev);
         cache.owners.set(summary.id, summary.ownerId);
+        console.info(
+          "Vault chat %s could not be opened with the current key; re-encrypting from its local copy.",
+          summary.id
+        );
+      } else {
+        console.warn("Could not decrypt vault chat %s:", summary.id, error);
       }
       continue;
     }
