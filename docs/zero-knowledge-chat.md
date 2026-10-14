@@ -22,8 +22,10 @@ Ziele
 - Wiederherstellung des eigenen Schlüssels auf einem neuen Gerät über den
   Passkey (WebAuthn PRF).
 - **Opt-in:** Die zentrale Speicherung ist standardmäßig aus. Schlüsselpaar,
-  Passkey und Upload passieren erst, wenn der Nutzer dies im Benutzer-Menü
-  aktiv explizit einschaltet. Ohne Opt-in bleibt alles wie bisher lokal.
+Passkey und Upload passieren erst, wenn der Nutzer dies im Benutzer-Menü
+aktiv explizit einschaltet. Bei der Registrierung benennt der Nutzer den
+Passkey oder das Gerät. Zusätzliche Passkeys können später im selben Menü
+hinzugefügt werden. Ohne Opt-in bleibt alles wie bisher lokal.
 
 Nicht-Ziele (bewusste Grenzen)
 
@@ -85,6 +87,29 @@ dieses Schalters läuft der Registrierungs-Flow (4.1). Das vermeidet einen
 unerwarteten Biometrie-Dialog beim Login und hält das Default-Verhalten
 unverändert lokal.
 
+Die WebAuthn-RP-ID ist standardmäßig der Hostname der App. Sie muss bei
+Registrierung, Assertion und Backend-Prüfung übereinstimmen. Ein Browserwechsel
+auf demselben Hostnamen ist in Ordnung; `localhost`, `127.0.0.1` und ein
+Produktionshostname sind unterschiedliche RP-IDs.
+
+Bei lokaler Entwicklung verwendet die UI `localhost` als RP-ID. Vites
+API-Proxy leitet Anfragen standardmäßig an die gehostete API weiter, deren
+WebAuthn-RP-ID serverseitig konfiguriert ist. Für einen lokalen Proxy müssen UI
+und Backend auf denselben Wert eingestellt sein, zum Beispiel:
+
+```env
+# openai-ui .env.local
+VITE_API_PROXY_TARGET=http://localhost:3000
+
+# openai-proxy .env
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_ORIGINS=http://localhost:5173
+```
+
+Der Backend-Origin muss außerdem in `CORS_ORIGINS` erlaubt sein. Beide
+Browser müssen dieselbe UI-Origin und denselben Vault-Backend verwenden; ein
+Vault-Eintrag auf einem anderen Backend wird nicht automatisch übernommen.
+
 Zustände:
 
 | Zustand | Bedeutung | Verhalten |
@@ -98,14 +123,16 @@ Zustände:
 1. OIDC-Login ist bereits erfolgt; der Nutzer hat die Funktion im Menü
    aktiviert.
 2. Frontend prüft IndexedDB auf `SK_user`. Fehlt er, wird die Einrichtung
-   gestartet.
+   gestartet und der Nutzer gibt einen Namen für diesen Passkey oder dieses
+   Gerät ein.
 3. Passkey via `navigator.credentials.create()` mit `extensions.prf.eval.first
    = prfSalt` (fester, konfigurierbarer Salt, 32 Byte) anlegen.
 4. PRF-Output (`ikm`) via HKDF zu `K_pass` ableiten.
 5. `PK_user/SK_user` (ECDH P-256) erzeugen.
 6. `SK_user` (pkcs8) mit `K_pass` (AES-GCM, zufälliger IV) verschlüsseln.
-7. `{credentialId, credentialPublicKey(spki), publicKey(spki), encryptedSK,
-   iv, challenge}` an das Backend senden. `credentialPublicKey` ist der
+7. `{credentialId, credentialName, credentialPublicKey(spki), publicKey(spki), encryptedSK,
+   iv, challenge}` an das Backend senden. `credentialName` erscheint später
+   bei der Auswahl auf einem neuen Gerät. `credentialPublicKey` ist der
    WebAuthn-Schlüssel für Assertions; `publicKey` ist der ECDH-Schlüssel zum
    Ableiten des Chat-Schlüssel-Wrappings. `publicKeyAlgorithm` wird als
    `ECDH-P256` gespeichert. Ältere Schlüssel ohne dieses Feld gelten als RSA.
@@ -114,17 +141,23 @@ Zustände:
 Beim Deaktivieren (Toggle aus) wird `DELETE /api/zk/keys/me` angeboten und der
 IndexedDB-Cache via `clearPrivateKey()` geleert.
 
+Auf einem bereits entsperrten Gerät kann der Nutzer weitere benannte Passkeys
+registrieren. Jeder Passkey erhält eine eigene, mit seinem PRF-Output
+verschlüsselte Kopie von `SK_user`; der öffentliche Nutzer-Schlüssel bleibt
+dabei gleich.
+
 ### 4.2 Login auf neuem Gerät
 
 1. OIDC-Login.
 2. Die App fragt `GET /zk/keys/me` ab. Wenn für das Konto bereits ein
-   Vault-Schlüssel existiert, bietet sie an, die verschlüsselten Chats auf
-   diesem Gerät zu entsperren und zu synchronisieren. Die lokale Einstellung
-   wird erst nach erfolgreichem Entsperren aktiviert.
-3. Nach Zustimmung: Ist IndexedDB leer, liefert `GET /zk/keys/me` die
-   Credential-ID und den Public Key und Algorithmus, aber noch nicht
+   Vault-Schlüssel existiert, zeigt sie die Namen aller registrierten
+   Passkeys/Geräte. Der Nutzer wählt eines aus, bevor die App die
+   verschlüsselten Chats auf diesem Gerät entsperrt und synchronisiert. Die
+   lokale Einstellung wird erst nach erfolgreichem Entsperren aktiviert.
+3. Ist IndexedDB leer, liefert `GET /zk/keys/me` die Credential-IDs und Namen
+   sowie den öffentlichen Schlüssel und Algorithmus, aber noch nicht
    `encryptedSK`.
-4. `POST /zk/keys/assertion-challenge` anfordern und
+4. Für das gewählte Gerät `POST /zk/keys/assertion-challenge` anfordern und
    `navigator.credentials.get()` mit demselben `prfSalt` aufrufen.
 5. Die Assertion einschließlich des Challenges an `POST /zk/keys/assertion`
    senden. Nach erfolgreicher Prüfung liefert ein erneutes `GET /zk/keys/me`
@@ -190,6 +223,8 @@ Der Server kennt nur Chiffrat und öffentliche Schlüssel.
 user_keys
   user_id           string  PK
   credential_id     bytes   unique
+  credentials       array   (credential_id, name, credential_public_key,
+                             encrypted_sk, encrypted_sk_iv, timestamps)
   credential_public_key bytes (WebAuthn credential, from attestation)
   public_key        bytes   (SPKI, Klartext)
   encrypted_sk      bytes   (AES-GCM)

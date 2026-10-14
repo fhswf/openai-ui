@@ -9,11 +9,19 @@
 export type VaultUserKey = {
   userId: string;
   credentialId: string;
+  credentialName?: string;
+  credentials?: VaultCredential[];
   publicKey: string;
   /** Missing metadata identifies legacy RSA keys stored before algorithm tags. */
   publicKeyAlgorithm?: "RSA-OAEP-SHA256" | "ECDH-P256";
   encryptedSk?: string;
   encryptedSkIv?: string;
+};
+
+export type VaultCredential = {
+  credentialId: string;
+  name: string;
+  createdAt: string;
 };
 
 export type VaultPublicKey = {
@@ -142,6 +150,7 @@ export const chatVault = {
   registerKey(
     payload: {
       credentialId: string;
+      credentialName: string;
       publicKey: string;
       publicKeyAlgorithm: "RSA-OAEP-SHA256" | "ECDH-P256";
       encryptedSk: string;

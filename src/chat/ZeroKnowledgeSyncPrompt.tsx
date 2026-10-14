@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
-import { Button, Dialog, Portal, Text } from "@chakra-ui/react";
+import { Button, Dialog, Portal, Stack, Text } from "@chakra-ui/react";
 import { t } from "i18next";
 import { toaster } from "../components/ui/toaster";
 import { useGlobal } from "./context";
 import { useOptions } from "./hooks";
-import { chatVault } from "./service/chatVault";
-import { enableZeroKnowledgeStorage } from "./utils/zeroKnowledgeStorage";
+import {
+  chatVault,
+  type VaultCredential,
+  type VaultUserKey,
+} from "./service/chatVault";
+import {
+  enableZeroKnowledgeStorage,
+  getZeroKnowledgeStorageErrorKey,
+} from "./utils/zeroKnowledgeStorage";
 
 export function ZeroKnowledgeSyncPrompt() {
   const { user, options } = useGlobal();
@@ -14,6 +21,7 @@ export function ZeroKnowledgeSyncPrompt() {
   const identityValue = user?.sub ?? user?.id ?? user?.email ?? null;
   const identity = identityValue == null ? null : String(identityValue);
   const [availableFor, setAvailableFor] = useState<string | null>(null);
+  const [userKey, setUserKey] = useState<VaultUserKey | null>(null);
   const [dismissedFor, setDismissedFor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -25,10 +33,14 @@ export function ZeroKnowledgeSyncPrompt() {
 
     let cancelled = false;
     setAvailableFor(null);
+    setUserKey(null);
     chatVault
       .getMyKey()
-      .then(() => {
-        if (!cancelled) setAvailableFor(identity);
+      .then((key) => {
+        if (!cancelled) {
+          setUserKey(key);
+          setAvailableFor(identity);
+        }
       })
       .catch((error) => {
         // A 404 means this account has not enabled encrypted storage. Other
@@ -54,10 +66,22 @@ export function ZeroKnowledgeSyncPrompt() {
     if (identity) setDismissedFor(identity);
   };
 
-  const unlock = async () => {
+  const credentials: VaultCredential[] = userKey
+    ? userKey.credentials?.length
+      ? userKey.credentials
+      : [
+          {
+            credentialId: userKey.credentialId,
+            name: userKey.credentialName || t("zk_storage_default_passkey_name"),
+            createdAt: "",
+          },
+        ]
+    : [];
+
+  const unlock = async (credentialId: string) => {
     setBusy(true);
     try {
-      await enableZeroKnowledgeStorage(user);
+      await enableZeroKnowledgeStorage(user, { credentialId });
       setGeneral({ zkStorage: true });
       setAvailableFor(null);
       dismiss();
@@ -69,9 +93,15 @@ export function ZeroKnowledgeSyncPrompt() {
       });
     } catch (error) {
       console.error("Could not unlock encrypted chat storage:", error);
+      const errorKey = getZeroKnowledgeStorageErrorKey(error);
       toaster.create({
         title: t("zk_storage_error"),
-        description: error instanceof Error ? error.message : t("unknown_error"),
+        description:
+          errorKey
+            ? t(errorKey)
+            : error instanceof Error
+              ? error.message
+              : t("unknown_error"),
         duration: 8000,
         type: "error",
       });
@@ -98,20 +128,27 @@ export function ZeroKnowledgeSyncPrompt() {
               <Dialog.Title>{t("zk_storage_sync_prompt_title")}</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body>
-              <Text>{t("zk_storage_sync_prompt_description")}</Text>
+              <Stack gap="3" align="stretch">
+                <Text>{t("zk_storage_sync_prompt_description")}</Text>
+                <Text fontWeight="semibold">
+                  {t("zk_storage_choose_passkey")}
+                </Text>
+                {credentials.map((credential) => (
+                  <Button
+                    key={credential.credentialId}
+                    variant="outline"
+                    disabled={busy}
+                    loading={busy}
+                    onClick={() => void unlock(credential.credentialId)}
+                  >
+                    {t("zk_storage_unlock_with", { name: credential.name })}
+                  </Button>
+                ))}
+              </Stack>
             </Dialog.Body>
             <Dialog.Footer>
               <Button variant="outline" disabled={busy} onClick={dismiss}>
                 {t("zk_storage_sync_prompt_later")}
-              </Button>
-              <Button
-                disabled={busy}
-                loading={busy}
-                onClick={() => void unlock()}
-              >
-                {busy
-                  ? t("zk_storage_unlocking")
-                  : t("zk_storage_sync_prompt_action")}
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

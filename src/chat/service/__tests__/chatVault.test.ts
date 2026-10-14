@@ -39,6 +39,7 @@ describe("chatVault API client", () => {
 
     await chatVault.registerKey({
       credentialId: "cid",
+      credentialName: "Laptop",
       publicKey: "pk",
       publicKeyAlgorithm: "ECDH-P256",
       encryptedSk: "esk",
@@ -51,6 +52,7 @@ describe("chatVault API client", () => {
     expect(init.headers["Content-Type"]).toBe("application/json");
     expect(JSON.parse(init.body)).toMatchObject({
       credentialId: "cid",
+      credentialName: "Laptop",
       encryptedSk: "esk",
     });
   });

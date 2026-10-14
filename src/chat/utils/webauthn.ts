@@ -33,11 +33,26 @@ export type RegisteredPasskey = {
 };
 
 export type AssertedPasskey = {
+  credentialId: string;
   prfOutput: ArrayBuffer;
   authenticatorData: string;
   clientDataJSON: string;
   signature: string;
 };
+
+export class UnsupportedWebAuthnPrfError extends Error {
+  constructor() {
+    super("The passkey did not return a WebAuthn PRF result");
+    this.name = "UnsupportedWebAuthnPrfError";
+  }
+}
+
+export class UnexpectedPasskeyError extends Error {
+  constructor() {
+    super("The selected passkey is not registered for encrypted chat storage");
+    this.name = "UnexpectedPasskeyError";
+  }
+}
 
 function extractPrfOutput(credential: Credential | null): ArrayBuffer {
   if (!credential) {
@@ -48,9 +63,7 @@ function extractPrfOutput(credential: Credential | null): ArrayBuffer {
   ).getClientExtensionResults() as PrfExtensionResults;
   const prfOutput = results.prf?.results?.first;
   if (!prfOutput) {
-    throw new Error(
-      "This browser or authenticator does not support WebAuthn PRF encryption"
-    );
+    throw new UnsupportedWebAuthnPrfError();
   }
   return prfOutput;
 }
@@ -124,6 +137,8 @@ export async function assertPasskeyWithResponse(params: {
     publicKey: {
       challenge: params.challenge,
       rpId: params.rpId ?? window.location.hostname,
+      // The UI has the user choose a named credential first. Constraining the
+      // assertion here keeps the browser prompt aligned with that choice.
       allowCredentials: [
         {
           id: base64UrlToBuffer(params.credentialId),
@@ -141,8 +156,14 @@ export async function assertPasskeyWithResponse(params: {
     throw new Error("Passkey authentication was cancelled");
   }
 
+  const credentialId = bufferToBase64Url(assertion.rawId);
+  if (credentialId !== params.credentialId) {
+    throw new UnexpectedPasskeyError();
+  }
+
   const response = assertion.response as AuthenticatorAssertionResponse;
   return {
+    credentialId,
     prfOutput: extractPrfOutput(assertion),
     authenticatorData: bufferToBase64Url(response.authenticatorData),
     clientDataJSON: bufferToBase64Url(response.clientDataJSON),
