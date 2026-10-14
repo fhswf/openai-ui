@@ -127,16 +127,19 @@ Zustände:
    Gerät ein.
 3. Passkey via `navigator.credentials.create()` mit `extensions.prf.eval.first
    = prfSalt` (fester, konfigurierbarer Salt, 32 Byte) anlegen.
-4. PRF-Output (`ikm`) via HKDF zu `K_pass` ableiten.
-5. `PK_user/SK_user` (ECDH P-256) erzeugen.
-6. `SK_user` (pkcs8) mit `K_pass` (AES-GCM, zufälliger IV) verschlüsseln.
-7. `{credentialId, credentialName, credentialPublicKey(spki), publicKey(spki), encryptedSK,
+4. Falls der Authenticator bei der Registrierung keinen PRF-Output liefert,
+   denselben Passkey sofort mit `navigator.credentials.get()` und demselben Salt
+   bestätigen, um den Output zu erhalten.
+5. PRF-Output (`ikm`) via HKDF zu `K_pass` ableiten.
+6. `PK_user/SK_user` (ECDH P-256) erzeugen.
+7. `SK_user` (pkcs8) mit `K_pass` (AES-GCM, zufälliger IV) verschlüsseln.
+8. `{credentialId, credentialName, credentialPublicKey(spki), publicKey(spki), encryptedSK,
    iv, challenge}` an das Backend senden. `credentialName` erscheint später
    bei der Auswahl auf einem neuen Gerät. `credentialPublicKey` ist der
    WebAuthn-Schlüssel für Assertions; `publicKey` ist der ECDH-Schlüssel zum
    Ableiten des Chat-Schlüssel-Wrappings. `publicKeyAlgorithm` wird als
    `ECDH-P256` gespeichert. Ältere Schlüssel ohne dieses Feld gelten als RSA.
-8. `SK_user` in IndexedDB cachen, Zustand -> `enabled-unlocked`.
+9. `SK_user` in IndexedDB cachen, Zustand -> `enabled-unlocked`.
 
 Beim Deaktivieren (Toggle aus) wird `DELETE /api/zk/keys/me` angeboten und der
 IndexedDB-Cache via `clearPrivateKey()` geleert.
