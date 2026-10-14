@@ -124,6 +124,7 @@ export async function enableZeroKnowledgeStorage(
   if (existing) {
     const cachedPrivateKey = await loadPrivateKey();
     if (
+      !options.credentialId &&
       cachedPrivateKey &&
       (await isPrivateKeyForUser(cachedPrivateKey, existing))
     ) {
@@ -213,7 +214,8 @@ export async function enableZeroKnowledgeStorage(
 /** Add another named passkey that unlocks the existing user private key. */
 export async function registerAdditionalPasskey(
   user: AuthenticatedUser,
-  credentialName: string
+  credentialName: string,
+  existingCredentialId?: string
 ): Promise<VaultUserKey> {
   if (!isPrfSupported()) {
     throw new Error(
@@ -226,9 +228,51 @@ export async function registerAdditionalPasskey(
   if (!existing) {
     throw new Error("Enable encrypted chat storage before adding a passkey");
   }
-  const privateKey = await loadPrivateKey();
-  if (!privateKey || !(await isPrivateKeyForUser(privateKey, existing))) {
+  const cachedPrivateKey = await loadPrivateKey();
+  if (
+    !cachedPrivateKey ||
+    !(await isPrivateKeyForUser(cachedPrivateKey, existing))
+  ) {
     throw new Error("Unlock encrypted chat storage before adding a passkey");
+  }
+  const credentialId = existingCredentialId ?? existing.credentialId;
+
+  // Cached private keys are deliberately non-extractable. Re-authenticate
+  // with an existing passkey and import a temporary exportable copy so it can
+  // be encrypted for the new passkey. The temporary key is never persisted.
+  const assertionChallenge = await chatVault.assertionChallenge(credentialId);
+  const assertion = await assertPasskeyWithResponse({
+    credentialId,
+    challenge: base64UrlToBuffer(assertionChallenge.challenge),
+  });
+  await chatVault.submitAssertion({
+    credentialId: assertion.credentialId,
+    challenge: assertionChallenge.challenge,
+    authenticatorData: assertion.authenticatorData,
+    clientDataJSON: assertion.clientDataJSON,
+    signature: assertion.signature,
+  });
+
+  const assertedKey = await chatVault.getMyKey();
+  if (
+    assertedKey.credentialId !== assertion.credentialId ||
+    !assertedKey.encryptedSk ||
+    !assertedKey.encryptedSkIv
+  ) {
+    throw new Error("The server did not release the encrypted chat key");
+  }
+  const existingKPass = await deriveKeyFromPrf(assertion.prfOutput);
+  const privateKey = await decryptPrivateKey(
+    {
+      encryptedKey: assertedKey.encryptedSk,
+      iv: assertedKey.encryptedSkIv,
+    },
+    existingKPass,
+    assertedKey.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM,
+    true
+  );
+  if (!(await isPrivateKeyForUser(privateKey, assertedKey))) {
+    throw new Error("The selected passkey could not unlock the chat key");
   }
 
   const identity = getUserIdentity(user);

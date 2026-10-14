@@ -70,6 +70,8 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "Turn off encrypted chat storage? This deletes all registered passkeys and the encrypted key from the server. Server chat copies will remain encrypted but become inaccessible. Chats already stored in this browser remain available locally.",
           zk_storage_checking: "Checking this device's recovery key…",
           zk_storage_unlocked: "This device can open your encrypted chats.",
+          zk_storage_choose_other_passkey_help:
+            "You are still signed in to the same account. Choose a passkey below to unlock the same chat key with that passkey.",
           zk_storage_locked_help:
             "Choose a registered passkey or device to unlock chats stored on your account.",
           zk_storage_locked:
@@ -81,6 +83,17 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_sync_prompt_later: "Not now",
           zk_storage_choose_passkey: "Choose a passkey or device to unlock your chats:",
           zk_storage_unlock_with: "Unlock with {{name}}",
+          zk_storage_rename_passkey: "Rename",
+          zk_storage_save_name: "Save name",
+          zk_storage_delete_passkey: "Delete",
+          zk_storage_delete_passkey_confirm:
+            "Remove “{{name}}” from your encrypted chat storage account? It will no longer unlock chats here. The passkey may still remain in your device or password manager, where it can be deleted separately. Keep at least one working passkey.",
+          zk_storage_passkey_renamed: "Passkey name updated",
+          zk_storage_passkey_deleted: "Passkey removed",
+          zk_storage_passkey_deleted_help:
+            "It was removed from this account. If you also want to remove it from your device or password manager, delete it there separately.",
+          zk_storage_last_credential_help:
+            "At least one passkey must remain. Turn off encrypted chat storage to remove all passkeys.",
           zk_storage_your_passkeys: "Your passkeys",
           zk_storage_default_passkey_name: "Passkey",
           zk_storage_passkey_created: "Added {{date}}",
@@ -91,6 +104,10 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_passkey_name_placeholder: "For example, Laptop or Phone",
           zk_storage_passkey_name_help:
             "Choose a name you will recognize when you unlock chats from another device.",
+          zk_storage_add_passkey_confirmation_help:
+            "First confirm one of your existing passkeys. Then you can create the new passkey.",
+          zk_storage_confirm_with_passkey_label:
+            "Confirm with this existing passkey",
           zk_storage_register_passkey: "Continue",
           zk_storage_registering_passkey: "Registering…",
           zk_storage_cancel: "Cancel",
@@ -396,6 +413,8 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Verschlüsselte Chatspeicherung ausschalten? Dadurch werden alle registrierten Passkeys und der verschlüsselte Schlüssel vom Server gelöscht. Vorhandene Serverkopien bleiben verschlüsselt und sind nicht mehr zugänglich. Chats, die bereits in diesem Browser gespeichert sind, bleiben lokal verfügbar.",
           zk_storage_checking: "Wiederherstellungsschlüssel auf diesem Gerät wird geprüft …",
           zk_storage_unlocked: "Dieses Gerät kann Ihre verschlüsselten Chats öffnen.",
+          zk_storage_choose_other_passkey_help:
+            "Sie sind weiterhin bei demselben Konto angemeldet. Wählen Sie unten einen Passkey, um denselben Chatschlüssel damit zu entsperren.",
           zk_storage_locked_help:
             "Wählen Sie einen registrierten Passkey oder ein Gerät, um die Chats Ihres Kontos zu entsperren.",
           zk_storage_locked:
@@ -407,6 +426,17 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_sync_prompt_later: "Später",
           zk_storage_choose_passkey: "Wählen Sie einen Passkey oder ein Gerät zum Entsperren Ihrer Chats:",
           zk_storage_unlock_with: "Mit {{name}} entsperren",
+          zk_storage_rename_passkey: "Umbenennen",
+          zk_storage_save_name: "Namen speichern",
+          zk_storage_delete_passkey: "Löschen",
+          zk_storage_delete_passkey_confirm:
+            "„{{name}}“ aus Ihrem Konto für verschlüsselte Chats entfernen? Dieser Passkey kann die Chats dann hier nicht mehr entsperren. Auf Ihrem Gerät oder im Passwort-Manager kann er weiterhin gespeichert sein und muss dort separat gelöscht werden. Mindestens ein funktionierender Passkey muss verbleiben.",
+          zk_storage_passkey_renamed: "Passkey umbenannt",
+          zk_storage_passkey_deleted: "Passkey entfernt",
+          zk_storage_passkey_deleted_help:
+            "Der Passkey wurde aus diesem Konto entfernt. Wenn Sie ihn auch von Ihrem Gerät oder aus dem Passwort-Manager löschen möchten, entfernen Sie ihn dort separat.",
+          zk_storage_last_credential_help:
+            "Mindestens ein Passkey muss verbleiben. Deaktivieren Sie die verschlüsselte Chatspeicherung, um alle Passkeys zu entfernen.",
           zk_storage_your_passkeys: "Ihre Passkeys",
           zk_storage_default_passkey_name: "Passkey",
           zk_storage_passkey_created: "Hinzugefügt am {{date}}",
@@ -417,6 +447,10 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_passkey_name_placeholder: "Zum Beispiel Laptop oder Telefon",
           zk_storage_passkey_name_help:
             "Wählen Sie einen Namen, den Sie beim Entsperren Ihrer Chats auf einem anderen Gerät wiedererkennen.",
+          zk_storage_add_passkey_confirmation_help:
+            "Bestätigen Sie zuerst einen Ihrer bestehenden Passkeys. Danach können Sie den neuen Passkey anlegen.",
+          zk_storage_confirm_with_passkey_label:
+            "Mit diesem bestehenden Passkey bestätigen",
           zk_storage_register_passkey: "Weiter",
           zk_storage_registering_passkey: "Wird registriert …",
           zk_storage_cancel: "Abbrechen",

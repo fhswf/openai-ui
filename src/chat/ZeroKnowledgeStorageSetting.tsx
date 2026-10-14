@@ -9,6 +9,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { t } from "i18next";
+import { Radio, RadioGroup } from "../components/ui/radio";
 import { Switch } from "../components/ui/switch";
 import { toaster } from "../components/ui/toaster";
 import { useGlobal } from "./context";
@@ -53,6 +54,12 @@ export function ZeroKnowledgeStorageSetting() {
   const [registrationMode, setRegistrationMode] =
     useState<RegistrationMode>(null);
   const [credentialName, setCredentialName] = useState("");
+  const [authorizationCredentialId, setAuthorizationCredentialId] =
+    useState("");
+  const [editingCredentialId, setEditingCredentialId] = useState<string | null>(
+    null
+  );
+  const [editingCredentialName, setEditingCredentialName] = useState("");
 
   const credentials = useMemo(() => getCredentials(vaultKey), [vaultKey]);
 
@@ -99,6 +106,11 @@ export function ZeroKnowledgeStorageSetting() {
 
   const openRegistration = (mode: Exclude<RegistrationMode, null>) => {
     setCredentialName("");
+    setAuthorizationCredentialId(
+      mode === "additional"
+        ? vaultKey?.credentialId ?? credentials[0]?.credentialId ?? ""
+        : ""
+    );
     setRegistrationMode(mode);
   };
 
@@ -111,7 +123,11 @@ export function ZeroKnowledgeStorageSetting() {
     setBusy(true);
     try {
       if (addingToExistingKey) {
-        const updatedKey = await registerAdditionalPasskey(user, credentialName);
+        const updatedKey = await registerAdditionalPasskey(
+          user,
+          credentialName,
+          authorizationCredentialId
+        );
         setVaultKey(updatedKey);
       } else {
         const result = await enableZeroKnowledgeStorage(user, {
@@ -180,6 +196,99 @@ export function ZeroKnowledgeStorageSetting() {
     }
   };
 
+  const renameCredential = async (credential: VaultCredential) => {
+    const name = editingCredentialName.trim();
+    if (!name) return;
+
+    setBusy(true);
+    try {
+      const renamed = await chatVault.renameMyCredential(
+        credential.credentialId,
+        name
+      );
+      setVaultKey((current) => {
+        if (!current) return current;
+        const currentCredentials = getCredentials(current);
+        const updatedCredentials = currentCredentials.map((item) =>
+          item.credentialId === renamed.credentialId
+            ? { ...item, name: renamed.credentialName }
+            : item
+        );
+        return {
+          ...current,
+          credentialName:
+            current.credentialId === renamed.credentialId
+              ? renamed.credentialName
+              : current.credentialName,
+          credentials: updatedCredentials,
+        };
+      });
+      setEditingCredentialId(null);
+      toaster.create({
+        title: t("zk_storage_passkey_renamed"),
+        duration: 5000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Could not rename a passkey:", error);
+      toaster.create({
+        title: t("zk_storage_error"),
+        description: error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteCredential = async (credential: VaultCredential) => {
+    const confirmed = window.confirm(
+      t("zk_storage_delete_passkey_confirm", { name: credential.name })
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    try {
+      await chatVault.deleteMyCredential(credential.credentialId);
+      setVaultKey((current) => {
+        if (!current) return current;
+        const remainingCredentials = getCredentials(current).filter(
+          (item) => item.credentialId !== credential.credentialId
+        );
+        const primaryCredential =
+          remainingCredentials.find(
+            (item) => item.credentialId === current.credentialId
+          ) ?? remainingCredentials[0];
+        return {
+          ...current,
+          credentialId: primaryCredential?.credentialId ?? current.credentialId,
+          credentialName: primaryCredential?.name ?? current.credentialName,
+          credentials: remainingCredentials,
+        };
+      });
+      if (editingCredentialId === credential.credentialId) {
+        setEditingCredentialId(null);
+      }
+      toaster.create({
+        title: t("zk_storage_passkey_deleted"),
+        description: t("zk_storage_passkey_deleted_help"),
+        duration: 7000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Could not delete a passkey:", error);
+      toaster.create({
+        title: t("zk_storage_error"),
+        description: error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const disable = async () => {
     const confirmed = window.confirm(t("zk_storage_disable_confirm"));
     if (!confirmed) return;
@@ -235,23 +344,15 @@ export function ZeroKnowledgeStorageSetting() {
         <Field.HelperText>{t("zk_storage_checking")}</Field.HelperText>
       )}
       {enabled && keyStatus === "unlocked" && (
-        <Field.HelperText>{t("zk_storage_unlocked")}</Field.HelperText>
+        <Stack align="start" gap="1">
+          <Field.HelperText>{t("zk_storage_unlocked")}</Field.HelperText>
+          <Field.HelperText>
+            {t("zk_storage_choose_other_passkey_help")}
+          </Field.HelperText>
+        </Stack>
       )}
       {enabled && keyStatus === "locked" && (
-        <Stack align="start" gap="2">
-          <Field.HelperText>{t("zk_storage_locked_help")}</Field.HelperText>
-          {credentials.map((credential) => (
-            <Button
-              key={credential.credentialId}
-              variant="outline"
-              size="sm"
-              disabled={busy}
-              onClick={() => void unlock(credential.credentialId)}
-            >
-              {t("zk_storage_unlock_with", { name: credential.name })}
-            </Button>
-          ))}
-        </Stack>
+        <Field.HelperText>{t("zk_storage_locked_help")}</Field.HelperText>
       )}
       {vaultKey && (
         <Stack mt="3" align="start" gap="2" width="full">
@@ -266,16 +367,88 @@ export function ZeroKnowledgeStorageSetting() {
               padding="2"
               width="full"
             >
-              <Text>{credential.name}</Text>
-              {credential.createdAt && (
-                <Text fontSize="sm" color="fg.muted">
-                  {t("zk_storage_passkey_created", {
-                    date: new Date(credential.createdAt).toLocaleDateString(),
-                  })}
-                </Text>
+              {editingCredentialId === credential.credentialId ? (
+                <Stack align="start" gap="2" width="full">
+                  <Input
+                    maxLength={80}
+                    value={editingCredentialName}
+                    onChange={(event) =>
+                      setEditingCredentialName(event.target.value)
+                    }
+                    aria-label={t("zk_storage_passkey_name_label")}
+                  />
+                  <Stack direction="row" gap="2">
+                    <Button
+                      size="sm"
+                      disabled={busy || !editingCredentialName.trim()}
+                      loading={busy}
+                      onClick={() => void renameCredential(credential)}
+                    >
+                      {t("zk_storage_save_name")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => setEditingCredentialId(null)}
+                    >
+                      {t("zk_storage_cancel")}
+                    </Button>
+                  </Stack>
+                </Stack>
+              ) : (
+                <>
+                  <Text>{credential.name}</Text>
+                  {credential.createdAt && (
+                    <Text fontSize="sm" color="fg.muted">
+                      {t("zk_storage_passkey_created", {
+                        date: new Date(
+                          credential.createdAt
+                        ).toLocaleDateString(),
+                      })}
+                    </Text>
+                  )}
+                  {enabled && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => void unlock(credential.credentialId)}
+                    >
+                      {t("zk_storage_unlock_with", { name: credential.name })}
+                    </Button>
+                  )}
+                  <Stack direction="row" gap="2" mt="2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => {
+                        setEditingCredentialName(credential.name);
+                        setEditingCredentialId(credential.credentialId);
+                      }}
+                    >
+                      {t("zk_storage_rename_passkey")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      colorPalette="red"
+                      disabled={busy || credentials.length <= 1}
+                      onClick={() => void deleteCredential(credential)}
+                    >
+                      {t("zk_storage_delete_passkey")}
+                    </Button>
+                  </Stack>
+                </>
               )}
             </Stack>
           ))}
+          {credentials.length <= 1 && (
+            <Field.HelperText>
+              {t("zk_storage_last_credential_help")}
+            </Field.HelperText>
+          )}
           {keyStatus === "unlocked" && (
             <Button
               variant="outline"
@@ -320,9 +493,37 @@ export function ZeroKnowledgeStorageSetting() {
                     placeholder={t("zk_storage_passkey_name_placeholder")}
                   />
                   <Field.HelperText>
-                    {t("zk_storage_passkey_name_help")}
+                    {t(
+                      registrationMode === "additional"
+                        ? "zk_storage_add_passkey_confirmation_help"
+                        : "zk_storage_passkey_name_help"
+                    )}
                   </Field.HelperText>
                 </Field.Root>
+                {registrationMode === "additional" && (
+                  <Field.Root mt="4">
+                    <Field.Label>
+                      {t("zk_storage_confirm_with_passkey_label")}
+                    </Field.Label>
+                    <RadioGroup
+                      value={authorizationCredentialId}
+                      onValueChange={(event) =>
+                        setAuthorizationCredentialId(event.value)
+                      }
+                    >
+                      <Stack gap="2">
+                        {credentials.map((credential) => (
+                          <Radio
+                            key={credential.credentialId}
+                            value={credential.credentialId}
+                          >
+                            {credential.name}
+                          </Radio>
+                        ))}
+                      </Stack>
+                    </RadioGroup>
+                  </Field.Root>
+                )}
               </Dialog.Body>
               <Dialog.Footer>
                 <Button
@@ -333,7 +534,12 @@ export function ZeroKnowledgeStorageSetting() {
                   {t("zk_storage_cancel")}
                 </Button>
                 <Button
-                  disabled={busy || !credentialName.trim()}
+                  disabled={
+                    busy ||
+                    !credentialName.trim() ||
+                    (registrationMode === "additional" &&
+                      !authorizationCredentialId)
+                  }
                   loading={busy}
                   onClick={() => void registerCredential()}
                 >

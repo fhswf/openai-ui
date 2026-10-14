@@ -199,6 +199,29 @@ export const chatVault = {
     return request("/keys/me", {}, options);
   },
 
+  renameMyCredential(
+    credentialId: string,
+    credentialName: string,
+    options?: RequestOptions
+  ): Promise<{ credentialId: string; credentialName: string }> {
+    return request(
+      `/keys/me/credentials/${encodeURIComponent(credentialId)}`,
+      { method: "PATCH", body: JSON.stringify({ credentialName }) },
+      options
+    );
+  },
+
+  deleteMyCredential(
+    credentialId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    return request(
+      `/keys/me/credentials/${encodeURIComponent(credentialId)}`,
+      { method: "DELETE" },
+      options
+    );
+  },
+
   getPublicKey(
     userId: string,
     options?: RequestOptions
