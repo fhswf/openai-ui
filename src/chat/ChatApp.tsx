@@ -4,6 +4,7 @@ import { ErrorFallback } from "./ErrorFallback";
 import { ChatProvider } from "./context";
 import { AppsProvider } from "./apps/context";
 import { ProgressCircle } from "@chakra-ui/react";
+import { ZeroKnowledgeSyncPrompt } from "./ZeroKnowledgeSyncPrompt";
 
 import "./style.less";
 const Chat = React.lazy(() => import("./Chat"));
@@ -14,6 +15,7 @@ export default function ChatApp() {
     <Suspense fallback={loading}>
       <ErrorBoundary fallbackRender={ErrorFallback}>
         <ChatProvider>
+          <ZeroKnowledgeSyncPrompt />
           <AppsProvider>
             <Chat />
           </AppsProvider>

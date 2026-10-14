@@ -33,11 +33,31 @@ export type RegisteredPasskey = {
 };
 
 export type AssertedPasskey = {
+  credentialId: string;
   prfOutput: ArrayBuffer;
   authenticatorData: string;
   clientDataJSON: string;
   signature: string;
 };
+
+export class UnsupportedWebAuthnPrfError extends Error {
+  readonly extensionEnabled?: boolean;
+  readonly resultLength?: number;
+
+  constructor(details: { extensionEnabled?: boolean; resultLength?: number } = {}) {
+    super("The passkey did not return a valid WebAuthn PRF result");
+    this.name = "UnsupportedWebAuthnPrfError";
+    this.extensionEnabled = details.extensionEnabled;
+    this.resultLength = details.resultLength;
+  }
+}
+
+export class UnexpectedPasskeyError extends Error {
+  constructor() {
+    super("The selected passkey is not registered for encrypted chat storage");
+    this.name = "UnexpectedPasskeyError";
+  }
+}
 
 function extractPrfOutput(credential: Credential | null): ArrayBuffer {
   if (!credential) {
@@ -47,17 +67,18 @@ function extractPrfOutput(credential: Credential | null): ArrayBuffer {
     credential as PublicKeyCredential
   ).getClientExtensionResults() as PrfExtensionResults;
   const prfOutput = results.prf?.results?.first;
-  if (!prfOutput) {
-    throw new Error(
-      "This browser or authenticator does not support WebAuthn PRF encryption"
-    );
+  if (!prfOutput || prfOutput.byteLength !== 32) {
+    throw new UnsupportedWebAuthnPrfError({
+      extensionEnabled: results.prf?.enabled,
+      resultLength: prfOutput?.byteLength,
+    });
   }
   return prfOutput;
 }
 
 /**
- * Create a new resident passkey and immediately evaluate the PRF extension so
- * the caller can derive K_pass without a second prompt.
+ * Create a new resident passkey and evaluate its PRF. If the authenticator
+ * defers evaluation until authentication, assert the new credential to get it.
  */
 export async function registerPasskey(params: {
   userId: string;
@@ -67,11 +88,12 @@ export async function registerPasskey(params: {
   rpId?: string;
   rpName?: string;
 }): Promise<RegisteredPasskey> {
+  const rpId = params.rpId ?? window.location.hostname;
   const credential = (await navigator.credentials.create({
     publicKey: {
       challenge: params.challenge,
       rp: {
-        id: params.rpId ?? window.location.hostname,
+        id: rpId,
         name: params.rpName ?? "OpenAI UI",
       },
       user: {
@@ -104,9 +126,38 @@ export async function registerPasskey(params: {
     );
   }
 
+  const credentialId = bufferToBase64Url(credential.rawId);
+  let prfOutput: ArrayBuffer;
+  try {
+    prfOutput = extractPrfOutput(credential);
+  } catch (error) {
+    if (!(error instanceof UnsupportedWebAuthnPrfError)) {
+      throw error;
+    }
+
+    // An explicit false means the authenticator cannot evaluate PRF for this
+    // credential, so a follow-up assertion cannot help.
+    if (error.extensionEnabled === false) {
+      throw error;
+    }
+
+    // WebAuthn permits authenticators to defer PRF evaluation until an
+    // assertion, even when PRF was requested during credential creation.
+    if (typeof navigator.credentials.get !== "function") {
+      throw error;
+    }
+    const assertionChallenge = new ArrayBuffer(32);
+    crypto.getRandomValues(new Uint8Array(assertionChallenge));
+    prfOutput = await assertPasskey({
+      credentialId,
+      challenge: assertionChallenge,
+      rpId,
+    });
+  }
+
   return {
-    credentialId: bufferToBase64Url(credential.rawId),
-    prfOutput: extractPrfOutput(credential),
+    credentialId,
+    prfOutput,
     credentialPublicKey: bufferToBase64Url(credentialPublicKey),
   };
 }
@@ -124,6 +175,8 @@ export async function assertPasskeyWithResponse(params: {
     publicKey: {
       challenge: params.challenge,
       rpId: params.rpId ?? window.location.hostname,
+      // The UI has the user choose a named credential first. Constraining the
+      // assertion here keeps the browser prompt aligned with that choice.
       allowCredentials: [
         {
           id: base64UrlToBuffer(params.credentialId),
@@ -141,8 +194,14 @@ export async function assertPasskeyWithResponse(params: {
     throw new Error("Passkey authentication was cancelled");
   }
 
+  const credentialId = bufferToBase64Url(assertion.rawId);
+  if (credentialId !== params.credentialId) {
+    throw new UnexpectedPasskeyError();
+  }
+
   const response = assertion.response as AuthenticatorAssertionResponse;
   return {
+    credentialId,
     prfOutput: extractPrfOutput(assertion),
     authenticatorData: bufferToBase64Url(response.authenticatorData),
     clientDataJSON: bufferToBase64Url(response.clientDataJSON),
@@ -171,6 +230,14 @@ export async function assertPasskey(params: {
       },
     },
   })) as PublicKeyCredential | null;
+
+  if (!assertion) {
+    throw new Error("Passkey authentication was cancelled");
+  }
+
+  if (bufferToBase64Url(assertion.rawId) !== params.credentialId) {
+    throw new UnexpectedPasskeyError();
+  }
 
   return extractPrfOutput(assertion);
 }

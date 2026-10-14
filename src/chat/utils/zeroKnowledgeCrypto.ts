@@ -201,7 +201,8 @@ export async function encryptPrivateKey(
 export async function decryptPrivateKey(
   encrypted: EncryptedKey,
   kPass: CryptoKey,
-  algorithm: UserKeyAlgorithm = DEFAULT_USER_KEY_ALGORITHM
+  algorithm: UserKeyAlgorithm = DEFAULT_USER_KEY_ALGORITHM,
+  extractable = false
 ): Promise<CryptoKey> {
   const decrypted = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: base64UrlToBuffer(encrypted.iv) },
@@ -214,7 +215,7 @@ export async function decryptPrivateKey(
       "pkcs8",
       decrypted,
       { name: "ECDH", namedCurve: "P-256" },
-      false,
+      extractable,
       ["deriveBits"]
     );
   }
@@ -223,7 +224,7 @@ export async function decryptPrivateKey(
     "pkcs8",
     decrypted,
     { name: "RSA-OAEP", hash: "SHA-256" },
-    false,
+    extractable,
     ["decrypt", "unwrapKey"]
   );
 }
