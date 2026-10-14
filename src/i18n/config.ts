@@ -95,6 +95,7 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_last_credential_help:
             "At least one passkey must remain. Turn off encrypted chat storage to remove all passkeys.",
           zk_storage_your_passkeys: "Your passkeys",
+          zk_storage_active_passkey: "Currently unlocked with this passkey",
           zk_storage_default_passkey_name: "Passkey",
           zk_storage_passkey_created: "Added {{date}}",
           zk_storage_add_passkey: "Add a passkey or device",
@@ -105,7 +106,7 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_passkey_name_help:
             "Choose a name you will recognize when you unlock chats from another device.",
           zk_storage_add_passkey_confirmation_help:
-            "First confirm one of your existing passkeys. Then you can create the new passkey.",
+            "This selects the registered passkey by name; it does not select a password manager. In the Windows Security dialog, choose “iPhone, iPad, or Android device” to use the passkey on your phone. Then you can create a new passkey for the same chat vault.",
           zk_storage_confirm_with_passkey_label:
             "Confirm with this existing passkey",
           zk_storage_register_passkey: "Continue",
@@ -118,6 +119,8 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "This passkey did not provide the PRF result required to decrypt your chats. Try a device and passkey provider that support PRF for this passkey. A regular passkey sign-in cannot unlock the encrypted chat key.",
           zk_storage_passkey_mismatch:
             "The selected passkey is not the one registered for encrypted chat storage. Use the passkey created when you enabled this feature.",
+          zk_storage_passkey_unavailable:
+            "The selected passkey was not available or the prompt was canceled. Choose a registered passkey that is available on this device.",
           zk_storage_rp_id_mismatch:
             "The chat service and this page disagree on the site name the passkey is bound to. For local development, use a backend configured with WEBAUTHN_RP_ID=localhost; Vite otherwise proxies requests to the hosted API by default.",
           zk_storage_sync_error: "Encrypted chat sync failed",
@@ -438,6 +441,8 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_last_credential_help:
             "Mindestens ein Passkey muss verbleiben. Deaktivieren Sie die verschlüsselte Chatspeicherung, um alle Passkeys zu entfernen.",
           zk_storage_your_passkeys: "Ihre Passkeys",
+          zk_storage_active_passkey:
+            "Auf diesem Gerät aktuell mit diesem Passkey entsperrt",
           zk_storage_default_passkey_name: "Passkey",
           zk_storage_passkey_created: "Hinzugefügt am {{date}}",
           zk_storage_add_passkey: "Passkey oder Gerät hinzufügen",
@@ -448,7 +453,7 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_passkey_name_help:
             "Wählen Sie einen Namen, den Sie beim Entsperren Ihrer Chats auf einem anderen Gerät wiedererkennen.",
           zk_storage_add_passkey_confirmation_help:
-            "Bestätigen Sie zuerst einen Ihrer bestehenden Passkeys. Danach können Sie den neuen Passkey anlegen.",
+            "Damit wählen Sie den registrierten Passkey anhand seines Namens aus, nicht den Passwort-Manager. Wählen Sie im Windows-Sicherheitsdialog „iPhone, iPad oder Android-Gerät“, um den Passkey auf Ihrem Telefon zu verwenden. Danach können Sie einen neuen Passkey für denselben Chatspeicher anlegen.",
           zk_storage_confirm_with_passkey_label:
             "Mit diesem bestehenden Passkey bestätigen",
           zk_storage_register_passkey: "Weiter",
@@ -461,6 +466,8 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Dieser Passkey hat nicht das PRF-Ergebnis geliefert, das zum Entschlüsseln Ihrer Chats benötigt wird. Verwenden Sie ein Gerät und einen Passkey-Anbieter, die PRF für diesen Passkey unterstützen. Eine normale Passkey-Anmeldung kann den verschlüsselten Chatschlüssel nicht entsperren.",
           zk_storage_passkey_mismatch:
             "Der ausgewählte Passkey ist nicht der für die verschlüsselte Chatspeicherung registrierte. Verwenden Sie den Passkey, den Sie bei der Aktivierung dieser Funktion erstellt haben.",
+          zk_storage_passkey_unavailable:
+            "Der ausgewählte Passkey war auf diesem Gerät nicht verfügbar oder die Abfrage wurde abgebrochen. Wählen Sie einen hier verfügbaren, bereits registrierten Passkey.",
           zk_storage_rp_id_mismatch:
             "Der Chatdienst und diese Seite verwenden unterschiedliche Hostnamen für den Passkey. Konfigurieren Sie für die lokale Entwicklung das Backend mit WEBAUTHN_RP_ID=localhost. Vite leitet Anfragen standardmäßig an die gehostete API weiter.",
           zk_storage_sync_error: "Synchronisierung der verschlüsselten Chats fehlgeschlagen",

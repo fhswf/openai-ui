@@ -42,6 +42,7 @@ export function getZeroKnowledgeStorageErrorKey(
   | "zk_storage_rp_id_mismatch"
   | "zk_storage_prf_unsupported"
   | "zk_storage_passkey_mismatch"
+  | "zk_storage_passkey_unavailable"
   | null {
   if (
     error instanceof VaultError &&
@@ -55,6 +56,9 @@ export function getZeroKnowledgeStorageErrorKey(
   }
   if (error instanceof UnexpectedPasskeyError) {
     return "zk_storage_passkey_mismatch";
+  }
+  if (error instanceof Error && error.name === "NotAllowedError") {
+    return "zk_storage_passkey_unavailable";
   }
   return null;
 }

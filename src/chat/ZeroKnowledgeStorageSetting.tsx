@@ -19,7 +19,13 @@ import {
   type VaultCredential,
   type VaultUserKey,
 } from "./service/chatVault";
-import { clearPrivateKey, loadPrivateKey } from "./utils/zeroKnowledgeKeystore";
+import {
+  clearActiveCredentialId,
+  clearPrivateKey,
+  loadActiveCredentialId,
+  loadPrivateKey,
+  saveActiveCredentialId,
+} from "./utils/zeroKnowledgeKeystore";
 import {
   enableZeroKnowledgeStorage,
   getZeroKnowledgeStorageErrorKey,
@@ -56,6 +62,9 @@ export function ZeroKnowledgeStorageSetting() {
   const [credentialName, setCredentialName] = useState("");
   const [authorizationCredentialId, setAuthorizationCredentialId] =
     useState("");
+  const [activeCredentialId, setActiveCredentialId] = useState<string | null>(
+    null
+  );
   const [editingCredentialId, setEditingCredentialId] = useState<string | null>(
     null
   );
@@ -63,10 +72,18 @@ export function ZeroKnowledgeStorageSetting() {
 
   const credentials = useMemo(() => getCredentials(vaultKey), [vaultKey]);
 
+  const markActiveCredential = (credentialId: string) => {
+    setActiveCredentialId(credentialId);
+    void saveActiveCredentialId(credentialId).catch((error) => {
+      console.warn("Could not save the active passkey indicator:", error);
+    });
+  };
+
   useEffect(() => {
     if (!userIdentity) {
       setVaultKey(null);
       setKeyStatus("idle");
+      setActiveCredentialId(null);
       setLoadingAccountKey(false);
       return;
     }
@@ -82,8 +99,22 @@ export function ZeroKnowledgeStorageSetting() {
           enabled &&
           privateKey &&
           (await isPrivateKeyForUser(privateKey, key));
+        let activeCredentialId: string | null = null;
+        if (unlocked) {
+          try {
+            activeCredentialId = await loadActiveCredentialId();
+          } catch (error) {
+            console.warn("Could not load the active passkey indicator:", error);
+          }
+        }
+        const storedCredentialIsRegistered = getCredentials(key).some(
+          (credential) => credential.credentialId === activeCredentialId
+        );
         if (!cancelled) {
           setVaultKey(key);
+          setActiveCredentialId(
+            storedCredentialIsRegistered ? activeCredentialId : null
+          );
           if (enabled) setKeyStatus(unlocked ? "unlocked" : "locked");
           setLoadingAccountKey(false);
         }
@@ -129,11 +160,13 @@ export function ZeroKnowledgeStorageSetting() {
           authorizationCredentialId
         );
         setVaultKey(updatedKey);
+        markActiveCredential(authorizationCredentialId);
       } else {
         const result = await enableZeroKnowledgeStorage(user, {
           credentialName,
         });
         setVaultKey(result.userKey);
+        markActiveCredential(result.userKey.credentialId);
         setGeneral({ zkStorage: true });
         setKeyStatus("unlocked");
       }
@@ -174,6 +207,7 @@ export function ZeroKnowledgeStorageSetting() {
     try {
       const result = await enableZeroKnowledgeStorage(user, { credentialId });
       setVaultKey(result.userKey);
+      markActiveCredential(credentialId);
       setGeneral({ zkStorage: true });
       setKeyStatus("unlocked");
       window.dispatchEvent(new Event("zk-storage-key-available"));
@@ -270,6 +304,12 @@ export function ZeroKnowledgeStorageSetting() {
       if (editingCredentialId === credential.credentialId) {
         setEditingCredentialId(null);
       }
+      if (activeCredentialId === credential.credentialId) {
+        void clearActiveCredentialId().catch((error) => {
+          console.warn("Could not clear the active passkey indicator:", error);
+        });
+        setActiveCredentialId(null);
+      }
       toaster.create({
         title: t("zk_storage_passkey_deleted"),
         description: t("zk_storage_passkey_deleted_help"),
@@ -300,6 +340,7 @@ export function ZeroKnowledgeStorageSetting() {
       setGeneral({ zkStorage: false });
       setVaultKey(null);
       setKeyStatus("idle");
+      setActiveCredentialId(null);
       toaster.create({
         title: t("zk_storage_disabled"),
         description: t("zk_storage_disabled_help"),
@@ -398,7 +439,14 @@ export function ZeroKnowledgeStorageSetting() {
                 </Stack>
               ) : (
                 <>
-                  <Text>{credential.name}</Text>
+                  <Stack direction="row" align="center" gap="2">
+                    <Text>{credential.name}</Text>
+                    {activeCredentialId === credential.credentialId && (
+                      <Text fontSize="sm" color="fg.muted">
+                        {t("zk_storage_active_passkey")}
+                      </Text>
+                    )}
+                  </Stack>
                   {credential.createdAt && (
                     <Text fontSize="sm" color="fg.muted">
                       {t("zk_storage_passkey_created", {

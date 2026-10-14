@@ -10,6 +10,7 @@ const DB_NAME = "ChatCryptoDB";
 const DB_VERSION = 1;
 const STORE_NAME = "keys";
 const PRIVATE_KEY_ID = "private-chat-key";
+const ACTIVE_CREDENTIAL_ID = "active-passkey-credential-id";
 
 function getIndexedDB(): IDBFactory {
   if (typeof indexedDB === "undefined") {
@@ -74,6 +75,57 @@ export async function clearPrivateKey(
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readwrite");
       tx.objectStore(STORE_NAME).delete(PRIVATE_KEY_ID);
+      tx.objectStore(STORE_NAME).delete(ACTIVE_CREDENTIAL_ID);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
+export async function saveActiveCredentialId(
+  credentialId: string,
+  idb: IDBFactory = getIndexedDB()
+): Promise<void> {
+  const db = await openDatabase(idb);
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.objectStore(STORE_NAME).put(credentialId, ACTIVE_CREDENTIAL_ID);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
+export async function loadActiveCredentialId(
+  idb: IDBFactory = getIndexedDB()
+): Promise<string | null> {
+  const db = await openDatabase(idb);
+  try {
+    return await new Promise<string | null>((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const request = tx.objectStore(STORE_NAME).get(ACTIVE_CREDENTIAL_ID);
+      request.onsuccess = () =>
+        resolve((request.result as string | undefined) ?? null);
+      request.onerror = () => reject(request.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
+export async function clearActiveCredentialId(
+  idb: IDBFactory = getIndexedDB()
+): Promise<void> {
+  const db = await openDatabase(idb);
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.objectStore(STORE_NAME).delete(ACTIVE_CREDENTIAL_ID);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
