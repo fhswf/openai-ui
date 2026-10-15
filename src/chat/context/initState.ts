@@ -50,6 +50,7 @@ export const initState: GlobalState = {
       codeEditor: false,
       gravatar: false,
       zkStorage: false,
+      zkLazyHistory: false,
     },
     openai: {
       baseUrl: defaultOpenAIBaseUrl,

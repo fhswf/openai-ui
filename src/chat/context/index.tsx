@@ -33,12 +33,17 @@ import { t } from "i18next";
 import { chatVault, type VaultUserKey } from "../service/chatVault";
 import {
   createVaultSyncCache,
+  demoteVaultChat,
+  hydrateVaultChat,
+  markVaultChats,
   restoreVaultChats,
+  searchVaultChats,
   syncVaultChats,
   type VaultSyncCache,
 } from "../service/zeroKnowledgeSync";
 import { loadPrivateKey } from "../utils/zeroKnowledgeKeystore";
 import { isPrivateKeyForUser } from "../utils/zeroKnowledgeStorage";
+import { matchesChatQuery } from "../utils/chatSearch";
 import type { Chat } from "./types";
 
 const DRAFT_PERSIST_DELAY_MS = 300;
@@ -113,6 +118,7 @@ export const ChatProvider = ({ children }) => {
   } | null>(null);
   const vaultSyncRunning = useRef(false);
   const vaultSyncRequested = useRef(false);
+  const hydratedChats = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     latestState.current = state;
@@ -123,7 +129,10 @@ export const ChatProvider = ({ children }) => {
     const handleVaultKeyAvailable = () => {
       setVaultUnlockRevision((revision) => revision + 1);
     };
-    window.addEventListener("zk-storage-key-available", handleVaultKeyAvailable);
+    window.addEventListener(
+      "zk-storage-key-available",
+      handleVaultKeyAvailable
+    );
     return () => {
       window.removeEventListener(
         "zk-storage-key-available",
@@ -169,12 +178,15 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   const zkStorageEnabled = state.options.general.zkStorage ?? false;
+  const lazyHistory = state.options.general.zkLazyHistory ?? false;
   const vaultIdentity =
     state.user?.sub ?? state.user?.id ?? state.user?.email ?? null;
 
   useEffect(() => {
     let cancelled = false;
-    const bootstrapKey = `${zkStorageEnabled}:${vaultIdentity ?? ""}:${vaultUnlockRevision}`;
+    const bootstrapKey = `${zkStorageEnabled}:${
+      vaultIdentity ?? ""
+    }:${vaultUnlockRevision}:${lazyHistory}`;
 
     if (!zkStorageEnabled || !vaultIdentity) {
       setVaultReady(false);
@@ -190,6 +202,7 @@ export const ChatProvider = ({ children }) => {
     if (vaultBootstrap.current?.key !== bootstrapKey) {
       vaultCredentials.current = null;
       vaultCache.current = createVaultSyncCache();
+      hydratedChats.current = new Set();
       const cache = vaultCache.current;
       const promise = (async () => {
         const userKey = await chatVault.getMyKey();
@@ -202,7 +215,8 @@ export const ChatProvider = ({ children }) => {
           localState.chat,
           privateKey,
           userKey,
-          cache
+          cache,
+          { lazy: lazyHistory }
         );
         return { privateKey, userKey, chats };
       })();
@@ -225,7 +239,10 @@ export const ChatProvider = ({ children }) => {
         const currentChat =
           selectedIndex >= 0
             ? selectedIndex
-            : Math.min(current.currentChat, Math.max(result.chats.length - 1, 0));
+            : Math.min(
+                current.currentChat,
+                Math.max(result.chats.length - 1, 0)
+              );
         dispatch({
           type: GlobalActionType.SET_STATE,
           payload: { chat: result.chats, currentChat },
@@ -247,7 +264,13 @@ export const ChatProvider = ({ children }) => {
     return () => {
       cancelled = true;
     };
-  }, [zkStorageEnabled, vaultIdentity, vaultUnlockRevision, dispatch]);
+  }, [
+    zkStorageEnabled,
+    vaultIdentity,
+    vaultUnlockRevision,
+    lazyHistory,
+    dispatch,
+  ]);
 
   useEffect(() => {
     if (!zkStorageEnabled || !vaultReady) return;
@@ -291,6 +314,161 @@ export const ChatProvider = ({ children }) => {
     return () => window.clearTimeout(timeout);
   }, [state.chat, zkStorageEnabled, vaultReady]);
 
+  // Replace several chats at once. `latestState.current` is not updated until
+  // the next render, so one dispatch per chat would apply every update to the
+  // same stale snapshot and lose all but the last one.
+  const applyChatUpdates = useCallback(
+    (updates: Map<string, Chat>) => {
+      if (!updates.size) return;
+      const current = latestState.current;
+      let changed = false;
+      const nextChat = current.chat.map((item) => {
+        const replacement = updates.get(String(item.id));
+        if (!replacement) return item;
+        changed = true;
+        return replacement;
+      });
+      if (!changed) return;
+      dispatch({
+        type: GlobalActionType.SET_STATE,
+        payload: { chat: nextChat },
+      });
+    },
+    [dispatch]
+  );
+
+  const replaceChat = useCallback(
+    (chat: Chat) => {
+      applyChatUpdates(new Map([[String(chat.id), chat]]));
+    },
+    [applyChatUpdates]
+  );
+
+  // Fetch the transcript of a placeholder chat when it is opened.
+  const loadChatMessages = useCallback(
+    async (id: number | string) => {
+      const key = String(id);
+      const chat = latestState.current.chat?.find(
+        (item) => String(item.id) === key
+      );
+      if (!chat?.vault || chat.messages?.length) return;
+      if (hydratedChats.current.has(key)) return;
+      const credentials = vaultCredentials.current;
+      if (!credentials) return;
+
+      hydratedChats.current.add(key);
+      try {
+        replaceChat(
+          await hydrateVaultChat(
+            chat,
+            credentials.privateKey,
+            credentials.userKey,
+            vaultCache.current
+          )
+        );
+      } catch (error) {
+        hydratedChats.current.delete(key);
+        throw error;
+      }
+    },
+    [replaceChat]
+  );
+
+  // Search the complete history. Matching placeholders are loaded from the
+  // vault and kept in state; non-matching ones are reduced again so the browser
+  // storage stays small.
+  const searchChats = useCallback(
+    async (query: string): Promise<Chat[]> => {
+      const credentials = vaultCredentials.current;
+      const chats = latestState.current.chat ?? [];
+      if (!credentials) {
+        return chats.filter((chat) => matchesChatQuery(chat, query));
+      }
+
+      const matches = await searchVaultChats(
+        chats,
+        query,
+        credentials.privateKey,
+        credentials.userKey,
+        vaultCache.current
+      );
+      const matchedIds = new Set(matches.map((chat) => String(chat.id)));
+      const currentId = String(
+        latestState.current.chat?.[latestState.current.currentChat]?.id
+      );
+      const updates = new Map<string, Chat>();
+      for (const match of matches) {
+        updates.set(String(match.id), match);
+      }
+      for (const chat of chats) {
+        const id = String(chat.id);
+        if (
+          id === currentId ||
+          !chat.vault ||
+          !chat.messages?.length ||
+          matchedIds.has(id)
+        ) {
+          continue;
+        }
+        hydratedChats.current.delete(id);
+        updates.set(id, demoteVaultChat(chat));
+      }
+      applyChatUpdates(updates);
+      return matches;
+    },
+    [applyChatUpdates]
+  );
+
+  // Record which chats live in the vault so the persistence layer may drop
+  // their transcripts. Marking happens after the vault sync populated the
+  // revision cache; it is idempotent and converges after one dispatch.
+  useEffect(() => {
+    if (!zkStorageEnabled || !vaultReady || !lazyHistory) return;
+    const credentials = vaultCredentials.current;
+    if (!credentials) return;
+    const marked = markVaultChats(
+      state.chat ?? [],
+      vaultCache.current,
+      credentials.userKey
+    );
+    if (marked) {
+      dispatch({
+        type: GlobalActionType.SET_STATE,
+        payload: { chat: marked },
+      });
+    }
+  }, [state.chat, zkStorageEnabled, vaultReady, lazyHistory, dispatch]);
+
+  // With lazy history the current chat is a placeholder until it is opened.
+  useEffect(() => {
+    if (!lazyHistory || !vaultReady) return;
+    const chat = state.chat?.[state.currentChat];
+    if (!chat?.vault || chat.messages?.length) return;
+
+    let cancelled = false;
+    loadChatMessages(chat.id).catch((error) => {
+      if (cancelled) return;
+      console.error("Could not load the encrypted chat:", error);
+      toaster.create({
+        title: t("zk_storage_sync_error"),
+        description:
+          error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    state.chat,
+    state.currentChat,
+    lazyHistory,
+    vaultReady,
+    loadChatMessages,
+  ]);
+
   useEffect(() => {
     const typingOnly = pendingTypingOnly.current === true;
     pendingTypingOnly.current = null;
@@ -311,7 +489,15 @@ export const ChatProvider = ({ children }) => {
   }, [debouncedSave.flush]);
 
   return (
-    <ChatContext.Provider value={{ ...state, ...actionList }}>
+    <ChatContext.Provider
+      value={{
+        ...state,
+        ...actionList,
+        loadChatMessages,
+        searchChats,
+        vaultReady,
+      }}
+    >
       <MessagesContext.Provider value={dispatch}>
         {children}
       </MessagesContext.Provider>

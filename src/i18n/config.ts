@@ -127,6 +127,11 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_unlock: "Unlock this device",
           zk_storage_unlocking: "Unlocking…",
           zk_storage_error: "Encrypted chat storage could not be changed",
+          zk_lazy_history_label: "Load chat history on demand",
+          zk_lazy_history_help:
+            "Keep only the chat list in this browser and download a transcript from the encrypted vault when you open or search it. This avoids hitting the browser storage limit.",
+          zk_storage_search_loading:
+            "Loading the complete history from the encrypted vault…",
           unknown_error: "An unexpected error occurred.",
           send_help: "Select a button for sending messages.",
           fontsize_help: "Select the font size of the user interface.",
@@ -474,6 +479,11 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_unlock: "Dieses Gerät entsperren",
           zk_storage_unlocking: "Wird entsperrt …",
           zk_storage_error: "Die verschlüsselte Chatspeicherung konnte nicht geändert werden",
+          zk_lazy_history_label: "Chat-Verlauf bei Bedarf laden",
+          zk_lazy_history_help:
+            "In diesem Browser wird nur die Chat-Liste gespeichert. Ein Verlauf wird aus dem verschlüsselten Speicher geladen, sobald Sie ihn öffnen oder darin suchen. So wird das Speicherlimit des Browsers nicht überschritten.",
+          zk_storage_search_loading:
+            "Der vollständige Verlauf wird aus dem verschlüsselten Speicher geladen …",
           unknown_error: "Ein unerwarteter Fehler ist aufgetreten.",
           open_issue: "Melde einen Verbesserungswunsch",
           theme_style: "Farbschema",

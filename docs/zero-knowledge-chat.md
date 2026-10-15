@@ -186,6 +186,26 @@ dabei gleich.
 2. Eigene Hülle mit `SK_user` entpacken -> `K_chat`.
 3. Chiffrat mit `K_chat` entschlüsseln -> Chat-Objekt.
 
+#### 4.4.1 Verlauf bei Bedarf laden (`general.zkLazyHistory`)
+
+Die zentrale Speicherung kann den kompletten Verlauf aller Chats schnell größer
+werden lassen, als `localStorage` im Browser erlaubt. Mit der Option
+`general.zkLazyHistory` (Default `false`, nur sichtbar wenn `zkStorage` aktiv
+ist) wird deshalb nur noch eine **leichte Chatliste** lokal gespeichert:
+
+* Pro Chat bleiben Titel, Zeitpunkt, Anzahl Nachrichten und eine kurze
+  Vorschau der ersten Nutzerfrage erhalten (`ChatVaultDescriptor`).
+* Der vollständige Verlauf bleibt ausschließlich im Vault.
+* Beim Öffnen eines Chats wird der Verlauf geladen
+  (`hydrateVaultChat`), solange im Speicher gehalten und beim nächsten
+  Speichern wieder durch den Platzhalter ersetzt.
+* Die Suche (`searchVaultChats`) lädt Platzhalter nacheinander aus dem Vault
+  und übernimmt nur Treffer in den Zustand, damit die Suche nicht erneut den
+  gesamten Verlauf lokal ablegt.
+* Platzhalter werden nie hochgeladen (`syncVaultChats` überspringt sie), damit
+  ein nicht geladener Verlauf den Vault nicht mit einem leeren Chat
+  überschreibt.
+
 ### 4.5 Chat teilen
 
 Zum Verpacken von `K_chat` braucht der Absender den **Public Key des
@@ -410,8 +430,11 @@ expliziten Löschung bestehen und werden dann unzugänglich)
    lokale Chats ohne Remote-Gegenstück werden migriert. Gleichzeitige Änderungen
    werden mit `rev` nach dem Last-Write-Wins-Prinzip aufgelöst. Teilen ist noch
    nicht in der Oberfläche integriert.
+   - Zusatzoption `general.zkLazyHistory` (Default `false`, sichtbar bei
+     aktivem `zkStorage`): hält lokal nur die leichte Chatliste und lädt
+     Verläufe bei Bedarf aus dem Vault (siehe 4.4.1).
 7. **Tests** unter `src/chat/utils/__tests__` und `src/chat/service/__tests__`
-   (Roundtrips, Fehlerfälle, Envelope-Sharing, API-Vertrag).
+   (Roundtrips, Fehlerfälle, Envelope-Sharing, API-Vertrag, Lazy-History).
 
 ## 9. Offene Fragen an den Auftraggeber
 

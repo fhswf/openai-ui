@@ -52,6 +52,7 @@ export function ZeroKnowledgeStorageSetting() {
   const { options, user } = useGlobal();
   const { setGeneral } = useOptions();
   const enabled = options.general.zkStorage ?? false;
+  const lazyHistory = options.general.zkLazyHistory ?? false;
   const userIdentity = user?.sub ?? user?.id ?? user?.email ?? null;
   const [busy, setBusy] = useState(false);
   const [keyStatus, setKeyStatus] = useState<KeyStatus>("idle");
@@ -394,6 +395,21 @@ export function ZeroKnowledgeStorageSetting() {
       )}
       {enabled && keyStatus === "locked" && (
         <Field.HelperText>{t("zk_storage_locked_help")}</Field.HelperText>
+      )}
+      {enabled && (
+        <Field.Root mt="3">
+          <Switch
+            id="zk-lazy-history"
+            checked={lazyHistory}
+            disabled={busy}
+            onChange={(event) => {
+              setGeneral({ zkLazyHistory: event.target.checked });
+            }}
+          >
+            {t("zk_lazy_history_label")}
+          </Switch>
+          <Field.HelperText>{t("zk_lazy_history_help")}</Field.HelperText>
+        </Field.Root>
       )}
       {vaultKey && (
         <Stack mt="3" align="start" gap="2" width="full">
