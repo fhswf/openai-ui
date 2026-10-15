@@ -5,6 +5,14 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.53.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.52.0...openai-ui-v0.53.0) (2026-10-15)
+
+
+### Features
+
+* load encrypted chat history on demand (fixes [#193](https://github.com/fhswf/openai-ui/issues/193)) ([6bf2f25](https://github.com/fhswf/openai-ui/commit/6bf2f258a69261c21a78577fc59ce8b4b81375a3))
+* load encrypted chat history on demand to stay within browser storage ([e867cea](https://github.com/fhswf/openai-ui/commit/e867cead403181d1a4eab4fc7000e2e593912db2)), closes [#193](https://github.com/fhswf/openai-ui/issues/193)
+
 ## [0.52.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.51.0...openai-ui-v0.52.0) (2026-10-14)
 
 
