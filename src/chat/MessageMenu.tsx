@@ -7,10 +7,12 @@ import {
   Card,
   HStack,
   IconButton,
+  Input,
   Kbd,
   Dialog,
   SimpleGrid,
   Spacer,
+  Spinner,
   Text,
   Heading,
   Button,
@@ -19,11 +21,12 @@ import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { useTranslation } from "react-i18next";
 import { IoChatboxOutline, IoCloseOutline } from "react-icons/io5";
-import { IoIosClose } from "react-icons/io";
+import { IoIosSearch, IoIosClose } from "react-icons/io";
 import { MdOutlineDeleteOutline } from "react-icons/md";
 import { RiChatHistoryLine, RiChatNewLine } from "react-icons/ri";
-import { Message } from "./context/types";
+import { Chat, Message } from "./context/types";
 import { Toaster, toaster } from "../components/ui/toaster";
+import { matchesChatQuery } from "./utils/chatSearch";
 
 export function MessageMenu() {
   const {
@@ -37,11 +40,19 @@ export function MessageMenu() {
     chat,
     currentApp,
     currentChat,
+    searchChats,
+    vaultReady,
   } = useGlobal();
   const { apps, category } = useApps();
   const { t } = useTranslation();
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState<Chat[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const lazyHistory = options.general.zkLazyHistory ?? false;
 
   const currentRef = useCallback(
     (node) => {
@@ -58,6 +69,42 @@ export function MessageMenu() {
     const index = chat.findIndex((item) => item.id == id);
     removeChat(index);
   };
+
+  // Searching must cover the complete history, so placeholders are loaded from
+  // the vault on demand. Non-matching transcripts are released again.
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!menuOpen || !lazyHistory || !trimmed || !vaultReady) {
+      setResults(null);
+      return;
+    }
+
+    let cancelled = false;
+    setSearching(true);
+    setLoadError(null);
+    searchChats(trimmed)
+      .then((matches) => {
+        if (!cancelled) setResults(matches);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("Could not search the complete chat history:", error);
+        setLoadError(
+          error instanceof Error ? error.message : t("unknown_error")
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [menuOpen, lazyHistory, query, vaultReady, searchChats, t]);
+
+  const visibleChats =
+    results ?? chat.filter((item) => matchesChatQuery(item, query));
+  const searchIncomplete = lazyHistory && query.trim().length > 0 && searching;
 
   function getTitle(
     messages: Message[]
@@ -119,85 +166,118 @@ export function MessageMenu() {
             <Dialog.Title>{t("chat_history")}</Dialog.Title>
           </Dialog.Header>
           <Dialog.Body className={styles.dialog_body}>
+            <HStack gap={2} marginBlockEnd={3}>
+              <Input
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setLoadError(null);
+                }}
+                placeholder={t("Search...")}
+                aria-label={t("Search...")}
+                data-testid="ChatHistorySearchInput"
+              />
+              {searching && <Spinner size="sm" />}
+              {query && (
+                <IconButton
+                  variant="ghost"
+                  title={t("clear")}
+                  onClick={() => setQuery("")}
+                >
+                  <IoIosClose />
+                </IconButton>
+              )}
+            </HStack>
+            {loadError && (
+              <Text color="red.600" marginBlockEnd={3}>
+                {loadError}
+              </Text>
+            )}
+            {searchIncomplete && (
+              <Text color="fg.muted" marginBlockEnd={3}>
+                {t("zk_storage_search_loading")}
+              </Text>
+            )}
             <SimpleGrid minChildWidth="sm" gap={"2em"} className={styles.grid}>
-              {chat
-                // sort currentChat to the top
-                //.toSorted((a, b) => a.id == chat[currentChat].id ? -1 : b.id == chat[currentChat].id ? 1 : 0)
-                .map((c, index) => {
-                  const itemProps =
-                    chat[currentChat]?.id == c.id
-                      ? { ref: currentRef, className: styles.current }
-                      : {};
+              {visibleChats.map((c) => {
+                const index = chat.findIndex((item) => item.id == c.id);
+                const itemProps =
+                  chat[currentChat]?.id == c.id
+                    ? { ref: currentRef, className: styles.current }
+                    : {};
 
-                  return (
-                    <Card.Root
-                      size="sm"
-                      key={c.id}
-                      className={styles.card}
-                      {...itemProps}
-                      onClick={(e) => {
-                        console.log("Clicking on chat %o", c.id);
-                        setState({ currentChat: index });
-                        setMenuOpen(false);
-                      }}
-                    >
-                      <Card.Header>
-                        <HStack
-                          width={"100%"}
-                          justifyContent="space-between"
-                          alignItems="baseline"
+                return (
+                  <Card.Root
+                    size="sm"
+                    key={c.id}
+                    className={styles.card}
+                    {...itemProps}
+                    onClick={(e) => {
+                      console.log("Clicking on chat %o", c.id);
+                      setState({ currentChat: index });
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <Card.Header>
+                      <HStack
+                        width={"100%"}
+                        justifyContent="space-between"
+                        alignItems="baseline"
+                      >
+                        <Heading>{c.title}</Heading>
+                        <Spacer />
+                        <Text textStyle="xs">
+                          {new Date(c.ct).toLocaleString()}
+                        </Text>
+                      </HStack>
+                    </Card.Header>
+                    <Card.Body>
+                      <Card.Description className={styles.description} asChild>
+                        <Text>
+                          {c.messages?.length
+                            ? getTitle(
+                                c.messages.filter((m) => m.role == "user")
+                              )
+                            : c.vault?.preview}
+                        </Text>
+                      </Card.Description>
+                      {c.messages?.length
+                        ? getImage(c.messages.filter((m) => m.role == "user"))
+                        : null}
+                    </Card.Body>
+                    <Card.Footer>
+                      <HStack
+                        width={"100%"}
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
+                        <IconButton
+                          variant="ghost"
+                          size="xs"
+                          focusRing="none"
+                          title={t("delete_chat")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteChat(c.id);
+                          }}
                         >
-                          <Heading>{c.title}</Heading>
-                          <Spacer />
-                          <Text textStyle="xs">
-                            {new Date(c.ct).toLocaleString()}
-                          </Text>
-                        </HStack>
-                      </Card.Header>
-                      <Card.Body>
-                        <Card.Description
-                          className={styles.description}
-                          asChild
-                        >
-                          <Text>
-                            {getTitle(
-                              c.messages.filter((m) => m.role == "user")
-                            )}
-                          </Text>
-                        </Card.Description>
-                        {getImage(c.messages.filter((m) => m.role == "user"))}
-                      </Card.Body>
-                      <Card.Footer>
-                        <HStack
-                          width={"100%"}
-                          justifyContent="space-between"
-                          alignItems="center"
-                        >
-                          <IconButton
-                            variant="ghost"
-                            size="xs"
-                            focusRing="none"
-                            title={t("delete_chat")}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteChat(c.id);
-                            }}
-                          >
-                            <MdOutlineDeleteOutline />
-                          </IconButton>
-                          <Spacer />
-                          <Text>
-                            {t("count_messages", {
-                              count: c.messages?.filter(
-                                (item) => item.role !== "system"
-                              ).length,
-                            })}
-                          </Text>
-                        </HStack>
-                      </Card.Footer>
-                    </Card.Root>
-                  );
-                })}
+                          <MdOutlineDeleteOutline />
+                        </IconButton>
+                        <Spacer />
+                        <Text>
+                          {t("count_messages", {
+                            count: c.vault?.messageCount
+                              ? c.vault.messageCount
+                              : c.messages?.filter(
+                                  (item) => item.role !== "system"
+                                ).length,
+                          })}
+                        </Text>
+                      </HStack>
+                    </Card.Footer>
+                  </Card.Root>
+                );
+              })}
             </SimpleGrid>
           </Dialog.Body>
           <Dialog.Footer>
@@ -219,7 +299,10 @@ export function MessageMenu() {
                 {t("new_chat")}
               </Button>
               <Spacer />
-              <Button type={"primary" as any} onClick={() => setMenuOpen(false)}>
+              <Button
+                type={"primary" as any}
+                onClick={() => setMenuOpen(false)}
+              >
                 {t("close")}
               </Button>
             </HStack>

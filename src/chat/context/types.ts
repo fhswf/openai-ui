@@ -27,6 +27,8 @@ export type GeneralOptions = {
   size: string;
   codeEditor: boolean;
   zkStorage: boolean;
+  /** Keep only a lightweight chat list in this browser and load transcripts from the vault on demand. */
+  zkLazyHistory: boolean;
 };
 
 export type AccountOptions = {
@@ -125,6 +127,12 @@ export type GlobalActions = {
   setIs: (arg: any) => void;
   currentList: () => any;
   stopResponse: () => void;
+  /** Load the transcript of a vault-backed chat that is stored as a placeholder. */
+  loadChatMessages: (id: number | string) => Promise<void>;
+  /** Search the complete history, loading placeholders from the vault on demand. */
+  searchChats: (query: string) => Promise<Chat[]>;
+  /** True once the encrypted vault has been unlocked for this session. */
+  vaultReady: boolean;
 };
 
 export interface MessageAttachment {
@@ -161,6 +169,23 @@ export type Chat = {
   messages: Messages;
   error?: any;
   botStarts?: boolean;
+  /**
+   * Set when only a lightweight placeholder for this chat is stored locally.
+   * The transcript still lives in the encrypted vault and is fetched on demand.
+   */
+  vault?: ChatVaultDescriptor;
+};
+
+export type ChatVaultDescriptor = {
+  /** Vault revision the local placeholder was derived from. */
+  rev: number;
+  /** Owner of the remote chat, used to decide whether edits may be uploaded. */
+  ownerId: string;
+  /** Number of messages the remote transcript contains. */
+  messageCount: number;
+  /** Plaintext of the first user message, used as a local search fallback. */
+  preview: string;
+  updatedAt: number;
 };
 
 export type App = {

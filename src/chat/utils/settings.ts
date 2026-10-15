@@ -41,6 +41,20 @@ function isQuotaExceededError(error: unknown): error is Error {
   return error instanceof Error && error.name === "QuotaExceededError";
 }
 
+/**
+ * Drop transcripts that can be re-downloaded from the encrypted vault. Only the
+ * lightweight placeholder (title, time, preview, message count) stays in
+ * localStorage, so the shared history no longer fills the browser quota.
+ */
+function stripVaultTranscripts(chat: Chat[], lazyHistory: boolean): Chat[] {
+  if (!lazyHistory) {
+    return chat;
+  }
+  return chat.map((item) =>
+    item.vault && item.messages?.length ? { ...item, messages: [] } : item
+  );
+}
+
 function logStorageSizes(settings: PersistedSettings, chat: Chat[]) {
   console.error("Quota exceeded! Analyzing sizes...");
   const settingsStr = JSON.stringify(settings, replacer);
@@ -178,6 +192,10 @@ export function saveState(stateToSave: {
   const { chat, ...settings } = reducedState as typeof reducedState & {
     currentChat: number;
   };
+  const storedChat = stripVaultTranscripts(
+    chat,
+    Boolean(stateToSave.options?.general?.zkLazyHistory)
+  );
 
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify(settings, replacer));
@@ -186,14 +204,14 @@ export function saveState(stateToSave: {
   }
 
   try {
-    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chat, replacer));
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(storedChat, replacer));
   } catch (error) {
     if (!isQuotaExceededError(error)) {
       throw error;
     }
 
-    logStorageSizes(settings, chat);
-    pruneChatHistoryToFitStorage(settings, chat, error);
+    logStorageSizes(settings, storedChat);
+    pruneChatHistoryToFitStorage(settings, storedChat, error);
   }
 }
 
