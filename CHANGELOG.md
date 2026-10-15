@@ -5,6 +5,21 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.52.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.51.0...openai-ui-v0.52.0) (2026-10-14)
+
+
+### Features
+
+* add active credential management for Zero-Knowledge storage with UI updates and error handling ([5f8dc2a](https://github.com/fhswf/openai-ui/commit/5f8dc2ac8e4f2d01c5e1e71ee31834a596329084))
+* add citation metadata for OpenAI-UI ([2ed0fb7](https://github.com/fhswf/openai-ui/commit/2ed0fb71c72e27aae837cfe4e12341a162494a57))
+* add Zero-Knowledge sync prompt and localization for encrypted chat storage ([069ebbd](https://github.com/fhswf/openai-ui/commit/069ebbd232ec651b11535514cbaa6d980a254f3b))
+* add Zero-Knowledge sync prompt and localization for encrypted chat storage ([ab64bb1](https://github.com/fhswf/openai-ui/commit/ab64bb1a3158e4a83a2925c635d49b95b11cc387))
+* enhance passkey registration with PRF evaluation and error handling ([bce44e2](https://github.com/fhswf/openai-ui/commit/bce44e21f0bc9f53862d74897ac625afa12321f3))
+* enhance vault chat restoration with improved logging for decryption failures ([7744f6a](https://github.com/fhswf/openai-ui/commit/7744f6a80834df3a664ac7a79306299594c1301d))
+* implement credential management with rename and delete functionality for Zero-Knowledge storage ([bf2cde6](https://github.com/fhswf/openai-ui/commit/bf2cde6a5dff46b7468158f0f605dc1468af1c22))
+* implement passkey registration and management for encrypted chat storage ([f324e4d](https://github.com/fhswf/openai-ui/commit/f324e4d4e93b873f06c117085912b5161fd0195a))
+* implement zero-knowledge storage for encrypted chat synchronization ([8b5129b](https://github.com/fhswf/openai-ui/commit/8b5129baf45f663a08de1ca3f343f37f8bf30b9a))
+
 ## [0.51.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.50.1...openai-ui-v0.51.0) (2026-10-13)
 
 
