@@ -169,8 +169,25 @@ header {
 }
 
 .header-action-menu {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   position: relative;
   flex: 0 0 auto;
+}
+
+.header-user-info {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+
+  & > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .mobile-more-button {

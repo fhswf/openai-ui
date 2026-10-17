@@ -886,18 +886,14 @@ function HeaderActionList({
       <HeaderActionItem label={t("usage_information")}>
         <UsageInformationDialog />
       </HeaderActionItem>
-      <HeaderActionItem label={t("User information")}>
-        <UserInformationPopover
-          openai={openai}
-          setOptions={setOptions}
-          user={user}
-        />
-      </HeaderActionItem>
     </div>
   );
 }
 
-interface MobileHeaderActionsProps extends Omit<HeaderActionListProps, "onAction" | "open"> {}
+type MobileHeaderActionsProps = Omit<
+  HeaderActionListProps,
+  "onAction" | "open"
+>;
 
 function MobileHeaderActions(props: MobileHeaderActionsProps) {
   const [open, setOpen] = useState(false);
@@ -924,6 +920,8 @@ function MobileHeaderActions(props: MobileHeaderActionsProps) {
     };
   }, [open]);
 
+  const { user, ...actionProps } = props;
+
   return (
     <div className={chatStyles["header-action-menu"]} ref={actionMenuRef}>
       <IconButton
@@ -937,7 +935,18 @@ function MobileHeaderActions(props: MobileHeaderActionsProps) {
       >
         <LuEllipsis />
       </IconButton>
-      <HeaderActionList {...props} open={open} onAction={() => setOpen(false)} />
+      <HeaderActionList
+        {...actionProps}
+        open={open}
+        onAction={() => setOpen(false)}
+      />
+      <div className={chatStyles["header-user-info"]}>
+        <UserInformationPopover
+          openai={props.openai}
+          setOptions={props.setOptions}
+          user={user}
+        />
+      </div>
     </div>
   );
 }
