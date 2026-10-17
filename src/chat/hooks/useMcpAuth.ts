@@ -88,9 +88,7 @@ export function areMcpAuthConfigsEqual(
   const normalizedA = normalizeMcpAuthConfig(a);
   const normalizedB = normalizeMcpAuthConfig(b);
 
-  if (
-    normalizedA.mode !== normalizedB.mode
-  ) {
+  if (normalizedA.mode !== normalizedB.mode) {
     return false;
   }
 
@@ -196,7 +194,11 @@ export async function discoverMcpAuthConfig(
 
     return buildUserDataConfig(currentConfig, discovery.scopes);
   } catch (error) {
-    console.warn("Unable to discover MCP auth config for %s: %o", serverUrl, error);
+    console.warn(
+      "Unable to discover MCP auth config for %s: %o",
+      serverUrl,
+      error
+    );
     return currentConfig;
   }
 }
@@ -234,7 +236,9 @@ export function useMcpAuthDiscovery({
   const normalizedMode = normalizedConfig.mode;
   const staticToken =
     normalizedConfig.mode === "static" ? normalizedConfig.staticToken : "";
-  const userDataScopeKey = userData.scopes.map((scope) => scope.scope).join(",");
+  const userDataScopeKey = userData.scopes
+    .map((scope) => scope.scope)
+    .join(",");
 
   React.useEffect(() => {
     let cancelled = false;
@@ -388,7 +392,11 @@ export async function getAuthorizationForMcpConfig(
       case "static":
         return getStaticAuthorization(normalizedConfig.staticToken);
       case "user-data":
-        return await getUserDataAuthorization(normalizedConfig, serverUrl, user);
+        return await getUserDataAuthorization(
+          normalizedConfig,
+          serverUrl,
+          user
+        );
       default:
         return undefined;
     }

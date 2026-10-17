@@ -1,122 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { Tooltip } from "../components/ui/tooltip";
-import { Button, IconButton, Spacer, VStack } from "@chakra-ui/react";
-import { IoInformationCircleOutline } from "react-icons/io5";
-import { IoSettingsOutline } from "react-icons/io5";
-import { IoApps } from "react-icons/io5";
-import { RiChatHistoryLine } from "react-icons/ri";
-import { MdOutlineDarkMode } from "react-icons/md";
-import { MdOutlineLightMode } from "react-icons/md";
-import { TbArrowsMinimize } from "react-icons/tb";
-import { TbArrowsMaximize } from "react-icons/tb";
-import { LuMonitor } from "react-icons/lu";
-import { useGlobal } from "./context";
-import { classnames } from "../components/utils";
-import { useOptions } from "./hooks";
-import { t } from "i18next";
-import { MobileSidebarDrawer, SidebarAboutDialog } from "./ChatSideBarOverlays";
-
-import styles from "./style/sider.module.less";
-import semver from "semver";
-
-const ICONS = {
-  help: IoInformationCircleOutline,
-  apps: IoApps,
-  history: RiChatHistoryLine,
-  config: IoSettingsOutline,
-  dark: MdOutlineDarkMode,
-  light: MdOutlineLightMode,
-  auto: LuMonitor,
-  "min-screen": TbArrowsMinimize,
-  "full-screen": TbArrowsMaximize,
-};
-
-const Option = (props) => {
-  const { type, onClick, tooltip, dataTestId, expanded = false } = props;
-  const testId = dataTestId ? { "data-testid": dataTestId } : {};
-  if (!ICONS[type]) {
-    console.error(`Icon ${type} not found`);
-    return null;
-  }
-
-  const icon = ICONS[type]();
-  const control = expanded ? (
-    <Button
-      width="100%"
-      justifyContent="flex-start"
-      variant="ghost"
-      onClick={onClick}
-      aria-label={tooltip}
-      {...testId}
-    >
-      {icon}
-      <span>{tooltip}</span>
-    </Button>
-  ) : (
-    <IconButton
-      aria-label={tooltip}
-      variant={props.variant || "ghost"}
-      onClick={onClick}
-      {...testId}
-    >
-      {icon}
-    </IconButton>
-  );
-
-  return (
-    <Tooltip content={tooltip}>
-      {control}
-    </Tooltip>
-  );
-};
-
-interface PrimarySidebarOptionsProps {
-  expanded: boolean;
-  fullScreen: boolean;
-  theme: string;
-  onToggleConfig: VoidFunction;
-  onToggleFullScreen: VoidFunction;
-  onToggleTheme: VoidFunction;
-}
-
-function PrimarySidebarOptions({
-  expanded,
-  fullScreen,
-  theme,
-  onToggleConfig,
-  onToggleFullScreen,
-  onToggleTheme,
-}: PrimarySidebarOptionsProps) {
-  return (
-    <div
-      className={classnames(styles.tool, "flex-c-sb flex-column", {
-        [styles["drawer-options"]]: expanded,
-      })}
-      data-testid={expanded ? "MobileSidebarActions" : "BottomLeftSideBar"}
-    >
-      <Option
-        type={theme}
-        onClick={onToggleTheme}
-        tooltip={t("Theme")}
-        dataTestId="OptionDarkModeSelect"
-        expanded={expanded}
-      />
-      <Option
-        dataTestId="OpenConfigBtn"
-        type="config"
-        onClick={onToggleConfig}
-        tooltip={t("Config")}
-        expanded={expanded}
-      />
-      <Option
-        type={`${fullScreen ? "min" : "full"}-screen`}
-        onClick={onToggleFullScreen}
-        tooltip={`${fullScreen ? t("Minimize") : t("Maximize")}`}
-        expanded={expanded}
-      />
-    </div>
-  );
-}
+import React, { useState } from "react";
+import { ChatSideBarView } from "./ChatSideBarOverlays";
+import { useChatSideBarState } from "./ChatSideBarHooks";
 
 const text = `
 ## Datenschutzhinweise
@@ -227,108 +111,38 @@ export function ChatSideBar({
   onMobileOpenChange,
 }: ChatSideBarProps) {
   const [open, setOpen] = useState(false);
-  const [metadata, setMetadata] = useState<{
-    release?: string;
-    build_sha?: string;
-  }>({});
-  const { is, setState, options, version, release } = useGlobal();
-  const { setGeneral, setAccount } = useOptions();
+  const {
+    acceptTerms,
+    is,
+    metadata,
+    options,
+    toggleConfig,
+    toggleFullScreen,
+    toggleTheme,
+  } = useChatSideBarState(onMobileOpenChange, () => setOpen(false));
   const informationWindowOpen = !options.account.terms || open;
 
-  const acceptTerms = () => {
-    setOpen(false);
-    setAccount({ terms: true });
-  };
-
-  const toggleTheme = () => {
-    const currentTheme =
-      document.documentElement.dataset.theme ?? options.general.theme;
-    setGeneral({
-      theme: currentTheme === "light" ? "dark" : "light",
-    });
-    onMobileOpenChange(false);
-  };
-
-  const toggleConfig = () => {
-    setState({ is: { ...is, config: !is.config } });
-    onMobileOpenChange(false);
-  };
-
-  const toggleFullScreen = () => {
-    setState({ is: { ...is, fullScreen: !is.fullScreen } });
-    onMobileOpenChange(false);
-  };
-
-  useEffect(() => {
-    fetch("/metadata.json", { cache: "no-cache" })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        setMetadata(data);
-        if (semver.gt(data.release, version) || !release) {
-          console.log("New release: %s", data.release);
-          setState({ version: data.release });
-          fetch(`${data.repo_url}/releases/tags/openai-ui-v${data.release}`)
-            .then((response) => response.json())
-            .then((data) => {
-              console.log("release data: %j", data);
-              setState({ release: data });
-            })
-            .catch((error) => {
-              console.error("Error fetching release data: %s", error);
-            });
-        }
-      });
-  }, [version]);
-
   return (
-    <>
-      <VStack
-        role="toolbar"
-        className={classnames(styles.sider, "flex-c-sb flex-column")}
-        data-testid="LeftSideBar"
-      >
-        <PrimarySidebarOptions
-          expanded={false}
-          theme={options.general.theme}
-          fullScreen={is.fullScreen}
-          onToggleTheme={toggleTheme}
-          onToggleConfig={toggleConfig}
-          onToggleFullScreen={toggleFullScreen}
-        />
-        <Spacer />
-        <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
-          <SidebarAboutDialog
-            open={informationWindowOpen}
-            acceptedTerms={options.account.terms}
-            metadata={metadata}
-            termsText={text}
-            onOpenChange={(nextOpen) => {
-              if (options.account.terms) setOpen(nextOpen);
-            }}
-            onAcceptTerms={acceptTerms}
-          />
-        </div>
-      </VStack>
-
-      <MobileSidebarDrawer
-        mobileOpen={mobileOpen}
-        onMobileOpenChange={onMobileOpenChange}
-        onOpenAbout={() => {
-          onMobileOpenChange(false);
-          setOpen(true);
-        }}
-        actions={
-          <PrimarySidebarOptions
-            expanded
-            theme={options.general.theme}
-            fullScreen={is.fullScreen}
-            onToggleTheme={toggleTheme}
-            onToggleConfig={toggleConfig}
-            onToggleFullScreen={toggleFullScreen}
-          />
-        }
-      />
-    </>
+    <ChatSideBarView
+      mobileOpen={mobileOpen}
+      onMobileOpenChange={onMobileOpenChange}
+      aboutOpen={informationWindowOpen}
+      acceptedTerms={options.account.terms}
+      metadata={metadata}
+      termsText={text}
+      theme={options.general.theme}
+      fullScreen={is.fullScreen}
+      onToggleTheme={toggleTheme}
+      onToggleConfig={toggleConfig}
+      onToggleFullScreen={toggleFullScreen}
+      onAboutOpenChange={(nextOpen) => {
+        if (options.account.terms) setOpen(nextOpen);
+      }}
+      onAcceptTerms={acceptTerms}
+      onOpenAbout={() => {
+        onMobileOpenChange(false);
+        setOpen(true);
+      }}
+    />
   );
 }

@@ -3,10 +3,7 @@ import type { Tool } from "openai/resources/responses/responses.mjs";
 import { Menu, Portal } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { LuChevronRight } from "react-icons/lu";
-import type {
-  ToolChangeRequest,
-  McpToolMap,
-} from "./utils/mcpServices";
+import type { ToolChangeRequest, McpToolMap } from "./utils/mcpServices";
 
 interface ToolOptionsGroupProps {
   onToolChange: React.Dispatch<ToolChangeRequest>;

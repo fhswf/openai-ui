@@ -939,6 +939,7 @@ function MobileHeaderActions(props: MobileHeaderActionsProps) {
         {...actionProps}
         open={open}
         onAction={() => setOpen(false)}
+        user={user}
       />
       <div className={chatStyles["header-user-info"]}>
         <UserInformationPopover

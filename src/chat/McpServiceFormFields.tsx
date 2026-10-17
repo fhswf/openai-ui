@@ -172,7 +172,10 @@ function McpApprovalField({
   );
 }
 
-function McpAllowedToolsField({ form, setForm }: McpServiceIdentityFieldsProps) {
+function McpAllowedToolsField({
+  form,
+  setForm,
+}: McpServiceIdentityFieldsProps) {
   const { t } = useTranslation();
 
   return (

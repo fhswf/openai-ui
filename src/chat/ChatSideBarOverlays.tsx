@@ -4,6 +4,7 @@ import {
   IconButton,
   Link,
   Portal,
+  Spacer,
   Text,
   VStack,
 } from "@chakra-ui/react";
@@ -15,6 +16,9 @@ import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { Tooltip } from "../components/ui/tooltip";
+import { classnames } from "../components/utils";
+import { PrimarySidebarOptions } from "./ChatSideBarOptions";
+import type { PrimarySidebarOptionsProps } from "./ChatSideBarOptions";
 import {
   DialogBody,
   DialogCloseTrigger,
@@ -35,6 +39,7 @@ import {
   DrawerTitle,
 } from "../components/ui/drawer";
 import styles from "./style/sider.module.less";
+import "katex/dist/katex.min.css";
 
 interface ReleaseMetadata {
   release?: string;
@@ -120,6 +125,133 @@ export function SidebarAboutDialog({
         </DialogFooter>
       </DialogContent>
     </DialogRoot>
+  );
+}
+
+interface DesktopSidebarProps {
+  actions: React.ReactNode;
+  about: React.ReactNode;
+}
+
+export function DesktopSidebar({ actions, about }: DesktopSidebarProps) {
+  return (
+    <VStack
+      role="toolbar"
+      className={classnames(styles.sider, "flex-c-sb flex-column")}
+      data-testid="LeftSideBar"
+    >
+      {actions}
+      <Spacer />
+      <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
+        {about}
+      </div>
+    </VStack>
+  );
+}
+
+type SidebarActionProps = Omit<PrimarySidebarOptionsProps, "expanded">;
+
+interface DesktopChatSideBarProps extends SidebarActionProps {
+  acceptedTerms: boolean;
+  aboutOpen: boolean;
+  metadata: ReleaseMetadata;
+  onAboutOpenChange: (open: boolean) => void;
+  onAcceptTerms: VoidFunction;
+  termsText: string;
+}
+
+function DesktopChatSideBar({
+  acceptedTerms,
+  aboutOpen,
+  fullScreen,
+  metadata,
+  onAboutOpenChange,
+  onAcceptTerms,
+  onToggleConfig,
+  onToggleFullScreen,
+  onToggleTheme,
+  termsText,
+  theme,
+}: DesktopChatSideBarProps) {
+  return (
+    <DesktopSidebar
+      actions={
+        <PrimarySidebarOptions
+          expanded={false}
+          theme={theme}
+          fullScreen={fullScreen}
+          onToggleTheme={onToggleTheme}
+          onToggleConfig={onToggleConfig}
+          onToggleFullScreen={onToggleFullScreen}
+        />
+      }
+      about={
+        <SidebarAboutDialog
+          open={aboutOpen}
+          acceptedTerms={acceptedTerms}
+          metadata={metadata}
+          termsText={termsText}
+          onOpenChange={onAboutOpenChange}
+          onAcceptTerms={onAcceptTerms}
+        />
+      }
+    />
+  );
+}
+
+interface MobileChatSideBarProps extends SidebarActionProps {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+  onOpenAbout: VoidFunction;
+}
+
+function MobileChatSideBar({
+  fullScreen,
+  mobileOpen,
+  onMobileOpenChange,
+  onOpenAbout,
+  onToggleConfig,
+  onToggleFullScreen,
+  onToggleTheme,
+  theme,
+}: MobileChatSideBarProps) {
+  return (
+    <MobileSidebarDrawer
+      mobileOpen={mobileOpen}
+      onMobileOpenChange={onMobileOpenChange}
+      onOpenAbout={onOpenAbout}
+      actions={
+        <PrimarySidebarOptions
+          expanded
+          theme={theme}
+          fullScreen={fullScreen}
+          onToggleTheme={onToggleTheme}
+          onToggleConfig={onToggleConfig}
+          onToggleFullScreen={onToggleFullScreen}
+        />
+      }
+    />
+  );
+}
+
+interface ChatSideBarViewProps extends SidebarActionProps {
+  acceptedTerms: boolean;
+  aboutOpen: boolean;
+  metadata: ReleaseMetadata;
+  mobileOpen: boolean;
+  onAboutOpenChange: (open: boolean) => void;
+  onAcceptTerms: VoidFunction;
+  onMobileOpenChange: (open: boolean) => void;
+  onOpenAbout: VoidFunction;
+  termsText: string;
+}
+
+export function ChatSideBarView(props: ChatSideBarViewProps) {
+  return (
+    <>
+      <DesktopChatSideBar {...props} />
+      <MobileChatSideBar {...props} />
+    </>
   );
 }
 
