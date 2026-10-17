@@ -223,6 +223,8 @@ export function useMcpAuthDiscovery({
   const [discoveredScopes, setDiscoveredScopes] = React.useState<
     McpScopeDefinition[]
   >([]);
+  const [discoveryCompleteForUrl, setDiscoveryCompleteForUrl] =
+    React.useState("");
   const discoveredServerUrlRef = React.useRef("");
   const trimmedServerUrl = serverUrl.trim();
   const userData =
@@ -240,10 +242,12 @@ export function useMcpAuthDiscovery({
     if (discoveredServerUrlRef.current !== trimmedServerUrl) {
       discoveredServerUrlRef.current = trimmedServerUrl;
       setDiscoveredScopes([]);
+      setDiscoveryCompleteForUrl("");
     }
 
     if (!trimmedServerUrl) {
       setDiscoveredScopes([]);
+      setDiscoveryCompleteForUrl("");
       return;
     }
 
@@ -254,6 +258,7 @@ export function useMcpAuthDiscovery({
 
           discoveredServerUrlRef.current = trimmedServerUrl;
           setDiscoveredScopes(scopes);
+          setDiscoveryCompleteForUrl(trimmedServerUrl);
 
           if (normalizedConfig.mode === "user-data") {
             const nextConfig = buildUserDataConfig(normalizedConfig, scopes);
@@ -267,6 +272,7 @@ export function useMcpAuthDiscovery({
 
           discoveredServerUrlRef.current = trimmedServerUrl;
           setDiscoveredScopes([]);
+          setDiscoveryCompleteForUrl(trimmedServerUrl);
         });
     }, 300);
 
@@ -288,7 +294,10 @@ export function useMcpAuthDiscovery({
     discoveredScopes.length > 0 ? discoveredScopes : userData.scopes;
   const serverAuthOptionsDisabled =
     normalizedConfig.mode === "user-data" && effectiveUserDataScopes.length > 0;
-  const userDataOptionDisabled = effectiveUserDataScopes.length === 0;
+  const discoveryPending =
+    Boolean(trimmedServerUrl) && discoveryCompleteForUrl !== trimmedServerUrl;
+  const userDataOptionDisabled =
+    effectiveUserDataScopes.length === 0 && !discoveryPending;
 
   return {
     effectiveUserDataScopes,

@@ -1,25 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Tooltip } from "../components/ui/tooltip";
-
-import {
-  DialogBody,
-  DialogCloseTrigger,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTitle,
-  DialogTrigger,
-} from "../components/ui/dialog";
-import {
-  Button,
-  IconButton,
-  Link,
-  Portal,
-  Spacer,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
+import { Button, IconButton, Spacer, VStack } from "@chakra-ui/react";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { IoSettingsOutline } from "react-icons/io5";
 import { IoApps } from "react-icons/io5";
@@ -33,23 +14,9 @@ import { useGlobal } from "./context";
 import { classnames } from "../components/utils";
 import { useOptions } from "./hooks";
 import { t } from "i18next";
-import Markdown from "react-markdown";
-import remarkMath from "remark-math";
-import smartypants from "remark-smartypants";
-import remarkGfm from "remark-gfm";
-import rehypeKatex from "rehype-katex";
+import { MobileSidebarDrawer, SidebarAboutDialog } from "./ChatSideBarOverlays";
 
 import styles from "./style/sider.module.less";
-import {
-  DrawerBackdrop,
-  DrawerBody,
-  DrawerCloseTrigger,
-  DrawerContent,
-  DrawerHeader,
-  DrawerRoot,
-  DrawerTitle,
-} from "../components/ui/drawer";
-import "katex/dist/katex.min.css";
 import semver from "semver";
 
 const ICONS = {
@@ -264,7 +231,6 @@ export function ChatSideBar({
     release?: string;
     build_sha?: string;
   }>({});
-  const [newRelease, setNewRelease] = useState(false);
   const { is, setState, options, version, release } = useGlobal();
   const { setGeneral, setAccount } = useOptions();
   const informationWindowOpen = !options.account.terms || open;
@@ -301,7 +267,6 @@ export function ChatSideBar({
         setMetadata(data);
         if (semver.gt(data.release, version) || !release) {
           console.log("New release: %s", data.release);
-          setNewRelease(true);
           setState({ version: data.release });
           fetch(`${data.repo_url}/releases/tags/openai-ui-v${data.release}`)
             .then((response) => response.json())
@@ -333,121 +298,37 @@ export function ChatSideBar({
         />
         <Spacer />
         <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
-          <DialogRoot
+          <SidebarAboutDialog
             open={informationWindowOpen}
-            onOpenChange={(e) => {
-              if (options.account.terms) {
-                setOpen(e.open);
-              }
+            acceptedTerms={options.account.terms}
+            metadata={metadata}
+            termsText={text}
+            onOpenChange={(nextOpen) => {
+              if (options.account.terms) setOpen(nextOpen);
             }}
-            size="lg"
-          >
-            <DialogTrigger asChild>
-              <IconButton
-                aria-label={t("about")}
-                variant="ghost"
-                data-testid="aboutBtn"
-              >
-                <Tooltip content={t("about")}>
-                  <IoInformationCircleOutline />
-                </Tooltip>
-              </IconButton>
-            </DialogTrigger>
-            <DialogContent data-testid="InformationWindow">
-              <DialogHeader>
-                <DialogTitle>{t("About")}</DialogTitle>
-                {options.account.terms ? <DialogCloseTrigger /> : null}
-              </DialogHeader>
-              <DialogBody className="z-ui-markdown">
-                {metadata.release ? (
-                  <Text>
-                    Version:{" "}
-                    <Link
-                      target="blank"
-                      href={
-                        "https://github.com/fhswf/openai-ui/releases/tag/openai-ui-v" +
-                        metadata?.release
-                      }
-                    >
-                      {metadata?.release}
-                    </Link>{" "}
-                    (
-                    <Link
-                      target="blank"
-                      href={
-                        "https://github.com/fhswf/openai-ui/commit/" +
-                        metadata?.build_sha
-                      }
-                    >
-                      commit {String(metadata?.build_sha).substring(0, 7)}
-                    </Link>
-                    )
-                  </Text>
-                ) : null}
-                <Markdown
-                  remarkPlugins={[remarkGfm, remarkMath, smartypants]}
-                  rehypePlugins={[rehypeKatex]}
-                >
-                  {text}
-                </Markdown>
-              </DialogBody>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  onClick={acceptTerms}
-                  data-testid="accept-terms-btn"
-                >
-                  {t("Accept Terms")}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </DialogRoot>
+            onAcceptTerms={acceptTerms}
+          />
         </div>
       </VStack>
 
-      <DrawerRoot
-        open={mobileOpen}
-        onOpenChange={(event) => onMobileOpenChange(event.open)}
-        placement="start"
-        size="xs"
-      >
-        <Portal>
-          <DrawerBackdrop />
-        </Portal>
-        <DrawerContent
-          id="mobile-chat-navigation"
-          className={styles["mobile-drawer"]}
-        >
-          <DrawerHeader>
-            <DrawerTitle>{t("chatbot_title")}</DrawerTitle>
-            <DrawerCloseTrigger aria-label={t("close")} />
-          </DrawerHeader>
-          <DrawerBody>
-            <VStack align="stretch" gap="2" className={styles["drawer-controls"]}>
-              <PrimarySidebarOptions
-                expanded
-                theme={options.general.theme}
-                fullScreen={is.fullScreen}
-                onToggleTheme={toggleTheme}
-                onToggleConfig={toggleConfig}
-                onToggleFullScreen={toggleFullScreen}
-              />
-              <Button
-                width="100%"
-                justifyContent="flex-start"
-                variant="ghost"
-                onClick={() => {
-                  onMobileOpenChange(false);
-                  setOpen(true);
-                }}
-                data-testid="MobileAboutBtn"
-              >
-                <IoInformationCircleOutline /> <span>{t("about")}</span>
-              </Button>
-            </VStack>
-          </DrawerBody>
-        </DrawerContent>
-      </DrawerRoot>
+      <MobileSidebarDrawer
+        mobileOpen={mobileOpen}
+        onMobileOpenChange={onMobileOpenChange}
+        onOpenAbout={() => {
+          onMobileOpenChange(false);
+          setOpen(true);
+        }}
+        actions={
+          <PrimarySidebarOptions
+            expanded
+            theme={options.general.theme}
+            fullScreen={is.fullScreen}
+            onToggleTheme={toggleTheme}
+            onToggleConfig={toggleConfig}
+            onToggleFullScreen={toggleFullScreen}
+          />
+        }
+      />
     </>
   );
 }
