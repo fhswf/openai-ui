@@ -88,9 +88,7 @@ export function areMcpAuthConfigsEqual(
   const normalizedA = normalizeMcpAuthConfig(a);
   const normalizedB = normalizeMcpAuthConfig(b);
 
-  if (
-    normalizedA.mode !== normalizedB.mode
-  ) {
+  if (normalizedA.mode !== normalizedB.mode) {
     return false;
   }
 
@@ -196,7 +194,11 @@ export async function discoverMcpAuthConfig(
 
     return buildUserDataConfig(currentConfig, discovery.scopes);
   } catch (error) {
-    console.warn("Unable to discover MCP auth config for %s: %o", serverUrl, error);
+    console.warn(
+      "Unable to discover MCP auth config for %s: %o",
+      serverUrl,
+      error
+    );
     return currentConfig;
   }
 }
@@ -223,6 +225,8 @@ export function useMcpAuthDiscovery({
   const [discoveredScopes, setDiscoveredScopes] = React.useState<
     McpScopeDefinition[]
   >([]);
+  const [discoveryCompleteForUrl, setDiscoveryCompleteForUrl] =
+    React.useState("");
   const discoveredServerUrlRef = React.useRef("");
   const trimmedServerUrl = serverUrl.trim();
   const userData =
@@ -232,7 +236,9 @@ export function useMcpAuthDiscovery({
   const normalizedMode = normalizedConfig.mode;
   const staticToken =
     normalizedConfig.mode === "static" ? normalizedConfig.staticToken : "";
-  const userDataScopeKey = userData.scopes.map((scope) => scope.scope).join(",");
+  const userDataScopeKey = userData.scopes
+    .map((scope) => scope.scope)
+    .join(",");
 
   React.useEffect(() => {
     let cancelled = false;
@@ -240,10 +246,12 @@ export function useMcpAuthDiscovery({
     if (discoveredServerUrlRef.current !== trimmedServerUrl) {
       discoveredServerUrlRef.current = trimmedServerUrl;
       setDiscoveredScopes([]);
+      setDiscoveryCompleteForUrl("");
     }
 
     if (!trimmedServerUrl) {
       setDiscoveredScopes([]);
+      setDiscoveryCompleteForUrl("");
       return;
     }
 
@@ -254,6 +262,7 @@ export function useMcpAuthDiscovery({
 
           discoveredServerUrlRef.current = trimmedServerUrl;
           setDiscoveredScopes(scopes);
+          setDiscoveryCompleteForUrl(trimmedServerUrl);
 
           if (normalizedConfig.mode === "user-data") {
             const nextConfig = buildUserDataConfig(normalizedConfig, scopes);
@@ -267,6 +276,7 @@ export function useMcpAuthDiscovery({
 
           discoveredServerUrlRef.current = trimmedServerUrl;
           setDiscoveredScopes([]);
+          setDiscoveryCompleteForUrl(trimmedServerUrl);
         });
     }, 300);
 
@@ -288,7 +298,10 @@ export function useMcpAuthDiscovery({
     discoveredScopes.length > 0 ? discoveredScopes : userData.scopes;
   const serverAuthOptionsDisabled =
     normalizedConfig.mode === "user-data" && effectiveUserDataScopes.length > 0;
-  const userDataOptionDisabled = effectiveUserDataScopes.length === 0;
+  const discoveryPending =
+    Boolean(trimmedServerUrl) && discoveryCompleteForUrl !== trimmedServerUrl;
+  const userDataOptionDisabled =
+    effectiveUserDataScopes.length === 0 && !discoveryPending;
 
   return {
     effectiveUserDataScopes,
@@ -379,7 +392,11 @@ export async function getAuthorizationForMcpConfig(
       case "static":
         return getStaticAuthorization(normalizedConfig.staticToken);
       case "user-data":
-        return await getUserDataAuthorization(normalizedConfig, serverUrl, user);
+        return await getUserDataAuthorization(
+          normalizedConfig,
+          serverUrl,
+          user
+        );
       default:
         return undefined;
     }

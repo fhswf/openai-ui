@@ -12,6 +12,7 @@
   }
 
   max-width: 100%;
+  min-width: 0;
 
   &.user {
     align-self: flex-end;
@@ -43,6 +44,33 @@
     max-width: 16rem;
     margin: 5px;
   }
+}
+
+.message-list {
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  min-width: 0;
+  margin-inline: auto;
+  padding: 16px clamp(12px, 3vw, 24px) 24px;
+  box-sizing: border-box;
+}
+
+.message-header {
+  min-width: 0;
+}
+
+.message-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.message-footer {
+  min-width: 0;
+}
+
+.message-footer-content {
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 
@@ -96,7 +124,7 @@
     font-size: 12px;
   }
 
-  &_inner {
+  &-inner {
     background-color: var(--background-color);
     border-radius: var(--border-radius);
     font-size: var(--font-size-base);
@@ -141,14 +169,18 @@
 .bar {
   position: relative;
   z-index: 10;
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  margin-inline: auto;
   padding: 4px;
   border-top: 1px solid var(--border-color);
+  box-sizing: border-box;
 
   &_tool {
     padding: var(--spacing) 0;
   }
 
-  &_inner {
+  &-inner {
     position: relative;
     z-index: 0;
     background-color: var(--background-color);
@@ -276,13 +308,63 @@
   border: 1px solid var(--chakra-colors-red-500);
 }
 
-.editorToggle {
+.editor-toggle {
   @media(max-width: 768px) {
     display: none;
   }
 }
 
-@media screen and (max-width: 600px) {
+.input-controls {
+  min-width: 0;
+}
+
+.model-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-inline-end: auto;
+}
+
+.clear-button {
+  min-height: 40px;
+}
+
+.clear-label,
+.send-shortcut {
+  display: inline;
+}
+
+.send-icon {
+  display: none;
+}
+
+.thinking-controls {
+  min-width: 0;
+}
+
+.attachments {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.code-editor {
+  min-width: 0;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.upload-button,
+.voice-button,
+.send-button {
+  flex: 0 0 auto;
+}
+
+.send-button {
+  min-height: 40px;
+}
+
+@media screen and (width <= 600px) {
   .z-chat {
     &-sider {
       display: none;
@@ -311,5 +393,181 @@
         display: block;
       }
     }
+  }
+}
+
+@media (width <= 767px) {
+  .message-list {
+    max-width: none;
+    padding: 12px 12px 20px;
+    gap: 12px;
+  }
+
+  .bar {
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .message {
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+    border-radius: 16px;
+  }
+
+  .message-body {
+    padding: 12px;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+
+  .message-footer-content button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .generated_image {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    max-height: 70dvh;
+    margin: 8px auto;
+    object-fit: contain;
+  }
+}
+
+@media (width <= 600px) {
+  .bar {
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0));
+    background: var(--background-color-gray);
+  }
+
+  .bar-inner {
+    display: grid !important;
+    grid-template-columns: 40px minmax(0, 1fr) 40px 40px;
+    grid-template-areas:
+      "thinking thinking thinking thinking"
+      "model model model clear"
+      "attachments attachments attachments attachments"
+      "upload input voice send";
+    align-items: center;
+    gap: 4px;
+    padding: 8px !important;
+    border-radius: 22px !important;
+    background: var(--background-color);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
+  }
+
+  .input-controls {
+    display: contents !important;
+  }
+
+  .model-controls {
+    grid-area: model;
+    min-height: 40px;
+    gap: 4px;
+    margin-inline-end: 0;
+  }
+
+  .model-controls > * {
+    min-width: 0;
+  }
+
+  .editor-toggle {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .clear-button {
+    grid-area: clear;
+    width: 40px;
+    min-width: 40px !important;
+    min-height: 40px;
+    padding: 0;
+  }
+
+  .clear-label,
+  .send-label,
+  .send-shortcut {
+    display: none !important;
+  }
+
+  .attachments {
+    grid-area: attachments;
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start !important;
+  }
+
+  .attachments:empty {
+    display: none;
+  }
+
+  .textarea,
+  .code-editor {
+    grid-area: input;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    max-height: 30vh;
+    max-height: 30dvh;
+    align-self: center;
+    border: 0;
+    background: transparent;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .textarea {
+    padding: 8px 2px;
+  }
+
+  .code-editor {
+    padding: 8px 2px;
+  }
+
+  .upload-button {
+    grid-area: upload;
+    width: 40px;
+    min-width: 40px !important;
+    height: 40px;
+    padding: 0;
+  }
+
+  .voice-button {
+    grid-area: voice;
+    width: 40px;
+    min-width: 40px !important;
+    height: 40px;
+    padding: 0;
+  }
+
+  .send-button {
+    grid-area: send;
+    width: 40px;
+    min-width: 40px !important;
+    min-height: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .send-icon {
+    display: inline;
+  }
+
+  .thinking-controls {
+    grid-area: thinking;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .thinking-controls > *:first-child {
+    width: 100% !important;
+    max-width: 100%;
   }
 }

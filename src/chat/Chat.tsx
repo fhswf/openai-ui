@@ -1,4 +1,5 @@
 import React from "react";
+import * as Sentry from "@sentry/react";
 import { ErrorBoundary } from "react-error-boundary";
 import {
   Alert,
@@ -39,6 +40,7 @@ import { ErrorFallback } from "./ErrorFallback";
 export default function Chat() {
   const { is, user } = useGlobal();
   const { t } = useTranslation();
+  const [mobileNavigationOpen, setMobileNavigationOpen] = React.useState(false);
   const chatStyle = is?.fullScreen ? styles.full : styles.normal;
 
   React.useEffect(() => {
@@ -114,29 +116,39 @@ export default function Chat() {
   return (
     <ErrorBoundary fallbackRender={ErrorFallback}>
       <Grid
-        gridTemplateAreas={`"header header" "side main" "side input"`}
-        gridTemplateColumns={"max-content 1fr"}
-        gridTemplateRows={"max-content 1fr max-content"}
-        className={classnames(styles.chat, chatStyle)}
+        className={classnames(styles.chat, styles["chat-layout"], chatStyle)}
       >
         <Toaster />
 
         <GridItem gridArea={"header"}>
-          <MessageHeader />
+          <MessageHeader
+            onOpenNavigation={() => setMobileNavigationOpen(true)}
+            mobileNavigationOpen={mobileNavigationOpen}
+          />
         </GridItem>
 
         <GridItem
           gridArea={"side"}
           as="aside"
-          className={is?.toolbar ? styles.showToolbar : styles.hideToolbar}
+          className={styles["sidebar-column"]}
         >
-          <ChatSideBar />
+          <ChatSideBar
+            mobileOpen={mobileNavigationOpen}
+            onMobileOpenChange={setMobileNavigationOpen}
+          />
         </GridItem>
 
         {is?.config ? (
-          <Config />
+          <GridItem gridArea="main" overflow="auto" className={styles.main}>
+            <Config />
+          </GridItem>
         ) : (
-          <GridItem as="main" gridArea={"main"} overflow="auto">
+          <GridItem
+            as="main"
+            gridArea={"main"}
+            overflow="hidden"
+            className={styles.main}
+          >
             <ErrorBoundary fallbackRender={ErrorFallback}>
               <div className={styles.chat_content}>
                 <ChatMessage />
@@ -145,7 +157,7 @@ export default function Chat() {
           </GridItem>
         )}
 
-        <GridItem gridArea={"input"}>
+        <GridItem gridArea={"input"} className={styles["input-area"]}>
           <MessageInput />
         </GridItem>
       </Grid>

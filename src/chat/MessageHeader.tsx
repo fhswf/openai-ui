@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import {
   Tool,
@@ -9,7 +9,6 @@ import {
   OptionActionType,
 } from "./context/types";
 import {
-  Alert,
   Avatar,
   HStack,
   Stack,
@@ -19,27 +18,17 @@ import {
   Button,
   Menu,
   Popover,
-  Dialog,
-  CloseButton,
   Heading,
   Portal,
-  Field,
-  Input,
-  Select,
-  Checkbox,
-  Separator,
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { IoLogoMarkdown, IoSettingsOutline } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
 import {
-  LuChevronRight,
-  LuPanelLeftClose,
-  LuPanelLeftOpen,
+  LuEllipsis,
+  LuMenu,
 } from "react-icons/lu";
 import {
-  MdDelete,
-  MdEdit,
   MdOutlineSimCardDownload,
   MdVpnKey,
 } from "react-icons/md";
@@ -50,10 +39,15 @@ import { useApps } from "./apps/context";
 import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
+import chatStyles from "./style/chat.module.less";
 import { MessageMenu } from "./MessageMenu";
+import {
+  McpServicesDialog,
+  McpServicesMenu,
+  ToolOptionsGroup,
+} from "./McpServiceComponents";
 import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
-import { McpAuthFields } from "./McpAuthFields";
 import {
   AiHubError,
   AiHubBudget,
@@ -68,7 +62,6 @@ import { isMcpAuthorizationIncomplete, useMcpAuth } from "./hooks/useMcpAuth";
 import {
   ApprovalOptions,
   buildMcpTools,
-  CheckedChange,
   createDeleteMcpServiceHandler,
   createEditToolHandler,
   createEmptyMcpToolForm,
@@ -79,13 +72,10 @@ import {
   ensureToolCollections,
   getApprovalOptions,
   getNormalizedTools,
-  McpTextFieldName,
   McpToolFormState,
   McpToolMap,
   ToolChangeRequest,
-  updateFormField,
 } from "./utils/mcpServices";
-import { isValidMcpToolName } from "./utils/mcpToolName";
 
 import "../assets/icon/style.css";
 
@@ -99,23 +89,31 @@ function logout(): void {
 }
 
 interface ToolbarToggleButtonProps {
-  setIs: GlobalActions["setIs"];
-  toolbar: boolean;
+  onOpenNavigation?: VoidFunction;
+  navigationOpen?: boolean;
 }
 
-function ToolbarToggleButton({ setIs, toolbar }: ToolbarToggleButtonProps) {
+function ToolbarToggleButton({
+  onOpenNavigation,
+  navigationOpen = false,
+}: ToolbarToggleButtonProps) {
   const { t } = useTranslation();
+  const label = navigationOpen ? t("hide_sidebar") : t("show_sidebar");
+
+  if (!onOpenNavigation) return null;
 
   return (
     <IconButton
       hideFrom="md"
       variant="ghost"
-      title={toolbar ? t("hide_toolbar") : t("show_toolbar")}
-      onClick={() => {
-        setIs({ toolbar: !toolbar });
-      }}
+      aria-label={label}
+      aria-expanded={navigationOpen}
+      aria-controls="mobile-chat-navigation"
+      title={label}
+      className={chatStyles["mobile-nav-toggle"]}
+      onClick={onOpenNavigation}
     >
-      {toolbar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />}
+      <LuMenu />
     </IconButton>
   );
 }
@@ -134,517 +132,39 @@ function HeaderTitleBlock({ messages, title }: HeaderTitleBlockProps) {
       flexGrow={1}
       gap="1px"
       paddingInlineStart={2}
-      className={styles.title}
+      minWidth={0}
+      className={chatStyles["chat-header-title"]}
     >
-      <Heading data-testid="HeaderTitle" textStyle="lg">
+      <Text className={chatStyles["chat-header-brand"]} title={t("chatbot_title")}>
+        {t("chatbot_title")}
+      </Text>
+      <Heading
+        data-testid="HeaderTitle"
+        textStyle="lg"
+        title={title}
+        className={chatStyles["chat-title-text"]}
+      >
         {title}
       </Heading>
-      <Text textStyle="xs">{t("count_messages", { count })}</Text>
+      <Text textStyle="xs" className={chatStyles["chat-header-count"]}>
+        {t("count_messages", { count })}
+      </Text>
     </Stack>
   );
 }
 
-interface ToolOptionsGroupProps {
-  onToolChange: React.Dispatch<ToolChangeRequest>;
-  tools: Map<string, Tool>;
-  toolsEnabled: Set<string>;
-}
-
-function ToolOptionsGroup({
-  onToolChange,
-  tools,
-  toolsEnabled,
-}: ToolOptionsGroupProps) {
-  const { t } = useTranslation();
-
-  return (
-    <Menu.ItemGroup>
-      <Menu.ItemGroupLabel>{t("tool_options")}</Menu.ItemGroupLabel>
-      {Array.from(tools.entries()).map(([key, value]) => (
-        <Menu.CheckboxItem
-          key={key}
-          value={value.type === "mcp" ? key : value.type}
-          checked={toolsEnabled.has(key)}
-          onCheckedChange={(event) => {
-            onToolChange({ key, tool: value, checkedChange: event });
-          }}
-        >
-          <Menu.ItemIndicator />
-          {key}
-        </Menu.CheckboxItem>
-      ))}
-    </Menu.ItemGroup>
-  );
-}
-
-interface McpServicesMenuProps {
-  mcpTools: McpToolMap;
-  onEditMcp: VoidFunction;
-  onToolChange: React.Dispatch<ToolChangeRequest>;
-  toolsEnabled: Set<string>;
-}
-
-function McpServicesMenu({
-  mcpTools,
-  onEditMcp,
-  onToolChange,
-  toolsEnabled,
-}: McpServicesMenuProps) {
-  const { t } = useTranslation();
-
-  return (
-    <Menu.Root positioning={{ placement: "right-start", gutter: 2 }}>
-      <Menu.TriggerItem data-testid="mcp-services-menu-trigger">
-        {t("MCP Services")} <LuChevronRight />
-      </Menu.TriggerItem>
-      <Portal>
-        <Menu.Positioner>
-          <Menu.Content>
-            {Array.from(mcpTools.entries()).map(([key, tool]) => (
-              <Menu.CheckboxItem
-                key={key}
-                value={key}
-                checked={toolsEnabled.has(key)}
-                onCheckedChange={(event) => {
-                  onToolChange({ key, tool, checkedChange: event });
-                }}
-              >
-                <Menu.ItemIndicator />
-                {key}
-              </Menu.CheckboxItem>
-            ))}
-            <Menu.Item
-              value="edit_mcp_services"
-              onClick={onEditMcp}
-              data-testid="mcp-add-remove-services"
-            >
-              {t("Add/Remove MCP Services")}
-            </Menu.Item>
-          </Menu.Content>
-        </Menu.Positioner>
-      </Portal>
-    </Menu.Root>
-  );
-}
-
-interface McpServiceFormFieldsProps {
-  approvalOptions: ApprovalOptions;
-  contentRef: React.RefObject<HTMLDivElement | null>;
-  form: McpToolFormState;
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>;
-}
-
-interface McpTextFieldProps {
-  errorText?: string;
-  field: McpTextFieldName;
-  form: McpToolFormState;
-  helperText?: string;
-  id: string;
-  label: string;
-  placeholder?: string;
-  required?: boolean;
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>;
-  type?: string;
-}
-
-function getTextFieldValue(
-  form: McpToolFormState,
-  field: McpTextFieldName
-): string {
-  switch (field) {
-    case "label":
-      return form.label;
-    case "server_label":
-      return form.server_label;
-    case "server_url":
-      return form.server_url;
-    case "allowed_tools_input":
-      return form.allowed_tools_input;
-    default:
-      return "";
-  }
-}
-
-function McpTextField({
-  errorText,
-  field,
-  form,
-  helperText,
-  id,
+function HeaderActionItem({
   label,
-  placeholder,
-  required,
-  setForm,
-  type,
-}: McpTextFieldProps) {
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
-    <Field.Root invalid={Boolean(errorText)}>
-      <Field.Label htmlFor={id}>{label}</Field.Label>
-      <Input
-        id={id}
-        name={id}
-        type={type}
-        required={required}
-        className={styles.input}
-        placeholder={placeholder}
-        value={getTextFieldValue(form, field)}
-        onChange={(event) => {
-          updateFormField(setForm, field, event.target.value);
-        }}
-      />
-      {helperText && !errorText && (
-        <Field.HelperText>{helperText}</Field.HelperText>
-      )}
-      {errorText && <Field.ErrorText>{errorText}</Field.ErrorText>}
-    </Field.Root>
-  );
-}
-
-interface McpApprovalFieldProps {
-  approvalOptions: ApprovalOptions;
-  contentRef: React.RefObject<HTMLDivElement | null>;
-  form: McpToolFormState;
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>;
-}
-
-function McpApprovalField({
-  approvalOptions,
-  contentRef,
-  form,
-  setForm,
-}: McpApprovalFieldProps) {
-  const { t } = useTranslation();
-
-  return (
-    <Field.Root>
-      <Select.Root
-        data-testid="mcp-require-approval-select"
-        collection={approvalOptions}
-        size="sm"
-        width="320px"
-        value={[form.require_approval]}
-        onValueChange={(event) => {
-          updateFormField(setForm, "require_approval", event.value[0]);
-        }}
-      >
-        <Select.HiddenSelect />
-        <Select.Label>{t("Require Approval")}</Select.Label>
-        <Select.Control>
-          <Select.Trigger data-testid="mcp-require-approval-trigger">
-            <Select.ValueText placeholder="Select" />
-          </Select.Trigger>
-          <Select.IndicatorGroup>
-            <Select.Indicator />
-          </Select.IndicatorGroup>
-        </Select.Control>
-        <Portal container={contentRef}>
-          <Select.Positioner>
-            <Select.Content>
-              {approvalOptions.items.map((item) => (
-                <Select.Item item={item} key={item.value}>
-                  {item.label}
-                  <Select.ItemIndicator />
-                </Select.Item>
-              ))}
-            </Select.Content>
-          </Select.Positioner>
-        </Portal>
-      </Select.Root>
-    </Field.Root>
-  );
-}
-
-function McpServiceFormFields({
-  approvalOptions,
-  contentRef,
-  form,
-  setForm,
-}: McpServiceFormFieldsProps) {
-  const { t } = useTranslation();
-  const serverLabelError =
-    form.server_label && !isValidMcpToolName(form.server_label)
-      ? t("mcp_invalid_tool_name")
-      : undefined;
-
-  return (
-    <Stack gap={4}>
-      <McpTextField
-        field="label"
-        form={form}
-        id="label"
-        label={t("Label")}
-        required
-        setForm={setForm}
-      />
-      <McpTextField
-        errorText={serverLabelError}
-        field="server_label"
-        form={form}
-        id="server_label"
-        label={t("Server Label")}
-        helperText={t("mcp_server_label_helper")}
-        required
-        setForm={setForm}
-      />
-      <McpTextField
-        field="server_url"
-        form={form}
-        id="server_url"
-        label={t("Server URL")}
-        required
-        setForm={setForm}
-        type="url"
-      />
-      <McpApprovalField
-        approvalOptions={approvalOptions}
-        contentRef={contentRef}
-        form={form}
-        setForm={setForm}
-      />
-      <McpTextField
-        field="allowed_tools_input"
-        form={form}
-        id="allowed_tools"
-        label={t("Allowed Tools")}
-        placeholder={t("Comma separated")}
-        setForm={setForm}
-      />
-    </Stack>
-  );
-}
-
-interface McpServiceRowProps {
-  checked: boolean;
-  onDelete: VoidFunction;
-  onEdit: VoidFunction;
-  onToggle: React.Dispatch<CheckedChange>;
-  toolKey: string;
-}
-
-function McpServiceRow({
-  checked,
-  onDelete,
-  onEdit,
-  onToggle,
-  toolKey,
-}: McpServiceRowProps) {
-  return (
-    <HStack justifyContent="space-between" alignItems="center">
-      <HStack>
-        <Checkbox.Root
-          size="sm"
-          variant="outline"
-          checked={checked}
-          onCheckedChange={onToggle}
-        >
-          <Checkbox.HiddenInput />
-          <Checkbox.Control />
-        </Checkbox.Root>
-        <Text>{toolKey}</Text>
-      </HStack>
-      <HStack gap={1} alignItems="center">
-        <Button
-          data-testid={`mcp-edit-${toolKey}`}
-          variant="ghost"
-          size="sm"
-          onClick={onEdit}
-        >
-          <MdEdit />
-        </Button>
-        <Button
-          data-testid={`mcp-delete-${toolKey}`}
-          variant="ghost"
-          size="sm"
-          onClick={onDelete}
-        >
-          <MdDelete />
-        </Button>
-      </HStack>
-    </HStack>
-  );
-}
-
-interface McpServicesListProps {
-  mcpTools: McpToolMap;
-  onDeleteTool: React.Dispatch<string>;
-  onEditTool: React.Dispatch<EditToolRequest>;
-  onToolChange: React.Dispatch<ToolChangeRequest>;
-  toolsEnabled: Set<string>;
-}
-
-function McpServicesList({
-  mcpTools,
-  onDeleteTool,
-  onEditTool,
-  onToolChange,
-  toolsEnabled,
-}: McpServicesListProps) {
-  const { t } = useTranslation();
-
-  return (
-    <Stack
-      padding={2}
-      gap={2}
-      as="form"
-      onSubmit={(event) => event.preventDefault()}
-    >
-      <Text fontWeight="bold">{t("MCP Services")}</Text>
-      <Stack padding={2} gap={2} className={styles.mcpServices}>
-        {Array.from(mcpTools.entries()).map(([key, tool]) => (
-          <McpServiceRow
-            key={key}
-            toolKey={key}
-            checked={toolsEnabled.has(key)}
-            onEdit={() => {
-              onEditTool({ key, tool });
-            }}
-            onDelete={() => {
-              onDeleteTool(key);
-            }}
-            onToggle={(checkedChange) => {
-              onToolChange({ key, tool, checkedChange });
-            }}
-          />
-        ))}
-      </Stack>
-    </Stack>
-  );
-}
-
-interface McpServicesDialogProps {
-  approvalOptions: ApprovalOptions;
-  authorizationIncomplete: boolean;
-  consentPromptOpen: boolean;
-  contentRef: React.RefObject<HTMLDivElement | null>;
-  form: McpToolFormState;
-  mcpTools: McpToolMap;
-  onDeleteTool: React.Dispatch<string>;
-  onEditTool: React.Dispatch<EditToolRequest>;
-  onOpenChange: React.Dispatch<boolean>;
-  onSave: VoidFunction;
-  onToolChange: React.Dispatch<ToolChangeRequest>;
-  open: boolean;
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>;
-  toolsEnabled: Set<string>;
-  user: Record<string, unknown> | null;
-}
-
-interface McpServicesDialogBodyProps {
-  approvalOptions: ApprovalOptions;
-  authorizationIncomplete: boolean;
-  consentPromptOpen: boolean;
-  contentRef: React.RefObject<HTMLDivElement | null>;
-  form: McpToolFormState;
-  mcpTools: McpToolMap;
-  onDeleteTool: React.Dispatch<string>;
-  onEditTool: React.Dispatch<EditToolRequest>;
-  onSave: VoidFunction;
-  onToolChange: React.Dispatch<ToolChangeRequest>;
-  setForm: React.Dispatch<React.SetStateAction<McpToolFormState>>;
-  toolsEnabled: Set<string>;
-  user: Record<string, unknown> | null;
-}
-
-function McpServicesDialogBody(props: McpServicesDialogBodyProps) {
-  const { t } = useTranslation();
-
-  return (
-    <Dialog.Body overflowY="auto">
-      <Stack gap={4}>
-        {props.consentPromptOpen && (
-          <Alert.Root status="info" variant="subtle" size="sm">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Description fontSize="sm">
-                {t("mcp_consent_prompt_info")}
-              </Alert.Description>
-            </Alert.Content>
-          </Alert.Root>
-        )}
-        <McpServiceFormFields
-          approvalOptions={props.approvalOptions}
-          contentRef={props.contentRef}
-          form={props.form}
-          setForm={props.setForm}
-        />
-        <McpAuthFields
-          config={props.form.authConfig}
-          onChange={(authConfig) => {
-            updateFormField(props.setForm, "authConfig", authConfig);
-          }}
-          serverUrl={props.form.server_url}
-          user={props.user}
-        />
-        {props.authorizationIncomplete && (
-          <Text fontSize="sm" color="orange.600">
-            {t("mcp_save_without_consent_info")}
-          </Text>
-        )}
-        <Button
-          data-testid="mcp-add-service-btn"
-          onClick={props.onSave}
-          colorPalette="blue"
-        >
-          {t("Add/Save Service")}
-        </Button>
-      </Stack>
-
-      <Separator marginBlockStart={4} marginBlockEnd={4} />
-
-      <McpServicesList
-        mcpTools={props.mcpTools}
-        onDeleteTool={props.onDeleteTool}
-        onEditTool={props.onEditTool}
-        onToolChange={props.onToolChange}
-        toolsEnabled={props.toolsEnabled}
-      />
-    </Dialog.Body>
-  );
-}
-
-function McpServicesDialog(props: McpServicesDialogProps) {
-  const { t } = useTranslation();
-
-  return (
-    <Dialog.Root
-      data-testid="mcp-services-dialog"
-      open={props.open}
-      onOpenChange={(event) => {
-        props.onOpenChange(event.open);
-      }}
-      lazyMount
-      size="cover"
-    >
-      <Portal>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content ref={props.contentRef}>
-            <Dialog.Header>
-              <Dialog.Title>{t("Edit MCP Services")}</Dialog.Title>
-            </Dialog.Header>
-            <McpServicesDialogBody
-              approvalOptions={props.approvalOptions}
-              authorizationIncomplete={props.authorizationIncomplete}
-              consentPromptOpen={props.consentPromptOpen}
-              contentRef={props.contentRef}
-              form={props.form}
-              mcpTools={props.mcpTools}
-              onDeleteTool={props.onDeleteTool}
-              onEditTool={props.onEditTool}
-              onSave={props.onSave}
-              onToolChange={props.onToolChange}
-              setForm={props.setForm}
-              toolsEnabled={props.toolsEnabled}
-              user={props.user}
-            />
-            <Dialog.Footer />
-            <Dialog.CloseTrigger asChild>
-              <CloseButton size="sm" />
-            </Dialog.CloseTrigger>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>
-    </Dialog.Root>
+    <div className={chatStyles["header-action-item"]}>
+      <Text className={chatStyles["header-action-label"]}>{label}</Text>
+      {children}
+    </div>
   );
 }
 
@@ -937,9 +457,16 @@ function NewChatMenu({ apps, category, newChat }: NewChatMenuProps) {
   return (
     <Menu.Root>
       <Menu.Trigger asChild>
-        <IconButton variant="ghost" title={t("new_chat")}>
-          <RiChatNewLine aria-label={t("new_chat")} />
-        </IconButton>
+        <Button
+          variant="subtle"
+          size="sm"
+          title={t("new_chat")}
+          aria-label={t("new_chat")}
+          className={chatStyles["new-chat-button"]}
+        >
+          <RiChatNewLine aria-hidden="true" />
+          <span className={chatStyles["new-chat-label"]}>{t("new_chat")}</span>
+        </Button>
       </Menu.Trigger>
       <Menu.Content>
         <Menu.ItemGroup title={t("new_chat")}>
@@ -953,7 +480,7 @@ function NewChatMenu({ apps, category, newChat }: NewChatMenuProps) {
                   newChat(app);
                 }}
                 value={String(app.id)}
-                aria-keyshortcuts={index}
+                aria-keyshortcuts={String(index)}
               >
                 <span
                   className={classnames(styles.icon, `ico - ${cat?.icon} `)}
@@ -1215,7 +742,11 @@ function UserInformationPopover({
         }
       }}
     >
-      <Popover.Trigger data-testid="UserInformationBtn">
+      <Popover.Trigger
+        data-testid="UserInformationBtn"
+        aria-label={t("User information")}
+        title={t("User information")}
+      >
         <Avatar.Root size="sm">
           <Avatar.Fallback name={user?.name} />
           <Avatar.Image src={user?.avatar ?? undefined} />
@@ -1304,48 +835,158 @@ function UserInformationPopover({
   );
 }
 
-export function MessageHeader() {
-  const {
-    is,
-    setIs,
-    setOptions,
-    newChat,
-    downloadThread,
-    showSettings,
-    options,
-    user,
-  } = useGlobal();
+interface HeaderActionListProps {
+  downloadThread: GlobalActions["downloadThread"];
+  onAction: VoidFunction;
+  open: boolean;
+  openai: OpenAIOptions;
+  setOptions: GlobalActions["setOptions"];
+  showSettings: GlobalActions["showSettings"];
+  user: Record<string, unknown> | null;
+}
+
+function HeaderActionList({
+  downloadThread,
+  onAction,
+  open,
+  openai,
+  setOptions,
+  showSettings,
+  user,
+}: HeaderActionListProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div
+      id="mobile-chat-header-actions"
+      className={chatStyles["header-action-items"]}
+      data-open={open}
+      onClickCapture={onAction}
+    >
+      <HeaderActionItem label={t("chat_options")}>
+        <ChatOptionsMenu openai={openai} setOptions={setOptions} user={user} />
+      </HeaderActionItem>
+      <HeaderActionItem label={t("chat_history")}>
+        <MessageMenu />
+      </HeaderActionItem>
+      {openai.mode === "assistant" && (
+        <HeaderActionItem label={t("chat_settings")}>
+          <AssistantSettingsButton
+            mode={openai.mode}
+            showSettings={showSettings}
+          />
+        </HeaderActionItem>
+      )}
+      <HeaderActionItem label={t("download_thread")}>
+        <DownloadThreadMenu downloadThread={downloadThread} />
+      </HeaderActionItem>
+      <HeaderActionItem label={t("open_issue")}>
+        <GitHubMenu />
+      </HeaderActionItem>
+      <HeaderActionItem label={t("usage_information")}>
+        <UsageInformationDialog />
+      </HeaderActionItem>
+    </div>
+  );
+}
+
+type MobileHeaderActionsProps = Omit<
+  HeaderActionListProps,
+  "onAction" | "open"
+>;
+
+function MobileHeaderActions(props: MobileHeaderActionsProps) {
+  const [open, setOpen] = useState(false);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    if (!open) return;
+
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!actionMenuRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  const { user, ...actionProps } = props;
+
+  return (
+    <div className={chatStyles["header-action-menu"]} ref={actionMenuRef}>
+      <IconButton
+        className={chatStyles["mobile-more-button"]}
+        variant="ghost"
+        aria-label={t("more_actions")}
+        aria-expanded={open}
+        aria-controls="mobile-chat-header-actions"
+        title={t("more_actions")}
+        onClick={() => setOpen((wasOpen) => !wasOpen)}
+      >
+        <LuEllipsis />
+      </IconButton>
+      <HeaderActionList
+        {...actionProps}
+        open={open}
+        onAction={() => setOpen(false)}
+        user={user}
+      />
+      <div className={chatStyles["header-user-info"]}>
+        <UserInformationPopover
+          openai={props.openai}
+          setOptions={props.setOptions}
+          user={user}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface MessageHeaderProps {
+  onOpenNavigation?: VoidFunction;
+  mobileNavigationOpen?: boolean;
+}
+
+export function MessageHeader({
+  onOpenNavigation,
+  mobileNavigationOpen = false,
+}: MessageHeaderProps) {
+  const { setOptions, newChat, downloadThread, showSettings, options, user } =
+    useGlobal();
   const { message } = useMessage();
   const { apps, category } = useApps();
 
   return (
     <HStack
       as="header"
-      padding={1}
+      className={chatStyles["chat-header"]}
       borderBottomWidth="1px"
       justifyContent="space-between"
+      gap={1}
       data-testid="ChatHeader"
     >
-      <ToolbarToggleButton toolbar={is.toolbar} setIs={setIs} />
+      <ToolbarToggleButton
+        onOpenNavigation={onOpenNavigation}
+        navigationOpen={mobileNavigationOpen}
+      />
       <HeaderTitleBlock title={message.title} messages={message.messages} />
-      <ChatOptionsMenu
-        openai={options.openai}
-        setOptions={setOptions}
-        user={user}
-      />
       <NewChatMenu apps={apps} category={category} newChat={newChat} />
-      <MessageMenu />
-      <AssistantSettingsButton
-        mode={options.openai.mode}
-        showSettings={showSettings}
-      />
-      <DownloadThreadMenu downloadThread={downloadThread} />
-      <GitHubMenu />
-      <UsageInformationDialog />
-      <UserInformationPopover
+      <MobileHeaderActions
         openai={options.openai}
         setOptions={setOptions}
         user={user}
+        showSettings={showSettings}
+        downloadThread={downloadThread}
       />
     </HStack>
   );

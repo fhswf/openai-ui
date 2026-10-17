@@ -147,7 +147,7 @@ export interface MessageAttachment {
 export type Message = {
   images?: any;
   files?: MessageAttachment[];
-  content: string;
+  content: string | any[];
   sentTime?: number;
   startTime?: number;
   endTime?: number;

@@ -1,79 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { Tooltip } from "../components/ui/tooltip";
-
-import {
-  DialogBody,
-  DialogCloseTrigger,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTitle,
-  DialogTrigger,
-} from "../components/ui/dialog";
-import {
-  Button,
-  IconButton,
-  Link,
-  Spacer,
-  Text,
-  VStack,
-} from "@chakra-ui/react";
-import { IoInformationCircleOutline } from "react-icons/io5";
-import { IoSettingsOutline } from "react-icons/io5";
-import { IoApps } from "react-icons/io5";
-import { RiChatHistoryLine } from "react-icons/ri";
-import { MdOutlineDarkMode } from "react-icons/md";
-import { MdOutlineLightMode } from "react-icons/md";
-import { TbArrowsMinimize } from "react-icons/tb";
-import { TbArrowsMaximize } from "react-icons/tb";
-import { LuMonitor } from "react-icons/lu";
-import { useGlobal } from "./context";
-import { classnames } from "../components/utils";
-import { useOptions } from "./hooks";
-import { t } from "i18next";
-import Markdown from "react-markdown";
-import remarkMath from "remark-math";
-import smartypants from "remark-smartypants";
-import remarkGfm from "remark-gfm";
-import rehypeKatex from "rehype-katex";
-
-import styles from "./style/sider.module.less";
-import "katex/dist/katex.min.css";
-import semver from "semver";
-
-const ICONS = {
-  help: IoInformationCircleOutline,
-  apps: IoApps,
-  history: RiChatHistoryLine,
-  config: IoSettingsOutline,
-  dark: MdOutlineDarkMode,
-  light: MdOutlineLightMode,
-  auto: LuMonitor,
-  "min-screen": TbArrowsMinimize,
-  "full-screen": TbArrowsMaximize,
-};
-
-const Option = (props) => {
-  const { type, onClick, tooltip, dataTestId } = props;
-  const testId = dataTestId ? { "data-testid": dataTestId } : {};
-  if (!ICONS[type]) {
-    console.error(`Icon ${type} not found`);
-    return null;
-  }
-  return (
-    <Tooltip content={tooltip}>
-      <IconButton
-        aria-label={tooltip}
-        variant={props.variant || "ghost"}
-        onClick={onClick}
-        {...testId}
-      >
-        {ICONS[type]()}
-      </IconButton>
-    </Tooltip>
-  );
-};
+import React, { useState } from "react";
+import { ChatSideBarView } from "./ChatSideBarOverlays";
+import { useChatSideBarState } from "./ChatSideBarHooks";
 
 const text = `
 ## Datenschutzhinweise
@@ -174,152 +101,48 @@ Der Quellcode der Anwendung ist auf GitHub in folgenden Repositories verfügbar:
 - Proxy-Server: [github.com/fhswf/openai-proxy](https://github.com/fhswf/openai-proxy)
 `;
 
-export function ChatSideBar() {
+interface ChatSideBarProps {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+}
+
+export function ChatSideBar({
+  mobileOpen,
+  onMobileOpenChange,
+}: ChatSideBarProps) {
   const [open, setOpen] = useState(false);
-  const [metadata, setMetadata] = useState({});
-  const [newRelease, setNewRelease] = useState(false);
-  const { is, setState, options, version, release } = useGlobal();
-  const { setGeneral, setAccount } = useOptions();
+  const {
+    acceptTerms,
+    is,
+    metadata,
+    options,
+    toggleConfig,
+    toggleFullScreen,
+    toggleTheme,
+  } = useChatSideBarState(onMobileOpenChange, () => setOpen(false));
   const informationWindowOpen = !options.account.terms || open;
 
-  const acceptTerms = () => {
-    setOpen(false);
-    setAccount({ terms: true });
-  };
-
-  const toggleTheme = () => {
-    const currentTheme =
-      document.documentElement.dataset.theme ?? options.general.theme;
-    setGeneral({
-      theme: currentTheme === "light" ? "dark" : "light",
-    });
-  };
-
-  useEffect(() => {
-    fetch("/metadata.json", { cache: "no-cache" })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        setMetadata(data);
-        if (semver.gt(data.release, version) || !release) {
-          console.log("New release: %s", data.release);
-          setNewRelease(true);
-          setState({ version: data.release });
-          fetch(`${data.repo_url}/releases/tags/openai-ui-v${data.release}`)
-            .then((response) => response.json())
-            .then((data) => {
-              console.log("release data: %j", data);
-              setState({ release: data });
-            })
-            .catch((error) => {
-              console.error("Error fetching release data: %s", error);
-            });
-        }
-      });
-  }, [version]);
-
   return (
-    <VStack
-      role="toolbar"
-      as="aside"
-      hideBelow={is.toolbar ? "base" : "md"}
-      className={classnames(styles.sider, "flex-c-sb flex-column")}
-      data-testid="LeftSideBar"
-    >
-      <div
-        className={classnames(styles.tool, "flex-c-sb flex-column")}
-        data-testid="BottomLeftSideBar"
-      >
-        <Option
-          type={options.general.theme}
-          onClick={toggleTheme}
-          tooltip={t("Theme")}
-          dataTestId="OptionDarkModeSelect"
-        />
-        <Option
-          dataTestId="OpenConfigBtn"
-          type="config"
-          onClick={() => setState({ is: { ...is, config: !is.config } })}
-          tooltip={t("Config")}
-        />
-        <Option
-          type={`${is.fullScreen ? "min" : "full"}-screen`}
-          onClick={() =>
-            setState({ is: { ...is, fullScreen: !is.fullScreen } })
-          }
-          tooltip={`${is.fullScreen ? t("Minimize") : t("Maximize")}`}
-        />
-      </div>
-      <Spacer />
-      <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
-        <DialogRoot
-          open={informationWindowOpen}
-          onOpenChange={(e) => {
-            if (options.account.terms) {
-              setOpen(e.open);
-            }
-          }}
-          size="lg"
-        >
-          <DialogTrigger asChild>
-            <IconButton
-              aria-label={t("about")}
-              variant="ghost"
-              data-testid="aboutBtn"
-            >
-              <Tooltip content={t("about")}>{ICONS["help"]()}</Tooltip>
-            </IconButton>
-          </DialogTrigger>
-          <DialogContent data-testid="InformationWindow">
-            <DialogHeader>
-              <DialogTitle>{t("About")}</DialogTitle>
-              {options.account.terms ? <DialogCloseTrigger /> : null}
-            </DialogHeader>
-            <DialogBody className="z-ui-markdown">
-              {metadata.release ? (
-                <Text>
-                  Version:{" "}
-                  <Link
-                    target="blank"
-                    href={
-                      "https://github.com/fhswf/openai-ui/releases/tag/openai-ui-v" +
-                      metadata?.release
-                    }
-                  >
-                    {metadata?.release}
-                  </Link>{" "}
-                  (
-                  <Link
-                    target="blank"
-                    href={
-                      "https://github.com/fhswf/openai-ui/commit/" +
-                      metadata?.build_sha
-                    }
-                  >
-                    commit {String(metadata?.build_sha).substring(0, 7)}
-                  </Link>
-                  )
-                </Text>
-              ) : null}
-              <Markdown
-                remarkPlugins={[remarkGfm, remarkMath, smartypants]}
-                rehypePlugins={[rehypeKatex]}
-              >
-                {text}
-              </Markdown>
-            </DialogBody>
-            <DialogFooter>
-              <Button
-                type="primary"
-                onClick={acceptTerms}
-                data-testid="accept-terms-btn"
-              >
-                {t("Accept Terms")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </DialogRoot>
-      </div>
-    </VStack>
+    <ChatSideBarView
+      mobileOpen={mobileOpen}
+      onMobileOpenChange={onMobileOpenChange}
+      aboutOpen={informationWindowOpen}
+      acceptedTerms={options.account.terms}
+      metadata={metadata}
+      termsText={text}
+      theme={options.general.theme}
+      fullScreen={is.fullScreen}
+      onToggleTheme={toggleTheme}
+      onToggleConfig={toggleConfig}
+      onToggleFullScreen={toggleFullScreen}
+      onAboutOpenChange={(nextOpen) => {
+        if (options.account.terms) setOpen(nextOpen);
+      }}
+      onAcceptTerms={acceptTerms}
+      onOpenAbout={() => {
+        onMobileOpenChange(false);
+        setOpen(true);
+      }}
+    />
   );
 }

@@ -50,6 +50,7 @@
   --spacing: 10px;
   --spacing-large: 15px;
   --spacing-min: 5px;
+  --chat-content-max-width: 88rem;
 
   --error-border-color: #ffe7e7;
   --error-background-color: #fff0f0;
@@ -176,10 +177,18 @@ body {
 
 body {
   overflow: hidden;
-  height: 100lvh;
-  width: 100lvw;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
   position: fixed;
   pointer-events: all;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 main {

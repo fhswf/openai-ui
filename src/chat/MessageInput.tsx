@@ -16,7 +16,12 @@ import {
 import { Switch } from "../components/ui/switch";
 import styles from "./style/message.module.less";
 import CodeEditor from "@uiw/react-textarea-code-editor";
-import { MdOutlineCancel, MdOutlineFileUpload } from "react-icons/md";
+import {
+  MdOutlineBackspace,
+  MdOutlineCancel,
+  MdOutlineFileUpload,
+  MdSend,
+} from "react-icons/md";
 import { CiMicrophoneOff, CiMicrophoneOn } from "react-icons/ci";
 import { toaster } from "../components/ui/toaster";
 import classNames from "classnames";
@@ -301,7 +306,7 @@ export function MessageInput() {
         />
       </div>
       <Stack
-        className={styles.bar_inner}
+        className={styles["bar-inner"]}
         width="100%"
         borderColor={is.inputing ? "blue.500" : "gray.200"}
         borderWidth={1}
@@ -312,7 +317,11 @@ export function MessageInput() {
         onDragEnter={dragHandler}
       >
         {is.thinking && (
-          <HStack justify={"flex-end"}>
+          <HStack
+            justify={"flex-end"}
+            className={styles["thinking-controls"]}
+            gridArea="thinking"
+          >
             <Progress.Root size="xs" width="20em" value={null}>
               <Progress.Label>
                 {is.tool ? t(is.tool) : t("thinking")}
@@ -328,8 +337,9 @@ export function MessageInput() {
         )}
         {options.general.codeEditor ? (
           <CodeEditor
+            className={styles["code-editor"]}
             language="Python"
-            minHeight="6lh"
+            minHeight={96}
             onFocus={() => {
               setIs({ inputing: true });
             }}
@@ -378,6 +388,8 @@ export function MessageInput() {
             justify={"flex-end"}
             paddingInlineStart={2}
             paddingInlineEnd={2}
+            className={styles.attachments}
+            gridArea="attachments"
           >
             {typeingMessage?.images?.map((image, index) => {
               return (
@@ -432,32 +444,35 @@ export function MessageInput() {
           paddingInlineStart={2}
           paddingInlineEnd={2}
           flexWrap="wrap"
+          className={styles["input-controls"]}
         >
-          <ModelSelector
-            openai={options.openai}
-            effort={options.openai.reasoningEffort}
-            onModelChange={(model) => {
-              setModel({ ...options.openai, model });
-            }}
-            onEffortChange={(reasoningEffort) => {
-              setModel({ ...options.openai, reasoningEffort });
-            }}
-          />
-          <Switch
-            size="sm"
-            colorScheme="blue"
-            className={styles.editorToggle}
-            marginInlineEnd="auto"
-            checked={options.general.codeEditor}
-            onCheckedChange={(ev) => {
-              setGeneral({ codeEditor: ev.checked });
-            }}
-          >
-            {t("Code Editor")}
-          </Switch>
+          <div className={styles["model-controls"]}>
+            <ModelSelector
+              openai={options.openai}
+              effort={options.openai.reasoningEffort}
+              onModelChange={(model) => {
+                setModel({ ...options.openai, model });
+              }}
+              onEffortChange={(reasoningEffort) => {
+                setModel({ ...options.openai, reasoningEffort });
+              }}
+            />
+            <Switch
+              size="sm"
+              colorScheme="blue"
+              className={styles["editor-toggle"]}
+              checked={options.general.codeEditor}
+              onCheckedChange={(ev) => {
+                setGeneral({ codeEditor: ev.checked });
+              }}
+            >
+              {t("Code Editor")}
+            </Switch>
+          </div>
           <IconButton
             variant="outline"
             aria-label={t("upload_file") || "Upload file"}
+            className={styles["upload-button"]}
             onClick={() => {
               fileInputRef.current?.click();
             }}
@@ -467,18 +482,28 @@ export function MessageInput() {
           </IconButton>
           <Button
             variant="outline"
+            className={styles["clear-button"]}
+            aria-label={t("clear")}
+            title={t("clear")}
             onClick={() => {
               typeingMessage.content = "";
               clearTypeing();
             }}
             data-testid="ClearMessageBtn"
           >
-            {t("clear")}
+            <MdOutlineBackspace aria-hidden="true" />
+            <span className={styles["clear-label"]}>{t("clear")}</span>
           </Button>
           {recognition ? (
             <IconButton
               variant="outline"
-              className={voiceClasses}
+              className={classNames(voiceClasses, styles["voice-button"])}
+              aria-label={
+                recognitionActive ? t("stop_voice_input") : t("voice_input")
+              }
+              title={
+                recognitionActive ? t("stop_voice_input") : t("voice_input")
+              }
               onClick={() => {
                 if (recognitionActive) {
                   recognition.stop();
@@ -504,15 +529,20 @@ export function MessageInput() {
           <Button
             colorPalette={is.thinking ? "gray" : "blue"}
             type="submit"
+            className={styles["send-button"]}
+            aria-label={t("send")}
             disabled={is.thinking || !typeingMessage?.content}
             onClick={() => {
               void sendMessage();
             }}
             data-testid="SendMessageBtn"
           >
-            {t("send")}
+            <MdSend className={styles["send-icon"]} aria-hidden="true" />
+            <span className={styles["send-label"]}>{t("send")}</span>
             {options.general.codeEditor || (
-              <Kbd size="sm">{t(options.general.sendCommand)}</Kbd>
+              <Kbd className={styles["send-shortcut"]} size="sm">
+                {t(options.general.sendCommand)}
+              </Kbd>
             )}
           </Button>
         </HStack>
