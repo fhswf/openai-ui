@@ -116,7 +116,7 @@ export default function Chat() {
   return (
     <ErrorBoundary fallbackRender={ErrorFallback}>
       <Grid
-        className={classnames(styles.chat, styles.chatLayout, chatStyle)}
+        className={classnames(styles.chat, styles["chat-layout"], chatStyle)}
       >
         <Toaster />
 
@@ -130,7 +130,7 @@ export default function Chat() {
         <GridItem
           gridArea={"side"}
           as="aside"
-          className={styles.sidebarColumn}
+          className={styles["sidebar-column"]}
         >
           <ChatSideBar
             mobileOpen={mobileNavigationOpen}
@@ -157,7 +157,7 @@ export default function Chat() {
           </GridItem>
         )}
 
-        <GridItem gridArea={"input"} className={styles.inputArea}>
+        <GridItem gridArea={"input"} className={styles["input-area"]}>
           <MessageInput />
         </GridItem>
       </Grid>

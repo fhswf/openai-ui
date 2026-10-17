@@ -46,7 +46,7 @@
   }
 }
 
-.messageList {
+.message-list {
   width: 100%;
   max-width: var(--chat-content-max-width);
   min-width: 0;
@@ -55,20 +55,20 @@
   box-sizing: border-box;
 }
 
-.messageHeader {
+.message-header {
   min-width: 0;
 }
 
-.messageBody {
+.message-body {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.messageFooter {
+.message-footer {
   min-width: 0;
 }
 
-.messageFooterContent {
+.message-footer-content {
   flex-wrap: wrap;
   gap: 4px;
 }
@@ -124,7 +124,7 @@
     font-size: 12px;
   }
 
-  &_inner {
+  &-inner {
     background-color: var(--background-color);
     border-radius: var(--border-radius);
     font-size: var(--font-size-base);
@@ -180,7 +180,7 @@
     padding: var(--spacing) 0;
   }
 
-  &_inner {
+  &-inner {
     position: relative;
     z-index: 0;
     background-color: var(--background-color);
@@ -308,17 +308,17 @@
   border: 1px solid var(--chakra-colors-red-500);
 }
 
-.editorToggle {
+.editor-toggle {
   @media(max-width: 768px) {
     display: none;
   }
 }
 
-.inputControls {
+.input-controls {
   min-width: 0;
 }
 
-.modelControls {
+.model-controls {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -326,20 +326,20 @@
   margin-inline-end: auto;
 }
 
-.clearButton {
+.clear-button {
   min-height: 40px;
 }
 
-.clearLabel,
-.sendShortcut {
+.clear-label,
+.send-shortcut {
   display: inline;
 }
 
-.sendIcon {
+.send-icon {
   display: none;
 }
 
-.thinkingControls {
+.thinking-controls {
   min-width: 0;
 }
 
@@ -348,23 +348,23 @@
   flex-wrap: wrap;
 }
 
-.codeEditor {
+.code-editor {
   min-width: 0;
   max-width: 100%;
   overflow: auto;
 }
 
-.uploadButton,
-.voiceButton,
-.sendButton {
+.upload-button,
+.voice-button,
+.send-button {
   flex: 0 0 auto;
 }
 
-.sendButton {
+.send-button {
   min-height: 40px;
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (width <= 600px) {
   .z-chat {
     &-sider {
       display: none;
@@ -396,8 +396,8 @@
   }
 }
 
-@media (max-width: 767px) {
-  .messageList {
+@media (width <= 767px) {
+  .message-list {
     max-width: none;
     padding: 12px 12px 20px;
     gap: 12px;
@@ -415,13 +415,13 @@
     border-radius: 16px;
   }
 
-  .messageBody {
+  .message-body {
     padding: 12px;
     font-size: 0.9375rem;
     line-height: 1.55;
   }
 
-  .messageFooterContent button {
+  .message-footer-content button {
     min-width: 44px;
     min-height: 44px;
   }
@@ -436,13 +436,13 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .bar {
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0));
     background: var(--background-color-gray);
   }
 
-  .bar_inner {
+  .bar-inner {
     display: grid !important;
     grid-template-columns: 40px minmax(0, 1fr) 40px 40px;
     grid-template-areas:
@@ -455,25 +455,25 @@
     padding: 8px !important;
     border-radius: 22px !important;
     background: var(--background-color);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
   }
 
-  .inputControls {
+  .input-controls {
     display: contents !important;
   }
 
-  .modelControls {
+  .model-controls {
     grid-area: model;
     min-height: 40px;
     gap: 4px;
     margin-inline-end: 0;
   }
 
-  .modelControls > * {
+  .model-controls > * {
     min-width: 0;
   }
 
-  .editorToggle {
+  .editor-toggle {
     display: flex;
     flex: 0 0 auto;
     gap: 4px;
@@ -481,7 +481,7 @@
     white-space: nowrap;
   }
 
-  .clearButton {
+  .clear-button {
     grid-area: clear;
     width: 40px;
     min-width: 40px !important;
@@ -489,9 +489,9 @@
     padding: 0;
   }
 
-  .clearLabel,
-  .sendLabel,
-  .sendShortcut {
+  .clear-label,
+  .send-label,
+  .send-shortcut {
     display: none !important;
   }
 
@@ -507,7 +507,7 @@
   }
 
   .textarea,
-  .codeEditor {
+  .code-editor {
     grid-area: input;
     width: 100%;
     min-width: 0;
@@ -525,11 +525,11 @@
     padding: 8px 2px;
   }
 
-  .codeEditor {
+  .code-editor {
     padding: 8px 2px;
   }
 
-  .uploadButton {
+  .upload-button {
     grid-area: upload;
     width: 40px;
     min-width: 40px !important;
@@ -537,7 +537,7 @@
     padding: 0;
   }
 
-  .voiceButton {
+  .voice-button {
     grid-area: voice;
     width: 40px;
     min-width: 40px !important;
@@ -545,7 +545,7 @@
     padding: 0;
   }
 
-  .sendButton {
+  .send-button {
     grid-area: send;
     width: 40px;
     min-width: 40px !important;
@@ -555,18 +555,18 @@
     border-radius: 50%;
   }
 
-  .sendIcon {
+  .send-icon {
     display: inline;
   }
 
-  .thinkingControls {
+  .thinking-controls {
     grid-area: thinking;
     width: 100%;
     flex-wrap: wrap;
     justify-content: flex-end;
   }
 
-  .thinkingControls > *:first-child {
+  .thinking-controls > *:first-child {
     width: 100% !important;
     max-width: 100%;
   }

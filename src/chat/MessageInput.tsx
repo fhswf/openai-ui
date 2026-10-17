@@ -306,7 +306,7 @@ export function MessageInput() {
         />
       </div>
       <Stack
-        className={styles.bar_inner}
+        className={styles["bar-inner"]}
         width="100%"
         borderColor={is.inputing ? "blue.500" : "gray.200"}
         borderWidth={1}
@@ -319,7 +319,7 @@ export function MessageInput() {
         {is.thinking && (
           <HStack
             justify={"flex-end"}
-            className={styles.thinkingControls}
+            className={styles["thinking-controls"]}
             gridArea="thinking"
           >
             <Progress.Root size="xs" width="20em" value={null}>
@@ -337,7 +337,7 @@ export function MessageInput() {
         )}
         {options.general.codeEditor ? (
           <CodeEditor
-            className={styles.codeEditor}
+            className={styles["code-editor"]}
             language="Python"
             minHeight={96}
             onFocus={() => {
@@ -444,9 +444,9 @@ export function MessageInput() {
           paddingInlineStart={2}
           paddingInlineEnd={2}
           flexWrap="wrap"
-          className={styles.inputControls}
+          className={styles["input-controls"]}
         >
-          <div className={styles.modelControls}>
+          <div className={styles["model-controls"]}>
             <ModelSelector
               openai={options.openai}
               effort={options.openai.reasoningEffort}
@@ -460,7 +460,7 @@ export function MessageInput() {
             <Switch
               size="sm"
               colorScheme="blue"
-              className={styles.editorToggle}
+              className={styles["editor-toggle"]}
               checked={options.general.codeEditor}
               onCheckedChange={(ev) => {
                 setGeneral({ codeEditor: ev.checked });
@@ -472,7 +472,7 @@ export function MessageInput() {
           <IconButton
             variant="outline"
             aria-label={t("upload_file") || "Upload file"}
-            className={styles.uploadButton}
+            className={styles["upload-button"]}
             onClick={() => {
               fileInputRef.current?.click();
             }}
@@ -482,7 +482,7 @@ export function MessageInput() {
           </IconButton>
           <Button
             variant="outline"
-            className={styles.clearButton}
+            className={styles["clear-button"]}
             aria-label={t("clear")}
             title={t("clear")}
             onClick={() => {
@@ -492,12 +492,12 @@ export function MessageInput() {
             data-testid="ClearMessageBtn"
           >
             <MdOutlineBackspace aria-hidden="true" />
-            <span className={styles.clearLabel}>{t("clear")}</span>
+            <span className={styles["clear-label"]}>{t("clear")}</span>
           </Button>
           {recognition ? (
             <IconButton
               variant="outline"
-              className={classNames(voiceClasses, styles.voiceButton)}
+              className={classNames(voiceClasses, styles["voice-button"])}
               aria-label={
                 recognitionActive ? t("stop_voice_input") : t("voice_input")
               }
@@ -529,7 +529,7 @@ export function MessageInput() {
           <Button
             colorPalette={is.thinking ? "gray" : "blue"}
             type="submit"
-            className={styles.sendButton}
+            className={styles["send-button"]}
             aria-label={t("send")}
             disabled={is.thinking || !typeingMessage?.content}
             onClick={() => {
@@ -537,10 +537,10 @@ export function MessageInput() {
             }}
             data-testid="SendMessageBtn"
           >
-            <MdSend className={styles.sendIcon} aria-hidden="true" />
-            <span className={styles.sendLabel}>{t("send")}</span>
+            <MdSend className={styles["send-icon"]} aria-hidden="true" />
+            <span className={styles["send-label"]}>{t("send")}</span>
             {options.general.codeEditor || (
-              <Kbd className={styles.sendShortcut} size="sm">
+              <Kbd className={styles["send-shortcut"]} size="sm">
                 {t(options.general.sendCommand)}
               </Kbd>
             )}

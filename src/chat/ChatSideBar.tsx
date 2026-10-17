@@ -103,6 +103,54 @@ const Option = (props) => {
   );
 };
 
+interface PrimarySidebarOptionsProps {
+  expanded: boolean;
+  fullScreen: boolean;
+  theme: string;
+  onToggleConfig: VoidFunction;
+  onToggleFullScreen: VoidFunction;
+  onToggleTheme: VoidFunction;
+}
+
+function PrimarySidebarOptions({
+  expanded,
+  fullScreen,
+  theme,
+  onToggleConfig,
+  onToggleFullScreen,
+  onToggleTheme,
+}: PrimarySidebarOptionsProps) {
+  return (
+    <div
+      className={classnames(styles.tool, "flex-c-sb flex-column", {
+        [styles["drawer-options"]]: expanded,
+      })}
+      data-testid={expanded ? "MobileSidebarActions" : "BottomLeftSideBar"}
+    >
+      <Option
+        type={theme}
+        onClick={onToggleTheme}
+        tooltip={t("Theme")}
+        dataTestId="OptionDarkModeSelect"
+        expanded={expanded}
+      />
+      <Option
+        dataTestId="OpenConfigBtn"
+        type="config"
+        onClick={onToggleConfig}
+        tooltip={t("Config")}
+        expanded={expanded}
+      />
+      <Option
+        type={`${fullScreen ? "min" : "full"}-screen`}
+        onClick={onToggleFullScreen}
+        tooltip={`${fullScreen ? t("Minimize") : t("Maximize")}`}
+        expanded={expanded}
+      />
+    </div>
+  );
+}
+
 const text = `
 ## Datenschutzhinweise
 
@@ -245,36 +293,6 @@ export function ChatSideBar({
     onMobileOpenChange(false);
   };
 
-  const primaryOptions = (expanded: boolean) => (
-    <div
-      className={classnames(styles.tool, "flex-c-sb flex-column", {
-        [styles.drawerOptions]: expanded,
-      })}
-      data-testid={expanded ? "MobileSidebarActions" : "BottomLeftSideBar"}
-    >
-      <Option
-        type={options.general.theme}
-        onClick={toggleTheme}
-        tooltip={t("Theme")}
-        dataTestId="OptionDarkModeSelect"
-        expanded={expanded}
-      />
-      <Option
-        dataTestId="OpenConfigBtn"
-        type="config"
-        onClick={toggleConfig}
-        tooltip={t("Config")}
-        expanded={expanded}
-      />
-      <Option
-        type={`${is.fullScreen ? "min" : "full"}-screen`}
-        onClick={toggleFullScreen}
-        tooltip={`${is.fullScreen ? t("Minimize") : t("Maximize")}`}
-        expanded={expanded}
-      />
-    </div>
-  );
-
   useEffect(() => {
     fetch("/metadata.json", { cache: "no-cache" })
       .then((response) => response.json())
@@ -305,7 +323,14 @@ export function ChatSideBar({
         className={classnames(styles.sider, "flex-c-sb flex-column")}
         data-testid="LeftSideBar"
       >
-        {primaryOptions(false)}
+        <PrimarySidebarOptions
+          expanded={false}
+          theme={options.general.theme}
+          fullScreen={is.fullScreen}
+          onToggleTheme={toggleTheme}
+          onToggleConfig={toggleConfig}
+          onToggleFullScreen={toggleFullScreen}
+        />
         <Spacer />
         <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
           <DialogRoot
@@ -391,15 +416,22 @@ export function ChatSideBar({
         </Portal>
         <DrawerContent
           id="mobile-chat-navigation"
-          className={styles.mobileDrawer}
+          className={styles["mobile-drawer"]}
         >
           <DrawerHeader>
             <DrawerTitle>{t("chatbot_title")}</DrawerTitle>
             <DrawerCloseTrigger aria-label={t("close")} />
           </DrawerHeader>
           <DrawerBody>
-            <VStack align="stretch" gap="2" className={styles.drawerControls}>
-              {primaryOptions(true)}
+            <VStack align="stretch" gap="2" className={styles["drawer-controls"]}>
+              <PrimarySidebarOptions
+                expanded
+                theme={options.general.theme}
+                fullScreen={is.fullScreen}
+                onToggleTheme={toggleTheme}
+                onToggleConfig={toggleConfig}
+                onToggleFullScreen={toggleFullScreen}
+              />
               <Button
                 width="100%"
                 justifyContent="flex-start"

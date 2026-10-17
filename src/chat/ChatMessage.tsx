@@ -204,7 +204,7 @@ export function MessageItem(props) {
       )}
     >
       <Card.Header
-        className={styles.messageHeader}
+        className={styles["message-header"]}
         justifyContent={role === "user" ? "flex-end" : "flex-start"}
       >
         <HStack wrap="wrap">
@@ -216,7 +216,7 @@ export function MessageItem(props) {
           <ToolUse toolsUsed={toolsUsed} />
         </HStack>
       </Card.Header>
-      <Card.Body className={styles.messageBody}>
+      <Card.Body className={styles["message-body"]}>
         <LazyRenderer isVisible={true}>{message}</LazyRenderer>
         {images &&
           Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
@@ -276,11 +276,11 @@ export function MessageItem(props) {
           </HStack>
         )}
       </Card.Body>
-      <Card.Footer className={styles.messageFooter}>
+      <Card.Footer className={styles["message-footer"]}>
         <HStack
           width={"100%"}
           justifyContent="space-between"
-          className={styles.messageFooterContent}
+          className={styles["message-footer-content"]}
         >
           <Usage usage={usage} startTime={startTime} endTime={endTime} />
           <Spacer />
@@ -323,7 +323,7 @@ export function MessageContainer() {
   return (
     <React.Fragment>
       {
-        <Stack data-testid="ChatListContainer" className={styles.messageList}>
+        <Stack data-testid="ChatListContainer" className={styles["message-list"]}>
           {messages
             .filter((message) => {
               if (message.role === "system") return false;
