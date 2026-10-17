@@ -1,42 +1,60 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@chakra-ui/react";
 import styles from "../style/message.module.less";
 import classNames from "classnames";
+import { getAttachmentStorageId, getOpfsFile } from "../utils/attachments";
 
 export interface OPFSImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
     readonly src?: string;
     readonly alt?: string;
+    readonly chatId?: string;
+    readonly attachmentId?: string;
 }
 
 export function OPFSImage(props: OPFSImageProps) {
-    const { src, alt, className, ...rest } = props;
+    const { src, alt, className, chatId, attachmentId, ...rest } = props;
     const [loaded, setLoaded] = useState(false);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [visible, setVisible] = useState(!chatId);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!chatId || !containerRef.current || !("IntersectionObserver" in window)) {
+            setVisible(true);
+            return;
+        }
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setVisible(true);
+                    observer.disconnect();
+                }
+            },
+            { rootMargin: "200px" }
+        );
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, [chatId, src]);
 
     useEffect(() => {
         let active = true;
+        let createdUrl: string | null = null;
+        setImageUrl(null);
+        setLoaded(false);
         if (src?.startsWith("opfs://")) {
-            const filename = src.replace("opfs://", "");
-            navigator.storage
-                .getDirectory()
-                .then(async (opfs) => {
-                    try {
-                        const fileHandle = await opfs.getFileHandle(filename);
-                        const file = await fileHandle.getFile();
-                        const url = URL.createObjectURL(file);
-                        if (active) {
-                            setImageUrl(url);
-                            setLoaded(true);
-                        } else {
-                            URL.revokeObjectURL(url);
-                        }
-                    } catch (error) {
-                        console.error("Error reading file from OPFS:", error);
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error getting OPFS directory:", error);
-                });
+            if (!visible) return;
+            const filename = src.slice("opfs://".length);
+            void (async () => {
+                try {
+                    const storageId = await getAttachmentStorageId(attachmentId, filename);
+                    const file = await getOpfsFile(filename, chatId, storageId);
+                    createdUrl = URL.createObjectURL(file);
+                    if (active) setImageUrl(createdUrl);
+                    else URL.revokeObjectURL(createdUrl);
+                } catch (error) {
+                    console.error("Error reading attachment:", error);
+                }
+            })();
         } else {
             setImageUrl(src || null);
             setLoaded(true);
@@ -44,24 +62,24 @@ export function OPFSImage(props: OPFSImageProps) {
 
         return () => {
             active = false;
-            if (imageUrl?.startsWith("blob:")) {
-                URL.revokeObjectURL(imageUrl);
-            }
+            if (createdUrl) URL.revokeObjectURL(createdUrl);
         };
-    }, [src]);
-
-    if (!imageUrl) {
-        return <Skeleton className={classNames(styles.image, className)} />;
-    }
+    }, [src, chatId, attachmentId, visible]);
 
     return (
-        <img
-            src={imageUrl}
-            alt={alt || "Image"}
-            className={classNames(styles.image, { [styles.loaded]: loaded }, className)}
-            loading="lazy"
-            onLoad={() => setLoaded(true)}
-            {...rest}
-        />
+        <div ref={containerRef}>
+            {imageUrl ? (
+                <img
+                    src={imageUrl}
+                    alt={alt || "Image"}
+                    className={classNames(styles.image, { [styles.loaded]: loaded }, className)}
+                    loading="lazy"
+                    onLoad={() => setLoaded(true)}
+                    {...rest}
+                />
+            ) : (
+                <Skeleton className={classNames(styles.image, className)} />
+            )}
+        </div>
     );
 }

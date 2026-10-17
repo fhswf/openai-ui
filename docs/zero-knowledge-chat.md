@@ -179,6 +179,11 @@ dabei gleich.
    Chiffrat werden als getrennte Envelope-Felder gespeichert.
 4. `{id, ciphertext, iv, envelopes:[{recipient, wrappedKey, iv}], metadata}`
    per `PUT /zk/chats/{id}` hochladen.
+5. OPFS-Dateien, auf die der Chat verweist, werden separat mit demselben
+   `K_chat` verschlüsselt und als Binärdaten hochgeladen. Dateiinhalte werden
+   beim Wiederherstellen eines Chats nicht mitgeladen, sondern erst beim
+   Anzeigen, Herunterladen oder Senden an das Modell abgerufen. AES-GCM bindet
+   jede Datei zusätzlich an ihre Chat-ID und ihre zufällige Anhang-ID.
 
 ### 4.4 Chat wiederherstellen
 
@@ -275,6 +280,11 @@ chat_keys                       -- Multi-Recipient Key Header
   is_owner          bool
   created_at        ts
   PK (chat_id, recipient_id)
+
+zk_attachments.files/chunks     -- GridFS, opaque attachment IDs
+  metadata.chatId               string
+  metadata.attachmentId         string
+  data                          AES-GCM ciphertext (including the IV)
 ```
 
 Sichtbarkeitsregel: Ein Nutzer darf einen Chat lesen/ändern, wenn ein
@@ -284,8 +294,9 @@ Autorisierung, nicht zur Entschlüsselung.
 ## 6. Backend-API-Design
 
 Alle Endpunkte unter `/api/zk`. Authentifizierung per OIDC-Bearer-Token bzw.
-Session-Cookie (wie der bestehende Proxy). Inhaltstyp `application/json`,
-Binärdaten base64url-kodiert. Der Server prüft WebAuthn-Assertions, aber
+Session-Cookie (wie der bestehende Proxy). JSON-Endpunkte verwenden
+`application/json`; Anhänge werden als `application/octet-stream` übertragen.
+Der Server prüft WebAuthn-Assertions, aber
 niemals die Verschlüsselung von Chats oder privaten Schlüsseln. Er validiert
 Größen, IDs und Berechtigungen.
 
@@ -368,6 +379,19 @@ expliziten Löschung bestehen und werden dann unzugänglich)
 `DELETE /api/zk/chats/{id}`
 -> 204 (nur Owner).
 
+`GET /api/zk/chats/{id}/attachments/{attachmentId}`
+-> binäre AES-GCM-Chiffratdaten (jeder Chat-Empfänger mit Envelope)
+
+`HEAD /api/zk/chats/{id}/attachments/{attachmentId}`
+-> `204`, wenn vorhanden (nur Berechtigung prüfen, ohne Inhalt zu laden)
+
+`PUT /api/zk/chats/{id}/attachments/{attachmentId}`
+`Content-Type: application/octet-stream`, Body enthält IV und Chiffrat
+-> 204 (nur Owner; höchstens 100 MiB)
+
+`DELETE /api/zk/chats/{id}/attachments/{attachmentId}`
+-> 204 (nur Owner). Das Frontend entfernt außerdem die Verweise im Chat.
+
 ### 6.3 Fehlerformat
 
 `{ "error": { "code": "...", "message": "..." } }` mit
@@ -377,8 +401,8 @@ expliziten Löschung bestehen und werden dann unzugänglich)
 
 ### 6.4 Grenzen und Aufbewahrung
 
-- Max. Chiffratgröße z. B. 5 MB pro Chat; größere Inhalte chunked
-  (`/chats/{id}/blobs/{n}`).
+- Chat-Chiffrat ist auf 5 MB begrenzt. Einzelne verschlüsselte Anhänge werden
+  getrennt in MongoDB GridFS gespeichert und sind auf 100 MiB begrenzt.
 - ECDH-Hüllen verwenden einen etwa 91 Byte großen P-256-SPKI-Public-Key,
   12 Byte IV und 48 Byte Chiffrat.
   RSA-OAEP bleibt für vorhandene Schlüssel lesbar und darf bis zu 1024 Byte groß
