@@ -12,6 +12,7 @@
   }
 
   max-width: 100%;
+  min-width: 0;
 
   &.user {
     align-self: flex-end;
@@ -43,6 +44,33 @@
     max-width: 16rem;
     margin: 5px;
   }
+}
+
+.messageList {
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  min-width: 0;
+  margin-inline: auto;
+  padding: 16px clamp(12px, 3vw, 24px) 24px;
+  box-sizing: border-box;
+}
+
+.messageHeader {
+  min-width: 0;
+}
+
+.messageBody {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.messageFooter {
+  min-width: 0;
+}
+
+.messageFooterContent {
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 
@@ -141,8 +169,12 @@
 .bar {
   position: relative;
   z-index: 10;
+  width: 100%;
+  max-width: var(--chat-content-max-width);
+  margin-inline: auto;
   padding: 4px;
   border-top: 1px solid var(--border-color);
+  box-sizing: border-box;
 
   &_tool {
     padding: var(--spacing) 0;
@@ -282,6 +314,56 @@
   }
 }
 
+.inputControls {
+  min-width: 0;
+}
+
+.modelControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-inline-end: auto;
+}
+
+.clearButton {
+  min-height: 40px;
+}
+
+.clearLabel,
+.sendShortcut {
+  display: inline;
+}
+
+.sendIcon {
+  display: none;
+}
+
+.thinkingControls {
+  min-width: 0;
+}
+
+.attachments {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.codeEditor {
+  min-width: 0;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.uploadButton,
+.voiceButton,
+.sendButton {
+  flex: 0 0 auto;
+}
+
+.sendButton {
+  min-height: 40px;
+}
+
 @media screen and (max-width: 600px) {
   .z-chat {
     &-sider {
@@ -311,5 +393,181 @@
         display: block;
       }
     }
+  }
+}
+
+@media (max-width: 767px) {
+  .messageList {
+    max-width: none;
+    padding: 12px 12px 20px;
+    gap: 12px;
+  }
+
+  .bar {
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .message {
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+    border-radius: 16px;
+  }
+
+  .messageBody {
+    padding: 12px;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+
+  .messageFooterContent button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .generated_image {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    max-height: 70dvh;
+    margin: 8px auto;
+    object-fit: contain;
+  }
+}
+
+@media (max-width: 600px) {
+  .bar {
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: var(--background-color-gray);
+  }
+
+  .bar_inner {
+    display: grid !important;
+    grid-template-columns: 40px minmax(0, 1fr) 40px 40px;
+    grid-template-areas:
+      "thinking thinking thinking thinking"
+      "model model model clear"
+      "attachments attachments attachments attachments"
+      "upload input voice send";
+    align-items: center;
+    gap: 4px;
+    padding: 8px !important;
+    border-radius: 22px !important;
+    background: var(--background-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .inputControls {
+    display: contents !important;
+  }
+
+  .modelControls {
+    grid-area: model;
+    min-height: 40px;
+    gap: 4px;
+    margin-inline-end: 0;
+  }
+
+  .modelControls > * {
+    min-width: 0;
+  }
+
+  .editorToggle {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .clearButton {
+    grid-area: clear;
+    width: 40px;
+    min-width: 40px !important;
+    min-height: 40px;
+    padding: 0;
+  }
+
+  .clearLabel,
+  .sendLabel,
+  .sendShortcut {
+    display: none !important;
+  }
+
+  .attachments {
+    grid-area: attachments;
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start !important;
+  }
+
+  .attachments:empty {
+    display: none;
+  }
+
+  .textarea,
+  .codeEditor {
+    grid-area: input;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    max-height: 30vh;
+    max-height: 30dvh;
+    align-self: center;
+    border: 0;
+    background: transparent;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .textarea {
+    padding: 8px 2px;
+  }
+
+  .codeEditor {
+    padding: 8px 2px;
+  }
+
+  .uploadButton {
+    grid-area: upload;
+    width: 40px;
+    min-width: 40px !important;
+    height: 40px;
+    padding: 0;
+  }
+
+  .voiceButton {
+    grid-area: voice;
+    width: 40px;
+    min-width: 40px !important;
+    height: 40px;
+    padding: 0;
+  }
+
+  .sendButton {
+    grid-area: send;
+    width: 40px;
+    min-width: 40px !important;
+    min-height: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .sendIcon {
+    display: inline;
+  }
+
+  .thinkingControls {
+    grid-area: thinking;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .thinkingControls > *:first-child {
+    width: 100% !important;
+    max-width: 100%;
   }
 }

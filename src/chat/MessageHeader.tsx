@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import {
   Tool,
@@ -34,8 +34,8 @@ import { IoLogoMarkdown, IoSettingsOutline } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
 import {
   LuChevronRight,
-  LuPanelLeftClose,
-  LuPanelLeftOpen,
+  LuEllipsis,
+  LuMenu,
 } from "react-icons/lu";
 import {
   MdDelete,
@@ -50,6 +50,7 @@ import { useApps } from "./apps/context";
 import { useMessage } from "./hooks";
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
+import chatStyles from "./style/chat.module.less";
 import { MessageMenu } from "./MessageMenu";
 import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
@@ -99,23 +100,31 @@ function logout(): void {
 }
 
 interface ToolbarToggleButtonProps {
-  setIs: GlobalActions["setIs"];
-  toolbar: boolean;
+  onOpenNavigation?: VoidFunction;
+  navigationOpen?: boolean;
 }
 
-function ToolbarToggleButton({ setIs, toolbar }: ToolbarToggleButtonProps) {
+function ToolbarToggleButton({
+  onOpenNavigation,
+  navigationOpen = false,
+}: ToolbarToggleButtonProps) {
   const { t } = useTranslation();
+  const label = navigationOpen ? t("hide_sidebar") : t("show_sidebar");
+
+  if (!onOpenNavigation) return null;
 
   return (
     <IconButton
       hideFrom="md"
       variant="ghost"
-      title={toolbar ? t("hide_toolbar") : t("show_toolbar")}
-      onClick={() => {
-        setIs({ toolbar: !toolbar });
-      }}
+      aria-label={label}
+      aria-expanded={navigationOpen}
+      aria-controls="mobile-chat-navigation"
+      title={label}
+      className={chatStyles.mobileNavToggle}
+      onClick={onOpenNavigation}
     >
-      {toolbar ? <LuPanelLeftClose /> : <LuPanelLeftOpen />}
+      <LuMenu />
     </IconButton>
   );
 }
@@ -134,13 +143,39 @@ function HeaderTitleBlock({ messages, title }: HeaderTitleBlockProps) {
       flexGrow={1}
       gap="1px"
       paddingInlineStart={2}
-      className={styles.title}
+      minWidth={0}
+      className={chatStyles.chatHeaderTitle}
     >
-      <Heading data-testid="HeaderTitle" textStyle="lg">
+      <Text className={chatStyles.chatHeaderBrand} title={t("chatbot_title")}>
+        {t("chatbot_title")}
+      </Text>
+      <Heading
+        data-testid="HeaderTitle"
+        textStyle="lg"
+        title={title}
+        className={chatStyles.chatTitleText}
+      >
         {title}
       </Heading>
-      <Text textStyle="xs">{t("count_messages", { count })}</Text>
+      <Text textStyle="xs" className={chatStyles.chatHeaderCount}>
+        {t("count_messages", { count })}
+      </Text>
     </Stack>
+  );
+}
+
+function HeaderActionItem({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={chatStyles.headerActionItem}>
+      <Text className={chatStyles.headerActionLabel}>{label}</Text>
+      {children}
+    </div>
   );
 }
 
@@ -937,9 +972,16 @@ function NewChatMenu({ apps, category, newChat }: NewChatMenuProps) {
   return (
     <Menu.Root>
       <Menu.Trigger asChild>
-        <IconButton variant="ghost" title={t("new_chat")}>
-          <RiChatNewLine aria-label={t("new_chat")} />
-        </IconButton>
+        <Button
+          variant="subtle"
+          size="sm"
+          title={t("new_chat")}
+          aria-label={t("new_chat")}
+          className={chatStyles.newChatButton}
+        >
+          <RiChatNewLine aria-hidden="true" />
+          <span className={chatStyles.newChatLabel}>{t("new_chat")}</span>
+        </Button>
       </Menu.Trigger>
       <Menu.Content>
         <Menu.ItemGroup title={t("new_chat")}>
@@ -953,7 +995,7 @@ function NewChatMenu({ apps, category, newChat }: NewChatMenuProps) {
                   newChat(app);
                 }}
                 value={String(app.id)}
-                aria-keyshortcuts={index}
+                aria-keyshortcuts={String(index)}
               >
                 <span
                   className={classnames(styles.icon, `ico - ${cat?.icon} `)}
@@ -1215,7 +1257,11 @@ function UserInformationPopover({
         }
       }}
     >
-      <Popover.Trigger data-testid="UserInformationBtn">
+      <Popover.Trigger
+        data-testid="UserInformationBtn"
+        aria-label={t("User information")}
+        title={t("User information")}
+      >
         <Avatar.Root size="sm">
           <Avatar.Fallback name={user?.name} />
           <Avatar.Image src={user?.avatar ?? undefined} />
@@ -1304,10 +1350,16 @@ function UserInformationPopover({
   );
 }
 
-export function MessageHeader() {
+interface MessageHeaderProps {
+  onOpenNavigation?: VoidFunction;
+  mobileNavigationOpen?: boolean;
+}
+
+export function MessageHeader({
+  onOpenNavigation,
+  mobileNavigationOpen = false,
+}: MessageHeaderProps) {
   const {
-    is,
-    setIs,
     setOptions,
     newChat,
     downloadThread,
@@ -1317,36 +1369,99 @@ export function MessageHeader() {
   } = useGlobal();
   const { message } = useMessage();
   const { apps, category } = useApps();
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
+  const mobileActionsRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    if (!mobileActionsOpen) return;
+
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!mobileActionsRef.current?.contains(event.target as Node)) {
+        setMobileActionsOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileActionsOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [mobileActionsOpen]);
 
   return (
     <HStack
       as="header"
-      padding={1}
+      className={chatStyles.chatHeader}
       borderBottomWidth="1px"
       justifyContent="space-between"
+      gap={1}
       data-testid="ChatHeader"
     >
-      <ToolbarToggleButton toolbar={is.toolbar} setIs={setIs} />
+      <ToolbarToggleButton
+        onOpenNavigation={onOpenNavigation}
+        navigationOpen={mobileNavigationOpen}
+      />
       <HeaderTitleBlock title={message.title} messages={message.messages} />
-      <ChatOptionsMenu
-        openai={options.openai}
-        setOptions={setOptions}
-        user={user}
-      />
       <NewChatMenu apps={apps} category={category} newChat={newChat} />
-      <MessageMenu />
-      <AssistantSettingsButton
-        mode={options.openai.mode}
-        showSettings={showSettings}
-      />
-      <DownloadThreadMenu downloadThread={downloadThread} />
-      <GitHubMenu />
-      <UsageInformationDialog />
-      <UserInformationPopover
-        openai={options.openai}
-        setOptions={setOptions}
-        user={user}
-      />
+      <div className={chatStyles.headerActionMenu} ref={mobileActionsRef}>
+        <IconButton
+          className={chatStyles.mobileMoreButton}
+          variant="ghost"
+          aria-label={t("more_actions")}
+          aria-expanded={mobileActionsOpen}
+          aria-controls="mobile-chat-header-actions"
+          title={t("more_actions")}
+          onClick={() => setMobileActionsOpen((open) => !open)}
+        >
+          <LuEllipsis />
+        </IconButton>
+        <div
+          id="mobile-chat-header-actions"
+          className={chatStyles.headerActionItems}
+          data-open={mobileActionsOpen}
+          onClickCapture={() => setMobileActionsOpen(false)}
+        >
+          <HeaderActionItem label={t("chat_options")}>
+            <ChatOptionsMenu
+              openai={options.openai}
+              setOptions={setOptions}
+              user={user}
+            />
+          </HeaderActionItem>
+          <HeaderActionItem label={t("chat_history")}>
+            <MessageMenu />
+          </HeaderActionItem>
+          {options.openai.mode === "assistant" ? (
+            <HeaderActionItem label={t("chat_settings")}>
+              <AssistantSettingsButton
+                mode={options.openai.mode}
+                showSettings={showSettings}
+              />
+            </HeaderActionItem>
+          ) : null}
+          <HeaderActionItem label={t("download_thread")}>
+            <DownloadThreadMenu downloadThread={downloadThread} />
+          </HeaderActionItem>
+          <HeaderActionItem label={t("open_issue")}>
+            <GitHubMenu />
+          </HeaderActionItem>
+          <HeaderActionItem label={t("usage_information")}>
+            <UsageInformationDialog />
+          </HeaderActionItem>
+          <HeaderActionItem label={t("User information")}>
+            <UserInformationPopover
+              openai={options.openai}
+              setOptions={setOptions}
+              user={user}
+            />
+          </HeaderActionItem>
+        </div>
+      </div>
     </HStack>
   );
 }

@@ -15,6 +15,7 @@ import {
   Button,
   IconButton,
   Link,
+  Portal,
   Spacer,
   Text,
   VStack,
@@ -39,6 +40,15 @@ import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 
 import styles from "./style/sider.module.less";
+import {
+  DrawerBackdrop,
+  DrawerBody,
+  DrawerCloseTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerRoot,
+  DrawerTitle,
+} from "../components/ui/drawer";
 import "katex/dist/katex.min.css";
 import semver from "semver";
 
@@ -55,22 +65,40 @@ const ICONS = {
 };
 
 const Option = (props) => {
-  const { type, onClick, tooltip, dataTestId } = props;
+  const { type, onClick, tooltip, dataTestId, expanded = false } = props;
   const testId = dataTestId ? { "data-testid": dataTestId } : {};
   if (!ICONS[type]) {
     console.error(`Icon ${type} not found`);
     return null;
   }
+
+  const icon = ICONS[type]();
+  const control = expanded ? (
+    <Button
+      width="100%"
+      justifyContent="flex-start"
+      variant="ghost"
+      onClick={onClick}
+      aria-label={tooltip}
+      {...testId}
+    >
+      {icon}
+      <span>{tooltip}</span>
+    </Button>
+  ) : (
+    <IconButton
+      aria-label={tooltip}
+      variant={props.variant || "ghost"}
+      onClick={onClick}
+      {...testId}
+    >
+      {icon}
+    </IconButton>
+  );
+
   return (
     <Tooltip content={tooltip}>
-      <IconButton
-        aria-label={tooltip}
-        variant={props.variant || "ghost"}
-        onClick={onClick}
-        {...testId}
-      >
-        {ICONS[type]()}
-      </IconButton>
+      {control}
     </Tooltip>
   );
 };
@@ -174,9 +202,20 @@ Der Quellcode der Anwendung ist auf GitHub in folgenden Repositories verfügbar:
 - Proxy-Server: [github.com/fhswf/openai-proxy](https://github.com/fhswf/openai-proxy)
 `;
 
-export function ChatSideBar() {
+interface ChatSideBarProps {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+}
+
+export function ChatSideBar({
+  mobileOpen,
+  onMobileOpenChange,
+}: ChatSideBarProps) {
   const [open, setOpen] = useState(false);
-  const [metadata, setMetadata] = useState({});
+  const [metadata, setMetadata] = useState<{
+    release?: string;
+    build_sha?: string;
+  }>({});
   const [newRelease, setNewRelease] = useState(false);
   const { is, setState, options, version, release } = useGlobal();
   const { setGeneral, setAccount } = useOptions();
@@ -193,7 +232,48 @@ export function ChatSideBar() {
     setGeneral({
       theme: currentTheme === "light" ? "dark" : "light",
     });
+    onMobileOpenChange(false);
   };
+
+  const toggleConfig = () => {
+    setState({ is: { ...is, config: !is.config } });
+    onMobileOpenChange(false);
+  };
+
+  const toggleFullScreen = () => {
+    setState({ is: { ...is, fullScreen: !is.fullScreen } });
+    onMobileOpenChange(false);
+  };
+
+  const primaryOptions = (expanded: boolean) => (
+    <div
+      className={classnames(styles.tool, "flex-c-sb flex-column", {
+        [styles.drawerOptions]: expanded,
+      })}
+      data-testid={expanded ? "MobileSidebarActions" : "BottomLeftSideBar"}
+    >
+      <Option
+        type={options.general.theme}
+        onClick={toggleTheme}
+        tooltip={t("Theme")}
+        dataTestId="OptionDarkModeSelect"
+        expanded={expanded}
+      />
+      <Option
+        dataTestId="OpenConfigBtn"
+        type="config"
+        onClick={toggleConfig}
+        tooltip={t("Config")}
+        expanded={expanded}
+      />
+      <Option
+        type={`${is.fullScreen ? "min" : "full"}-screen`}
+        onClick={toggleFullScreen}
+        tooltip={`${is.fullScreen ? t("Minimize") : t("Maximize")}`}
+        expanded={expanded}
+      />
+    </div>
+  );
 
   useEffect(() => {
     fetch("/metadata.json", { cache: "no-cache" })
@@ -219,107 +299,123 @@ export function ChatSideBar() {
   }, [version]);
 
   return (
-    <VStack
-      role="toolbar"
-      as="aside"
-      hideBelow={is.toolbar ? "base" : "md"}
-      className={classnames(styles.sider, "flex-c-sb flex-column")}
-      data-testid="LeftSideBar"
-    >
-      <div
-        className={classnames(styles.tool, "flex-c-sb flex-column")}
-        data-testid="BottomLeftSideBar"
+    <>
+      <VStack
+        role="toolbar"
+        className={classnames(styles.sider, "flex-c-sb flex-column")}
+        data-testid="LeftSideBar"
       >
-        <Option
-          type={options.general.theme}
-          onClick={toggleTheme}
-          tooltip={t("Theme")}
-          dataTestId="OptionDarkModeSelect"
-        />
-        <Option
-          dataTestId="OpenConfigBtn"
-          type="config"
-          onClick={() => setState({ is: { ...is, config: !is.config } })}
-          tooltip={t("Config")}
-        />
-        <Option
-          type={`${is.fullScreen ? "min" : "full"}-screen`}
-          onClick={() =>
-            setState({ is: { ...is, fullScreen: !is.fullScreen } })
-          }
-          tooltip={`${is.fullScreen ? t("Minimize") : t("Maximize")}`}
-        />
-      </div>
-      <Spacer />
-      <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
-        <DialogRoot
-          open={informationWindowOpen}
-          onOpenChange={(e) => {
-            if (options.account.terms) {
-              setOpen(e.open);
-            }
-          }}
-          size="lg"
+        {primaryOptions(false)}
+        <Spacer />
+        <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
+          <DialogRoot
+            open={informationWindowOpen}
+            onOpenChange={(e) => {
+              if (options.account.terms) {
+                setOpen(e.open);
+              }
+            }}
+            size="lg"
+          >
+            <DialogTrigger asChild>
+              <IconButton
+                aria-label={t("about")}
+                variant="ghost"
+                data-testid="aboutBtn"
+              >
+                <Tooltip content={t("about")}>
+                  <IoInformationCircleOutline />
+                </Tooltip>
+              </IconButton>
+            </DialogTrigger>
+            <DialogContent data-testid="InformationWindow">
+              <DialogHeader>
+                <DialogTitle>{t("About")}</DialogTitle>
+                {options.account.terms ? <DialogCloseTrigger /> : null}
+              </DialogHeader>
+              <DialogBody className="z-ui-markdown">
+                {metadata.release ? (
+                  <Text>
+                    Version:{" "}
+                    <Link
+                      target="blank"
+                      href={
+                        "https://github.com/fhswf/openai-ui/releases/tag/openai-ui-v" +
+                        metadata?.release
+                      }
+                    >
+                      {metadata?.release}
+                    </Link>{" "}
+                    (
+                    <Link
+                      target="blank"
+                      href={
+                        "https://github.com/fhswf/openai-ui/commit/" +
+                        metadata?.build_sha
+                      }
+                    >
+                      commit {String(metadata?.build_sha).substring(0, 7)}
+                    </Link>
+                    )
+                  </Text>
+                ) : null}
+                <Markdown
+                  remarkPlugins={[remarkGfm, remarkMath, smartypants]}
+                  rehypePlugins={[rehypeKatex]}
+                >
+                  {text}
+                </Markdown>
+              </DialogBody>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  onClick={acceptTerms}
+                  data-testid="accept-terms-btn"
+                >
+                  {t("Accept Terms")}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </DialogRoot>
+        </div>
+      </VStack>
+
+      <DrawerRoot
+        open={mobileOpen}
+        onOpenChange={(event) => onMobileOpenChange(event.open)}
+        placement="start"
+        size="xs"
+      >
+        <Portal>
+          <DrawerBackdrop />
+        </Portal>
+        <DrawerContent
+          id="mobile-chat-navigation"
+          className={styles.mobileDrawer}
         >
-          <DialogTrigger asChild>
-            <IconButton
-              aria-label={t("about")}
-              variant="ghost"
-              data-testid="aboutBtn"
-            >
-              <Tooltip content={t("about")}>{ICONS["help"]()}</Tooltip>
-            </IconButton>
-          </DialogTrigger>
-          <DialogContent data-testid="InformationWindow">
-            <DialogHeader>
-              <DialogTitle>{t("About")}</DialogTitle>
-              {options.account.terms ? <DialogCloseTrigger /> : null}
-            </DialogHeader>
-            <DialogBody className="z-ui-markdown">
-              {metadata.release ? (
-                <Text>
-                  Version:{" "}
-                  <Link
-                    target="blank"
-                    href={
-                      "https://github.com/fhswf/openai-ui/releases/tag/openai-ui-v" +
-                      metadata?.release
-                    }
-                  >
-                    {metadata?.release}
-                  </Link>{" "}
-                  (
-                  <Link
-                    target="blank"
-                    href={
-                      "https://github.com/fhswf/openai-ui/commit/" +
-                      metadata?.build_sha
-                    }
-                  >
-                    commit {String(metadata?.build_sha).substring(0, 7)}
-                  </Link>
-                  )
-                </Text>
-              ) : null}
-              <Markdown
-                remarkPlugins={[remarkGfm, remarkMath, smartypants]}
-                rehypePlugins={[rehypeKatex]}
-              >
-                {text}
-              </Markdown>
-            </DialogBody>
-            <DialogFooter>
+          <DrawerHeader>
+            <DrawerTitle>{t("chatbot_title")}</DrawerTitle>
+            <DrawerCloseTrigger aria-label={t("close")} />
+          </DrawerHeader>
+          <DrawerBody>
+            <VStack align="stretch" gap="2" className={styles.drawerControls}>
+              {primaryOptions(true)}
               <Button
-                type="primary"
-                onClick={acceptTerms}
-                data-testid="accept-terms-btn"
+                width="100%"
+                justifyContent="flex-start"
+                variant="ghost"
+                onClick={() => {
+                  onMobileOpenChange(false);
+                  setOpen(true);
+                }}
+                data-testid="MobileAboutBtn"
               >
-                {t("Accept Terms")}
+                <IoInformationCircleOutline /> <span>{t("about")}</span>
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </DialogRoot>
-      </div>
-    </VStack>
+            </VStack>
+          </DrawerBody>
+        </DrawerContent>
+      </DrawerRoot>
+    </>
   );
 }

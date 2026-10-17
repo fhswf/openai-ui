@@ -23,6 +23,7 @@ import {
 import { classnames } from "../components/utils";
 
 import { useGlobal } from "./context";
+import type { Message } from "./context/types";
 import { CopyIcon, ScrollView, OPFSImage, ToolUsagePopup, FilePreview } from "./component";
 import { LazyRenderer } from "./MessageRender";
 import { useMessage } from "./hooks/useMessage";
@@ -54,7 +55,7 @@ function Usage(props: UsageProps) {
     props.startTime && props.endTime ? props.endTime - props.startTime : null;
 
   return (
-    <HStack>
+    <HStack wrap="wrap">
       {elapsed !== null && (
         <HStack gap="0.2ex">
           <IoTimerOutline />
@@ -104,7 +105,7 @@ function ToolUse(props) {
   console.log("Grouped tools:", groupedTools);
 
   return (
-    <HStack>
+    <HStack wrap="wrap">
       {groupedTools.map(([key, tools]) => (
         <Tooltip content={t(key + "_description")} key={key.toString()}>
           <Tag.Root size={"md"} onClick={() => setIsOpen(true)} cursor="pointer" data-testid={`tool-usage-badge-${key}`}>
@@ -202,8 +203,11 @@ export function MessageItem(props) {
         role === "user" ? styles.user : styles.assistant
       )}
     >
-      <Card.Header justifyContent={role === "user" ? "flex-end" : "flex-start"}>
-        <HStack>
+      <Card.Header
+        className={styles.messageHeader}
+        justifyContent={role === "user" ? "flex-end" : "flex-start"}
+      >
+        <HStack wrap="wrap">
           <Avatar.Root size="sm">
             <Avatar.Fallback name={user?.name} />
             <Avatar.Image src={role === "user" ? user?.avatar : avatar} />
@@ -212,7 +216,7 @@ export function MessageItem(props) {
           <ToolUse toolsUsed={toolsUsed} />
         </HStack>
       </Card.Header>
-      <Card.Body>
+      <Card.Body className={styles.messageBody}>
         <LazyRenderer isVisible={true}>{message}</LazyRenderer>
         {images &&
           Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
@@ -272,8 +276,12 @@ export function MessageItem(props) {
           </HStack>
         )}
       </Card.Body>
-      <Card.Footer>
-        <HStack width={"100%"} justifyContent="space-between">
+      <Card.Footer className={styles.messageFooter}>
+        <HStack
+          width={"100%"}
+          justifyContent="space-between"
+          className={styles.messageFooterContent}
+        >
           <Usage usage={usage} startTime={startTime} endTime={endTime} />
           <Spacer />
           <Tooltip content={t("Remove Message")}>
@@ -315,7 +323,7 @@ export function MessageContainer() {
   return (
     <React.Fragment>
       {
-        <Stack data-testid="ChatListContainer">
+        <Stack data-testid="ChatListContainer" className={styles.messageList}>
           {messages
             .filter((message) => {
               if (message.role === "system") return false;
