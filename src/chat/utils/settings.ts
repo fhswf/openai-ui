@@ -261,6 +261,15 @@ export function reduceState(state: GlobalState): GlobalState {
         );
       }
 
+      if (cleanMessage.images && typeof cleanMessage.images === "object") {
+        cleanMessage.images = Object.fromEntries(
+          Object.entries(cleanMessage.images).map(([id, image]: [string, any]) => {
+            const { src: _src, ...storedImage } = image ?? {};
+            return [id, storedImage];
+          })
+        );
+      }
+
       if (Array.isArray(cleanMessage.toolsUsed)) {
         cleanMessage.toolsUsed = cleanMessage.toolsUsed.map((tool) =>
           stripStoredToolPayload(tool)
@@ -299,9 +308,15 @@ export async function inflateState(state: GlobalState) {
               const updatedImages = { ...message.images };
               await Promise.all(
                 Object.entries(updatedImages).map(async ([file_id, image]) => {
-                  const file = await opfs.getFileHandle(image.name);
-                  image.src = URL.createObjectURL(await file.getFile());
-                  updatedImages[file_id] = image;
+                  if (image.file_id || image.url) return;
+                  try {
+                    const file = await opfs.getFileHandle(image.name);
+                    image.src = URL.createObjectURL(await file.getFile());
+                    updatedImages[file_id] = image;
+                  } catch {
+                    // The file may be available only in encrypted remote
+                    // storage on this device; the chat view loads it lazily.
+                  }
                 })
               );
               message.images = updatedImages;

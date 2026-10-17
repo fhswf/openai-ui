@@ -59,15 +59,15 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           language_help: "Select a language for the user interface.",
           zk_storage_label: "Encrypted cross-device chat storage",
           zk_storage_help:
-            "Chats are encrypted in this browser before they are synced. A passkey with WebAuthn PRF support is required.",
+            "Chats and their referenced files are encrypted in this browser before they are synced. Files download only when opened or needed for a request. A passkey with WebAuthn PRF support is required.",
           zk_storage_enabled: "Encrypted chat storage enabled",
           zk_storage_enabled_help:
-            "Your chats will now be synced in encrypted form. The server cannot read their contents.",
+            "Your chats and referenced files will now sync in encrypted form. The server cannot read their contents.",
           zk_storage_disabled: "Encrypted chat storage disabled",
           zk_storage_disabled_help:
-            "All passkeys and the encrypted key were removed from the server. Existing server chat copies remain encrypted and can no longer be opened; chats already stored in this browser remain available locally.",
+            "All passkeys and the encrypted key were removed from the server. Existing server chats and files remain encrypted and can no longer be opened; chats already stored in this browser remain available locally.",
           zk_storage_disable_confirm:
-            "Turn off encrypted chat storage? This deletes all registered passkeys and the encrypted key from the server. Server chat copies will remain encrypted but become inaccessible. Chats already stored in this browser remain available locally.",
+            "Turn off encrypted chat storage? This deletes all registered passkeys and the encrypted key from the server. Server chat and file copies will remain encrypted but become inaccessible. Chats already stored in this browser remain available locally.",
           zk_storage_checking: "Checking this device's recovery key…",
           zk_storage_unlocked: "This device can open your encrypted chats.",
           zk_storage_choose_other_passkey_help:
@@ -145,6 +145,15 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           custom_endpoint_desc:
             "If you don't want to use our proxy server, you can configure a different endpoint, e.g. api.openai.com",
           chat_settings: "Chat Settings",
+          chat_attachments: "Files in this chat",
+          chat_attachments_help:
+            "Open or download referenced files. With encrypted storage enabled, files download only when needed and stay encrypted on the server.",
+          view_attachment: "View file",
+          download_attachment: "Download file",
+          delete_attachment: "Delete file and its chat references",
+          attachment_unavailable: "File could not be loaded",
+          attachment_no_preview:
+            "This file type cannot be previewed here. Download the file to open it.",
           clear_thread: "Clear Conversation",
           reload_thread: "Reload Conversation",
           general: "General",
@@ -368,6 +377,15 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Wenn Sie unseren Proxy-Server nicht verwenden möchten, können Sie einen anderen Endpunkt konfigurieren, z.B. api.openai.com",
           about: "Infos",
           chat_settings: "Chat-Einstellungen",
+          chat_attachments: "Dateien in diesem Chat",
+          chat_attachments_help:
+            "Dateien öffnen oder herunterladen. Bei aktivierter verschlüsselter Speicherung werden sie erst bei Bedarf geladen und bleiben auf dem Server verschlüsselt.",
+          view_attachment: "Datei anzeigen",
+          download_attachment: "Datei herunterladen",
+          delete_attachment: "Datei und ihre Chatverweise löschen",
+          attachment_unavailable: "Datei konnte nicht geladen werden",
+          attachment_no_preview:
+            "Dieser Dateityp kann hier nicht angezeigt werden. Laden Sie die Datei herunter, um sie zu öffnen.",
           clear_thread: "Chat löschen",
           reload_thread: "Unterhaltung neu laden",
           new_chat: "Neuer Chat",
@@ -405,15 +423,15 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           gravatar: "Gravatar",
           zk_storage_label: "Verschlüsselte geräteübergreifende Chatspeicherung",
           zk_storage_help:
-            "Chats werden in diesem Browser verschlüsselt, bevor sie synchronisiert werden. Erforderlich ist ein Passkey mit WebAuthn-PRF-Unterstützung.",
+            "Chats und ihre referenzierten Dateien werden in diesem Browser verschlüsselt, bevor sie synchronisiert werden. Dateien werden erst beim Anzeigen oder für eine Anfrage geladen. Erforderlich ist ein Passkey mit WebAuthn-PRF-Unterstützung.",
           zk_storage_enabled: "Verschlüsselte Chatspeicherung aktiviert",
           zk_storage_enabled_help:
-            "Ihre Chats werden jetzt verschlüsselt synchronisiert. Der Server kann ihre Inhalte nicht lesen.",
+            "Ihre Chats und referenzierten Dateien werden jetzt verschlüsselt synchronisiert. Der Server kann ihre Inhalte nicht lesen.",
           zk_storage_disabled: "Verschlüsselte Chatspeicherung deaktiviert",
           zk_storage_disabled_help:
-            "Alle Passkeys und der verschlüsselte Schlüssel wurden vom Server entfernt. Vorhandene Serverkopien bleiben verschlüsselt und können nicht mehr geöffnet werden. Chats, die bereits in diesem Browser gespeichert sind, bleiben lokal verfügbar.",
+            "Alle Passkeys und der verschlüsselte Schlüssel wurden vom Server entfernt. Vorhandene Chats und Dateien auf dem Server bleiben verschlüsselt und können nicht mehr geöffnet werden. Chats, die bereits in diesem Browser gespeichert sind, bleiben lokal verfügbar.",
           zk_storage_disable_confirm:
-            "Verschlüsselte Chatspeicherung ausschalten? Dadurch werden alle registrierten Passkeys und der verschlüsselte Schlüssel vom Server gelöscht. Vorhandene Serverkopien bleiben verschlüsselt und sind nicht mehr zugänglich. Chats, die bereits in diesem Browser gespeichert sind, bleiben lokal verfügbar.",
+            "Verschlüsselte Chatspeicherung ausschalten? Dadurch werden alle registrierten Passkeys und der verschlüsselte Schlüssel vom Server gelöscht. Vorhandene Chats und Dateien auf dem Server bleiben verschlüsselt und sind nicht mehr zugänglich. Chats, die bereits in diesem Browser gespeichert sind, bleiben lokal verfügbar.",
           zk_storage_checking: "Wiederherstellungsschlüssel auf diesem Gerät wird geprüft …",
           zk_storage_unlocked: "Dieses Gerät kann Ihre verschlüsselten Chats öffnen.",
           zk_storage_choose_other_passkey_help:

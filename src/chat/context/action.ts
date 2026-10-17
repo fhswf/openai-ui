@@ -12,6 +12,7 @@ import {
 } from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
+import { toaster } from "../../components/ui/toaster";
 import { getLoginUrl, isRetryableMessage } from "../utils/loginRetry";
 import { buildInputFile, getInputFileMimeType } from "../utils/attachments";
 import { v7 as uuidv7 } from "uuid";
@@ -23,12 +24,20 @@ async function processImages(images: any[], opfs: FileSystemDirectoryHandle | nu
     images.map(async (image) => {
       console.log("sendMessage: image: %o", image);
       if (image.url) {
-        return { type: "input_image", image_url: image.url, name: image.name };
-      } else if (image.name && opfs) {
+        return {
+          type: "input_image",
+          image_url: image.url,
+          name: image.name,
+          attachmentId: image.url.startsWith("opfs://") ? image.id : undefined,
+          size: image.size,
+          mimeType: image.type,
+        };
+      } else if ((image.opfsName || image.name) && opfs) {
         console.log("sendMessage: reading file: %o", image.name);
 
         // get file from OPFS
-        const fileHandle = await opfs.getFileHandle(image.name);
+        const opfsName = image.opfsName || image.name;
+        const fileHandle = await opfs.getFileHandle(opfsName);
         if (!fileHandle) {
           console.error("File not found in OPFS: %s", image.name);
           throw new Error(`File not found: ${image.name}`);
@@ -36,8 +45,11 @@ async function processImages(images: any[], opfs: FileSystemDirectoryHandle | nu
 
         return {
           type: "input_image",
-          image_url: `opfs://${image.name}`,
+          image_url: `opfs://${opfsName}`,
           name: image.name,
+          attachmentId: image.id,
+          size: image.size,
+          mimeType: image.type,
         };
       }
     })
@@ -46,9 +58,8 @@ async function processImages(images: any[], opfs: FileSystemDirectoryHandle | nu
 
 function processFiles(files: MessageAttachment[]) {
   console.log("transform files: %o", files);
-  // Files stay in OPFS and are referenced by name only. The request builder
-  // resolves each `input_file` to base64 `file_data` per request, so files are
-  // never uploaded through the files API.
+  // The request builder resolves local or lazily restored files to base64
+  // `file_data` per request, so they are not uploaded through the files API.
   return files
     .filter((file) => Boolean(file.name))
     .map((file) => buildInputFile(file));
@@ -67,6 +78,19 @@ export default function action(
   const setIs = (arg) => {
     const { is } = state;
     setState({ is: { ...is, ...arg } });
+  };
+
+  const startResponse = (globalState, parent) => {
+    void createResponse(globalState, parent).catch((error) => {
+      console.error("Could not prepare the chat request:", error);
+      setIs({ thinking: false });
+      toaster.create({
+        title: t("error_occurred"),
+        description: error instanceof Error ? error.message : String(error),
+        duration: 6000,
+        type: "error",
+      });
+    });
   };
 
   const setOptions = ({ type, data }: OptionAction) => {
@@ -106,7 +130,7 @@ export default function action(
 
     console.log("retryPendingMessage: resending last user message");
     setIs({ ...state.is, thinking: true, tool: null });
-    void createResponse({ ...state, setState, setIs, setOptions }, this);
+    startResponse({ ...state, setState, setIs, setOptions }, this);
   };
 
   const sendMessage = async () => {
@@ -159,7 +183,7 @@ export default function action(
         typeingMessage: {},
         is: { ...state.is, thinking: true, tool: null },
       });
-      void createResponse({ ...state, chat: newChat, setState, setIs, setOptions }, this);
+      startResponse({ ...state, chat: newChat, setState, setIs, setOptions }, this);
     }
   };
 
@@ -238,7 +262,7 @@ export default function action(
       const _chat: Chat[] = chatList;
       if (newApp.botStarts) {
         console.log("botStarts");
-        void createResponse({ ...state, chat: _chat, setState, setIs, setOptions }, this);
+        startResponse({ ...state, chat: _chat, setState, setIs, setOptions }, this);
       } else {
         console.debug("starting chat: %o", _chat);
         startChat(_chat, 0);
@@ -342,28 +366,32 @@ export default function action(
             textContent += item.text;
           } else if (item.type === "input_image") {
             const imageUrl = item.image_url;
-            let name = "image.png";
+            let name = item.name || "image.png";
             if (imageUrl?.startsWith("opfs://")) {
-              name = imageUrl.replace("opfs://", "");
+              name = item.name || imageUrl.replace("opfs://", "");
             }
             images.push({
               name: name,
+              opfsName: imageUrl?.startsWith("opfs://")
+                ? imageUrl.slice("opfs://".length)
+                : name,
               url: imageUrl,
               // We don't have size/type/lastModified here, but MessageInput should handle it gracefully or we can mock it
               size: 0,
               type: "image/png",
               lastModified: Date.now(),
-              id: uuidv7(),
+              id: item.attachmentId,
             });
           } else if (item.type === "input_file") {
             const name = item.filename || "document";
             files.push({
               name,
-              url: `opfs://${name}`,
+              opfsName: item.opfsName || name,
+              url: `opfs://${item.opfsName || name}`,
               size: 0,
               type: getInputFileMimeType(name),
               lastModified: Date.now(),
-              id: uuidv7(),
+              id: item.attachmentId,
             });
           }
         }
