@@ -92,9 +92,8 @@ test.describe("Mobile chat header", () => {
   test("download thread menu opens from the mobile sheet", async ({ page }) => {
     await openActionSheet(page);
     await page
-      .getByRole("button", {
-        name: /Unterhaltung herunterladen|Download Thread/i,
-      })
+      .locator("#mobile-chat-header-actions [data-header-action-label]")
+      .filter({ hasText: /Unterhaltung herunterladen|Download Thread/i })
       .click();
 
     const menu = page

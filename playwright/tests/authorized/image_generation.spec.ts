@@ -16,8 +16,17 @@ test('Image Generation', async ({ page, browserName }) => {
                 }
             },
             {
+                type: 'response.output_item.added',
+                item: {
+                    type: 'image_generation_call',
+                    id: 'item_mock_123',
+                    output_format: 'png',
+                }
+            },
+            {
                 type: 'response.output_item.done',
                 item: {
+                    type: 'image_generation_call',
                     id: 'item_mock_123',
                     output_format: 'png',
                     result: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', // 1x1 red pixel
