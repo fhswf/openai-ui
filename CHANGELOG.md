@@ -5,6 +5,23 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.54.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.53.0...openai-ui-v0.54.0) (2026-10-18)
+
+
+### Features
+
+* Enhance attachment handling with OPFS and encrypted storage ([80ab040](https://github.com/fhswf/openai-ui/commit/80ab040bed0a0641c4d72cab5a92ea73f6af7c77))
+* Enhance attachment handling with OPFS and encrypted storage ([317c35d](https://github.com/fhswf/openai-ui/commit/317c35d31474d52a27244866c22a116c9877fc7f))
+* Enhance Chat Sidebar and Header for Mobile Experience ([c96936b](https://github.com/fhswf/openai-ui/commit/c96936bc9fb723e42d731ee4f9751ff322a78e4f))
+* Enhance Chat Sidebar and Header for Mobile Experience ([9690985](https://github.com/fhswf/openai-ui/commit/9690985848ca0a699efa115099feaa11d0dbb083))
+* Refactor Chat Sidebar and introduce custom hooks for state management ([4c5f452](https://github.com/fhswf/openai-ui/commit/4c5f4524f5dbbb1240e493f82b16302885b4770b))
+* Update Mobile Header Actions and Styles for User Information ([2708519](https://github.com/fhswf/openai-ui/commit/2708519c9de359721b9af23aa9a5152e5e6ce145))
+
+
+### Bug Fixes
+
+* Refactor chat sidebar and MCP service components ([b1c8f1a](https://github.com/fhswf/openai-ui/commit/b1c8f1a39f90fa805170187aeea34db6127e0c09))
+
 ## [0.53.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.52.0...openai-ui-v0.53.0) (2026-10-15)
 
 
