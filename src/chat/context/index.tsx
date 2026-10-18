@@ -328,6 +328,53 @@ export const ChatProvider = ({ children }) => {
   }, [zkStorageEnabled, vaultReady, vaultIdentity, vaultUnlockRevision]);
 
   useEffect(() => {
+    if (!zkStorageEnabled || !vaultReady) {
+      setVaultAttachmentResolver(null);
+      return;
+    }
+
+    setVaultAttachmentResolver({
+      async load(chatId, attachmentId, filename) {
+        const chatKey = vaultCache.current.chatKeys.get(chatId);
+        if (!chatKey) {
+          throw new Error("The encryption key for this chat is unavailable");
+        }
+        const encrypted = await chatVault.getAttachment(chatId, attachmentId);
+        const plaintext = await decryptAttachmentData(
+          encrypted,
+          chatKey,
+          getAttachmentAdditionalData(chatId, attachmentId)
+        );
+        const file = new File([plaintext], filename, {
+          type: getInputFileMimeType(filename),
+        });
+
+        try {
+          const opfs = await navigator.storage.getDirectory();
+          const handle = await opfs.getFileHandle(filename, { create: true });
+          const writable = await handle.createWritable();
+          await writable.write(plaintext);
+          await writable.close();
+        } catch (error) {
+          console.warn("Could not cache downloaded attachment in OPFS:", error);
+        }
+        return file;
+      },
+      delete(chatId, attachmentId) {
+        return chatVault.deleteAttachment(chatId, attachmentId);
+      },
+      canDelete(chatId) {
+        const credentials = vaultCredentials.current;
+        return Boolean(
+          credentials &&
+            vaultCache.current.owners.get(chatId) === credentials.userKey.userId
+        );
+      },
+    });
+    return () => setVaultAttachmentResolver(null);
+  }, [zkStorageEnabled, vaultReady, vaultIdentity, vaultUnlockRevision]);
+
+  useEffect(() => {
     if (!zkStorageEnabled || !vaultReady) return;
 
     const sync = async () => {
