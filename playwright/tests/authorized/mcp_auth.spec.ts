@@ -642,6 +642,7 @@ test.describe("MCP Auth", () => {
                                                                           }) => {
         const context = await browser.newContext({
           storageState: "playwright/.auth/user.json",
+          serviceWorkers: "block",
         });
         const page = await context.newPage();
 

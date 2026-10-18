@@ -43,6 +43,8 @@ export default defineConfig({
     baseURL,
 
     locale: 'de-DE',
+    /* Keep page.route() mocks deterministic for API requests in CI. */
+    serviceWorkers: 'block',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
