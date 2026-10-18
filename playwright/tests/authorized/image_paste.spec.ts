@@ -92,7 +92,7 @@ test('Image Paste', async ({ page, browserName }) => {
         .locator('[data-testid^="ChatMessage-"]')
         .filter({ has: page.locator('img[alt="test_image_paste.png"]') });
     await expect(userMessage).toBeVisible();
-    await expect(userMessage.locator('img[alt="test_image_paste.png"]')).toBeVisible({ timeout: 15000 });
+    await expect(userMessage.getByTestId('included-image')).toBeVisible({ timeout: 15000 });
 
     // Screenshots copied from the clipboard often have no filename. Pasting such
     // an image must still work and receive a generated name.

@@ -160,9 +160,24 @@ function HeaderActionItem({
   label: string;
   children: React.ReactNode;
 }) {
+  const handleLabelClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const actionButton = Array.from(
+      event.currentTarget.parentElement?.querySelectorAll("button") ?? []
+    ).find((button) => button !== event.currentTarget);
+    actionButton?.click();
+  };
+
   return (
     <div className={chatStyles["header-action-item"]}>
-      <Text className={chatStyles["header-action-label"]}>{label}</Text>
+      <button
+        type="button"
+        aria-label={label}
+        className={chatStyles["header-action-label"]}
+        data-header-action-label
+        onClick={handleLabelClick}
+      >
+        {label}
+      </button>
       {children}
     </div>
   );
@@ -856,12 +871,28 @@ function HeaderActionList({
 }: HeaderActionListProps) {
   const { t } = useTranslation();
 
+  const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest?.("[data-header-action-label]")) return;
+
+    // Rows that open a popup (menu/dialog/popover) must not collapse the sheet.
+    // The popup is anchored to a trigger inside the sheet, and a `display: none`
+    // sheet would zero out that trigger's box, so the popup would open without a
+    // usable position. Keeping the sheet laid out mirrors the desktop toolbar,
+    // where the action list stays visible while a popup is open.
+    const isPopupInteraction = target?.closest?.(
+      '[data-scope="menu"], [data-scope="dialog"], [data-scope="popover"]'
+    );
+    if (isPopupInteraction) return;
+    onAction();
+  };
+
   return (
     <div
       id="mobile-chat-header-actions"
       className={chatStyles["header-action-items"]}
       data-open={open}
-      onClickCapture={onAction}
+      onClickCapture={handleClickCapture}
     >
       <HeaderActionItem label={t("chat_options")}>
         <ChatOptionsMenu openai={openai} setOptions={setOptions} user={user} />
@@ -903,10 +934,20 @@ function MobileHeaderActions(props: MobileHeaderActionsProps) {
   useEffect(() => {
     if (!open) return;
 
+    const isInsidePopup = (target: EventTarget | null) =>
+      target instanceof Element &&
+      !!target.closest(
+        '[data-scope="menu"], [data-scope="dialog"], [data-scope="popover"]'
+      );
+
     const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (!actionMenuRef.current?.contains(event.target as Node)) {
-        setOpen(false);
+      const target = event.target as Node;
+      // Submenus and dialogs are portalled out of the sheet, so a pointerdown
+      // inside them is not a click on the sheet backdrop and must not close it.
+      if (actionMenuRef.current?.contains(target) || isInsidePopup(target)) {
+        return;
       }
+      setOpen(false);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);

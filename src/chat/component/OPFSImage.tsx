@@ -9,10 +9,11 @@ export interface OPFSImageProps extends React.ImgHTMLAttributes<HTMLImageElement
     readonly alt?: string;
     readonly chatId?: string;
     readonly attachmentId?: string;
+    readonly fallbackSrc?: string;
 }
 
 export function OPFSImage(props: OPFSImageProps) {
-    const { src, alt, className, chatId, attachmentId, ...rest } = props;
+    const { src, alt, className, chatId, attachmentId, fallbackSrc, ...rest } = props;
     const [loaded, setLoaded] = useState(false);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [visible, setVisible] = useState(!chatId);
@@ -39,7 +40,7 @@ export function OPFSImage(props: OPFSImageProps) {
     useEffect(() => {
         let active = true;
         let createdUrl: string | null = null;
-        setImageUrl(null);
+        setImageUrl(fallbackSrc || null);
         setLoaded(false);
         if (src?.startsWith("opfs://")) {
             if (!visible) return;
@@ -64,7 +65,7 @@ export function OPFSImage(props: OPFSImageProps) {
             active = false;
             if (createdUrl) URL.revokeObjectURL(createdUrl);
         };
-    }, [src, chatId, attachmentId, visible]);
+    }, [src, chatId, attachmentId, visible, fallbackSrc]);
 
     return (
         <div ref={containerRef}>

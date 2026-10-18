@@ -60,5 +60,5 @@ test('Image Drop', async ({ page, browserName }) => {
     // It should contain the image
     const userMessage = page.locator('[data-testid^="ChatMessage-"]').filter({ has: page.locator('img[alt="test_image_drop.png"]') });
     await expect(userMessage).toBeVisible();
-    await expect(userMessage.locator('img[alt="test_image_drop.png"]')).toBeVisible({ timeout: 15000 });
+    await expect(userMessage.getByTestId('included-image')).toBeVisible({ timeout: 15000 });
 });

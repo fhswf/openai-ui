@@ -34,6 +34,20 @@ export const apiBaseUrl =
 
 const legacyProxyBaseUrl = "https://openai.ki.fh-swf.de/api";
 
+function decodeBase64Image(image_base64: string) {
+  return Uint8Array.from(atob(image_base64), (character) =>
+    character.charCodeAt(0)
+  );
+}
+
+function setMessageImage(message: Message, fileId: string, image: any) {
+  const images = Object.entries(message.images ?? {});
+  images.push([fileId, image]);
+  // fromEntries defines keys as own properties, including special names such
+  // as "__proto__", instead of invoking inherited setters.
+  message.images = Object.fromEntries(images);
+}
+
 function normalizeApiBaseUrl(baseUrl?: string) {
   if (!baseUrl || baseUrl === legacyProxyBaseUrl) {
     baseUrl = apiBaseUrl;
@@ -48,7 +62,7 @@ function normalizeApiBaseUrl(baseUrl?: string) {
 
 function createClient(options?: Options) {
   return new OpenAI({
-    apiKey: options?.openai.apiKey || "unused",
+    apiKey: options?.openai.apiKey ?? "unused",
     dangerouslyAllowBrowser: true,
     baseURL: normalizeApiBaseUrl(options?.openai.baseUrl),
     organization: options?.openai.organizationId || undefined,
@@ -225,7 +239,7 @@ export async function createResponse(
       const processStream = async () => {
         try {
           for await (const event of stream) {
-            eventProcessor.process(event);
+            await eventProcessor.process(event);
           }
           console.log("Stream ended");
         } catch (error) {
@@ -377,13 +391,22 @@ class EventProcessor {
     message: Message,
     file_id: string
   ) {
-    const fileContent = atob(image_base64);
-
-    let writable: FileSystemWritableFileStream;
-    let fileHandle: FileSystemFileHandle;
-    let file: File;
+    const bytes = decodeBase64Image(image_base64);
+    const preview = new Blob([bytes], { type: "image/png" });
+    const previewUrl = URL.createObjectURL(preview);
 
     console.log("appendImageToMessage: %s %o", file_id, message);
+    setMessageImage(message, file_id, {
+      src: previewUrl,
+      name: `${file_id}.png`,
+      size: preview.size,
+      lastModified: Date.now(),
+      file_id,
+      id: file_id,
+      type: "png",
+    });
+    this.updateChat();
+
     if (!EventProcessor.opfs) {
       await this.initOPFS();
       if (!EventProcessor.opfs) {
@@ -392,58 +415,37 @@ class EventProcessor {
       }
     }
 
-    EventProcessor.opfs
-      .getFileHandle(`${file_id}.png`, { create: true })
-      .then((_fileHandle) => {
-        fileHandle = _fileHandle;
-        console.log("File handle created: ", fileHandle);
-        return fileHandle.createWritable();
-      })
-      .then((_writable) => {
-        writable = _writable;
-        console.log("Writable created: ", writable);
-        // Convert the base64 string to a Uint8Array
-        const byteCharacters = new Uint8Array(fileContent.length);
-        for (let i = 0; i < fileContent.length; i++) {
-          byteCharacters[i] = fileContent.charCodeAt(i);
-        }
-        return writable.write(byteCharacters);
-      })
-      .then(() => {
-        console.log("File written successfully");
-        return writable.close();
-      })
-      .then(() => {
-        console.log("Writable closed successfully");
-        fileHandle.getFile().then((_file) => {
-          file = _file;
-          console.log("File retrieved: ", file);
-          if (!message.images) {
-            message.images = {};
-          }
-          message.images[file_id] = {
-            src: URL.createObjectURL(file),
-            url: `opfs://${file.name}`,
-            name: file.name,
-            size: file.size,
-            lastModified: file.lastModified,
-            file_id,
-            id: file_id,
-            type: "png",
-          };
-          this.updateChat();
-        });
-      })
-      .catch((error) => {
-        console.error("Error writing file: ", error);
-        Sentry.captureException(error);
-        toaster.create({
-          title: t("error_occurred"),
-          description: error.message || "",
-          duration: 5000,
-          type: "error",
-        });
+    try {
+      const fileHandle = await EventProcessor.opfs.getFileHandle(
+        `${file_id}.png`,
+        { create: true }
+      );
+      const writable = await fileHandle.createWritable();
+      await writable.write(bytes);
+      await writable.close();
+
+      const file = await fileHandle.getFile();
+      setMessageImage(message, file_id, {
+        src: previewUrl,
+        url: `opfs://${file.name}`,
+        name: file.name,
+        size: file.size,
+        lastModified: file.lastModified,
+        file_id,
+        id: file_id,
+        type: "png",
       });
+      this.updateChat();
+    } catch (error) {
+      console.error("Error writing file: ", error);
+      Sentry.captureException(error);
+      toaster.create({
+        title: t("error_occurred"),
+        description: error.message || "",
+        duration: 5000,
+        type: "error",
+      });
+    }
   }
 
   updateChat() {
@@ -461,24 +463,19 @@ class EventProcessor {
   }
 
   updatePartialImage(image_base64: string, message: Message, file_id: string) {
-    const fileContent = atob(image_base64);
-    const byteCharacters = new Uint8Array(fileContent.length);
-    for (let i = 0; i < fileContent.length; i++) {
-      byteCharacters[i] = fileContent.charCodeAt(i);
-    }
-    const blob = new Blob([byteCharacters], { type: "image/png" });
+    const bytes = decodeBase64Image(image_base64);
+    const blob = new Blob([bytes], { type: "image/png" });
     const url = URL.createObjectURL(blob);
 
-    if (!message.images) {
-      message.images = {};
-    }
-
     // Revoke previous URL if it exists to avoid memory leaks
-    if (message.images[file_id]?.src?.startsWith('blob:')) {
-      URL.revokeObjectURL(message.images[file_id].src);
+    const previousImage = Object.entries(message.images ?? {}).find(
+      ([imageId]) => imageId === file_id
+    )?.[1];
+    if (previousImage?.src?.startsWith("blob:")) {
+      URL.revokeObjectURL(previousImage.src);
     }
 
-    message.images[file_id] = {
+    setMessageImage(message, file_id, {
       src: url,
       url: `opfs://${file_id}.png`,
       name: `${file_id}.png`,
@@ -487,7 +484,7 @@ class EventProcessor {
       file_id,
       id: file_id,
       type: "png",
-    };
+    });
     this.updateChat();
   }
 

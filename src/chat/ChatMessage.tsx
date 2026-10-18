@@ -238,6 +238,7 @@ export function MessageItem(props) {
                   alt={image.name || fileName}
                   chatId={props.chatId}
                   attachmentId={image.id || image.file_id}
+                  fallbackSrc={image.src}
                   className={styles.generated_image}
                   data-testid={`generated-image-${fileName}`}
                 />
