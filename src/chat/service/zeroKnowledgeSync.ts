@@ -7,14 +7,22 @@ import {
   type VaultUserKey,
 } from "./chatVault";
 import {
+  decryptAttachmentData,
   decryptChatData,
+  encryptAttachmentData,
   encryptChatData,
   generateChatKey,
+  getAttachmentAdditionalData,
   LEGACY_RSA_KEY_ALGORITHM,
   unwrapChatKey,
   wrapChatKey,
 } from "../utils/zeroKnowledgeCrypto";
 import { messageToPlainText, matchesChatQuery } from "../utils/chatSearch";
+import { getAttachmentStorageId, getOpfsFile } from "../utils/attachments";
+import {
+  ensureChatAttachmentIds,
+  getChatAttachmentReferences,
+} from "../utils/chatAttachments";
 
 export type VaultSyncCache = {
   revisions: Map<string, number>;
@@ -26,6 +34,8 @@ export type VaultSyncCache = {
    * memory only, so the localStorage copy stays a small placeholder list.
    */
   transcripts: Map<string, Chat>;
+  attachmentFingerprints: Map<string, string>;
+  attachmentIds: Map<string, Set<string>>;
 };
 
 /** Upper bound for the in-memory transcript cache (oldest entries are dropped). */
@@ -47,10 +57,101 @@ export function createVaultSyncCache(): VaultSyncCache {
     owners: new Map(),
     chatKeys: new Map(),
     transcripts: new Map(),
+    attachmentFingerprints: new Map(),
+    attachmentIds: new Map(),
   };
 }
 
 const PREVIEW_LENGTH = 500;
+
+function attachmentCacheKey(chatId: string, attachmentId: string): string {
+  return `${chatId}\u0000${attachmentId}`;
+}
+
+async function syncChatAttachments(
+  chat: Chat,
+  id: string,
+  chatKey: CryptoKey,
+  cache: VaultSyncCache,
+  options: { forceReencrypt?: boolean; previousChatKey?: CryptoKey } = {}
+): Promise<void> {
+  const references = getChatAttachmentReferences(chat);
+  const knownOnServer = new Set(cache.attachmentIds.get(id) ?? []);
+  const currentIds = new Set<string>();
+  for (const reference of references) {
+    const attachmentId = await getAttachmentStorageId(
+      reference.attachmentId,
+      reference.opfsName
+    );
+    currentIds.add(attachmentId);
+    if (!knownOnServer.has(attachmentId)) {
+      if (await chatVault.hasAttachment(id, attachmentId)) {
+        knownOnServer.add(attachmentId);
+      }
+    }
+    const cacheKey = attachmentCacheKey(id, attachmentId);
+    const additionalData = getAttachmentAdditionalData(
+      id,
+      attachmentId
+    ) as Uint8Array<ArrayBuffer>;
+    let data: ArrayBuffer;
+    let fingerprint: string;
+    try {
+      // Prefer local files during normal sync. A key rotation must also
+      // re-encrypt remote-only attachments with the new chat key.
+      const file = await getOpfsFile(reference.opfsName);
+      data = await file.arrayBuffer();
+      fingerprint = `${reference.opfsName}:${file.size}:${file.lastModified}`;
+    } catch {
+      if (
+        !options.forceReencrypt ||
+        !options.previousChatKey ||
+        !knownOnServer.has(attachmentId)
+      ) {
+        continue;
+      }
+      try {
+        const encrypted = await chatVault.getAttachment(id, attachmentId);
+        data = await decryptAttachmentData(
+          encrypted,
+          options.previousChatKey,
+          additionalData
+        );
+        fingerprint = `${reference.opfsName}:${
+          reference.size ?? "unknown"
+        }`;
+      } catch {
+        continue;
+      }
+    }
+    if (!options.forceReencrypt && knownOnServer.has(attachmentId)) {
+      const previousFingerprint = cache.attachmentFingerprints.get(cacheKey);
+      if (previousFingerprint === fingerprint) continue;
+      if (previousFingerprint === undefined) {
+        cache.attachmentFingerprints.set(cacheKey, fingerprint);
+        continue;
+      }
+    }
+
+    const encrypted = await encryptAttachmentData(
+      data,
+      chatKey,
+      additionalData
+    );
+    await chatVault.putAttachment(id, attachmentId, encrypted);
+    knownOnServer.add(attachmentId);
+    cache.attachmentFingerprints.set(cacheKey, fingerprint);
+  }
+
+  const previouslySynced = cache.attachmentIds.get(id) ?? new Set<string>();
+  for (const removedId of previouslySynced) {
+    if (currentIds.has(removedId)) continue;
+    await chatVault.deleteAttachment(id, removedId);
+    knownOnServer.delete(removedId);
+    cache.attachmentFingerprints.delete(attachmentCacheKey(id, removedId));
+  }
+  cache.attachmentIds.set(id, knownOnServer);
+}
 
 function chatId(chat: Chat): string {
   return String(chat.id);
@@ -170,14 +271,15 @@ async function uploadChat(
   userKey: VaultUserKey,
   cache: VaultSyncCache
 ): Promise<void> {
+  ensureChatAttachmentIds(chat);
   const id = chatId(chat);
   // Keys unwrapped from the vault are deliberately non-extractable, so they
   // cannot be wrapped again. Only reuse an extractable key we generated here;
   // otherwise create a fresh one for this upload.
   const cachedKey = cache.chatKeys.get(id);
+  const rotatesChatKey = cachedKey?.extractable !== true;
   const chatKey =
     cachedKey?.extractable === true ? cachedKey : await generateChatKey();
-  cache.chatKeys.set(id, chatKey);
   const encryptedChat = await encryptChatData(chat, chatKey);
   const wrappedKey = await wrapChatKey(
     chatKey,
@@ -211,8 +313,13 @@ async function uploadChat(
   }
 
   cache.revisions.set(id, uploaded.rev);
-  cache.fingerprints.set(id, fingerprint(chat));
   cache.owners.set(id, uploaded.ownerId || userKey.userId);
+  await syncChatAttachments(chat, id, chatKey, cache, {
+    forceReencrypt: rotatesChatKey,
+    previousChatKey: cachedKey,
+  });
+  cache.chatKeys.set(id, chatKey);
+  cache.fingerprints.set(id, fingerprint(chat));
 }
 
 type DownloadedChat = {
@@ -253,6 +360,9 @@ async function downloadChat(
     cache.fingerprints.set(id, fingerprint(chat));
     cache.owners.set(id, ownerId);
     cache.chatKeys.set(id, chatKey);
+    // Preserve the pre-migration fingerprint above so sync writes newly
+    // assigned IDs back into the encrypted chat.
+    ensureChatAttachmentIds(chat);
     return { chat, rev: encrypted.rev, ownerId };
   } catch (error) {
     console.warn("Could not decrypt vault chat %s:", summary.id, error);
@@ -300,6 +410,9 @@ export async function restoreVaultChats(
     if (lazy && local?.messages?.length) {
       cache.revisions.set(summary.id, summary.rev);
       cache.owners.set(summary.id, summary.ownerId);
+      const localFingerprint = fingerprint(local);
+      ensureChatAttachmentIds(local);
+      cache.fingerprints.set(summary.id, localFingerprint);
       cacheTranscript(cache, summary.id, local);
       restored.set(
         summary.id,
@@ -457,6 +570,7 @@ export async function syncVaultChats(
 ): Promise<void> {
   const currentIds = new Set(chats.map(chatId));
   for (const chat of chats) {
+    ensureChatAttachmentIds(chat);
     const id = chatId(chat);
     // A placeholder holds no transcript. Uploading it would replace the remote
     // history with an empty chat, so it is skipped until it has been hydrated.
@@ -468,6 +582,9 @@ export async function syncVaultChats(
     }
     if (cache.fingerprints.get(id) !== fingerprint(chat)) {
       await uploadChat(chat, userKey, cache);
+    } else {
+      const chatKey = cache.chatKeys.get(id);
+      if (chatKey) await syncChatAttachments(chat, id, chatKey, cache);
     }
   }
 
@@ -479,5 +596,9 @@ export async function syncVaultChats(
     cache.fingerprints.delete(id);
     cache.chatKeys.delete(id);
     cache.transcripts.delete(id);
+    cache.attachmentIds.delete(id);
+    for (const key of cache.attachmentFingerprints.keys()) {
+      if (key.startsWith(`${id}\u0000`)) cache.attachmentFingerprints.delete(key);
+    }
   }
 }

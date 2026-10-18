@@ -37,6 +37,13 @@ export const ACCEPTED_FILE_TYPES = ["image/*", ...INPUT_FILE_EXTENSIONS].join(
 );
 
 const MIME_TYPE_BY_EXTENSION = new Map<string, string>([
+  [".png", "image/png"],
+  [".jpg", "image/jpeg"],
+  [".jpeg", "image/jpeg"],
+  [".gif", "image/gif"],
+  [".webp", "image/webp"],
+  [".bmp", "image/bmp"],
+  [".svg", "image/svg+xml"],
   [".pdf", PDF_MIME_TYPE],
   [".doc", "application/msword"],
   [
@@ -85,9 +92,76 @@ export interface AttachmentLike {
 export interface Attachment {
   id?: string;
   name: string;
+  opfsName?: string;
   type?: string;
   size?: number;
   lastModified?: number;
+}
+
+export interface VaultAttachmentResolver {
+  load(chatId: string, attachmentId: string, filename: string): Promise<File>;
+  delete(chatId: string, attachmentId: string): Promise<void>;
+  canDelete(chatId: string): boolean;
+}
+
+let vaultAttachmentResolver: VaultAttachmentResolver | null = null;
+
+export function setVaultAttachmentResolver(
+  resolver: VaultAttachmentResolver | null
+): void {
+  vaultAttachmentResolver = resolver;
+}
+
+/** Gives old OPFS references a stable opaque key without changing chat data. */
+export async function getAttachmentStorageId(
+  attachmentId: string | undefined,
+  filename: string
+): Promise<string> {
+  if (attachmentId) return attachmentId;
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(filename)
+  );
+  const hex = Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+  return `legacy-${hex}`;
+}
+
+export function canDeleteVaultAttachment(chatId: string): boolean {
+  return vaultAttachmentResolver?.canDelete(chatId) ?? false;
+}
+
+export async function deleteVaultAttachment(
+  chatId: string,
+  attachmentId: string
+): Promise<void> {
+  if (!vaultAttachmentResolver) {
+    throw new Error("Encrypted attachment storage is not available");
+  }
+  await vaultAttachmentResolver.delete(chatId, attachmentId);
+}
+
+export async function deleteOpfsFile(filename: string): Promise<void> {
+  const opfs = await navigator.storage.getDirectory();
+  await opfs.removeEntry(filename);
+}
+
+export async function getOpfsFile(
+  filename: string,
+  chatId?: string,
+  attachmentId?: string
+): Promise<File> {
+  try {
+    const opfs = await navigator.storage.getDirectory();
+    const handle = await opfs.getFileHandle(filename);
+    return await handle.getFile();
+  } catch (localError) {
+    if (!chatId || !attachmentId || !vaultAttachmentResolver) {
+      throw localError;
+    }
+    return vaultAttachmentResolver.load(chatId, attachmentId, filename);
+  }
 }
 
 /**
@@ -217,13 +291,14 @@ export function fileToDataUrl(file: Blob): Promise<string> {
 }
 
 /**
- * Reads a file previously persisted in the origin private file system and
- * returns it as a base64 data URL.
+ * Reads a local or lazily restored OPFS file and returns a base64 data URL.
  */
-export async function readOpfsFileAsDataUrl(filename: string): Promise<string> {
-  const opfs = await navigator.storage.getDirectory();
-  const fileHandle = await opfs.getFileHandle(filename);
-  const file = await fileHandle.getFile();
+export async function readOpfsFileAsDataUrl(
+  filename: string,
+  chatId?: string,
+  attachmentId?: string
+): Promise<string> {
+  const file = await getOpfsFile(filename, chatId, attachmentId);
   // OPFS does not preserve the original File MIME type. Restore it from the
   // filename so the data URL carries a useful MIME type for input_file.
   return fileToDataUrl(
@@ -232,13 +307,16 @@ export async function readOpfsFileAsDataUrl(filename: string): Promise<string> {
 }
 
 /**
- * Builds the Responses API `input_file` content item. The file content stays in
- * OPFS (keyed by `filename`) and is turned into base64 `file_data` for each
- * request, never uploaded through the files API.
+ * Builds the Responses API `input_file` item. The local OPFS name and vault ID
+ * stay in chat storage and are removed before the request reaches the API.
  */
 export function buildInputFile(attachment: Attachment) {
   return {
     type: "input_file" as const,
     filename: attachment.name,
+    opfsName: attachment.opfsName ?? attachment.name,
+    attachmentId: attachment.id,
+    size: attachment.size,
+    mimeType: attachment.type,
   };
 }

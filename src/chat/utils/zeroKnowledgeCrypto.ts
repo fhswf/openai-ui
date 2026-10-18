@@ -274,6 +274,56 @@ export async function decryptChatData<T = unknown>(
   return JSON.parse(decoder.decode(plaintext)) as T;
 }
 
+/** Encrypt a file with its chat key; the returned binary is IV + AES-GCM data. */
+export async function encryptAttachmentData(
+  data: ArrayBuffer | Uint8Array,
+  chatKey: CryptoKey,
+  additionalData?: BufferSource
+): Promise<Uint8Array> {
+  const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
+  const plaintext = data instanceof Uint8Array ? data : new Uint8Array(data);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv, additionalData },
+    chatKey,
+    plaintext
+  );
+  const result = new Uint8Array(iv.byteLength + ciphertext.byteLength);
+  result.set(iv, 0);
+  result.set(new Uint8Array(ciphertext), iv.byteLength);
+  return result;
+}
+
+/** Decrypt the IV + AES-GCM binary format returned by encryptAttachmentData. */
+export async function decryptAttachmentData(
+  encryptedData: ArrayBuffer | Uint8Array,
+  chatKey: CryptoKey,
+  additionalData?: BufferSource
+): Promise<ArrayBuffer> {
+  const bytes = encryptedData instanceof Uint8Array
+    ? encryptedData
+    : new Uint8Array(encryptedData);
+  if (bytes.byteLength < AES_GCM_IV_LENGTH + 16) {
+    throw new Error("Encrypted attachment is incomplete");
+  }
+  const iv = bytes.subarray(0, AES_GCM_IV_LENGTH);
+  const ciphertext = bytes.subarray(AES_GCM_IV_LENGTH);
+  return crypto.subtle.decrypt(
+    { name: "AES-GCM", iv, additionalData },
+    chatKey,
+    ciphertext
+  );
+}
+
+/** Bind an attachment ciphertext to its chat and opaque storage ID. */
+export function getAttachmentAdditionalData(
+  chatId: string,
+  attachmentId: string
+): Uint8Array {
+  return encoder.encode(
+    `openai-ui-zk-attachment-v1\u0000${chatId}\u0000${attachmentId}`
+  );
+}
+
 /** Wrap K_chat for one recipient using ECDH by default or legacy RSA-OAEP. */
 export async function wrapChatKey(
   chatKey: CryptoKey,
