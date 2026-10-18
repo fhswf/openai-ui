@@ -177,6 +177,7 @@ export function MessageItem(props) {
   let message = "";
   let image_url = null;
   let image_name = null;
+  let image_attachment_id: string | undefined;
   const file_attachments: string[] = [];
   if (typeof content == "string") {
     message = processLaTeX(content);
@@ -187,6 +188,7 @@ export function MessageItem(props) {
       } else if (item.type === "input_image") {
         image_url = item.image_url;
         image_name = item.name;
+        image_attachment_id = item.attachmentId;
       } else if (item.type === "input_file") {
         file_attachments.push(item.filename || "document.pdf");
       } else if (item.type === "mcp_approval_response") {
@@ -220,7 +222,27 @@ export function MessageItem(props) {
         <LazyRenderer isVisible={true}>{message}</LazyRenderer>
         {images &&
           Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
-            if (image.src) {
+            const storedImageUrl = image.url?.startsWith("opfs://")
+              ? image.url
+              : image.name
+                ? `opfs://${image.name}`
+                : undefined;
+            if (
+              storedImageUrl &&
+              (image.url?.startsWith("opfs://") || image.file_id || image.id)
+            ) {
+              return (
+                <OPFSImage
+                  key={fileName}
+                  src={storedImageUrl}
+                  alt={image.name || fileName}
+                  chatId={props.chatId}
+                  attachmentId={image.id || image.file_id}
+                  className={styles.generated_image}
+                  data-testid={`generated-image-${fileName}`}
+                />
+              );
+            } else if (image.src) {
               // If image has a src, use it directly
               return (
                 <img
@@ -257,6 +279,8 @@ export function MessageItem(props) {
             <OPFSImage
               src={image_url}
               alt={image_name || "User content"}
+                  chatId={props.chatId}
+                  attachmentId={image_attachment_id}
               className={styles.image}
               data-testid="included-image"
             />
@@ -316,7 +340,7 @@ export function MessageItem(props) {
 }
 
 export function MessageContainer() {
-  const { options } = useGlobal();
+  const { options, chat, currentChat } = useGlobal();
   const { message } = useMessage();
   const { messages = [] } = message || {};
 
@@ -367,6 +391,7 @@ export function MessageContainer() {
               <MessageItem
                 key={item.id || item.sentTime}
                 {...item}
+                chatId={String(chat?.[currentChat]?.id ?? "")}
                 dataTestId={`ChatMessage-${index}`}
               />
             ))}

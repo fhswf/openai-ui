@@ -152,12 +152,15 @@ export function MessageInput() {
       return;
     }
     const name = ensureFileName(file, index);
+    const id = uuidv7();
+    const extension = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
+    const opfsName = `attachment-${id}${extension}`;
     const isImage = isImageFile(file);
     const isPdf = !isImage && isPdfFile(file);
     try {
-      // Images and input files are stored locally in OPFS and sent inline per
-      // request as base64 encoded data, not via the files API.
-      await persistToOpfs(name, file);
+      // Keep a local OPFS copy for inline model requests. Encrypted chat sync
+      // stores a separate ciphertext copy when zero-knowledge storage is enabled.
+      await persistToOpfs(opfsName, file);
     } catch (error) {
       console.error("Error writing file to OPFS: %o", error);
       toaster.create({
@@ -170,11 +173,12 @@ export function MessageInput() {
     }
     const attachment = {
       name,
-      url: `opfs://${name}`,
+      opfsName,
+      url: `opfs://${opfsName}`,
       size: file.size,
       lastModified: file.lastModified,
       type: isPdf ? PDF_MIME_TYPE : file.type,
-      id: uuidv7(),
+      id,
     };
     (isImage ? newMessage.images : newMessage.files).push(attachment);
     setState({ typeingMessage: newMessage });

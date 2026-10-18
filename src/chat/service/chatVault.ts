@@ -140,6 +140,36 @@ async function request<T>(
   return JSON.parse(text) as T;
 }
 
+async function requestBinary(
+  path: string,
+  init: RequestInit = {},
+  options: RequestOptions = {}
+): Promise<ArrayBuffer> {
+  const response = await fetch(`${getVaultBaseUrl()}${path}`, {
+    credentials: "include",
+    ...init,
+    signal: options.signal,
+    headers: {
+      ...(init.headers ?? {}),
+    },
+  });
+  if (!response.ok) {
+    let code: string | undefined;
+    let message = response.statusText;
+    let currentRev: number | undefined;
+    try {
+      const body = (await response.json()) as VaultErrorBody;
+      code = body.error?.code;
+      message = body.error?.message ?? message;
+      currentRev = body.currentRev ?? body.error?.currentRev;
+    } catch {
+      // Non-JSON error body; keep the status text.
+    }
+    throw new VaultError(response.status, code, message, currentRev);
+  }
+  return response.arrayBuffer();
+}
+
 export const chatVault = {
   registrationChallenge(
     options?: RequestOptions
@@ -256,6 +286,65 @@ export const chatVault = {
 
   getChat(id: string, options?: RequestOptions): Promise<VaultChat> {
     return request(`/chats/${encodeURIComponent(id)}`, {}, options);
+  },
+
+  putAttachment(
+    chatId: string,
+    attachmentId: string,
+    ciphertext: Uint8Array,
+    options?: RequestOptions
+  ): Promise<void> {
+    return request(
+      `/chats/${encodeURIComponent(chatId)}/attachments/${encodeURIComponent(attachmentId)}`,
+      {
+        method: "PUT",
+        body: ciphertext,
+        headers: { "Content-Type": "application/octet-stream" },
+      },
+      options
+    );
+  },
+
+  getAttachment(
+    chatId: string,
+    attachmentId: string,
+    options?: RequestOptions
+  ): Promise<ArrayBuffer> {
+    return requestBinary(
+      `/chats/${encodeURIComponent(chatId)}/attachments/${encodeURIComponent(attachmentId)}`,
+      {},
+      options
+    );
+  },
+
+  async hasAttachment(
+    chatId: string,
+    attachmentId: string,
+    options?: RequestOptions
+  ): Promise<boolean> {
+    try {
+      await request(
+        `/chats/${encodeURIComponent(chatId)}/attachments/${encodeURIComponent(attachmentId)}`,
+        { method: "HEAD" },
+        options
+      );
+      return true;
+    } catch (error) {
+      if (error instanceof VaultError && error.status === 404) return false;
+      throw error;
+    }
+  },
+
+  deleteAttachment(
+    chatId: string,
+    attachmentId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    return request(
+      `/chats/${encodeURIComponent(chatId)}/attachments/${encodeURIComponent(attachmentId)}`,
+      { method: "DELETE" },
+      options
+    );
   },
 
   putChat(

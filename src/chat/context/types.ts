@@ -138,6 +138,7 @@ export type GlobalActions = {
 export interface MessageAttachment {
   id?: string;
   name: string;
+  opfsName?: string;
   type?: string;
   url?: string;
   size?: number;

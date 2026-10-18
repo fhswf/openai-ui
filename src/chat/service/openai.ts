@@ -20,7 +20,10 @@ import {
 import { toaster } from "../../components/ui/toaster";
 import { showMcpApprovalToast } from "../component/McpToast";
 import { beginLoginRedirect } from "../utils/loginRetry";
-import { readOpfsFileAsDataUrl } from "../utils/attachments";
+import {
+  getAttachmentStorageId,
+  readOpfsFileAsDataUrl,
+} from "../utils/attachments";
 import { supportsReasoningEffort } from "../utils/options";
 import * as Sentry from "@sentry/react";
 
@@ -71,6 +74,7 @@ export async function createResponse(
 
   console.log("messages: %o", chat[currentChat].messages);
   console.log("parent: %o", parent);
+  const activeChatId = String(chat[currentChat].id);
 
   let input: ResponseInput;
   if (explicitInput) {
@@ -90,21 +94,25 @@ export async function createResponse(
           const cleaned = await Promise.all(
             (content as any[]).map(async (item) => {
               if (item.type === "input_image") {
-                const { name, ...rest } = item;
+                const {
+                  name,
+                  attachmentId,
+                  mimeType: _mimeType,
+                  size: _size,
+                  ...rest
+                } = item;
                 if (rest.image_url?.startsWith("opfs://")) {
                   try {
                     const filename = rest.image_url.replace("opfs://", "");
-                    const opfs = await navigator.storage.getDirectory();
-                    const fileHandle = await opfs.getFileHandle(filename);
-                    const file = await fileHandle.getFile();
-
-                    // Use FileReader to get data URL directly from file
-                    const dataUrl = await new Promise<string>((resolve, reject) => {
-                      const reader = new FileReader();
-                      reader.onload = () => resolve(reader.result as string);
-                      reader.onerror = reject;
-                      reader.readAsDataURL(file);
-                    });
+                    const storageId = await getAttachmentStorageId(
+                      attachmentId,
+                      filename
+                    );
+                    const dataUrl = await readOpfsFileAsDataUrl(
+                      filename,
+                      activeChatId,
+                      storageId
+                    );
 
                     // Extract MIME type and base64 length for logging
                     const mimeType = dataUrl.split(';')[0].split(':')[1];
@@ -114,7 +122,7 @@ export async function createResponse(
                     rest.image_url = dataUrl;
                   } catch (error) {
                     console.error("Error reading OPFS file for OpenAI API:", error);
-                    // Fallback or rethrow? For now, let's keep the original URL which will likely fail API validation but logs the error.
+                    throw error;
                   }
                 }
                 return { ...rest };
@@ -122,18 +130,33 @@ export async function createResponse(
               if (item.type === "input_file" && !item.file_data && !item.file_id) {
                 // PDFs are stored in OPFS and sent inline as base64 `input_file`
                 // `file_data` per request instead of via the files API.
+                const {
+                  attachmentId: _attachmentId,
+                  opfsName: _opfsName,
+                  mimeType: _mimeType,
+                  size: _size,
+                  ...apiItem
+                } = item;
                 try {
                   const filename = item.filename;
-                  const fileData = await readOpfsFileAsDataUrl(filename);
+                  const storageId = await getAttachmentStorageId(
+                    item.attachmentId,
+                    item.opfsName || filename
+                  );
+                  const fileData = await readOpfsFileAsDataUrl(
+                    item.opfsName || filename,
+                    activeChatId,
+                    storageId
+                  );
                   console.log(
                     "Converted OPFS file to base64 input_file: %s (%d bytes)",
                     filename,
                     fileData.length
                   );
-                  return { ...item, file_data: fileData };
+                  return { ...apiItem, file_data: fileData };
                 } catch (error) {
                   console.error("Error reading OPFS file for OpenAI API:", error);
-                  return item;
+                  throw error;
                 }
               }
               return item;
@@ -400,10 +423,12 @@ class EventProcessor {
           }
           message.images[file_id] = {
             src: URL.createObjectURL(file),
+            url: `opfs://${file.name}`,
             name: file.name,
             size: file.size,
             lastModified: file.lastModified,
             file_id,
+            id: file_id,
             type: "png",
           };
           this.updateChat();
@@ -455,10 +480,12 @@ class EventProcessor {
 
     message.images[file_id] = {
       src: url,
+      url: `opfs://${file_id}.png`,
       name: `${file_id}.png`,
       size: blob.size,
       lastModified: Date.now(),
       file_id,
+      id: file_id,
       type: "png",
     };
     this.updateChat();
