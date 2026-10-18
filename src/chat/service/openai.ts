@@ -62,7 +62,7 @@ function normalizeApiBaseUrl(baseUrl?: string) {
 
 function createClient(options?: Options) {
   return new OpenAI({
-    apiKey: options?.openai.apiKey || "unused",
+    apiKey: options?.openai.apiKey ?? "unused",
     dangerouslyAllowBrowser: true,
     baseURL: normalizeApiBaseUrl(options?.openai.baseUrl),
     organization: options?.openai.organizationId || undefined,
