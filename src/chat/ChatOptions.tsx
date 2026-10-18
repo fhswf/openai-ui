@@ -33,6 +33,7 @@ import { HiUpload } from "react-icons/hi";
 import { toaster } from "../components/ui/toaster";
 import { ZeroKnowledgeStorageSetting } from "./ZeroKnowledgeStorageSetting";
 import { ChatAttachmentManager } from "./ChatAttachmentManager";
+import { CustomGptSettings } from "./CustomGptSettings";
 
 export function ChatOptions() {
   const { options } = useGlobal();
@@ -239,6 +240,8 @@ export function ChatOptions() {
           <ZeroKnowledgeStorageSetting />
 
           <ChatAttachmentManager />
+
+          <CustomGptSettings />
 
           <Heading size="md" paddingBlockStart="2em">
             {t("Global OpenAI Config")}

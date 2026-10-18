@@ -9,13 +9,16 @@ import {
   GlobalActionType,
   OptionActionType,
   MessageAttachment,
+  CustomGpt,
+  SharedTargetContent,
 } from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
 import { toaster } from "../../components/ui/toaster";
 import { getLoginUrl, isRetryableMessage } from "../utils/loginRetry";
-import { buildInputFile, getInputFileMimeType } from "../utils/attachments";
+import { buildInputFile } from "../utils/attachments";
 import { v7 as uuidv7 } from "uuid";
+import { createCustomGptSummary } from "../service/customGptSummary";
 
 
 async function processImages(images: any[], opfs: FileSystemDirectoryHandle | null) {
@@ -110,10 +113,14 @@ export default function action(
     setState({ options });
   };
 
-  const startChat = (chat: Chat[], currentChat: number) =>
+  const startChat = (
+    chat: Chat[],
+    currentChat: number,
+    currentApp = state.currentApp
+  ) =>
     dispatch({
       type: GlobalActionType.START_CHAT,
-      payload: { chat, currentChat },
+      payload: { chat, currentChat, currentApp },
     });
 
   const retryPendingMessage = () => {
@@ -203,6 +210,22 @@ export default function action(
 
     retryPendingMessage,
 
+    async startCustomGptSummary(
+      customGpt: CustomGpt,
+      shared: SharedTargetContent
+    ) {
+      return createCustomGptSummary({
+        state,
+        customGpt,
+        shared,
+        setState,
+        setIs,
+        setOptions,
+        startResponse,
+        parent: this,
+      });
+    },
+
     setApp(app) {
       console.log("setApp", app);
       setState({ currentApp: app });
@@ -255,17 +278,36 @@ export default function action(
           app: newApp.id,
           messages,
           ct: Date.now(),
-          botStart: newApp.botStarts,
+          botStarts: newApp.botStarts,
         },
         ...chat,
       ];
       const _chat: Chat[] = chatList;
       if (newApp.botStarts) {
         console.log("botStarts");
-        startResponse({ ...state, chat: _chat, setState, setIs, setOptions }, this);
+        const nextIs = { ...state.is, thinking: true, tool: null };
+        setState({
+          chat: _chat,
+          currentChat: 0,
+          currentApp: newApp,
+          is: nextIs,
+        });
+        startResponse(
+          {
+            ...state,
+            chat: _chat,
+            currentChat: 0,
+            currentApp: newApp,
+            is: nextIs,
+            setState,
+            setIs,
+            setOptions,
+          },
+          this
+        );
       } else {
         console.debug("starting chat: %o", _chat);
-        startChat(_chat, 0);
+        startChat(_chat, 0, newApp);
       }
     },
 

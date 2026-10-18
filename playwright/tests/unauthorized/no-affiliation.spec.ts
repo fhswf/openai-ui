@@ -11,7 +11,10 @@ const noAffiliationUser = {
 const userEndpointPattern = /\/(?:api\/)?user\/?(?:\?.*)?$/;
 
 test('No Affiliation Access Denied', async ({ browser }) => {
-    const context = await browser.newContext({ storageState: undefined });
+    const context = await browser.newContext({
+        storageState: undefined,
+        serviceWorkers: 'block',
+    });
     const page = await context.newPage();
 
     await page.route(userEndpointPattern, async (route) => {
