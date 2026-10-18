@@ -16,6 +16,7 @@ This project is based on
 - Single Sign-On (SSO) via OpenID Connect (OIDC) for authentication.
 - Markdown support for chat messages.
 - Code editor for chat messages.
+- Create custom GPT profiles with personal system prompts, then select one when sharing a web page or supported document with the installed K!mpuls app to generate a summary.
 
 ## Zero-knowledge chat persistence
 

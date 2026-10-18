@@ -8,11 +8,8 @@ import { useTranslation } from "react-i18next";
 
 export function AppItem(props) {
   const { t } = useTranslation();
-  const { setCurrent, apps, dispatch } = useApps();
   const { setApp, newChat, currentApp } = useGlobal();
-
-  const { category } = props;
-  const app = apps.filter((item) => item.category === category)[0];
+  const app = props;
   console.log("AppItem: %o %o", currentApp, props);
   return (
     <Card.Root variant={currentApp?.id === props?.id ? "elevated" : "subtle"}>

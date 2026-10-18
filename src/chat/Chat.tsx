@@ -36,6 +36,7 @@ import {
 import { logger, SeverityNumber } from "./utils/instrumentation";
 
 import { ErrorFallback } from "./ErrorFallback";
+import { ShareTargetHandler } from "./ShareTargetHandler";
 
 export default function Chat() {
   const { is, user } = useGlobal();
@@ -119,6 +120,7 @@ export default function Chat() {
         className={classnames(styles.chat, styles["chat-layout"], chatStyle)}
       >
         <Toaster />
+        <ShareTargetHandler />
 
         <GridItem gridArea={"header"}>
           <MessageHeader

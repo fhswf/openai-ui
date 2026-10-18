@@ -9,12 +9,22 @@ import {
   GlobalActionType,
   OptionActionType,
   MessageAttachment,
+  CustomGpt,
+  SharedTargetContent,
 } from "./types";
 import React from "react";
 import { createResponse } from "../service/openai";
 import { toaster } from "../../components/ui/toaster";
 import { getLoginUrl, isRetryableMessage } from "../utils/loginRetry";
-import { buildInputFile, getInputFileMimeType } from "../utils/attachments";
+import {
+  buildInputFile,
+  ensureFileName,
+  getInputFileMimeType,
+  isImageFile,
+  isPdfFile,
+  isSupportedFile,
+  PDF_MIME_TYPE,
+} from "../utils/attachments";
 import { v7 as uuidv7 } from "uuid";
 
 
@@ -110,10 +120,14 @@ export default function action(
     setState({ options });
   };
 
-  const startChat = (chat: Chat[], currentChat: number) =>
+  const startChat = (
+    chat: Chat[],
+    currentChat: number,
+    currentApp = state.currentApp
+  ) =>
     dispatch({
       type: GlobalActionType.START_CHAT,
-      payload: { chat, currentChat },
+      payload: { chat, currentChat, currentApp },
     });
 
   const retryPendingMessage = () => {
@@ -203,6 +217,160 @@ export default function action(
 
     retryPendingMessage,
 
+    async startCustomGptSummary(
+      customGpt: CustomGpt,
+      shared: SharedTargetContent
+    ) {
+      const { options, chat } = state;
+      const summaryFiles: File[] = [];
+      const unsupportedFiles: File[] = [];
+      for (const file of shared.files ?? []) {
+        (isSupportedFile(file) ? summaryFiles : unsupportedFiles).push(file);
+      }
+
+      if (unsupportedFiles.length > 0) {
+        toaster.create({
+          title: t("share_unsupported_files_title"),
+          description: t("share_unsupported_files_description"),
+          duration: 5000,
+          type: "warning",
+        });
+      }
+      const textUrl = shared.text.match(/https?:\/\/[^\s<>"')]+/)?.[0];
+      const sharedUrl =
+        shared.url.trim() || textUrl?.replace(/[.,;!?]+$/, "") || "";
+      if (!sharedUrl.trim() && !shared.text.trim() && summaryFiles.length === 0) {
+        throw new Error(t("share_no_content"));
+      }
+
+      const opfs = await navigator.storage.getDirectory();
+
+      const imageAttachments: MessageAttachment[] = [];
+      const fileAttachments: MessageAttachment[] = [];
+      for (const [index, file] of summaryFiles.entries()) {
+        const name = ensureFileName(file, index);
+        const id = uuidv7();
+        const extension = name.includes(".")
+          ? name.slice(name.lastIndexOf("."))
+          : "";
+        const opfsName = `attachment-${id}${extension}`;
+        const handle = await opfs.getFileHandle(opfsName, { create: true });
+        const writable = await handle.createWritable();
+        await writable.write(await file.arrayBuffer());
+        await writable.close();
+
+        const isImage = isImageFile(file);
+        const attachment: MessageAttachment = {
+          id,
+          name,
+          opfsName,
+          url: `opfs://${opfsName}`,
+          size: file.size,
+          lastModified: file.lastModified,
+          type: isPdfFile(file)
+            ? PDF_MIME_TYPE
+            : file.type || getInputFileMimeType(name),
+        };
+        (isImage ? imageAttachments : fileAttachments).push(attachment);
+      }
+
+      const imageItems = imageAttachments.length
+        ? await processImages(imageAttachments, opfs)
+        : [];
+      const fileItems = processFiles(fileAttachments);
+      const details = [
+        t("share_summary_instruction"),
+        shared.title ? `${t("share_title_label")}: ${shared.title}` : "",
+        sharedUrl ? `${t("share_url_label")}: ${sharedUrl}` : "",
+        shared.text ? `${t("share_text_label")}:\n${shared.text}` : "",
+        summaryFiles.length
+          ? `${t("share_files_label")}: ${summaryFiles
+              .map((file) => ensureFileName(file))
+              .join(", ")}`
+          : "",
+      ].filter(Boolean);
+      const content = [
+        { type: "input_text", text: details.join("\n\n") },
+        ...imageItems,
+        ...fileItems,
+      ];
+      const userMessage = {
+        role: "user",
+        id: uuidv7(),
+        sentTime: Math.floor(Date.now() / 1000),
+        content,
+        images: imageAttachments,
+        files: fileAttachments,
+      };
+      const sourceTitle =
+        shared.title ||
+        summaryFiles[0]?.name ||
+        sharedUrl ||
+        t("shared_content");
+      const title = t("share_summary_title", {
+        title: sourceTitle.slice(0, 80),
+      });
+      const systemMessage = {
+        role: "system",
+        id: uuidv7(),
+        sentTime: Math.floor(Date.now() / 1000),
+        content: customGpt.systemPrompt.trim(),
+      };
+      const customGptName =
+        customGpt.name.trim() || t("custom_gpt_default_name");
+      const nextChat: Chat = {
+        id: uuidv7(),
+        title,
+        app: customGpt.id,
+        ct: Date.now(),
+        botStarts: true,
+        messages: [systemMessage, userMessage],
+      };
+      const nextChats = [nextChat, ...(chat ?? [])];
+      const app = {
+        category: 0,
+        title: customGptName,
+        desc: "",
+        id: customGpt.id,
+        content: customGpt.systemPrompt,
+        role: "system",
+        botStarts: true,
+      };
+      const nextIs = { ...state.is, thinking: true, tool: null };
+      const nextOptions = {
+        ...options,
+        openai: {
+          ...options.openai,
+          toolsEnabled: new Set(options.openai.toolsEnabled ?? []),
+        },
+      };
+      if (sharedUrl && nextOptions.openai.tools?.has("Web Search")) {
+        nextOptions.openai.toolsEnabled.add("Web Search");
+      }
+
+      setState({
+        chat: nextChats,
+        currentChat: 0,
+        currentApp: app,
+        typeingMessage: {},
+        is: nextIs,
+      });
+      startResponse(
+        {
+          ...state,
+          chat: nextChats,
+          currentChat: 0,
+          currentApp: app,
+          options: nextOptions,
+          is: nextIs,
+          setState,
+          setIs,
+          setOptions,
+        },
+        this
+      );
+    },
+
     setApp(app) {
       console.log("setApp", app);
       setState({ currentApp: app });
@@ -255,17 +423,36 @@ export default function action(
           app: newApp.id,
           messages,
           ct: Date.now(),
-          botStart: newApp.botStarts,
+          botStarts: newApp.botStarts,
         },
         ...chat,
       ];
       const _chat: Chat[] = chatList;
       if (newApp.botStarts) {
         console.log("botStarts");
-        startResponse({ ...state, chat: _chat, setState, setIs, setOptions }, this);
+        const nextIs = { ...state.is, thinking: true, tool: null };
+        setState({
+          chat: _chat,
+          currentChat: 0,
+          currentApp: newApp,
+          is: nextIs,
+        });
+        startResponse(
+          {
+            ...state,
+            chat: _chat,
+            currentChat: 0,
+            currentApp: newApp,
+            is: nextIs,
+            setState,
+            setIs,
+            setOptions,
+          },
+          this
+        );
       } else {
         console.debug("starting chat: %o", _chat);
-        startChat(_chat, 0);
+        startChat(_chat, 0, newApp);
       }
     },
 

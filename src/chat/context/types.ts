@@ -29,6 +29,22 @@ export type GeneralOptions = {
   zkStorage: boolean;
   /** Keep only a lightweight chat list in this browser and load transcripts from the vault on demand. */
   zkLazyHistory: boolean;
+  /** User-defined system prompts that can be selected for shared content. */
+  customGpts?: CustomGpt[];
+};
+
+export type CustomGpt = {
+  id: string;
+  name: string;
+  systemPrompt: string;
+  botStarts?: boolean;
+};
+
+export type SharedTargetContent = {
+  title: string;
+  text: string;
+  url: string;
+  files: File[];
 };
 
 export type AccountOptions = {
@@ -113,6 +129,10 @@ export type GlobalActions = {
   clearTypeing: () => void;
   sendMessage: () => Promise<void>;
   retryPendingMessage: () => void;
+  startCustomGptSummary: (
+    customGpt: CustomGpt,
+    shared: SharedTargetContent
+  ) => Promise<void>;
   setApp: (app: any) => void;
   showSettings: () => void;
   newChat: (app: any) => void;
@@ -163,7 +183,7 @@ export type Messages = Message[];
 
 export type Chat = {
   title: string;
-  app: number;
+  app: number | string;
   id: number | string;
   thread?: string;
   ct: number;
@@ -193,9 +213,10 @@ export type App = {
   category: number;
   title: string;
   desc: string;
-  id: number;
+  id: number | string;
   content: string;
-  botStarts: boolean;
+  botStarts?: boolean;
+  role?: string;
 };
 
 export interface McpScopeDefinition {

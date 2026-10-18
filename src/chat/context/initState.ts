@@ -51,6 +51,7 @@ export const initState: GlobalState = {
       gravatar: false,
       zkStorage: false,
       zkLazyHistory: false,
+      customGpts: [],
     },
     openai: {
       baseUrl: defaultOpenAIBaseUrl,
