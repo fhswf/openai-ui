@@ -160,9 +160,24 @@ function HeaderActionItem({
   label: string;
   children: React.ReactNode;
 }) {
+  const handleLabelClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const actionButton = Array.from(
+      event.currentTarget.parentElement?.querySelectorAll("button") ?? []
+    ).find((button) => button !== event.currentTarget);
+    actionButton?.click();
+  };
+
   return (
     <div className={chatStyles["header-action-item"]}>
-      <Text className={chatStyles["header-action-label"]}>{label}</Text>
+      <button
+        type="button"
+        aria-label={label}
+        className={chatStyles["header-action-label"]}
+        data-header-action-label
+        onClick={handleLabelClick}
+      >
+        {label}
+      </button>
       {children}
     </div>
   );
@@ -858,6 +873,8 @@ function HeaderActionList({
 
   const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement | null;
+    if (target?.closest?.("[data-header-action-label]")) return;
+
     // Rows that open a popup (menu/dialog/popover) must not collapse the sheet.
     // The popup is anchored to a trigger inside the sheet, and a `display: none`
     // sheet would zero out that trigger's box, so the popup would open without a
