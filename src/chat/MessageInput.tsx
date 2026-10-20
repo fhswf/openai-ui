@@ -293,6 +293,8 @@ export function MessageInput() {
           type="file"
           multiple
           accept={ACCEPTED_FILE_TYPES}
+          aria-hidden="true"
+          tabIndex={-1}
           style={{
             position: "absolute",
             width: "100%",
@@ -378,6 +380,7 @@ export function MessageInput() {
             borderWidth={0}
             outlineWidth={0}
             placeholder={t("Enter something....")}
+            aria-label={t("Enter something....")}
             className={styles.textarea}
             onDragOver={dragHandler}
             onDragEnter={dragHandler}
