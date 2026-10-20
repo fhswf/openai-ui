@@ -37,6 +37,10 @@ export type CustomGpt = {
   id: string;
   name: string;
   systemPrompt: string;
+  /** Task instruction added when this GPT receives shared content. */
+  sharePurpose?: string;
+  /** Label shown on the share action and used in the resulting chat title. */
+  shareTitle?: string;
   botStarts?: boolean;
 };
 
@@ -129,7 +133,7 @@ export type GlobalActions = {
   clearTypeing: () => void;
   sendMessage: () => Promise<void>;
   retryPendingMessage: () => void;
-  startCustomGptSummary: (
+  startCustomGptFromShare: (
     customGpt: CustomGpt,
     shared: SharedTargetContent
   ) => Promise<void>;

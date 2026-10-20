@@ -19,7 +19,7 @@ import type {
   SharedTargetContent,
 } from "../context/types";
 
-type SummaryDependencies = {
+type ShareDependencies = {
   state: Partial<GlobalState>;
   customGpt: CustomGpt;
   shared: SharedTargetContent;
@@ -117,11 +117,15 @@ function toImageInput(attachment: MessageAttachment) {
 
 function buildSharedDetails(
   shared: SharedTargetContent,
+  customGpt: CustomGpt,
   sharedUrl: string,
   files: File[]
 ) {
   return [
-    t("share_summary_instruction"),
+    customGpt.sharePurpose?.trim()
+      ? `${t("share_purpose_label")}: ${customGpt.sharePurpose.trim()}`
+      : "",
+    t("share_content_instruction"),
     shared.title ? `${t("share_title_label")}: ${shared.title}` : "",
     sharedUrl ? `${t("share_url_label")}: ${sharedUrl}` : "",
     shared.text ? `${t("share_text_label")}:\n${shared.text}` : "",
@@ -137,12 +141,16 @@ function buildSharedDetails(
 
 function createUserMessage(
   shared: SharedTargetContent,
+  customGpt: CustomGpt,
   sharedUrl: string,
   files: File[],
   attachments: StoredAttachments
 ) {
   const content = [
-    { type: "input_text", text: buildSharedDetails(shared, sharedUrl, files) },
+    {
+      type: "input_text",
+      text: buildSharedDetails(shared, customGpt, sharedUrl, files),
+    },
     ...attachments.imageAttachments.map(toImageInput),
     ...attachments.fileAttachments
       .filter((file) => Boolean(file.name))
@@ -158,7 +166,7 @@ function createUserMessage(
   };
 }
 
-function createSummaryChat(
+function createSharedContentChat(
   customGpt: CustomGpt,
   shared: SharedTargetContent,
   files: File[],
@@ -167,9 +175,13 @@ function createSummaryChat(
 ): { chat: Chat; app: App } {
   const sourceTitle =
     shared.title || files[0]?.name || sharedUrl || t("shared_content");
-  const title = t("share_summary_title", {
-    title: sourceTitle.slice(0, 80),
-  });
+  const shareTitle = customGpt.shareTitle?.trim();
+  const title = shareTitle
+    ? t("share_chat_title", {
+        purpose: shareTitle,
+        title: sourceTitle.slice(0, 80),
+      })
+    : sourceTitle.slice(0, 80);
   const name = customGpt.name.trim() || t("custom_gpt_default_name");
   const app: App = {
     category: 0,
@@ -215,7 +227,7 @@ function enableWebSearch(options: GlobalState["options"], sharedUrl: string) {
   return nextOptions;
 }
 
-export async function createCustomGptSummary({
+export async function createCustomGptFromShare({
   state,
   customGpt,
   shared,
@@ -224,13 +236,19 @@ export async function createCustomGptSummary({
   setOptions,
   startResponse,
   parent,
-}: SummaryDependencies) {
+}: ShareDependencies) {
   const files = getSupportedFiles(shared.files ?? []);
   const sharedUrl = getSharedUrl(shared);
   validateSharedContent(shared, sharedUrl, files);
   const attachments = await storeSharedFiles(files);
-  const userMessage = createUserMessage(shared, sharedUrl, files, attachments);
-  const { chat, app } = createSummaryChat(
+  const userMessage = createUserMessage(
+    shared,
+    customGpt,
+    sharedUrl,
+    files,
+    attachments
+  );
+  const { chat, app } = createSharedContentChat(
     customGpt,
     shared,
     files,
