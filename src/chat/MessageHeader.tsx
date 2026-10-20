@@ -836,21 +836,27 @@ function UserInformationPopover({
     }
   }
 
+  async function resolveAiHubKey(acceptedTerms: boolean) {
+    if (!aiHubKeyAlias) {
+      throw new Error("AI-Hub key alias requires a user email address.");
+    }
+
+    if (existingAiHubKey) {
+      return {
+        key: existingAiHubKey,
+        key_alias: aiHubKeyAlias,
+        key_name: openai.aiHubKeyName,
+      };
+    }
+
+    return generateUniqueAiHubKey(aiHubKeyAlias, { acceptedTerms });
+  }
+
   async function activateAiHubBudget(acceptedTerms: boolean) {
     setIsGeneratingHubKey(true);
 
     try {
-      if (!aiHubKeyAlias) {
-        throw new Error("AI-Hub key alias requires a user email address.");
-      }
-
-      const key = existingAiHubKey
-        ? {
-            key: existingAiHubKey,
-            key_alias: aiHubKeyAlias,
-            key_name: openai.aiHubKeyName,
-          }
-        : await generateUniqueAiHubKey(aiHubKeyAlias, { acceptedTerms });
+      const key = await resolveAiHubKey(acceptedTerms);
       const models = await fetchAiHubModels(key.key);
       const selectedModel = models.includes(openai.model)
         ? openai.model
