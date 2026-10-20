@@ -49,7 +49,13 @@ function assertOk(response: Response, code: AiHubErrorCode) {
   }
 }
 
-export async function generateAiHubKey(keyAlias = "kimpuls") {
+export const aiHubTermsUrl =
+  "https://publikationen.fhb.fh-swf.de/servlets/MCRFileNodeServlet/fhswf_derivate_00002553/Nr.%201328%20vom%2013.02.2025%20-%20Nutzungsordnung%20der%20FH%20SWF%20f%C3%BCr%20den%20OpenAI-Proxy%20KImpuls-Chatb.pdf";
+
+export async function generateAiHubKey(
+  keyAlias = "kimpuls",
+  acceptedTerms = false
+) {
   const response = await fetch(
     `${normalizedAiHubBaseUrl}/api/key/generate`,
     {
@@ -58,7 +64,10 @@ export async function generateAiHubKey(keyAlias = "kimpuls") {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ key_alias: keyAlias }),
+      body: JSON.stringify({
+        key_alias: keyAlias,
+        accepted_terms: acceptedTerms,
+      }),
     }
   );
 
@@ -70,6 +79,65 @@ export async function generateAiHubKey(keyAlias = "kimpuls") {
   }
 
   return payload;
+}
+
+// Statuscodes, mit denen der AI-Hub antwortet, wenn ein Key-Alias bereits
+// vergeben ist (z. B. weil auf einem anderen Rechner schon ein Key erzeugt wurde).
+// 401 gehoert nicht dazu: Der Hub meldet damit "Invalid session", also eine
+// fehlende Anmeldung im Hub, die ein neuer Alias nicht behebt.
+const keyAliasConflictStatuses = new Set([400, 409]);
+
+function createKeyAliasSuffix() {
+  const uuid = globalThis.crypto?.randomUUID?.();
+  return uuid
+    ? uuid.replace(/-/g, "").slice(0, 8)
+    : Math.random().toString(36).slice(2, 10);
+}
+
+function isKeyAliasConflict(error: unknown) {
+  return (
+    error instanceof AiHubError &&
+    error.code === "key_generation_failed" &&
+    error.status !== undefined &&
+    keyAliasConflictStatuses.has(error.status)
+  );
+}
+
+/**
+ * Erzeugt einen AI-Hub-Key. Ist der gewuenschte Alias bereits vergeben,
+ * wird ein zufaelliger Suffix angehaengt und erneut versucht.
+ * `acceptedTerms` muss vom Nutzer bestaetigt worden sein, sonst lehnt der
+ * Hub die Erzeugung ab.
+ */
+export async function generateUniqueAiHubKey(
+  keyAlias: string,
+  {
+    acceptedTerms = false,
+    maxAttempts = 3,
+    createSuffix = createKeyAliasSuffix,
+  }: {
+    acceptedTerms?: boolean;
+    maxAttempts?: number;
+    createSuffix?: () => string;
+  } = {}
+) {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const alias = attempt === 0 ? keyAlias : `${keyAlias}-${createSuffix()}`;
+
+    try {
+      const payload = await generateAiHubKey(alias, acceptedTerms);
+      return { ...payload, key_alias: payload.key_alias || alias };
+    } catch (error) {
+      if (!isKeyAliasConflict(error)) {
+        throw error;
+      }
+      lastError = error;
+    }
+  }
+
+  throw lastError;
 }
 
 export async function fetchAiHubModels(apiKey: string) {
