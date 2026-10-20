@@ -18,7 +18,7 @@ import { toaster } from "../../components/ui/toaster";
 import { getLoginUrl, isRetryableMessage } from "../utils/loginRetry";
 import { buildInputFile } from "../utils/attachments";
 import { v7 as uuidv7 } from "uuid";
-import { createCustomGptSummary } from "../service/customGptSummary";
+import { createCustomGptFromShare } from "../service/customGptFromShare";
 
 
 async function processImages(images: any[], opfs: FileSystemDirectoryHandle | null) {
@@ -210,11 +210,11 @@ export default function action(
 
     retryPendingMessage,
 
-    async startCustomGptSummary(
+    async startCustomGptFromShare(
       customGpt: CustomGpt,
       shared: SharedTargetContent
     ) {
-      return createCustomGptSummary({
+      return createCustomGptFromShare({
         state,
         customGpt,
         shared,

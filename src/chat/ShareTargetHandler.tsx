@@ -216,13 +216,13 @@ function CustomGptSelection({
   );
 }
 
-type SubmitSummaryArgs = {
+type SubmitSharedContentArgs = {
   shared: SharedTargetContent | null;
   selectedGpt?: CustomGpt;
-  canSummarize: boolean;
+  canStart: boolean;
   submitting: boolean;
   setSubmitting: (value: boolean) => void;
-  startCustomGptSummary: (
+  startCustomGptFromShare: (
     customGpt: CustomGpt,
     content: SharedTargetContent
   ) => Promise<void>;
@@ -230,23 +230,23 @@ type SubmitSummaryArgs = {
   t: Translate;
 };
 
-async function submitSummary({
+async function submitSharedContent({
   shared,
   selectedGpt,
-  canSummarize,
+  canStart,
   submitting,
   setSubmitting,
-  startCustomGptSummary,
+  startCustomGptFromShare,
   dismiss,
   t,
-}: SubmitSummaryArgs) {
-  if (!shared || !selectedGpt || !canSummarize || submitting) return;
+}: SubmitSharedContentArgs) {
+  if (!shared || !selectedGpt || !canStart || submitting) return;
   setSubmitting(true);
   try {
-    await startCustomGptSummary(selectedGpt, shared);
+    await startCustomGptFromShare(selectedGpt, shared);
     dismiss();
   } catch (error) {
-    console.error("Could not start the shared content summary:", error);
+    console.error("Could not start a chat from shared content:", error);
     toaster.create({
       title: t("error_occurred"),
       description: error instanceof Error ? error.message : String(error),
@@ -264,12 +264,12 @@ type ShareTargetDialogProps = {
   customGpts: CustomGpt[];
   selectedGptId: string;
   selectedGpt?: CustomGpt;
-  canSummarize: boolean;
+  canStart: boolean;
   submitting: boolean;
   onSelectGpt: (id: string) => void;
   onCreateGpt: () => void;
   onDismiss: () => void;
-  onGenerateSummary: () => void;
+  onStart: () => void;
 };
 
 function ShareDialogBody(props: ShareTargetDialogProps) {
@@ -301,11 +301,11 @@ function ShareDialogFooter(props: ShareTargetDialogProps) {
       {props.customGpts.length > 0 && (
         <Button
           colorPalette="blue"
-          onClick={props.onGenerateSummary}
-          disabled={!props.canSummarize || props.submitting}
+          onClick={props.onStart}
+          disabled={!props.canStart || props.submitting}
           loading={props.submitting}
         >
-          {t("share_summary_button")}
+          {props.selectedGpt?.shareTitle?.trim() || t("share_start_button")}
         </Button>
       )}
     </DialogFooter>
@@ -335,7 +335,7 @@ function ShareTargetDialog(props: ShareTargetDialogProps) {
 }
 
 export function ShareTargetHandler() {
-  const { is, options, setIs, startCustomGptSummary } = useGlobal();
+  const { is, options, setIs, startCustomGptFromShare } = useGlobal();
   const { t } = useTranslation();
   const customGpts: CustomGpt[] = Array.isArray(options.general.customGpts)
     ? options.general.customGpts
@@ -348,15 +348,15 @@ export function ShareTargetHandler() {
     setShared(null);
     setSubmitting(false);
   };
-  const canSummarize = Boolean(selectedGpt?.systemPrompt.trim());
-  const generateSummary = () =>
-    void submitSummary({
+  const canStart = Boolean(selectedGpt?.systemPrompt.trim());
+  const startFromShare = () =>
+    void submitSharedContent({
       shared,
       selectedGpt,
-      canSummarize,
+      canStart,
       submitting,
       setSubmitting,
-      startCustomGptSummary,
+      startCustomGptFromShare,
       dismiss,
       t,
     });
@@ -369,12 +369,12 @@ export function ShareTargetHandler() {
       customGpts={customGpts}
       selectedGptId={selectedGptId}
       selectedGpt={selectedGpt}
-      canSummarize={canSummarize}
+      canStart={canStart}
       submitting={submitting}
       onSelectGpt={setSelectedGptId}
       onCreateGpt={() => setIs({ config: true })}
       onDismiss={dismiss}
-      onGenerateSummary={generateSummary}
+      onStart={startFromShare}
     />
   );
 }

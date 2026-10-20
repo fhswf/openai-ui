@@ -69,6 +69,47 @@ function CustomGptPromptField({
   );
 }
 
+function CustomGptSharePurposeField({
+  customGpt,
+  updateCustomGpt,
+}: CustomGptFieldProps) {
+  const { t } = useTranslation();
+  return (
+    <Field.Root>
+      <Field.Label>{t("custom_gpt_share_purpose")}</Field.Label>
+      <Textarea
+        resize="vertical"
+        value={customGpt.sharePurpose ?? ""}
+        onChange={(event) =>
+          updateCustomGpt(customGpt.id, { sharePurpose: event.target.value })
+        }
+      />
+      <Field.HelperText>
+        {t("custom_gpt_share_purpose_help")}
+      </Field.HelperText>
+    </Field.Root>
+  );
+}
+
+function CustomGptShareTitleField({
+  customGpt,
+  updateCustomGpt,
+}: CustomGptFieldProps) {
+  const { t } = useTranslation();
+  return (
+    <Field.Root>
+      <Field.Label>{t("custom_gpt_share_title")}</Field.Label>
+      <Input
+        value={customGpt.shareTitle ?? ""}
+        onChange={(event) =>
+          updateCustomGpt(customGpt.id, { shareTitle: event.target.value })
+        }
+      />
+      <Field.HelperText>{t("custom_gpt_share_title_help")}</Field.HelperText>
+    </Field.Root>
+  );
+}
+
 function CustomGptBotStartsField({
   customGpt,
   updateCustomGpt,
@@ -103,6 +144,8 @@ function CustomGptCard({
         <Stack gap="4">
           <CustomGptNameField {...{ customGpt, updateCustomGpt }} />
           <CustomGptPromptField {...{ customGpt, updateCustomGpt }} />
+          <CustomGptSharePurposeField {...{ customGpt, updateCustomGpt }} />
+          <CustomGptShareTitleField {...{ customGpt, updateCustomGpt }} />
           <CustomGptBotStartsField {...{ customGpt, updateCustomGpt }} />
           <Button
             alignSelf="flex-end"
@@ -142,6 +185,8 @@ export function CustomGptSettings() {
           id: uuidv7(),
           name: t("custom_gpt_default_name"),
           systemPrompt: "",
+          sharePurpose: "",
+          shareTitle: "",
         },
       ],
     });
