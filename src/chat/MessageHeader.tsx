@@ -20,18 +20,20 @@ import {
   Popover,
   Heading,
   Portal,
+  Dialog,
+  CloseButton,
+  Checkbox,
+  Link,
+  List,
 } from "@chakra-ui/react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { IoLogoMarkdown, IoSettingsOutline } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
 import {
   LuEllipsis,
   LuMenu,
 } from "react-icons/lu";
-import {
-  MdOutlineSimCardDownload,
-  MdVpnKey,
-} from "react-icons/md";
+import { MdGavel, MdOutlineSimCardDownload, MdVpnKey } from "react-icons/md";
 import { CgOptions } from "react-icons/cg";
 import { RiChatNewLine } from "react-icons/ri";
 import { useGlobal } from "./context";
@@ -52,9 +54,11 @@ import {
   AiHubError,
   AiHubBudget,
   aiHubApiBaseUrl,
+  aiHubBaseUrl,
+  aiHubTermsUrl,
   fetchAiHubBudget,
   fetchAiHubModels,
-  generateAiHubKey,
+  generateUniqueAiHubKey,
 } from "./service/aiHub";
 import { defaultOpenAIBaseUrl, defaultOpenAIModel } from "./context/initState";
 import { toaster } from "../components/ui/toaster";
@@ -572,6 +576,135 @@ function DownloadThreadMenu({ downloadThread }: DownloadThreadMenuProps) {
   );
 }
 
+interface AiHubTermsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAccept: () => void;
+}
+
+function AiHubTermsDialog({
+  open,
+  onOpenChange,
+  onAccept,
+}: AiHubTermsDialogProps) {
+  const { t } = useTranslation();
+  const [accepted, setAccepted] = useState(false);
+
+  return (
+    <Dialog.Root
+      lazyMount
+      size="lg"
+      open={open}
+      onOpenChange={(event) => {
+        setAccepted(false);
+        onOpenChange(event.open);
+      }}
+    >
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content data-testid="AiHubTermsDialog">
+            <Dialog.Header borderBottomWidth="1px">
+              <HStack gap={2}>
+                <MdGavel size={22} color="var(--chakra-colors-blue-600)" />
+                <Dialog.Title>{t("ai_hub_terms_title")}</Dialog.Title>
+              </HStack>
+            </Dialog.Header>
+            <Dialog.Body paddingBlock={6}>
+              <Stack gap={4} fontSize="sm">
+                <Heading size="xl">{t("ai_hub_terms_title")}</Heading>
+                <Text>
+                  <Trans
+                    t={t}
+                    i18nKey="ai_hub_terms_intro"
+                    components={{ bold: <strong /> }}
+                  />
+                </Text>
+                <Text>{t("ai_hub_terms_pdf_intro")}</Text>
+                <Link
+                  href={aiHubTermsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  color="blue.600"
+                  textDecoration="underline"
+                >
+                  {t("ai_hub_terms_pdf")}
+                </Link>
+                <Text>
+                  <Trans
+                    t={t}
+                    i18nKey="ai_hub_terms_sensitive_data"
+                    components={{ bold: <strong /> }}
+                  />
+                </Text>
+                <Heading size="md" marginTop={4}>
+                  {t("ai_hub_terms_more_info")}
+                </Heading>
+                <List.Root paddingInlineStart={5}>
+                  <List.Item>
+                    <Link
+                      href="https://openai.com/de-DE/policies/terms-of-use/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      color="blue.600"
+                      textDecoration="underline"
+                    >
+                      {t("ai_hub_terms_openai_terms")}
+                    </Link>
+                  </List.Item>
+                  <List.Item>
+                    <Link
+                      href="https://openai.com/de-DE/enterprise-privacy/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      color="blue.600"
+                      textDecoration="underline"
+                    >
+                      {t("ai_hub_terms_openai_privacy")}
+                    </Link>
+                  </List.Item>
+                </List.Root>
+              </Stack>
+            </Dialog.Body>
+            <Dialog.Footer
+              borderTopWidth="1px"
+              justifyContent="space-between"
+              gap={4}
+            >
+              <Checkbox.Root
+                checked={accepted}
+                onCheckedChange={(event) => {
+                  setAccepted(event.checked === true);
+                }}
+                data-testid="AiHubTermsCheckbox"
+              >
+                <Checkbox.HiddenInput />
+                <Checkbox.Control />
+                <Checkbox.Label>{t("ai_hub_terms_confirm")}</Checkbox.Label>
+              </Checkbox.Root>
+              <Button
+                variant="subtle"
+                flexShrink={0}
+                disabled={!accepted}
+                onClick={() => {
+                  setAccepted(false);
+                  onAccept();
+                }}
+                data-testid="AiHubTermsAcceptBtn"
+              >
+                {t("ai_hub_terms_accept")}
+              </Button>
+            </Dialog.Footer>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton size="sm" />
+            </Dialog.CloseTrigger>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  );
+}
+
 interface UserInformationPopoverProps {
   openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
@@ -588,6 +721,7 @@ function UserInformationPopover({
   const [aiHubBudget, setAiHubBudget] = useState<AiHubBudget | null>(null);
   const [isLoadingAiHubBudget, setIsLoadingAiHubBudget] = useState(false);
   const [aiHubBudgetError, setAiHubBudgetError] = useState(false);
+  const [aiHubTermsDialogOpen, setAiHubTermsDialogOpen] = useState(false);
   const normalizedOpenAiBaseUrl = openai.baseUrl.replace(/\/$/, "");
   const normalizedAiHubApiBaseUrl = aiHubApiBaseUrl.replace(/\/$/, "");
   const isUsingAiHubBudget =
@@ -635,6 +769,9 @@ function UserInformationPopover({
 
     switch (error.code) {
       case "key_generation_failed":
+        if (error.status === 401) {
+          return t("ai_hub_session_invalid_desc", { url: aiHubBaseUrl });
+        }
         return t("ai_hub_key_generation_failed_desc", {
           status: error.status,
         });
@@ -679,31 +816,47 @@ function UserInformationPopover({
     });
   }
 
-  async function useAiHubBudget() {
+  const existingAiHubKey =
+    openai.aiHubApiKey ||
+    (normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl
+      ? openai.apiKey
+      : "");
+
+  function useAiHubBudget() {
     if (isUsingAiHubBudget) {
       stopUsingAiHubBudget();
       return;
     }
 
+    // Fuer einen neuen Key muss der Nutzer zuerst die Nutzungsbedingungen bestaetigen.
+    if (existingAiHubKey) {
+      void activateAiHubBudget(false);
+    } else {
+      setAiHubTermsDialogOpen(true);
+    }
+  }
+
+  async function resolveAiHubKey(acceptedTerms: boolean) {
+    if (!aiHubKeyAlias) {
+      throw new Error("AI-Hub key alias requires a user email address.");
+    }
+
+    if (existingAiHubKey) {
+      return {
+        key: existingAiHubKey,
+        key_alias: aiHubKeyAlias,
+        key_name: openai.aiHubKeyName,
+      };
+    }
+
+    return generateUniqueAiHubKey(aiHubKeyAlias, { acceptedTerms });
+  }
+
+  async function activateAiHubBudget(acceptedTerms: boolean) {
     setIsGeneratingHubKey(true);
 
     try {
-      if (!aiHubKeyAlias) {
-        throw new Error("AI-Hub key alias requires a user email address.");
-      }
-
-      const existingAiHubKey =
-        openai.aiHubApiKey ||
-        (normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl
-          ? openai.apiKey
-          : "");
-      const key = existingAiHubKey
-        ? {
-            key: existingAiHubKey,
-            key_alias: aiHubKeyAlias,
-            key_name: openai.aiHubKeyName,
-          }
-        : await generateAiHubKey(aiHubKeyAlias);
+      const key = await resolveAiHubKey(acceptedTerms);
       const models = await fetchAiHubModels(key.key);
       const selectedModel = models.includes(openai.model)
         ? openai.model
@@ -749,104 +902,114 @@ function UserInformationPopover({
   }
 
   return (
-    <Popover.Root
-      lazyMount
-      onOpenChange={(event) => {
-        if (event.open) {
-          void loadAiHubBudget();
-        }
-      }}
-    >
-      <Popover.Trigger
-        data-testid="UserInformationBtn"
-        aria-label={t("User information")}
-        title={t("User information")}
+    <>
+      <AiHubTermsDialog
+        open={aiHubTermsDialogOpen}
+        onOpenChange={setAiHubTermsDialogOpen}
+        onAccept={() => {
+          setAiHubTermsDialogOpen(false);
+          void activateAiHubBudget(true);
+        }}
+      />
+      <Popover.Root
+        lazyMount
+        onOpenChange={(event) => {
+          if (event.open) {
+            void loadAiHubBudget();
+          }
+        }}
       >
-        <Avatar.Root size="sm">
-          <Avatar.Fallback name={user?.name} />
-          <Avatar.Image src={user?.avatar ?? undefined} />
-        </Avatar.Root>
-      </Popover.Trigger>
-      <Popover.Positioner>
-        <Popover.Content data-testid="UserInformation">
-          <Popover.Arrow />
-          <Popover.Body>
-            <Popover.Title fontWeight="bold" paddingBlockEnd="15px">
-              {t("User information")}
-            </Popover.Title>
-            <Stack gap={2}>
-              <Text>{user?.name}</Text>
-              <Text>{user?.email}</Text>
-              {isUsingAiHubBudget && (
-                <Stack
-                  gap={1}
-                  borderTopWidth="1px"
-                  borderTopColor="gray.200"
-                  paddingTop={2}
-                  data-testid="AiHubBudget"
-                >
-                  <Text fontSize="sm" color="green.600">
-                    {t("ai_hub_budget_active")}
-                  </Text>
-                  <Text fontSize="sm" fontWeight="semibold">
-                    {t("ai_hub_budget_usage")}
-                  </Text>
-                  {isLoadingAiHubBudget ? (
-                    <Text fontSize="sm">{t("ai_hub_budget_loading")}</Text>
-                  ) : aiHubBudgetError ? (
-                    <Text fontSize="sm" color="red.600">
-                      {t("ai_hub_budget_unavailable")}
+        <Popover.Trigger
+          data-testid="UserInformationBtn"
+          aria-label={t("User information")}
+          title={t("User information")}
+        >
+          <Avatar.Root size="sm">
+            <Avatar.Fallback name={user?.name} />
+            <Avatar.Image src={user?.avatar ?? undefined} />
+          </Avatar.Root>
+        </Popover.Trigger>
+        <Popover.Positioner>
+          <Popover.Content data-testid="UserInformation">
+            <Popover.Arrow />
+            <Popover.Body>
+              <Popover.Title fontWeight="bold" paddingBlockEnd="15px">
+                {t("User information")}
+              </Popover.Title>
+              <Stack gap={2}>
+                <Text>{user?.name}</Text>
+                <Text>{user?.email}</Text>
+                {isUsingAiHubBudget && (
+                  <Stack
+                    gap={1}
+                    borderTopWidth="1px"
+                    borderTopColor="gray.200"
+                    paddingTop={2}
+                    data-testid="AiHubBudget"
+                  >
+                    <Text fontSize="sm" color="green.600">
+                      {t("ai_hub_budget_active")}
                     </Text>
-                  ) : aiHubBudget ? (
-                    <>
-                      <Text fontSize="sm">
-                        {t("ai_hub_budget_spent", {
-                          spend: formatAiHubCurrency(aiHubBudget.spend),
-                          budget: formatAiHubCurrency(
-                            aiHubBudget.max_budget_in_team
-                          ),
-                        })}
+                    <Text fontSize="sm" fontWeight="semibold">
+                      {t("ai_hub_budget_usage")}
+                    </Text>
+                    {isLoadingAiHubBudget ? (
+                      <Text fontSize="sm">{t("ai_hub_budget_loading")}</Text>
+                    ) : aiHubBudgetError ? (
+                      <Text fontSize="sm" color="red.600">
+                        {t("ai_hub_budget_unavailable")}
                       </Text>
-                      <Progress.Root
-                        size="sm"
-                        value={aiHubBudgetUsagePercentage}
-                        colorPalette="blue"
-                        aria-label={t("ai_hub_budget_usage")}
-                      >
-                        <Progress.Track>
-                          <Progress.Range />
-                        </Progress.Track>
-                      </Progress.Root>
-                      <Text fontSize="sm">
-                        {t("ai_hub_budget_remaining", {
-                          available: formatAiHubCurrency(
-                            aiHubBudget.available
-                          ),
-                        })}
-                      </Text>
-                    </>
-                  ) : null}
-                </Stack>
-              )}
-              <Button
-                colorPalette="green"
-                onClick={useAiHubBudget}
-                loading={isGeneratingHubKey}
-                data-testid="UseAiHubBudgetBtn"
-              >
-                <MdVpnKey />{" "}
-                {isUsingAiHubBudget
-                  ? t("stop_using_ai_hub_budget")
-                  : t("use_ai_hub_budget")}
-              </Button>
-              <Button colorPalette="blue" onClick={logout}>
-                {t("logout")}
-              </Button>
-            </Stack>
-          </Popover.Body>
-        </Popover.Content>
-      </Popover.Positioner>
-    </Popover.Root>
+                    ) : aiHubBudget ? (
+                      <>
+                        <Text fontSize="sm">
+                          {t("ai_hub_budget_spent", {
+                            spend: formatAiHubCurrency(aiHubBudget.spend),
+                            budget: formatAiHubCurrency(
+                              aiHubBudget.max_budget_in_team
+                            ),
+                          })}
+                        </Text>
+                        <Progress.Root
+                          size="sm"
+                          value={aiHubBudgetUsagePercentage}
+                          colorPalette="blue"
+                          aria-label={t("ai_hub_budget_usage")}
+                        >
+                          <Progress.Track>
+                            <Progress.Range />
+                          </Progress.Track>
+                        </Progress.Root>
+                        <Text fontSize="sm">
+                          {t("ai_hub_budget_remaining", {
+                            available: formatAiHubCurrency(
+                              aiHubBudget.available
+                            ),
+                          })}
+                        </Text>
+                      </>
+                    ) : null}
+                  </Stack>
+                )}
+                <Button
+                  colorPalette="green"
+                  onClick={useAiHubBudget}
+                  loading={isGeneratingHubKey}
+                  data-testid="UseAiHubBudgetBtn"
+                >
+                  <MdVpnKey />{" "}
+                  {isUsingAiHubBudget
+                    ? t("stop_using_ai_hub_budget")
+                    : t("use_ai_hub_budget")}
+                </Button>
+                <Button colorPalette="blue" onClick={logout}>
+                  {t("logout")}
+                </Button>
+              </Stack>
+            </Popover.Body>
+          </Popover.Content>
+        </Popover.Positioner>
+      </Popover.Root>
+    </>
   );
 }
 

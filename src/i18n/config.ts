@@ -286,6 +286,22 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "The AI-Hub response did not contain an API key.",
           ai_hub_model_list_failed_desc:
             "The AI-Hub models could not be loaded. Status: {{status}}.",
+          ai_hub_session_invalid_desc:
+            "You are not signed in to the AI-Hub. Please sign in at {{url}} and try again.",
+          ai_hub_terms_title: "Terms of Use",
+          ai_hub_terms_intro:
+            "Use of this application is subject to the <bold>FH SWF terms of use for the OpenAI proxy (KImpuls-Chat)</bold>.",
+          ai_hub_terms_pdf_intro: "You can read the full terms of use here:",
+          ai_hub_terms_pdf:
+            "FH SWF terms of use for the OpenAI proxy (KImpuls-Chat) (PDF)",
+          ai_hub_terms_sensitive_data:
+            "Among other things, they state that <bold>no sensitive data may be entered into the chat</bold>, because OpenAI \"sees\" the content of messages and stores it for a certain time.",
+          ai_hub_terms_more_info: "Further information",
+          ai_hub_terms_openai_terms: "OpenAI terms of use",
+          ai_hub_terms_openai_privacy: "OpenAI API data privacy",
+          ai_hub_terms_confirm:
+            "I confirm that I will use the API keys in accordance with the terms of use.",
+          ai_hub_terms_accept: "Accept and continue",
           ai_hub_responses_api_not_supported:
             "The Responses API requires a compatible endpoint. Your current Base URL appears to be configured for the Chat Completions API. Please check your Base URL setting or reset to the default OpenAI API endpoint.",
           ai_hub_not_supported_title: "AI Hub not supported",
@@ -654,6 +670,23 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Die AI-Hub-Antwort enthielt keinen API-Schlüssel.",
           ai_hub_model_list_failed_desc:
             "Die AI-Hub-Modelle konnten nicht geladen werden. Status: {{status}}.",
+          ai_hub_session_invalid_desc:
+            "Sie sind nicht im AI-Hub angemeldet. Bitte melden Sie sich unter {{url}} an und versuchen Sie es erneut.",
+          ai_hub_terms_title: "Nutzungsbedingungen",
+          ai_hub_terms_intro:
+            "Die Nutzung dieser Anwendung unterliegt der <bold>Nutzungsordnung der Fachhochschule Südwestfalen für den OpenAI-Proxy (KImpuls-Chat)</bold>.",
+          ai_hub_terms_pdf_intro:
+            "Die vollständige Nutzungsordnung können Sie hier abrufen:",
+          ai_hub_terms_pdf:
+            "Nutzungsordnung der FH SWF für den OpenAI-Proxy (KImpuls-Chat) (PDF)",
+          ai_hub_terms_sensitive_data:
+            "Sie regelt unter anderem, dass <bold>keine sensiblen Daten in den Chat eingegeben werden dürfen</bold>, da OpenAI die Inhalte der Nachrichten \"sieht\" und für eine gewisse Zeit speichert.",
+          ai_hub_terms_more_info: "Weiterführende Informationen",
+          ai_hub_terms_openai_terms: "Nutzungsbedingungen von OpenAI",
+          ai_hub_terms_openai_privacy: "OpenAI API Data Privacy",
+          ai_hub_terms_confirm:
+            "Ich bestätige, dass ich die API-Schlüssel im Einklang mit den Nutzungsbedingungen verwenden werde.",
+          ai_hub_terms_accept: "Akzeptieren und fortfahren",
           ai_hub_responses_api_not_supported:
             "Die Responses API erfordert einen kompatiblen Endpunkt. Ihre aktuelle Base-URL scheint für die Chat Completions API konfiguriert zu sein. Bitte überprüfen Sie Ihre Base-URL-Einstellung oder setzen Sie sie auf den Standard-OpenAI-API-Endpunkt zurück.",
           ai_hub_not_supported_title: "AI-Hub nicht unterstützt",
