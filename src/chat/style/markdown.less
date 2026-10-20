@@ -16,8 +16,19 @@
   }
 
   a {
-    color: var(--primary);
-    text-decoration: none;
+    color: #005a9c;
+    text-decoration: underline;
+  }
+
+  a.chakra-link {
+    color: #005a9c;
+    text-decoration: underline;
+  }
+
+  [data-theme="dark"] & a,
+  [data-theme="dark"] & a.chakra-link {
+    color: #80c5ff;
+    text-decoration: underline;
   }
 
   a.absent {

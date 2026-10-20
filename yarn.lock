@@ -9679,6 +9679,7 @@ __metadata:
     "@uiw/react-textarea-code-editor": "npm:^3.0.2"
     "@vitejs/plugin-react": "npm:^4.3.4"
     "@vitest/ui": "npm:^4.1.10"
+    axe-core: "npm:~4.8.4"
     classnames: "npm:^2.5.1"
     css-loader: "npm:^6.7.3"
     cypress: "npm:^14.2.1"
