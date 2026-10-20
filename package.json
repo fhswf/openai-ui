@@ -98,6 +98,7 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/ui": "^4.1.10",
+    "axe-core": "~4.8.4",
     "css-loader": "^6.7.3",
     "cypress": "^14.2.1",
     "eslint": "^9.20.1",
