@@ -926,7 +926,7 @@ function UserInformationPopover({
         >
           <Avatar.Root size="sm">
             <Avatar.Fallback name={user?.name} />
-            <Avatar.Image src={user?.avatar ?? undefined} />
+            <Avatar.Image src={user?.avatar ?? undefined} alt="" />
           </Avatar.Root>
         </Popover.Trigger>
         <Popover.Positioner>

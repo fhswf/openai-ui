@@ -212,7 +212,7 @@ export function MessageItem(props) {
         <HStack wrap="wrap">
           <Avatar.Root size="sm">
             <Avatar.Fallback name={user?.name} />
-            <Avatar.Image src={role === "user" ? user?.avatar : avatar} />
+            <Avatar.Image src={role === "user" ? user?.avatar : avatar} alt="" />
           </Avatar.Root>
           <Text>{dateFormat(sentTime)}</Text>
           <ToolUse toolsUsed={toolsUsed} />
@@ -311,6 +311,7 @@ export function MessageItem(props) {
           <Spacer />
           <Tooltip content={t("Remove Message")}>
             <IconButton
+              aria-label={t("Remove Message")}
               minWidth="24px"
               size="sm"
               variant="ghost"
@@ -322,6 +323,7 @@ export function MessageItem(props) {
           {role === "user" ? (
             <React.Fragment>
               <IconButton
+                aria-label={t("Edit Message")}
                 minWidth="24px"
                 size="sm"
                 variant="ghost"
