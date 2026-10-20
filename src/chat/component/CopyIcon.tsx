@@ -4,12 +4,12 @@ import { Tooltip } from "../../components/ui/tooltip";
 import { LuClipboardCheck } from "react-icons/lu";
 import { LuClipboardCopy } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
-import { t } from "i18next";
 
 export function CopyIcon(props) {
-  const { text = "copy", value, className } = props;
+  const { text, value } = props;
   const [icon, setIcon] = useState<React.ReactNode>(<LuClipboardCopy />);
   const { t } = useTranslation();
+  const label = text ?? t("copy");
 
   async function handleCopy() {
     try {
@@ -24,8 +24,9 @@ export function CopyIcon(props) {
   }
 
   return (
-    <Tooltip content={text}>
+    <Tooltip content={label}>
       <IconButton
+        aria-label={label}
         minWidth="24px"
         size="sm"
         variant="ghost"
