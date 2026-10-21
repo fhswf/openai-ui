@@ -362,24 +362,63 @@ test.describe("Document collections (vector stores)", () => {
     expect(service.files.size).toBe(0);
   });
 
-  test("passes matches from active collections to the model", async ({
+  test("searches active collections through a client-side function tool", async ({
     page,
   }) => {
     const store = service.addStore("Skript", ["skript.pdf"]);
-    let requestBody: any;
+    const responseBodies: any[] = [];
 
     await page.route("**/v1/responses", async (route) => {
-      requestBody = route.request().postDataJSON();
-      const events = [
-        { type: "response.created", response: { id: "resp_mock_fs" } },
-        { type: "response.output_text.delta", delta: "Am 12. Februar." },
-        {
-          type: "response.completed",
-          response: {
-            usage: { total_tokens: 2, input_tokens: 1, output_tokens: 1 },
-          },
-        },
-      ];
+      const requestBody = route.request().postDataJSON();
+      responseBodies.push(requestBody);
+      const events = requestBody.previous_response_id
+        ? [
+            {
+              type: "response.created",
+              response: { id: "resp_mock_answer" },
+            },
+            { type: "response.output_text.delta", delta: "Am 12. Februar." },
+            {
+              type: "response.completed",
+              response: {
+                id: "resp_mock_answer",
+                usage: { total_tokens: 2, input_tokens: 1, output_tokens: 1 },
+              },
+            },
+          ]
+        : [
+            { type: "response.created", response: { id: "resp_mock_fs" } },
+            {
+              type: "response.output_item.added",
+              output_index: 0,
+              item: {
+                id: "fc_item_fs",
+                type: "function_call",
+                call_id: "call_fs",
+                name: "search_documents",
+                arguments: '{"query":"Klausur Termine"}',
+              },
+            },
+            {
+              type: "response.output_item.done",
+              output_index: 0,
+              item: {
+                id: "fc_item_fs",
+                type: "function_call",
+                call_id: "call_fs",
+                name: "search_documents",
+                arguments: '{"query":"Klausur Termine"}',
+                status: "completed",
+              },
+            },
+            {
+              type: "response.completed",
+              response: {
+                id: "resp_mock_fs",
+                usage: { total_tokens: 2, input_tokens: 1, output_tokens: 1 },
+              },
+            },
+          ];
       await route.fulfill({
         status: 200,
         contentType: "text/event-stream",
@@ -402,24 +441,35 @@ test.describe("Document collections (vector stores)", () => {
       `POST /v1/vector_stores/${store.id}/search`
     );
 
-    // The matches are sent as context; the file_search tool is not.
+    const initialRequest = responseBodies[0];
+    const functionTool = initialRequest.tools.find(
+      (tool: { type: string; name?: string }) =>
+        tool.type === "function" && tool.name === "search_documents"
+    );
+    expect(functionTool).toBeDefined();
+    expect(initialRequest.tool_choice).toBe("auto");
+    expect(initialRequest.tools.map((tool: { type: string }) => tool.type)).not.toContain(
+      "file_search"
+    );
     expect(
-      requestBody.tools.map((tool: { type: string }) => tool.type)
-    ).not.toContain("file_search");
-    const input = requestBody.input as { role: string; content: unknown }[];
-    const context = input[input.length - 2];
-    expect(context.role).toBe("user");
-    expect(context.content).toContain("<documents>");
-    expect(context.content).toContain("skript.pdf");
-    expect(context.content).toContain(EXCERPT);
-    expect(input[input.length - 1].content).toBe("Wann ist die Klausur?");
+      JSON.stringify(initialRequest.input)
+    ).not.toContain("<documents>");
+
+    const continuationRequest = responseBodies[1];
+    expect(continuationRequest.previous_response_id).toBe("resp_mock_fs");
+    expect(continuationRequest.input[0]).toMatchObject({
+      type: "function_call_output",
+      call_id: "call_fs",
+    });
+    expect(continuationRequest.input[0].output).toContain("skript.pdf");
+    expect(continuationRequest.input[0].output).toContain(EXCERPT);
 
     // The search shows up as tool usage below the answer.
     const badge = page.getByTestId("tool-usage-badge-file_search_call");
     await expect(badge).toContainText("Dokumente");
     await badge.click();
     const popup = page.getByTestId("tool-usage-popup-content");
-    await expect(popup).toContainText("Wann ist die Klausur?");
+    await expect(popup).toContainText("Klausur Termine");
     await expect(popup).toContainText("skript.pdf");
     await expect(popup).toContainText(EXCERPT);
   });
