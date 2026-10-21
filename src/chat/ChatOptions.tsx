@@ -25,7 +25,7 @@ import { Slider } from "@chakra-ui/react";
 
 import { useOptions } from "./hooks";
 import { t } from "i18next";
-import { initState } from "./context/initState";
+import { initState, defaultVectorStoreBaseUrl } from "./context/initState";
 import { GlobalState } from "./context/types";
 import { Trans } from "react-i18next";
 import { exportSettings, importSettings } from "./utils/settings";
@@ -358,6 +358,20 @@ export function ChatOptions() {
               data-testid="APIKeyInput"
             />
             <Field.HelperText>{t("api_key_help")}</Field.HelperText>
+          </Field.Root>
+
+          <Field.Root mt="4">
+            <Field.Label>{t("vector_store_base_url")}</Field.Label>
+            <Input
+              width="60ex"
+              value={openai.vectorStoreBaseUrl ?? defaultVectorStoreBaseUrl}
+              placeholder={defaultVectorStoreBaseUrl}
+              onChange={(ev) =>
+                setModel({ vectorStoreBaseUrl: ev.target.value })
+              }
+              data-testid="VectorStoreBaseURLInput"
+            />
+            <Field.HelperText>{t("vector_store_base_url_help")}</Field.HelperText>
           </Field.Root>
 
           <Field.Root mt="4">

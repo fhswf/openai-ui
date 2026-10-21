@@ -11,6 +11,10 @@ export const defaultOpenAIBaseUrl =
   import.meta.env.API_BASE_URL ||
   "https://api.openai.com/v1";
 
+export const defaultVectorStoreBaseUrl =
+  import.meta.env.VITE_VECTOR_STORE_BASE_URL ||
+  "https://pgvector.fh-swf.cloud/v1";
+
 export const defaultOpenAIModel = "gpt-4o-mini";
 
 export const initState: GlobalState = {
@@ -65,6 +69,7 @@ export const initState: GlobalState = {
       n: 1,
       tools: toolOptions,
       toolsEnabled: new Set(),
+      vectorStoreBaseUrl: defaultVectorStoreBaseUrl,
       top_p: 1,
       stream: true,
       assistant: "",

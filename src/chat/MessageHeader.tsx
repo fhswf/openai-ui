@@ -50,6 +50,7 @@ import {
 } from "./McpServiceComponents";
 import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
+import { VectorStoresDialog } from "./VectorStoresDialog";
 import {
   AiHubError,
   AiHubBudget,
@@ -80,6 +81,7 @@ import {
   McpToolMap,
   ToolChangeRequest,
 } from "./utils/mcpServices";
+import { DocumentsMenu } from "./DocumentsMenu";
 
 import "../assets/icon/style.css";
 
@@ -260,6 +262,7 @@ interface ChatOptionsMenuStateBuilderArgs {
 interface ChatOptionsMenuContentProps {
   mcpTools: McpToolMap;
   onEditMcp: VoidFunction;
+  onManageVectorStores: VoidFunction;
   onToolChange: React.Dispatch<ToolChangeRequest>;
   openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
@@ -270,6 +273,7 @@ interface ChatOptionsMenuContentProps {
 function ChatOptionsMenuContent({
   mcpTools,
   onEditMcp,
+  onManageVectorStores,
   onToolChange,
   openai,
   setOptions,
@@ -302,6 +306,7 @@ function ChatOptionsMenuContent({
             onEditMcp={onEditMcp}
             onToolChange={onToolChange}
           />
+          <DocumentsMenu onManage={onManageVectorStores} />
         </Menu.Content>
       </Menu.Positioner>
     </Menu.Root>
@@ -430,12 +435,14 @@ function useChatOptionsMenuState({
 function ChatOptionsMenu({ openai, setOptions, user }: ChatOptionsMenuProps) {
   const { t } = useTranslation();
   const menuState = useChatOptionsMenuState({ openai, setOptions, t, user });
+  const [vectorStoresOpen, setVectorStoresOpen] = useState(false);
 
   return (
     <>
       <ChatOptionsMenuContent
         mcpTools={menuState.mcpTools}
         onEditMcp={menuState.handleOpenMcp}
+        onManageVectorStores={() => setVectorStoresOpen(true)}
         onToolChange={menuState.handleToolChange}
         openai={openai}
         setOptions={setOptions}
@@ -459,6 +466,11 @@ function ChatOptionsMenu({ openai, setOptions, user }: ChatOptionsMenuProps) {
         setForm={menuState.setForm}
         toolsEnabled={menuState.toolsEnabled}
         user={user}
+      />
+
+      <VectorStoresDialog
+        open={vectorStoresOpen}
+        onOpenChange={setVectorStoresOpen}
       />
     </>
   );

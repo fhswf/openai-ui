@@ -11,6 +11,7 @@ import OpenAI, { APIError } from "openai";
 import { t } from "i18next";
 import { Stream } from "openai/streaming.mjs";
 import {
+  ResponseFunctionToolCall,
   ResponseIncludable,
   ResponseInput,
   ResponseInputItem,
@@ -25,6 +26,12 @@ import {
   readOpfsFileAsDataUrl,
 } from "../utils/attachments";
 import { supportsReasoningEffort } from "../utils/options";
+import {
+  createClientFileSearchTool,
+  uniqueClientFileSearchToolName,
+  searchDocuments,
+  splitFileSearchTools,
+} from "../utils/fileSearch";
 import * as Sentry from "@sentry/react";
 
 export const apiBaseUrl =
@@ -60,11 +67,11 @@ function normalizeApiBaseUrl(baseUrl?: string) {
   return baseUrl;
 }
 
-function createClient(options?: Options) {
+export function createClient(options?: Options, baseURL?: string) {
   return new OpenAI({
     apiKey: options?.openai.apiKey ?? "unused",
     dangerouslyAllowBrowser: true,
-    baseURL: normalizeApiBaseUrl(options?.openai.baseUrl),
+    baseURL: baseURL || normalizeApiBaseUrl(options?.openai.baseUrl),
     organization: options?.openai.organizationId || undefined,
     fetch: (input, init: any) => {
       return fetch(input, { credentials: "include", ...init });
@@ -83,7 +90,7 @@ export async function createResponse(
   parent,
   explicitInput?: ResponseInput
 ) {
-  const { options, chat, currentChat, is, setState, setIs, setOptions } = global;
+  const { options, chat, currentChat, setState, setIs, setOptions } = global;
   const client = createClient(options);
 
   console.log("messages: %o", chat[currentChat].messages);
@@ -183,16 +190,25 @@ export async function createResponse(
     );
   }
 
-  const tools: Tool[] = [];
+  const enabledTools: Tool[] = [];
 
   options.openai.toolsEnabled.forEach((tool) => {
-    tools.push(options.openai.tools.get(tool));
+    enabledTools.push(options.openai.tools.get(tool));
   });
+  const { tools, vectorStoreIds } = splitFileSearchTools(enabledTools);
+  const fileSearchToolName =
+    vectorStoreIds.length > 0
+      ? uniqueClientFileSearchToolName(tools)
+      : undefined;
+  if (fileSearchToolName) {
+    tools.push(createClientFileSearchTool(fileSearchToolName));
+  }
   console.log("createResponse: tools: %o", tools);
 
-  const response_options = {
+  const response_options: any = {
     model: options.openai.model,
     tools,
+    tool_choice: "auto",
     input,
     stream: true,
     include: [
@@ -200,7 +216,6 @@ export async function createResponse(
       "code_interpreter_call.outputs",
     ] as ResponseIncludable[],
   };
-
   /*
    * Filter input to only include new items if we are chaining.
    * Currently we don't track "new" items robustly, but for approval flow:
@@ -230,10 +245,17 @@ export async function createResponse(
   client.responses
     .create(response_options)
     .then(async (stream: Stream<ResponseStreamEvent>) => {
-      setIs({ ...is, thinking: true });
+      setIs({ thinking: true });
       console.log("stream: %o", stream);
 
-      const eventProcessor = new EventProcessor(stream, global);
+      const eventProcessor = new EventProcessor(
+        stream,
+        global,
+        client,
+        response_options,
+        fileSearchToolName,
+        vectorStoreIds
+      );
       setState({ eventProcessor });
 
       const processStream = async () => {
@@ -257,7 +279,7 @@ export async function createResponse(
     console.log("Stream error: %o", error);
     Sentry.captureException(error);
     eventProcessor.stop();
-    setIs({ ...is, thinking: false });
+    setIs({ thinking: false, tool: null });
     setState({ eventProcessor: null });
     toaster.create({
       title: t("error_occurred"),
@@ -337,16 +359,31 @@ class EventProcessor {
   mainRef: any;
   stream: Stream<ResponseStreamEvent>;
   global: Partial<GlobalState> & Partial<GlobalActions>;
+  client: OpenAI;
+  responseOptions: any;
+  fileSearchToolName?: string;
+  vectorStoreIds: string[];
   responseId?: string;
   approvalRequests: Map<string, { item: any; decision?: boolean }> = new Map();
+  pendingFileSearchCalls: ResponseFunctionToolCall[] = [];
+  currentMessage?: Message;
+  stopped = false;
   static opfs: FileSystemDirectoryHandle = null;
 
   constructor(
     stream: Stream<ResponseStreamEvent>,
-    global: Partial<GlobalState> & Partial<GlobalActions>
+    global: Partial<GlobalState> & Partial<GlobalActions>,
+    client: OpenAI,
+    responseOptions: any,
+    fileSearchToolName?: string,
+    vectorStoreIds: string[] = []
   ) {
     const { chat, currentChat, setState, setIs } = global;
     this.stream = stream;
+    this.client = client;
+    this.responseOptions = responseOptions;
+    this.fileSearchToolName = fileSearchToolName;
+    this.vectorStoreIds = vectorStoreIds;
     this.chat = chat;
     this.currentChat = currentChat;
     this.setState = setState;
@@ -458,8 +495,9 @@ class EventProcessor {
 
   stop() {
     console.log("stop");
+    this.stopped = true;
     this.stream.controller.abort();
-    this.setIs({ thinking: false });
+    this.setIs({ thinking: false, tool: null });
   }
 
   updatePartialImage(image_base64: string, message: Message, file_id: string) {
@@ -490,39 +528,54 @@ class EventProcessor {
 
   async process(event) {
     console.log("event: %s %o", event.type, event);
-    let message =
-      this.chat[this.currentChat].messages[
+    let message = this.currentMessage ?? this.chat[this.currentChat].messages[
       this.chat[this.currentChat].messages.length - 1
-      ];
+    ];
 
     switch (event.type) {
       case "response.created":
         console.log(event.item);
-        message = {
-          role: "assistant",
-          content: "",
-          sentTime: Math.floor(Date.now() / 1000),
-          startTime: Date.now(),
-          id: event.response.id,
-        };
         this.responseId = event.response.id;
+        if (!this.currentMessage) {
+          message = {
+            role: "assistant",
+            content: "",
+            sentTime: Math.floor(Date.now() / 1000),
+            startTime: Date.now(),
+            id: event.response.id,
+          };
+          this.currentMessage = message;
+          this.chat[this.currentChat].messages.push(message);
+        }
         this.approvalRequests.clear();
         this.setState({ typeingMessage: {} });
-        this.chat[this.currentChat].messages.push(message);
         this.updateChat();
         break;
 
-      case "response.completed":
+      case "response.completed": {
         console.log("response.completed: %o", event.response.usage);
+        this.responseId = event.response.id;
+        if (this.pendingFileSearchCalls.length > 0) {
+          await this.runFileSearchCalls();
+          break;
+        }
 
         message.usage = event.response.usage;
         message.endTime = Date.now();
         this.updateChat();
-        this.setIs({ thinking: false });
+        this.setIs({ thinking: false, tool: null });
         break;
+      }
 
       case "response.output_item.done": {
         console.log(event.item);
+        if (
+          event.item.type === "function_call" &&
+          event.item.name === this.fileSearchToolName
+        ) {
+          this.pendingFileSearchCalls.push(event.item);
+          break;
+        }
         const toolIndex = message.toolsUsed?.findIndex(
           (tool) => tool.id === event.item.id
         );
@@ -565,6 +618,12 @@ class EventProcessor {
           case "web_search_call":
           case "image_generation_call":
           case "code_interpreter_call":
+            if (
+              event.item.type === "function_call" &&
+              event.item.name === this.fileSearchToolName
+            ) {
+              break;
+            }
             if (!message.toolsUsed) {
               message.toolsUsed = [];
             }
@@ -705,6 +764,86 @@ class EventProcessor {
           duration: 5000,
           type: "error",
         });
+    }
+  }
+
+  async runFileSearchCalls() {
+    const calls = this.pendingFileSearchCalls;
+    this.pendingFileSearchCalls = [];
+    const message = this.currentMessage;
+    const options = this.global.options;
+    if (!message || !options || !this.fileSearchToolName) return;
+
+    this.setIs({ thinking: true, tool: "file_search" });
+    const results = await Promise.all(
+      calls.map(async (call) => {
+        let query = "";
+        try {
+          const args = JSON.parse(call.arguments || "{}");
+          if (typeof args.query !== "string" || !args.query.trim()) {
+            throw new Error("The search query must be a non-empty string.");
+          }
+          query = args.query.trim();
+        } catch (error) {
+          const messageText =
+            error instanceof Error ? error.message : String(error);
+          return {
+            output: JSON.stringify({ error: messageText }),
+            toolCall: {
+              id: `fs_local_${call.call_id}`,
+              type: "file_search_call",
+              status: "failed",
+              queries: [query],
+              results: [],
+            } as any,
+          };
+        }
+
+        const retrieval = await searchDocuments(
+          options,
+          this.vectorStoreIds,
+          query,
+          call.call_id
+        );
+        if (retrieval.failedStoreIds.length > 0) {
+          toaster.create({
+            title: t("file_search_failed"),
+            description: t("file_search_failed_description"),
+            duration: 5000,
+            type: "warning",
+          });
+        }
+        return { output: retrieval.output, toolCall: retrieval.toolCall };
+      })
+    );
+
+    message.toolsUsed = [
+      ...(message.toolsUsed ?? []),
+      ...results.map((result) => result.toolCall),
+    ];
+    this.updateChat();
+    if (this.stopped) return;
+    this.setIs({ thinking: true, tool: null });
+
+    const outputs = calls.map((call, index) => ({
+      type: "function_call_output" as const,
+      call_id: call.call_id,
+      output: results[index].output,
+    }));
+    const continuationOptions = {
+      ...this.responseOptions,
+      input: outputs,
+      previous_response_id: this.responseId,
+      tool_choice: "auto",
+    };
+    const stream = await this.client.responses.create(continuationOptions);
+    if (this.stopped) {
+      stream.controller.abort();
+      return;
+    }
+    this.stream = stream;
+    for await (const event of stream) {
+      await this.process(event);
     }
   }
 }
