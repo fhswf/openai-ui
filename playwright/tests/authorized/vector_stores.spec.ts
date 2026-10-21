@@ -1,6 +1,6 @@
 import { test, expect } from "../baseFixtures";
 import type { Page, Route } from "@playwright/test";
-import { MockVectorStoreService } from "./vectorStoresMock";
+import { EXCERPT, MockVectorStoreService } from "./vectorStoresMock";
 import {
   APP_READY_TIMEOUT,
   acceptTermsIfVisible,

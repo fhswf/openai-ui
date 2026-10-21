@@ -11,7 +11,7 @@ export interface MockStore {
   files: MockFile[];
 }
 
-const EXCERPT = "Die Klausur findet am 12. Februar im Raum H 101 statt.";
+export const EXCERPT = "Die Klausur findet am 12. Februar im Raum H 101 statt.";
 
 /*
  * In-memory stand-in for the litellm-pgvector service, including its
