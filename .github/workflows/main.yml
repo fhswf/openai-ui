@@ -39,7 +39,7 @@ jobs:
         uses: actions/create-github-app-token@v3
         id: cicd
         with:
-          app-id: ${{ secrets.APP_ID }}
+          client-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           
       - uses: actions/checkout@v6
@@ -104,3 +104,4 @@ jobs:
         with:
           commit_message: "chore: update kustomize images [skip ci]"
           file_pattern: "k8s/overlays/**/kustomization.yaml"
+   
