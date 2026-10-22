@@ -23,10 +23,10 @@ For example, a citation can look like:
 The destination is a chat-local permalink. In the chat UI, clicking it opens a
 dialog with the exact text chunk returned for that result. Markdown source
 files render as Markdown in the dialog; other source types render as plain
-text. Local `#file-search/...` Markdown links, with or without OpenAI citation
-wrapper markers, are rendered as clickable links inside `⟨...⟩` brackets.
-Adjacent links separated by a citation delimiter get their own brackets and a
-space between them. The renderer also
+text. Markdown links, including local `#file-search/...` citations and links
+inside OpenAI citation wrappers, are rendered as clickable links inside
+`⟨...⟩` brackets. Adjacent links separated by a citation delimiter get their
+own brackets and a space between them. The renderer also
 recognizes structured OpenAI citation markers of the form
 `\uE200cite\uE202turn0url1\uE202L8-L13\uE201`. Resolved web and document
 citations are shown as clickable source labels inside the same brackets; line
