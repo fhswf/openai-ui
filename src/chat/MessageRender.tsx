@@ -32,7 +32,10 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import "./style/markdown.less";
 import "katex/dist/katex.min.css";
 import { useTranslation } from "react-i18next";
-import { findFileSearchCitation } from "./utils/fileSearch";
+import {
+  fileSearchCitationHref,
+  findFileSearchCitation,
+} from "./utils/fileSearch";
 
 function CitationAnchor({
   href,
@@ -57,13 +60,126 @@ function CitationAnchor({
   );
 }
 
-function stripFileSearchCitationMarkers(markdown) {
+function stripCitationLinkMarkers(markdown) {
   return typeof markdown === "string"
     ? markdown.replace(
-        /\uE200(\[[^\n]*?\]\(#file-search\/[^)\s]*\))\uE201/g,
+        /\uE200(\[[^\n]*?\]\((?:<[^>\n]+>|(?:\\.|[^()\s])*(?:\([^()\s]*\)(?:\\.|[^()\s])*)*)(?:\s+["'][^"'\n]*["'])?\))\uE201/g,
         "$1"
       )
     : markdown;
+}
+
+function citationSourceMap(toolsUsed = []) {
+  const urls = [];
+  const files = [];
+
+  for (const value of toolsUsed) {
+    const tool = value as any;
+    if (tool?.type === "web_search_call") {
+      const searchSources = Array.isArray(tool.action?.sources)
+        ? tool.action.sources
+        : [];
+      for (const source of searchSources) {
+        try {
+          const url = new URL(source.url);
+          if (url.protocol !== "http:" && url.protocol !== "https:") continue;
+          urls.push({
+            href: url.href,
+            label: url.hostname.replace(/^www\./, ""),
+          });
+        } catch {
+          // Ignore malformed source URLs.
+        }
+      }
+    }
+
+    if (tool?.type === "file_search_call" && Array.isArray(tool.results)) {
+      tool.results.forEach((result, index) => {
+        if (!tool.id) return;
+        files.push({
+          href: fileSearchCitationHref(tool.id, index + 1),
+          label: result.filename || result.file_id || `Source ${index + 1}`,
+        });
+      });
+    }
+  }
+
+  return { urls, files };
+}
+
+function createCitationMarkerPlugin(toolsUsed) {
+  const sources = citationSourceMap(toolsUsed);
+  const citationPattern =
+    /\uE200cite\uE202(turn\d+(?:url|file|block)\d+)(?:\uE202(L\d+(?:-L\d+)?))?\uE201/g;
+
+  function renderCitation(sourceId, locator) {
+    const match = /^turn\d+(url|file|block)(\d+)$/.exec(sourceId);
+    const source = match
+      ? (match[1] === "url" ? sources.urls : sources.files)[
+          Number(match[2]) - 1
+        ]
+      : undefined;
+    const label = source?.label || sourceId;
+    const linkLabel = locator ? `${label} · ${locator}` : label;
+
+    if (!source) {
+      return [{ type: "text", value: `⟨${linkLabel}⟩` }];
+    }
+
+    return [
+      { type: "text", value: "⟨" },
+      {
+        type: "link",
+        url: source.href,
+        children: [{ type: "text", value: linkLabel }],
+      },
+      { type: "text", value: "⟩" },
+    ];
+  }
+
+  function transformText(value) {
+    const nodes = [];
+    let cursor = 0;
+    let match;
+    citationPattern.lastIndex = 0;
+
+    while ((match = citationPattern.exec(value))) {
+      if (match.index > cursor) {
+        nodes.push({ type: "text", value: value.slice(cursor, match.index) });
+      }
+      nodes.push(...renderCitation(match[1], match[2]));
+      cursor = citationPattern.lastIndex;
+    }
+
+    if (cursor === 0) return undefined;
+    if (cursor < value.length) {
+      nodes.push({ type: "text", value: value.slice(cursor) });
+    }
+    return nodes;
+  }
+
+  return function remarkCitationMarkers() {
+    return function transformCitationMarkers(tree) {
+      function visit(node) {
+        if (
+          !Array.isArray(node.children) ||
+          ["link", "inlineCode", "code", "html"].includes(node.type)
+        ) {
+          return;
+        }
+
+        node.children = node.children.flatMap((child) => {
+          if (child.type === "text" && typeof child.value === "string") {
+            return transformText(child.value) || [child];
+          }
+          visit(child);
+          return [child];
+        });
+      }
+
+      visit(tree);
+    };
+  };
 }
 
 function isMarkdownSource(filename = "") {
@@ -107,8 +223,13 @@ export const MessageRender = (props) => {
     () => (
       <>
         <MarkdownHooks
-          children={stripFileSearchCitationMarkers(props.children)}
-          remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
+          children={stripCitationLinkMarkers(props.children)}
+          remarkPlugins={[
+            remarkMath,
+            remarkGfm,
+            remarkBreaks,
+            createCitationMarkerPlugin(props.toolsUsed),
+          ]}
           rehypePlugins={[
             rehypeRaw,
             [
