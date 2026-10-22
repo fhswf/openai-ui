@@ -7,7 +7,7 @@ import {
   Popover,
   Portal,
 } from "@chakra-ui/react";
-import { LuGithub } from "react-icons/lu";
+import { SiGithub } from "react-icons/si";
 import { useTranslation } from "react-i18next";
 import Markdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
@@ -40,7 +40,7 @@ export function GitHubMenu() {
     >
       <Menu.Trigger asChild>
         <IconButton variant="ghost" title={t("open_issue")}>
-          <LuGithub aria-label={t("open_issue")} />
+          <SiGithub aria-label={t("open_issue")} />
         </IconButton>
       </Menu.Trigger>
       <Menu.Positioner>
