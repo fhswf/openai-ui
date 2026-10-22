@@ -15,6 +15,7 @@ This project is based on
 - Access via a proxy server for privacy.
 - Single Sign-On (SSO) via OpenID Connect (OIDC) for authentication.
 - Markdown support for chat messages.
+- Search document collections and cite the matching passages with in-chat Markdown links ([citation design](docs/local-file-search-citations.md)).
 - Code editor for chat messages.
 - Create custom GPT profiles with personal system prompts, a purpose, and an action title, then select one when sharing a web page or supported document with the installed K!mpuls app.
 
