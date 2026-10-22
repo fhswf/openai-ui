@@ -57,6 +57,19 @@ function CitationAnchor({
   );
 }
 
+function stripFileSearchCitationMarkers(markdown) {
+  return typeof markdown === "string"
+    ? markdown.replace(
+        /\uE200(\[[^\n]*?\]\(#file-search\/[^)\s]*\))\uE201/g,
+        "$1"
+      )
+    : markdown;
+}
+
+function isMarkdownSource(filename = "") {
+  return /\.(md|markdown|mdown|mkd|mdx)$/i.test(filename);
+}
+
 export const MessageRender = (props) => {
   const { options } = useGlobal();
   const { t } = useTranslation();
@@ -94,7 +107,7 @@ export const MessageRender = (props) => {
     () => (
       <>
         <MarkdownHooks
-          children={props.children}
+          children={stripFileSearchCitationMarkers(props.children)}
           remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
           rehypePlugins={[
             rehypeRaw,
@@ -163,12 +176,20 @@ export const MessageRender = (props) => {
                 </Dialog.CloseTrigger>
                 <Dialog.Body>
                   {citationDialog?.source ? (
-                    <Box whiteSpace="pre-wrap" userSelect="text">
-                      <Text fontSize="sm" color="fg.muted" mb={3}>
-                        {t("file_search_source_title")}
-                      </Text>
-                      {citationDialog.source.text}
-                    </Box>
+                    isMarkdownSource(citationDialog.source.filename) ? (
+                      <Box className="z-ui-markdown" userSelect="text">
+                        <MessageRender>
+                          {citationDialog.source.text}
+                        </MessageRender>
+                      </Box>
+                    ) : (
+                      <Box whiteSpace="pre-wrap" userSelect="text">
+                        <Text fontSize="sm" color="fg.muted" mb={3}>
+                          {t("file_search_source_title")}
+                        </Text>
+                        {citationDialog.source.text}
+                      </Box>
+                    )
                   ) : (
                     <Text>{t("file_search_source_unavailable")}</Text>
                   )}
