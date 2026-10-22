@@ -1,7 +1,7 @@
 # Zero-Knowledge, geräteübergreifende Chats
 
-Status: Frontend-Opt-in, Schlüsselverwaltung und verschlüsselte Chat-Synchronisierung
-sind in diesem Repo implementiert. Das Proxy-Backend `fhswf/openai-proxy` muss die
+Status: Frontend-Opt-in, Schlüsselverwaltung, verschlüsselte Chat-Synchronisierung
+und Chat-Freigaben sind in diesem Repo implementiert. Das Proxy-Backend `fhswf/openai-proxy` muss die
 unten beschriebene `/api/zk`-API bereitstellen, einschließlich Prüfung von
 WebAuthn-Assertions und getrennter Speicherung der beiden Public Keys.
 
@@ -236,6 +236,17 @@ Empfänger seinen eigenen Public Key, z. B. über einen Teilen-Link
 mit `importPublicKey()` und verpackt `K_chat`. Kein Lookup, keine Enumeration,
 aber ein zusätzlicher manueller Schritt.
 
+Die Chat-Oberfläche bietet das Teilen mit bestimmten Personen und separate
+Freigabe-Links an. Für bestimmte Personen gibt die absendende Person eine
+E-Mail-Adresse ein. Der Empfänger muss die
+E-Mail-Suche im Speicher-Menü ausdrücklich freigeben; die Suche akzeptiert nur
+verifizierte Adressen aus derselben E-Mail-Domain. Für einen Link erstellt der
+Server ein sieben Tage gültiges, widerrufbares Capability-Token und speichert
+nur dessen SHA-256-Hash. Der Link enthält das Token und `K_chat` im
+URL-Fragment, das der Browser beim Seitenaufruf nicht an den Server sendet. Zur
+Einlösung schickt die App das Token im POST-Body. Beim Öffnen entschlüsselt der
+Browser den Chat und seine verfügbaren Anhänge und importiert eine lokale Kopie.
+
 ### 4.6 Migration bestehender lokaler Chats
 
 Beim ersten Entsperren werden vorhandene `CHAT_HISTORY`-Einträge aus
@@ -337,8 +348,12 @@ Größen, IDs und Berechtigungen.
 Hinweis: `encryptedSk` wird nur an den Eigentümer ausgeliefert. Andere erhalten
 ausschließlich `publicKey`, damit sie einen Chat teilen können. Der Lookup ist
 rate-limitiert und auf die eigene(n) OIDC-Domain(s) beschränkt (keine
-Nutzer-Enumeration). Alternativ kann auf den Lookup verzichtet und der Public
-Key empfänger-initiiert geteilt werden (siehe 4.5 B).
+Nutzer-Enumeration). Er findet nur Konten mit verifizierter E-Mail-Adresse,
+deren Profilfreigabe aktiv ist. Alternativ kann auf den Lookup verzichtet und
+der Public Key empfänger-initiiert geteilt werden (siehe 4.5 B).
+
+`PATCH /api/zk/keys/me/identity-disclosure`
+Body `{ identityDisclosure: "subject" | "profile" }` -> `200`
 
 `GET /api/zk/keys/me` liefert `{ registered: false }` mit Status `404`, solange
 der Nutzer noch kein Opt-in durchgeführt hat.
@@ -370,6 +385,18 @@ expliziten Löschung bestehen und werden dann unzugänglich)
 -> 201
 -> 403 wenn der Aufrufer selbst keine Hülle besitzt
 ```
+
+`POST /api/zk/chats/{id}/share-link`
+-> `201 { token, expiresAt }` (nur Owner; sieben Tage gültig)
+
+`POST /api/zk/chats/{id}/share-link/revoke`
+Body `{ token }` -> `204` (nur Owner)
+
+`POST /api/zk/public-shares/redeem`
+Body `{ token }` -> Chat-Chiffrat ohne Schlüssel-Hüllen
+
+`POST /api/zk/public-shares/redeem-attachment`
+Body `{ token, attachmentId }` -> binäre Anhang-Chiffratdaten
 
 `POST /api/zk/chats/{id}/revoke`
 ```
@@ -452,21 +479,16 @@ expliziten Löschung bestehen und werden dann unzugänglich)
    geladen; spätere Änderungen und lokale Löschungen werden synchronisiert.
    Bei gleichen IDs ersetzt beim Wiederherstellen der Vault die lokale Version;
    lokale Chats ohne Remote-Gegenstück werden migriert. Gleichzeitige Änderungen
-   werden mit `rev` nach dem Last-Write-Wins-Prinzip aufgelöst. Teilen ist noch
-   nicht in der Oberfläche integriert.
+   werden mit `rev` nach dem Last-Write-Wins-Prinzip aufgelöst. Teilen mit
+   registrierten Personen und Capability-Links stehen im Chat-Menü bereit.
    - Zusatzoption `general.zkLazyHistory` (Default `false`, sichtbar bei
      aktivem `zkStorage`): hält lokal nur die leichte Chatliste und lädt
      Verläufe bei Bedarf aus dem Vault (siehe 4.4.1).
 7. **Tests** unter `src/chat/utils/__tests__` und `src/chat/service/__tests__`
    (Roundtrips, Fehlerfälle, Envelope-Sharing, API-Vertrag, Lazy-History).
 
-## 9. Offene Fragen an den Auftraggeber
+## 9. Noch offene Punkte
 
-- Teilen synchron (Empfänger bereits registriert) oder asynchron via
-  Einladungslink? (Design deckt beide ab; nur der Empfänger-Public-Key muss
-  vorliegen.)
-- Public-Key-Discovery: Server-Lookup (4.5 A, Default) oder empfänger-initiiert
-  (4.5 B)? Hängt davon ab, ob ein zentrales Verzeichnis gewünscht ist.
 - Neue Nutzerschlüssel verwenden ECDH P-256. Vorhandene RSA-OAEP-Schlüssel
   werden anhand des gespeicherten Algorithmus weiter unterstützt.
 - Aufbewahrung/Recovery bei Passkey-Verlust.

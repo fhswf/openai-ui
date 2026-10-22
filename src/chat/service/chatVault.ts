@@ -16,6 +16,7 @@ export type VaultUserKey = {
   publicKeyAlgorithm?: "RSA-OAEP-SHA256" | "ECDH-P256";
   encryptedSk?: string;
   encryptedSkIv?: string;
+  identityDisclosure?: "subject" | "profile";
 };
 
 export type VaultCredential = {
@@ -56,6 +57,13 @@ export type VaultChat = {
   metadataCt?: string;
   metadataIv?: string;
   envelopes: VaultEnvelope[];
+};
+
+export type VaultSharedChat = Omit<VaultChat, "envelopes" | "ownerId">;
+
+export type VaultShareLink = {
+  token: string;
+  expiresAt: string;
 };
 
 export type PutChatPayload = {
@@ -183,6 +191,7 @@ export const chatVault = {
       credentialName: string;
       publicKey: string;
       publicKeyAlgorithm: "RSA-OAEP-SHA256" | "ECDH-P256";
+      identityDisclosure?: "subject" | "profile";
       encryptedSk: string;
       encryptedSkIv: string;
       challenge: string;
@@ -227,6 +236,17 @@ export const chatVault = {
 
   getMyKey(options?: RequestOptions): Promise<VaultUserKey> {
     return request("/keys/me", {}, options);
+  },
+
+  setIdentityDisclosure(
+    identityDisclosure: "subject" | "profile",
+    options?: RequestOptions
+  ): Promise<{ identityDisclosure: "subject" | "profile" }> {
+    return request(
+      "/keys/me/identity-disclosure",
+      { method: "PATCH", body: JSON.stringify({ identityDisclosure }) },
+      options
+    );
   },
 
   renameMyCredential(
@@ -379,6 +399,56 @@ export const chatVault = {
     return request(
       `/chats/${encodeURIComponent(id)}/revoke`,
       { method: "POST", body: JSON.stringify({ recipientId }) },
+      options
+    );
+  },
+
+  createShareLink(
+    id: string,
+    options?: RequestOptions
+  ): Promise<VaultShareLink> {
+    return request(
+      `/chats/${encodeURIComponent(id)}/share-link`,
+      { method: "POST" },
+      options
+    );
+  },
+
+  revokeShareLink(
+    id: string,
+    token: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    return request(
+      `/chats/${encodeURIComponent(id)}/share-link/revoke`,
+      { method: "POST", body: JSON.stringify({ token }) },
+      options
+    );
+  },
+
+  redeemShareLink(
+    token: string,
+    options?: RequestOptions
+  ): Promise<VaultSharedChat> {
+    return request(
+      "/public-shares/redeem",
+      { method: "POST", body: JSON.stringify({ token }) },
+      options
+    );
+  },
+
+  redeemShareLinkAttachment(
+    token: string,
+    attachmentId: string,
+    options?: RequestOptions
+  ): Promise<ArrayBuffer> {
+    return requestBinary(
+      "/public-shares/redeem-attachment",
+      {
+        method: "POST",
+        body: JSON.stringify({ token, attachmentId }),
+        headers: { "Content-Type": "application/json" },
+      },
       options
     );
   },

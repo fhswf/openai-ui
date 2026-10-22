@@ -451,7 +451,7 @@ export async function unwrapChatKey(
       "raw",
       rawChatKey,
       { name: "AES-GCM", length: AES_KEY_LENGTH },
-      false,
+      true,
       ["encrypt", "decrypt"]
     );
   }
@@ -464,7 +464,7 @@ export async function unwrapChatKey(
     recipientPrivateKey,
     { name: "RSA-OAEP" },
     { name: "AES-GCM", length: AES_KEY_LENGTH },
-    false,
+    true,
     ["encrypt", "decrypt"]
   );
 }
