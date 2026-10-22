@@ -32,7 +32,10 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import "./style/markdown.less";
 import "katex/dist/katex.min.css";
 import { useTranslation } from "react-i18next";
-import { findFileSearchCitation } from "./utils/fileSearch";
+import {
+  fileSearchCitationHref,
+  findFileSearchCitation,
+} from "./utils/fileSearch";
 
 function CitationAnchor({
   href,
@@ -57,13 +60,160 @@ function CitationAnchor({
   );
 }
 
-function stripFileSearchCitationMarkers(markdown) {
-  return typeof markdown === "string"
-    ? markdown.replace(
-        /\uE200(\[[^\n]*?\]\(#file-search\/[^)\s]*\))\uE201/g,
-        "$1"
-      )
-    : markdown;
+const CITATION_START = "\uE200";
+const CITATION_DELIMITER = "\uE202";
+const CITATION_STOP = "\uE201";
+const MARKDOWN_LINK_PATTERN = String.raw`\[[^\n]*?\]\((?:<[^>\n]+>|(?:\\.|[^()\s])*(?:\([^()\s]*\)(?:\\.|[^()\s])*)*)(?:\s+["'][^"'\n]*["'])?\)`;
+
+function formatCitationLinkMarkers(markdown) {
+  if (typeof markdown !== "string") return markdown;
+
+  const wrappedLinksPattern = new RegExp(
+    `${CITATION_START}(${MARKDOWN_LINK_PATTERN}(?:${CITATION_DELIMITER}${MARKDOWN_LINK_PATTERN})*)${CITATION_STOP}`,
+    "g"
+  );
+  const wrapped = markdown.replace(wrappedLinksPattern, (_match, links) =>
+    `⟨${links.split(CITATION_DELIMITER).join("⟩ ⟨")}⟩`
+  );
+  return wrapped;
+}
+
+function citationSourceMap(toolsUsed = []) {
+  const urls = [];
+  const files = [];
+
+  for (const value of toolsUsed) {
+    const tool = value as any;
+    if (tool?.type === "web_search_call") {
+      const searchSources = Array.isArray(tool.action?.sources)
+        ? tool.action.sources
+        : [];
+      for (const source of searchSources) {
+        try {
+          const url = new URL(source.url);
+          if (url.protocol !== "http:" && url.protocol !== "https:") continue;
+          urls.push({
+            href: url.href,
+            label: url.hostname.replace(/^www\./, ""),
+          });
+        } catch {
+          // Ignore malformed source URLs.
+        }
+      }
+    }
+
+    if (tool?.type === "file_search_call" && Array.isArray(tool.results)) {
+      tool.results.forEach((result, index) => {
+        if (!tool.id) return;
+        files.push({
+          href: fileSearchCitationHref(tool.id, index + 1),
+          label: result.filename || result.file_id || `Source ${index + 1}`,
+        });
+      });
+    }
+  }
+
+  return { urls, files };
+}
+
+function createCitationMarkerPlugin(toolsUsed) {
+  const sources = citationSourceMap(toolsUsed);
+  const citationPattern =
+    /\uE200cite\uE202(turn\d+(?:url|file|block)\d+)(?:\uE202(L\d+(?:-L\d+)?))?\uE201/g;
+
+  function renderCitation(sourceId, locator) {
+    const match = /^turn\d+(url|file|block)(\d+)$/.exec(sourceId);
+    const source = match
+      ? (match[1] === "url" ? sources.urls : sources.files)[
+          Number(match[2]) - 1
+        ]
+      : undefined;
+    const label = source?.label || sourceId;
+    const linkLabel = locator ? `${label} · ${locator}` : label;
+
+    if (!source) {
+      return [{ type: "text", value: `⟨${linkLabel}⟩` }];
+    }
+
+    return [
+      { type: "text", value: "⟨" },
+      {
+        type: "link",
+        url: source.href,
+        children: [{ type: "text", value: linkLabel }],
+      },
+      { type: "text", value: "⟩" },
+    ];
+  }
+
+  function transformText(value) {
+    const nodes = [];
+    let cursor = 0;
+    let match;
+    citationPattern.lastIndex = 0;
+
+    while ((match = citationPattern.exec(value))) {
+      if (match.index > cursor) {
+        nodes.push({ type: "text", value: value.slice(cursor, match.index) });
+      }
+      nodes.push(...renderCitation(match[1], match[2]));
+      cursor = citationPattern.lastIndex;
+    }
+
+    if (cursor === 0) return undefined;
+    if (cursor < value.length) {
+      nodes.push({ type: "text", value: value.slice(cursor) });
+    }
+    return nodes;
+  }
+
+  return function remarkCitationMarkers() {
+    return function transformCitationMarkers(tree) {
+      function visit(node) {
+        if (
+          !Array.isArray(node.children) ||
+          ["link", "inlineCode", "code", "html"].includes(node.type)
+        ) {
+          return;
+        }
+
+        const originalChildren = node.children;
+        const children = [];
+        originalChildren.forEach((child, index) => {
+          if (child.type === "text" && typeof child.value === "string") {
+            children.push(...(transformText(child.value) || [child]));
+            return;
+          }
+
+          visit(child);
+
+          if (child.type === "link" && child.url?.startsWith("#file-search/")) {
+            const previous = originalChildren[index - 1];
+            const next = originalChildren[index + 1];
+            const alreadyBracketed =
+              previous?.type === "text" &&
+              previous.value.endsWith("⟨") &&
+              next?.type === "text" &&
+              next.value.startsWith("⟩");
+
+            if (!alreadyBracketed) {
+              children.push({ type: "text", value: "⟨" });
+            }
+            children.push(child);
+            if (!alreadyBracketed) {
+              children.push({ type: "text", value: "⟩" });
+            }
+            return;
+          }
+
+          children.push(child);
+        });
+        node.children = children;
+      }
+
+      visit(tree);
+    };
+  };
 }
 
 function isMarkdownSource(filename = "") {
@@ -107,8 +257,13 @@ export const MessageRender = (props) => {
     () => (
       <>
         <MarkdownHooks
-          children={stripFileSearchCitationMarkers(props.children)}
-          remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
+          children={formatCitationLinkMarkers(props.children)}
+          remarkPlugins={[
+            remarkMath,
+            remarkGfm,
+            remarkBreaks,
+            createCitationMarkerPlugin(props.toolsUsed),
+          ]}
           rehypePlugins={[
             rehypeRaw,
             [
