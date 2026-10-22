@@ -5,6 +5,62 @@
 
 * update image generation model to gpt-image-2.5 ([3562452](https://github.com/fhswf/openai-ui/commit/35624520270addd73c4c5ecc3c5d6848ac87cd61))
 
+## [0.55.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.54.0...openai-ui-v0.55.0) (2026-10-22)
+
+
+### Features
+
+* add axe-core for accessibility testing and enhance MessageInput accessibility ([f103431](https://github.com/fhswf/openai-ui/commit/f1034312dcf2ce6df12536f2358e3662aaf8e946))
+* add axe-core for accessibility testing and enhance MessageInput accessibility ([aad531e](https://github.com/fhswf/openai-ui/commit/aad531e8e8943abb97d14045c9974e6db62c1fd8))
+* Add CreateVectorStoreForm and VectorStoreFiles components ([54d7e79](https://github.com/fhswf/openai-ui/commit/54d7e790dcee6e64104348b9b135440460451553))
+* add share purpose and title fields for custom GPTs and update r… ([a9fba97](https://github.com/fhswf/openai-ui/commit/a9fba97bfc7d5978e420ec8e94f012665452265a))
+* add share purpose and title fields for custom GPTs and update related functionality ([d6b23bd](https://github.com/fhswf/openai-ui/commit/d6b23bd35f7ec714ebc905a391926c5c28fb5cb1))
+* add SVG and PNG logos, update manifest icons ([489f949](https://github.com/fhswf/openai-ui/commit/489f949cf21db80a116080ac763841650ec45551))
+* **chat-sharing:** add ChatShareDialogView component for enhanced chat sharing UI ([c0ddad5](https://github.com/fhswf/openai-ui/commit/c0ddad5af58a04f03c1e6ff18d8d339e5c641197))
+* **chat-sharing:** implement chat sharing functionality with email d… ([efb9c60](https://github.com/fhswf/openai-ui/commit/efb9c60210fa5f9704dd3b08e7f3d402bfaff833))
+* **chat-sharing:** implement chat sharing functionality with email discovery and share links ([cde8100](https://github.com/fhswf/openai-ui/commit/cde8100ad8d20d255760287433f490af0f278c88))
+* enhance accessibility and improve UI elements for better user experience ([eaa6aa2](https://github.com/fhswf/openai-ui/commit/eaa6aa2ad47a235af9e1453d2c9ab39a5898775b))
+* enhance accessibility and improve UI elements for better user experience ([c15b084](https://github.com/fhswf/openai-ui/commit/c15b084f0cf98a39bfea8a4b2eee5ae22541b6ae))
+* implement custom GPT profiles and sharing functionality ([80f74ca](https://github.com/fhswf/openai-ui/commit/80f74cab959ac1be2ce0183a04dfb89912bb6ba5))
+* implement custom GPT profiles and sharing functionality ([d75d8fc](https://github.com/fhswf/openai-ui/commit/d75d8fc69d9f0f0e058e338313ed488940462b16))
+* implement custom GPT summary creation and sharing functionality ([1d77507](https://github.com/fhswf/openai-ui/commit/1d77507c3931d639965e0c001f66328154476dab))
+* **tests:** block service workers for deterministic API request mocks ([a8f74ec](https://github.com/fhswf/openai-ui/commit/a8f74ec1679a988691942336f9031564b0cb4d30))
+* **vector-stores:** add document citation support and update UI for … ([3c11a77](https://github.com/fhswf/openai-ui/commit/3c11a77f1237735bafd574fa69cfd526f0156f76))
+* **vector-stores:** add document citation support and update UI for file search results ([79d4281](https://github.com/fhswf/openai-ui/commit/79d4281647ac65e19288f85f33c4df8d9bc97457))
+* **vector-stores:** add mock service for vector store management and testing ([7a1eba9](https://github.com/fhswf/openai-ui/commit/7a1eba9880be4f3db8b06223313dbf2f082278a1))
+* **vector-stores:** add vector store management dialog ([#179](https://github.com/fhswf/openai-ui/issues/179)) ([b9a274a](https://github.com/fhswf/openai-ui/commit/b9a274acb9f78acd77d16280bf042523c99dca6f))
+* **vector-stores:** add vector store service and base url setting ([#179](https://github.com/fhswf/openai-ui/issues/179)) ([992ae90](https://github.com/fhswf/openai-ui/commit/992ae90de01d426ad563ff1705d39b38b9489962))
+* **vector-stores:** enhance citation handling with stripFileSearchCi… ([f3d66b2](https://github.com/fhswf/openai-ui/commit/f3d66b208812a148f66c9827bdba116474422c94))
+* **vector-stores:** enhance citation handling with stripFileSearchCitationMarkers and isMarkdownSource functions ([676b293](https://github.com/fhswf/openai-ui/commit/676b293d639c4a329248d98cf41557b271f43eb4))
+* **vector-stores:** enhance citation handling with structured marker… ([c147fbf](https://github.com/fhswf/openai-ui/commit/c147fbf5bb97b9c1f2014a8a9bade3ac8b8d9307))
+* **vector-stores:** enhance citation handling with structured markers and citation source mapping ([595c6ed](https://github.com/fhswf/openai-ui/commit/595c6edb30cf29ffbfab15af26a52ea85c73e2d7))
+* **vector-stores:** export EXCERPT constant for use in vector store tests ([8d7a7fd](https://github.com/fhswf/openai-ui/commit/8d7a7fde2bec428ad7cc53ff06537c1d32fa965f))
+* **vector-stores:** implement client-side document search functionality ([c5484c6](https://github.com/fhswf/openai-ui/commit/c5484c658e06e00b490c935cd212bbd440d86a4b))
+* **vector-stores:** improve citation link rendering with brackets and support for multiple links ([97e6cd1](https://github.com/fhswf/openai-ui/commit/97e6cd190f73e1134fdbc30ac58330ccc461e175))
+* **vector-stores:** refactor citation handling and improve Markdown rendering with CopyIcon and CitationDialog ([0bbedcd](https://github.com/fhswf/openai-ui/commit/0bbedcd97d759e8dc14ed29086607ca151649dd1))
+* **vector-stores:** refactor citation handling by introducing CitationAnchor component ([d983358](https://github.com/fhswf/openai-ui/commit/d98335841c03e253bc517d3f0f8a3284954cfb66))
+* **vector-stores:** search active document collections in chat ([#179](https://github.com/fhswf/openai-ui/issues/179)) ([1b00725](https://github.com/fhswf/openai-ui/commit/1b0072527eaab8812ca900891a205df81ce43a39))
+* **vector-stores:** update citation rendering to include brackets and improve link handling ([7b930d3](https://github.com/fhswf/openai-ui/commit/7b930d3b031c535d1ec78e9b2c5e4998c2b5d1b7))
+
+
+### Bug Fixes
+
+* auto-scroll chat to newest message ([2a5ccd7](https://github.com/fhswf/openai-ui/commit/2a5ccd7cdb2e6393732d81c914f3de217778b881))
+* auto-scroll chat to newest message ([eb732ad](https://github.com/fhswf/openai-ui/commit/eb732adbc15bd6390bb17d80d39694d3e796b7fb))
+* replace react-icons with lu-icons for consistency in chat compon… ([be2e65b](https://github.com/fhswf/openai-ui/commit/be2e65baa23b9f917bf09d64982a6b982b777a2d))
+* replace react-icons with lu-icons for consistency in chat components ([1dfe6c0](https://github.com/fhswf/openai-ui/commit/1dfe6c01d194263170b83114f3bbe630fc8544ea))
+* require terms acceptance and retry on AI-Hub key alias conflict ([0fe7f05](https://github.com/fhswf/openai-ui/commit/0fe7f051116bd18c95842606fa4fd8ef9935ea25))
+* require terms acceptance and retry on AI-Hub key alias conflict ([167aa4d](https://github.com/fhswf/openai-ui/commit/167aa4d3abc1318155ca6efc760a902d2f4f002b)), closes [#196](https://github.com/fhswf/openai-ui/issues/196)
+* update share action URL and enhance file type acceptance in mani… ([ee42e87](https://github.com/fhswf/openai-ui/commit/ee42e87109290394d6fc8158cd685570f27b27ec))
+* update share action URL and enhance file type acceptance in manifest ([fca7622](https://github.com/fhswf/openai-ui/commit/fca7622ff55d2eeb98f588b69891b855031795a8))
+* update share action URL to relative path in manifest ([7860ac9](https://github.com/fhswf/openai-ui/commit/7860ac9808cad0a685736f73c7d0d7593f5e43f7))
+* update share action URL to relative path in manifest ([a4336e8](https://github.com/fhswf/openai-ui/commit/a4336e88f2671ece2bfe768fa509fd73ac297282))
+* **workflow:** add GitHub App token creation step for CI ([f8d86f7](https://github.com/fhswf/openai-ui/commit/f8d86f7c35754d470f924fcb5189f11cd8f0d8fe))
+* **workflow:** add missing permission-contents parameter for GitHub App token ([de2c8f7](https://github.com/fhswf/openai-ui/commit/de2c8f7150f1aacd25b2be27648cecfe4a83d4b5))
+* **workflow:** correct parameter name for GitHub App token creation ([36ba902](https://github.com/fhswf/openai-ui/commit/36ba90273ac64e5cc616ca94a31994f38f808251))
+* **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
+* **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
+
 ## [0.54.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.53.0...openai-ui-v0.54.0) (2026-10-18)
 
 
