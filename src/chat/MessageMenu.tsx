@@ -20,10 +20,10 @@ import {
 import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import { useTranslation } from "react-i18next";
-import { IoChatboxOutline, IoCloseOutline } from "react-icons/io5";
+import { IoCloseOutline } from "react-icons/io5";
 import { IoIosSearch, IoIosClose } from "react-icons/io";
 import { MdOutlineDeleteOutline } from "react-icons/md";
-import { RiChatHistoryLine, RiChatNewLine } from "react-icons/ri";
+import { LuHistory, LuMessageSquarePlus } from "react-icons/lu";
 import { Chat, Message } from "./context/types";
 import { Toaster, toaster } from "../components/ui/toaster";
 import { matchesChatQuery } from "./utils/chatSearch";
@@ -147,7 +147,7 @@ export function MessageMenu() {
           title={t("chat_history")}
           onClick={() => setMenuOpen(true)}
         >
-          <RiChatHistoryLine aria-label={t("chat_history")} />
+          <LuHistory aria-label={t("chat_history")} />
         </IconButton>
       </Dialog.Trigger>
       <Dialog.Backdrop />
@@ -295,7 +295,7 @@ export function MessageMenu() {
                   newChat(currentApp);
                 }}
               >
-                <RiChatNewLine />
+                <LuMessageSquarePlus />
                 {t("new_chat")}
               </Button>
               <Spacer />

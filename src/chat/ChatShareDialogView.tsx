@@ -10,7 +10,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { IoCloseOutline, IoShareOutline } from "react-icons/io5";
+import { LuShare, LuX } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
 import { toaster } from "../components/ui/toaster";
 import type { VaultSharingActions } from "./context/types";
@@ -430,7 +430,7 @@ function ShareDialogTrigger({
         variant="ghost"
         onClick={() => setOpen(true)}
       >
-        <IoShareOutline />
+        <LuShare />
       </IconButton>
     </Dialog.Trigger>
   );
@@ -472,7 +472,7 @@ export function ChatShareDialogView(props: ShareDialogViewProps) {
         <Dialog.Content>
           <Dialog.CloseTrigger asChild>
             <IconButton aria-label={t("close")} variant="ghost">
-              <IoCloseOutline />
+              <LuX />
             </IconButton>
           </Dialog.CloseTrigger>
           <ShareDialogHeader />
