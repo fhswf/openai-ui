@@ -3,7 +3,6 @@ import React, {
   useEffect,
   useRef,
   useState,
-  useMemo,
 } from "react";
 import {
   Box,
@@ -220,145 +219,162 @@ function isMarkdownSource(filename = "") {
   return /\.(md|markdown|mdown|mkd|mdx)$/i.test(filename);
 }
 
-export const MessageRender = (props) => {
-  const { options } = useGlobal();
+function CopyIcon({ textRef }) {
+  const [Icon, setIcon] = useState(() => LuClipboardCopy);
+
+  const handleCopy = async () => {
+    try {
+      const text = textRef.current.innerText;
+      await navigator.clipboard.writeText(text);
+      setIcon(() => LuClipboardCheck);
+      setTimeout(() => setIcon(() => LuClipboardCopy), 1500);
+    } catch (error) {
+      console.error("Failed to copy: ", error);
+    }
+  };
+
+  return (
+    <span className="copy" onClick={handleCopy}>
+      <Icon />
+    </span>
+  );
+}
+
+function MarkdownCode({ node: _node, className, children, style, textRef, ...rest }) {
+  const match = /language-(\w+)/.exec(className || "");
+  if (!match) return <code {...rest}>{children}</code>;
+
+  return (
+    <>
+      <div className="code-header">
+        <CopyIcon textRef={textRef} />
+      </div>
+      <SyntaxHighlighter
+        ref={textRef}
+        {...rest}
+        children={children}
+        style={style}
+        language={match[1]}
+        PreTag="div"
+      />
+    </>
+  );
+}
+
+function MarkdownContent({ children, toolsUsed, onOpenCitation, style, textRef }) {
+  return (
+    <MarkdownHooks
+      children={formatCitationLinkMarkers(children)}
+      remarkPlugins={[
+        remarkMath,
+        remarkGfm,
+        remarkBreaks,
+        createCitationMarkerPlugin(toolsUsed),
+      ]}
+      rehypePlugins={[
+        rehypeRaw,
+        [
+          rehypeSanitize,
+          {
+            ...defaultSchema,
+            attributes: {
+              ...defaultSchema.attributes,
+              code: [
+                ...(defaultSchema.attributes?.code || []),
+                ["className", /^language-./, "math-inline", "math-display"],
+              ],
+            },
+          },
+        ],
+        rehypeKatex,
+      ]}
+      components={{
+        a: (anchorProps) => (
+          <CitationAnchor
+            {...anchorProps}
+            toolsUsed={toolsUsed}
+            onOpenCitation={onOpenCitation}
+          />
+        ),
+        code: (codeProps) => (
+          <MarkdownCode {...codeProps} style={style} textRef={textRef} />
+        ),
+      }}
+    />
+  );
+}
+
+function CitationDialogBody({ citation }) {
   const { t } = useTranslation();
-  const style = options.general.theme === "dark" ? oneDark : oneLight;
-  const [citationDialog, setCitationDialog] = useState(null);
+  const source = citation?.source;
+  if (!source) return <Text>{t("file_search_source_unavailable")}</Text>;
 
-  const textRef = useRef(null);
-
-  function CopyIcon() {
-    const [Icon, setIcon] = useState(() => LuClipboardCopy);
-
-    const handleCopy = async (e) => {
-      try {
-        console.log("handleCopy: %o", textRef.current.innerText);
-
-        const text = textRef.current.innerText;
-        await navigator.clipboard.writeText(text);
-        setIcon(() => LuClipboardCheck);
-        setTimeout(() => {
-          setIcon(() => LuClipboardCopy);
-        }, 1500);
-      } catch (err) {
-        console.error("Failed to copy: ", err);
-      }
-    };
-
+  if (isMarkdownSource(source.filename)) {
     return (
-      <span className="copy" onClick={handleCopy}>
-        <Icon />
-      </span>
+      <Box className="z-ui-markdown" userSelect="text">
+        <MessageRender>{source.text}</MessageRender>
+      </Box>
     );
   }
 
-  const rendered = useMemo(
-    () => (
-      <>
-        <MarkdownHooks
-          children={formatCitationLinkMarkers(props.children)}
-          remarkPlugins={[
-            remarkMath,
-            remarkGfm,
-            remarkBreaks,
-            createCitationMarkerPlugin(props.toolsUsed),
-          ]}
-          rehypePlugins={[
-            rehypeRaw,
-            [
-              rehypeSanitize,
-              {
-                ...defaultSchema,
-                attributes: {
-                  ...defaultSchema.attributes,
-                  code: [
-                    ...(defaultSchema.attributes?.code || []),
-                    ["className", /^language-./, "math-inline", "math-display"],
-                  ],
-                },
-              },
-            ],
-            rehypeKatex,
-          ]}
-          components={{
-            a: (anchorProps) => (
-              <CitationAnchor
-                {...anchorProps}
-                toolsUsed={props.toolsUsed}
-                onOpenCitation={setCitationDialog}
-              />
-            ),
-            code({ node, className, children, ...rest }) {
-              const match = /language-(\w+)/.exec(className || "");
-              return match ? (
-                <>
-                  <div className="code-header">
-                    <CopyIcon />
-                  </div>
-                  <SyntaxHighlighter
-                    ref={textRef}
-                    {...rest}
-                    children={children}
-                    style={style}
-                    language={match[1]}
-                    PreTag="div"
-                  />
-                </>
-              ) : (
-                <code {...rest}>{children}</code>
-              );
-            },
-          }}
-        />
-        <Dialog.Root
-          open={Boolean(citationDialog)}
-          onOpenChange={(event) => !event.open && setCitationDialog(null)}
-          size="xl"
-          scrollBehavior="inside"
-        >
-          <Portal>
-            <Dialog.Backdrop />
-            <Dialog.Positioner>
-              <Dialog.Content data-testid="file-search-citation-dialog">
-                <Dialog.Header>
-                  <Dialog.Title>
-                    {citationDialog?.source?.filename || t("file_search_source_title")}
-                  </Dialog.Title>
-                </Dialog.Header>
-                <Dialog.CloseTrigger asChild>
-                  <CloseButton size="sm" onClick={() => setCitationDialog(null)} />
-                </Dialog.CloseTrigger>
-                <Dialog.Body>
-                  {citationDialog?.source ? (
-                    isMarkdownSource(citationDialog.source.filename) ? (
-                      <Box className="z-ui-markdown" userSelect="text">
-                        <MessageRender>
-                          {citationDialog.source.text}
-                        </MessageRender>
-                      </Box>
-                    ) : (
-                      <Box whiteSpace="pre-wrap" userSelect="text">
-                        <Text fontSize="sm" color="fg.muted" mb={3}>
-                          {t("file_search_source_title")}
-                        </Text>
-                        {citationDialog.source.text}
-                      </Box>
-                    )
-                  ) : (
-                    <Text>{t("file_search_source_unavailable")}</Text>
-                  )}
-                </Dialog.Body>
-              </Dialog.Content>
-            </Dialog.Positioner>
-          </Portal>
-        </Dialog.Root>
-      </>
-    ),
-    [props.children, props.toolsUsed, style, citationDialog, t]
+  return (
+    <Box whiteSpace="pre-wrap" userSelect="text">
+      <Text fontSize="sm" color="fg.muted" mb={3}>
+        {t("file_search_source_title")}
+      </Text>
+      {source.text}
+    </Box>
   );
+}
 
-  return rendered;
+function CitationDialog({ citation, onClose }) {
+  const { t } = useTranslation();
+  return (
+    <Dialog.Root
+      open={Boolean(citation)}
+      onOpenChange={(event) => !event.open && onClose()}
+      size="xl"
+      scrollBehavior="inside"
+    >
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content data-testid="file-search-citation-dialog">
+            <Dialog.Header>
+              <Dialog.Title>
+                {citation?.source?.filename || t("file_search_source_title")}
+              </Dialog.Title>
+            </Dialog.Header>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton size="sm" onClick={onClose} />
+            </Dialog.CloseTrigger>
+            <Dialog.Body>
+              <CitationDialogBody citation={citation} />
+            </Dialog.Body>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  );
+}
+
+export const MessageRender = (props) => {
+  const { options } = useGlobal();
+  const [citation, setCitation] = useState(null);
+  const textRef = useRef(null);
+  const style = options.general.theme === "dark" ? oneDark : oneLight;
+
+  return (
+    <>
+      <MarkdownContent
+        {...props}
+        onOpenCitation={setCitation}
+        style={style}
+        textRef={textRef}
+      />
+      <CitationDialog citation={citation} onClose={() => setCitation(null)} />
+    </>
+  );
 };
 
 type RendererProps = {
