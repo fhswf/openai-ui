@@ -37,6 +37,7 @@ import { logger, SeverityNumber } from "./utils/instrumentation";
 
 import { ErrorFallback } from "./ErrorFallback";
 import { ShareTargetHandler } from "./ShareTargetHandler";
+import { ZkChatShareHandler } from "./ZkChatShareHandler";
 
 export default function Chat() {
   const { is, user } = useGlobal();
@@ -121,6 +122,7 @@ export default function Chat() {
       >
         <Toaster />
         <ShareTargetHandler />
+        <ZkChatShareHandler />
 
         <GridItem gridArea={"header"}>
           <MessageHeader

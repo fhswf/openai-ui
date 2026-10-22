@@ -17,6 +17,7 @@ import {
   GlobalActions,
   GlobalState,
   GlobalActionType,
+  VaultSharingActions,
 } from "./types";
 import {
   loadState,
@@ -45,8 +46,12 @@ import { loadPrivateKey } from "../utils/zeroKnowledgeKeystore";
 import { isPrivateKeyForUser } from "../utils/zeroKnowledgeStorage";
 import { matchesChatQuery } from "../utils/chatSearch";
 import {
+  bufferToBase64Url,
   decryptAttachmentData,
+  LEGACY_RSA_KEY_ALGORITHM,
   getAttachmentAdditionalData,
+  unwrapChatKey,
+  wrapChatKey,
 } from "../utils/zeroKnowledgeCrypto";
 import {
   getInputFileMimeType,
@@ -279,6 +284,110 @@ export const ChatProvider = ({ children }) => {
     lazyHistory,
     dispatch,
   ]);
+
+  const syncVaultBeforeSharing = useCallback(async () => {
+    while (vaultSyncRunning.current) {
+      vaultSyncRequested.current = true;
+      await new Promise((resolve) => window.setTimeout(resolve, 25));
+    }
+    vaultSyncRunning.current = true;
+    try {
+      do {
+        vaultSyncRequested.current = false;
+        const credentials = vaultCredentials.current;
+        if (!credentials || !latestState.current.options.general.zkStorage) {
+          throw new Error("Unlock encrypted chat storage before sharing chats");
+        }
+        await syncVaultChats(
+          reduceState(latestState.current).chat,
+          credentials.userKey,
+          vaultCache.current
+        );
+      } while (vaultSyncRequested.current);
+    } finally {
+      vaultSyncRunning.current = false;
+    }
+  }, []);
+
+  const getChatKeyForSharing = useCallback(async (chatId: string) => {
+    const credentials = vaultCredentials.current;
+    if (
+      !credentials ||
+      !latestState.current.options.general.zkStorage
+    ) {
+      throw new Error("Unlock encrypted chat storage before sharing chats");
+    }
+    await syncVaultBeforeSharing();
+    if (!vaultCache.current.owners.has(chatId)) {
+      throw new Error("This chat is not available in the encrypted store yet");
+    }
+    const encrypted = await chatVault.getChat(chatId);
+    const envelope = encrypted.envelopes.find(
+      (item) => item.recipientId === credentials.userKey.userId
+    );
+    if (!envelope) {
+      throw new Error("You do not have a key for this chat");
+    }
+    return unwrapChatKey(envelope, credentials.privateKey);
+  }, [syncVaultBeforeSharing]);
+
+  const shareChatWithUser = useCallback(
+    async (chatId: string, email: string) => {
+      const chatKey = await getChatKeyForSharing(chatId);
+      const recipient = await chatVault.lookupKeyByEmail(email.trim());
+      const wrappedKey = await wrapChatKey(
+        chatKey,
+        recipient.publicKey,
+        recipient.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM
+      );
+      await chatVault.shareChat(chatId, {
+        recipientId: recipient.userId,
+        ...wrappedKey,
+      });
+    },
+    [getChatKeyForSharing]
+  );
+
+  const createChatShareLink = useCallback(
+    async (chatId: string) => {
+      const chatKey = await getChatKeyForSharing(chatId);
+      const share = await chatVault.createShareLink(chatId);
+      const rawKey = await crypto.subtle.exportKey("raw", chatKey);
+      const url = new URL(window.location.href);
+      url.search = "";
+      url.hash = new URLSearchParams({
+        zkShare: share.token,
+        zkKey: bufferToBase64Url(rawKey),
+      }).toString();
+      return {
+        url: url.toString(),
+        token: share.token,
+        expiresAt: share.expiresAt,
+      };
+    },
+    [getChatKeyForSharing]
+  );
+
+  const revokeChatShareLink = useCallback(
+    async (chatId: string, token: string) => {
+      await chatVault.revokeShareLink(chatId, token);
+    },
+    []
+  );
+
+  const importSharedChat = useCallback(
+    (sharedChat: Chat) => {
+      const current = latestState.current;
+      dispatch({
+        type: GlobalActionType.SET_STATE,
+        payload: {
+          chat: [sharedChat, ...(current.chat ?? [])],
+          currentChat: 0,
+        },
+      });
+    },
+    [dispatch]
+  );
 
   useEffect(() => {
     if (!zkStorageEnabled || !vaultReady) {
@@ -597,6 +706,10 @@ export const ChatProvider = ({ children }) => {
         ...actionList,
         loadChatMessages,
         searchChats,
+        shareChatWithUser,
+        createChatShareLink,
+        revokeChatShareLink,
+        importSharedChat,
         vaultReady,
       }}
     >
@@ -608,5 +721,5 @@ export const ChatProvider = ({ children }) => {
 };
 
 export const useGlobal = () =>
-  useContext<GlobalActions & GlobalState>(ChatContext);
+  useContext<GlobalActions & GlobalState & VaultSharingActions>(ChatContext);
 export const useMessages = () => useContext(MessagesContext);

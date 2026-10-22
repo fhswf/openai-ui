@@ -160,6 +160,20 @@ export type GlobalActions = {
   vaultReady: boolean;
 };
 
+export type VaultSharingActions = {
+  /** Share a vault-backed chat with an account discoverable by verified email. */
+  shareChatWithUser: (chatId: string, email: string) => Promise<void>;
+  /** Create a short-lived capability link whose decryption key stays in its fragment. */
+  createChatShareLink: (chatId: string) => Promise<{
+    url: string;
+    token: string;
+    expiresAt: string;
+  }>;
+  revokeChatShareLink: (chatId: string, token: string) => Promise<void>;
+  /** Add a decrypted chat-link copy to local history. */
+  importSharedChat: (chat: Chat) => void;
+};
+
 export interface MessageAttachment {
   id?: string;
   name: string;

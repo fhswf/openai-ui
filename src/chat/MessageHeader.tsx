@@ -82,6 +82,7 @@ import {
   ToolChangeRequest,
 } from "./utils/mcpServices";
 import { DocumentsMenu } from "./DocumentsMenu";
+import { ChatShareDialog } from "./ChatShareDialog";
 
 import "../assets/icon/style.css";
 
@@ -1045,6 +1046,7 @@ function HeaderActionList({
   user,
 }: HeaderActionListProps) {
   const { t } = useTranslation();
+  const { options, vaultReady } = useGlobal();
 
   const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement | null;
@@ -1075,6 +1077,11 @@ function HeaderActionList({
       <HeaderActionItem label={t("chat_history")}>
         <MessageMenu />
       </HeaderActionItem>
+      {options.general.zkStorage && vaultReady && (
+        <HeaderActionItem label={t("share_chat")}>
+          <ChatShareDialog />
+        </HeaderActionItem>
+      )}
       {openai.mode === "assistant" && (
         <HeaderActionItem label={t("chat_settings")}>
           <AssistantSettingsButton

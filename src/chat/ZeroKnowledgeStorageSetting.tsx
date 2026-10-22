@@ -330,6 +330,37 @@ export function ZeroKnowledgeStorageSetting() {
     }
   };
 
+  const setEmailDiscovery = async (enabled: boolean) => {
+    setBusy(true);
+    try {
+      const result = await chatVault.setIdentityDisclosure(
+        enabled ? "profile" : "subject"
+      );
+      setVaultKey((current) =>
+        current ? { ...current, identityDisclosure: result.identityDisclosure } : current
+      );
+      toaster.create({
+        title: t(
+          enabled
+            ? "zk_storage_email_discovery_enabled"
+            : "zk_storage_email_discovery_disabled"
+        ),
+        duration: 5000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Could not change email discovery:", error);
+      toaster.create({
+        title: t("zk_storage_error"),
+        description: error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const disable = async () => {
     const confirmed = window.confirm(t("zk_storage_disable_confirm"));
     if (!confirmed) return;
@@ -409,6 +440,21 @@ export function ZeroKnowledgeStorageSetting() {
             {t("zk_lazy_history_label")}
           </Switch>
           <Field.HelperText>{t("zk_lazy_history_help")}</Field.HelperText>
+        </Field.Root>
+      )}
+      {vaultKey && keyStatus === "unlocked" && (
+        <Field.Root mt="3">
+          <Switch
+            id="zk-email-discovery"
+            checked={vaultKey.identityDisclosure === "profile"}
+            disabled={busy}
+            onChange={(event) => void setEmailDiscovery(event.target.checked)}
+          >
+            {t("zk_storage_email_discovery_label")}
+          </Switch>
+          <Field.HelperText>
+            {t("zk_storage_email_discovery_help")}
+          </Field.HelperText>
         </Field.Root>
       )}
       {vaultKey && (

@@ -296,6 +296,7 @@ export async function registerAdditionalPasskey(
     publicKey: existing.publicKey,
     publicKeyAlgorithm:
       existing.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM,
+    identityDisclosure: existing.identityDisclosure ?? "subject",
     encryptedSk: encryptedPrivateKey.encryptedKey,
     encryptedSkIv: encryptedPrivateKey.iv,
     challenge: challenge.challenge,
