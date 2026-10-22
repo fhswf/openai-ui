@@ -44,18 +44,22 @@ function CitationAnchor({
   ...rest
 }) {
   return (
-    <a
-      href={href}
-      {...rest}
-      onClick={(event) => {
-        if (!href?.startsWith("#file-search/")) return;
-        event.preventDefault();
-        const source = findFileSearchCitation(href, toolsUsed || []);
-        onOpenCitation(source ? { source } : { unavailable: true });
-      }}
-    >
-      {children}
-    </a>
+    <>
+      {"⟨"}
+      <a
+        href={href}
+        {...rest}
+        onClick={(event) => {
+          if (!href?.startsWith("#file-search/")) return;
+          event.preventDefault();
+          const source = findFileSearchCitation(href, toolsUsed || []);
+          onOpenCitation(source ? { source } : { unavailable: true });
+        }}
+      >
+        {children}
+      </a>
+      {"⟩"}
+    </>
   );
 }
 
@@ -72,7 +76,7 @@ function formatCitationLinkMarkers(markdown) {
     "g"
   );
   const wrapped = markdown.replace(wrappedLinksPattern, (_match, links) =>
-    `⟨${links.split(CITATION_DELIMITER).join("⟩ ⟨")}⟩`
+    links.split(CITATION_DELIMITER).join(" ")
   );
   return wrapped;
 }
@@ -130,19 +134,13 @@ function createCitationMarkerPlugin(toolsUsed) {
     const label = source?.label || sourceId;
     const linkLabel = locator ? `${label} · ${locator}` : label;
 
-    if (!source) {
-      return [{ type: "text", value: `⟨${linkLabel}⟩` }];
-    }
+    if (!source) return [{ type: "text", value: `⟨${linkLabel}⟩` }];
 
-    return [
-      { type: "text", value: "⟨" },
-      {
-        type: "link",
-        url: source.href,
-        children: [{ type: "text", value: linkLabel }],
-      },
-      { type: "text", value: "⟩" },
-    ];
+    return [{
+      type: "link",
+      url: source.href,
+      children: [{ type: "text", value: linkLabel }],
+    }];
   }
 
   function transformText(value) {
@@ -178,33 +176,13 @@ function createCitationMarkerPlugin(toolsUsed) {
 
         const originalChildren = node.children;
         const children = [];
-        originalChildren.forEach((child, index) => {
+        originalChildren.forEach((child) => {
           if (child.type === "text" && typeof child.value === "string") {
             children.push(...(transformText(child.value) || [child]));
             return;
           }
 
           visit(child);
-
-          if (child.type === "link" && child.url?.startsWith("#file-search/")) {
-            const previous = originalChildren[index - 1];
-            const next = originalChildren[index + 1];
-            const alreadyBracketed =
-              previous?.type === "text" &&
-              previous.value.endsWith("⟨") &&
-              next?.type === "text" &&
-              next.value.startsWith("⟩");
-
-            if (!alreadyBracketed) {
-              children.push({ type: "text", value: "⟨" });
-            }
-            children.push(child);
-            if (!alreadyBracketed) {
-              children.push({ type: "text", value: "⟩" });
-            }
-            return;
-          }
-
           children.push(child);
         });
         node.children = children;
