@@ -63,74 +63,114 @@ async function restoreSharedAttachments(
   const unavailable = new Set<string>();
 
   for (const reference of references) {
-    if (renamed.has(reference.opfsName) || unavailable.has(reference.opfsName)) {
+    if (
+      renamed.has(reference.opfsName) ||
+      unavailable.has(reference.opfsName)
+    ) {
       continue;
     }
-    const attachmentId = await getAttachmentStorageId(
-      reference.attachmentId,
-      reference.opfsName
+    const restoredName = await restoreAttachment(
+      reference,
+      originalChatId,
+      token,
+      chatKey,
+      opfs
     );
-    try {
-      const encrypted = await chatVault.redeemShareLinkAttachment(
-        token,
-        attachmentId
-      );
-      const plaintext = await decryptAttachmentData(
-        encrypted,
-        chatKey,
-        getAttachmentAdditionalData(originalChatId, attachmentId)
-      );
-      const extension = reference.opfsName.match(/\.[^./\\]+$/)?.[0] ?? "";
-      const newName = `attachment-${uuidv7()}${extension}`;
-      const handle = await opfs.getFileHandle(newName, { create: true });
-      const writable = await handle.createWritable();
-      await writable.write(plaintext);
-      await writable.close();
-      renamed.set(reference.opfsName, newName);
-    } catch (error) {
-      if (error instanceof VaultError && error.status === 404) {
-        unavailable.add(reference.opfsName);
-        continue;
-      }
-      throw error;
-    }
+    if (restoredName) renamed.set(reference.opfsName, restoredName);
+    else unavailable.add(reference.opfsName);
   }
 
+  rewriteChatAttachments(chat, renamed, unavailable);
+}
+
+async function restoreAttachment(
+  reference: ReturnType<typeof getChatAttachmentReferences>[number],
+  originalChatId: string,
+  token: string,
+  chatKey: CryptoKey,
+  opfs: FileSystemDirectoryHandle
+): Promise<string | null> {
+  const attachmentId = await getAttachmentStorageId(
+    reference.attachmentId,
+    reference.opfsName
+  );
+  try {
+    const encrypted = await chatVault.redeemShareLinkAttachment(
+      token,
+      attachmentId
+    );
+    const plaintext = await decryptAttachmentData(
+      encrypted,
+      chatKey,
+      getAttachmentAdditionalData(originalChatId, attachmentId)
+    );
+    const extension = reference.opfsName.match(/\.[^./\\]+$/)?.[0] ?? "";
+    const newName = `attachment-${uuidv7()}${extension}`;
+    const handle = await opfs.getFileHandle(newName, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(plaintext);
+    await writable.close();
+    return newName;
+  } catch (error) {
+    if (error instanceof VaultError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+function rewriteChatAttachments(
+  chat: Chat,
+  renamed: Map<string, string>,
+  unavailable: Set<string>
+) {
   for (const message of chat.messages ?? []) {
     if (Array.isArray(message.content)) {
-      message.content = message.content.filter((item: any) => {
-        const imageName = item?.image_url?.startsWith("opfs://")
-          ? item.image_url.slice("opfs://".length)
-          : null;
-        const fileName = item?.opfsName || item?.filename;
-        const oldName = imageName ?? (item?.type === "input_file" ? fileName : null);
-        if (!oldName) return true;
-        if (unavailable.has(oldName)) return false;
-        const newName = renamed.get(oldName);
-        if (!newName) return true;
-        if (imageName) item.image_url = `opfs://${newName}`;
-        if (item?.type === "input_file") item.opfsName = newName;
-        return true;
-      });
+      message.content = message.content.filter((item: any) =>
+        rewriteContentAttachment(item, renamed, unavailable)
+      );
     }
-
-    if (message.images && typeof message.images === "object") {
-      for (const [key, image] of Object.entries(message.images) as [string, any][]) {
-        const oldName = image?.url?.startsWith("opfs://")
-          ? image.url.slice("opfs://".length)
-          : image?.name;
-        if (!oldName) continue;
-        if (unavailable.has(oldName)) {
-          delete message.images[key];
-          continue;
-        }
-        const newName = renamed.get(oldName);
-        if (newName) {
-          image.url = `opfs://${newName}`;
-        }
-      }
-    }
+    rewriteImageAttachments(message.images, renamed, unavailable);
   }
+}
+
+function rewriteContentAttachment(
+  item: any,
+  renamed: Map<string, string>,
+  unavailable: Set<string>
+) {
+  const imageName = getOpfsName(item?.image_url);
+  const fileName = item?.opfsName || item?.filename;
+  const oldName = imageName ?? (item?.type === "input_file" ? fileName : null);
+  if (!oldName) return true;
+  if (unavailable.has(oldName)) return false;
+  const newName = renamed.get(oldName);
+  if (!newName) return true;
+  if (imageName) item.image_url = `opfs://${newName}`;
+  if (item?.type === "input_file") item.opfsName = newName;
+  return true;
+}
+
+function rewriteImageAttachments(
+  images: any,
+  renamed: Map<string, string>,
+  unavailable: Set<string>
+) {
+  if (!images || typeof images !== "object") return;
+  for (const [key, image] of Object.entries(images) as [string, any][]) {
+    const oldName = getOpfsName(image?.url) ?? image?.name;
+    if (!oldName) continue;
+    if (unavailable.has(oldName)) {
+      delete images[key];
+      continue;
+    }
+    const newName = renamed.get(oldName);
+    if (newName) image.url = `opfs://${newName}`;
+  }
+}
+
+function getOpfsName(url: unknown): string | null {
+  return typeof url === "string" && url.startsWith("opfs://")
+    ? url.slice("opfs://".length)
+    : null;
 }
 
 export function ZkChatShareHandler() {
@@ -155,7 +195,12 @@ export function ZkChatShareHandler() {
       );
       const encrypted = await chatVault.redeemShareLink(params.token);
       const shared = await decryptChatData<Chat>(encrypted, chatKey);
-      await restoreSharedAttachments(shared, encrypted.id, params.token, chatKey);
+      await restoreSharedAttachments(
+        shared,
+        encrypted.id,
+        params.token,
+        chatKey
+      );
       const imported: Chat = {
         ...shared,
         id: uuidv7(),
@@ -174,7 +219,8 @@ export function ZkChatShareHandler() {
       console.error("Could not open the shared encrypted chat:", error);
       toaster.create({
         title: t("share_chat_link_load_error"),
-        description: error instanceof Error ? error.message : t("unknown_error"),
+        description:
+          error instanceof Error ? error.message : t("unknown_error"),
         duration: 8000,
         type: "error",
       });
