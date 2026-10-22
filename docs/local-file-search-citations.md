@@ -21,11 +21,13 @@ For example, a citation can look like:
 ```
 
 The destination is a chat-local permalink. In the chat UI, clicking it opens a
-dialog with the exact text chunk returned for that result. The model receives
-this complete Markdown link in each result's `markdown_citation` field and is
-instructed to copy it for each excerpt used. The tool-usage display keeps its
-short preview, while `source_text` retains the complete passage for citation
-links after the chat is saved and reopened.
+dialog with the exact text chunk returned for that result. Markdown source
+files render as Markdown in the dialog; other source types render as plain
+text. OpenAI citation wrapper markers around local links are removed while
+rendering. The model receives this complete Markdown link in each result's
+`markdown_citation` field and is instructed to copy it for each excerpt used.
+The tool-usage display keeps its short preview, while `source_text` retains the
+complete passage for citation links after the chat is saved and reopened.
 
 ## Data flow
 
