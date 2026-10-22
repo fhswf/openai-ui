@@ -12,7 +12,7 @@ on:
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
@@ -30,11 +30,11 @@ jobs:
       
   build:
     needs: release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: ci-install token
         id: cicd
-        uses: getsentry/action-github-app-token@v2
+        uses: getsentry/action-github-app-token@v4
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -46,7 +46,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/fhswf/openai-ui            
@@ -61,17 +61,17 @@ jobs:
             type=raw,value=${{ needs.release.outputs.tag_name }},enable=${{ needs.release.outputs.release_created == 'true' }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
         
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -82,7 +82,7 @@ jobs:
             VERSION=${{ needs.release.outputs.release_created == 'true' && needs.release.outputs.tag_name || github.sha }}
 
       - name: Setup Kustomize
-        uses: imranismail/setup-kustomize@v1
+        uses: imranismail/setup-kustomize@v3
 
       - name: Update Staging Kustomize Image
         run: |
@@ -96,7 +96,7 @@ jobs:
           kustomize edit set image ghcr.io/fhswf/openai-ui=ghcr.io/fhswf/openai-ui:${{ needs.release.outputs.tag_name }}
 
       - name: Commit Kustomize Updates
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chore: update kustomize images [skip ci]"
           file_pattern: "k8s/overlays/**/kustomization.yaml"

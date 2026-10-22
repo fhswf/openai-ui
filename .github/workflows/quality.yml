@@ -20,7 +20,7 @@ env:
 jobs:
   build:
     timeout-minutes: 20
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -47,7 +47,7 @@ jobs:
     name: Playwright Auth Setup
     timeout-minutes: 15
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -98,7 +98,7 @@ jobs:
     name: Playwright Chromium ${{ matrix.shard }}/${{ matrix.total_shards }}
     timeout-minutes: 35
     needs: [build, playwright-auth]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -170,7 +170,7 @@ jobs:
     name: Playwright Cross-Browser Smoke
     timeout-minutes: 35
     needs: [build, playwright-auth]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -236,7 +236,7 @@ jobs:
   quality-summary:
     name: Quality Summary
     needs: [playwright-chromium, playwright-smoke]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: ${{ always() && !cancelled() }}
     permissions:
       contents: read

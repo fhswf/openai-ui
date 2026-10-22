@@ -7,7 +7,7 @@ on:
 
 jobs:
   prune:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Prune
       uses: vlaurin/action-ghcr-prune@v0.6.0
