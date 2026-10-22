@@ -60,13 +60,22 @@ function CitationAnchor({
   );
 }
 
-function stripCitationLinkMarkers(markdown) {
-  return typeof markdown === "string"
-    ? markdown.replace(
-        /\uE200(\[[^\n]*?\]\((?:<[^>\n]+>|(?:\\.|[^()\s])*(?:\([^()\s]*\)(?:\\.|[^()\s])*)*)(?:\s+["'][^"'\n]*["'])?\))\uE201/g,
-        "$1"
-      )
-    : markdown;
+const CITATION_START = "\uE200";
+const CITATION_DELIMITER = "\uE202";
+const CITATION_STOP = "\uE201";
+const MARKDOWN_LINK_PATTERN = String.raw`\[[^\n]*?\]\((?:<[^>\n]+>|(?:\\.|[^()\s])*(?:\([^()\s]*\)(?:\\.|[^()\s])*)*)(?:\s+["'][^"'\n]*["'])?\)`;
+
+function formatCitationLinkMarkers(markdown) {
+  if (typeof markdown !== "string") return markdown;
+
+  const wrappedLinksPattern = new RegExp(
+    `${CITATION_START}(${MARKDOWN_LINK_PATTERN}(?:${CITATION_DELIMITER}${MARKDOWN_LINK_PATTERN})*)${CITATION_STOP}`,
+    "g"
+  );
+  const wrapped = markdown.replace(wrappedLinksPattern, (_match, links) =>
+    `⟨${links.split(CITATION_DELIMITER).join("⟩ ⟨")}⟩`
+  );
+  return wrapped;
 }
 
 function citationSourceMap(toolsUsed = []) {
@@ -168,13 +177,38 @@ function createCitationMarkerPlugin(toolsUsed) {
           return;
         }
 
-        node.children = node.children.flatMap((child) => {
+        const originalChildren = node.children;
+        const children = [];
+        originalChildren.forEach((child, index) => {
           if (child.type === "text" && typeof child.value === "string") {
-            return transformText(child.value) || [child];
+            children.push(...(transformText(child.value) || [child]));
+            return;
           }
+
           visit(child);
-          return [child];
+
+          if (child.type === "link" && child.url?.startsWith("#file-search/")) {
+            const previous = originalChildren[index - 1];
+            const next = originalChildren[index + 1];
+            const alreadyBracketed =
+              previous?.type === "text" &&
+              previous.value.endsWith("⟨") &&
+              next?.type === "text" &&
+              next.value.startsWith("⟩");
+
+            if (!alreadyBracketed) {
+              children.push({ type: "text", value: "⟨" });
+            }
+            children.push(child);
+            if (!alreadyBracketed) {
+              children.push({ type: "text", value: "⟩" });
+            }
+            return;
+          }
+
+          children.push(child);
         });
+        node.children = children;
       }
 
       visit(tree);
@@ -223,7 +257,7 @@ export const MessageRender = (props) => {
     () => (
       <>
         <MarkdownHooks
-          children={stripCitationLinkMarkers(props.children)}
+          children={formatCitationLinkMarkers(props.children)}
           remarkPlugins={[
             remarkMath,
             remarkGfm,
