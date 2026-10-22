@@ -1,14 +1,19 @@
 import React, {
-  memo,
   forwardRef,
   useEffect,
   useRef,
   useState,
   useMemo,
 } from "react";
-import { Skeleton, SkeletonText } from "@chakra-ui/react";
-import { IconButton } from "@chakra-ui/react";
-import { Tooltip } from "../components/ui/tooltip";
+import {
+  Box,
+  CloseButton,
+  Dialog,
+  Portal,
+  Skeleton,
+  SkeletonText,
+  Text,
+} from "@chakra-ui/react";
 import { LuClipboardCheck } from "react-icons/lu";
 import { LuClipboardCopy } from "react-icons/lu";
 import MarkdownHooks from "react-markdown";
@@ -27,17 +32,41 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import "./style/markdown.less";
 import "katex/dist/katex.min.css";
 import { useTranslation } from "react-i18next";
+import { findFileSearchCitation } from "./utils/fileSearch";
+
+function CitationAnchor({
+  href,
+  children,
+  toolsUsed,
+  onOpenCitation,
+  ...rest
+}) {
+  return (
+    <a
+      href={href}
+      {...rest}
+      onClick={(event) => {
+        if (!href?.startsWith("#file-search/")) return;
+        event.preventDefault();
+        const source = findFileSearchCitation(href, toolsUsed || []);
+        onOpenCitation(source ? { source } : { unavailable: true });
+      }}
+    >
+      {children}
+    </a>
+  );
+}
 
 export const MessageRender = (props) => {
   const { options } = useGlobal();
+  const { t } = useTranslation();
   const style = options.general.theme === "dark" ? oneDark : oneLight;
+  const [citationDialog, setCitationDialog] = useState(null);
 
   const textRef = useRef(null);
 
-  function CopyIcon(props) {
-    const { value, className } = props;
-    const [icon, setIcon] = useState(LuClipboardCopy);
-    const { t } = useTranslation();
+  function CopyIcon() {
+    const [Icon, setIcon] = useState(() => LuClipboardCopy);
 
     const handleCopy = async (e) => {
       try {
@@ -45,9 +74,9 @@ export const MessageRender = (props) => {
 
         const text = textRef.current.innerText;
         await navigator.clipboard.writeText(text);
-        setIcon(LuClipboardCheck);
+        setIcon(() => LuClipboardCheck);
         setTimeout(() => {
-          setIcon(LuClipboardCopy);
+          setIcon(() => LuClipboardCopy);
         }, 1500);
       } catch (err) {
         console.error("Failed to copy: ", err);
@@ -56,58 +85,101 @@ export const MessageRender = (props) => {
 
     return (
       <span className="copy" onClick={handleCopy}>
-        {icon}
+        <Icon />
       </span>
     );
   }
 
   const rendered = useMemo(
     () => (
-      <MarkdownHooks
-        children={props.children}
-        remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
-        rehypePlugins={[
-          rehypeRaw,
-          [
-            rehypeSanitize,
-            {
-              ...defaultSchema,
-              attributes: {
-                ...defaultSchema.attributes,
-                code: [
-                  ...(defaultSchema.attributes?.code || []),
-                  ["className", /^language-./, "math-inline", "math-display"],
-                ],
+      <>
+        <MarkdownHooks
+          children={props.children}
+          remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
+          rehypePlugins={[
+            rehypeRaw,
+            [
+              rehypeSanitize,
+              {
+                ...defaultSchema,
+                attributes: {
+                  ...defaultSchema.attributes,
+                  code: [
+                    ...(defaultSchema.attributes?.code || []),
+                    ["className", /^language-./, "math-inline", "math-display"],
+                  ],
+                },
               },
+            ],
+            rehypeKatex,
+          ]}
+          components={{
+            a: (anchorProps) => (
+              <CitationAnchor
+                {...anchorProps}
+                toolsUsed={props.toolsUsed}
+                onOpenCitation={setCitationDialog}
+              />
+            ),
+            code({ node, className, children, ...rest }) {
+              const match = /language-(\w+)/.exec(className || "");
+              return match ? (
+                <>
+                  <div className="code-header">
+                    <CopyIcon />
+                  </div>
+                  <SyntaxHighlighter
+                    ref={textRef}
+                    {...rest}
+                    children={children}
+                    style={style}
+                    language={match[1]}
+                    PreTag="div"
+                  />
+                </>
+              ) : (
+                <code {...rest}>{children}</code>
+              );
             },
-          ],
-          rehypeKatex,
-        ]}
-        components={{
-          code({ node, inline, className, children, ...rest }) {
-            const match = /language-(\w+)/.exec(className || "");
-            return !inline && match ? (
-              <>
-                <div className="code-header">
-                  <CopyIcon />
-                </div>
-                <SyntaxHighlighter
-                  ref={textRef}
-                  {...rest}
-                  children={children}
-                  style={style}
-                  language={match[1]}
-                  PreTag="div"
-                />
-              </>
-            ) : (
-              <code {...props}>{children}</code>
-            );
-          },
-        }}
-      />
+          }}
+        />
+        <Dialog.Root
+          open={Boolean(citationDialog)}
+          onOpenChange={(event) => !event.open && setCitationDialog(null)}
+          size="xl"
+          scrollBehavior="inside"
+        >
+          <Portal>
+            <Dialog.Backdrop />
+            <Dialog.Positioner>
+              <Dialog.Content data-testid="file-search-citation-dialog">
+                <Dialog.Header>
+                  <Dialog.Title>
+                    {citationDialog?.source?.filename || t("file_search_source_title")}
+                  </Dialog.Title>
+                </Dialog.Header>
+                <Dialog.CloseTrigger asChild>
+                  <CloseButton size="sm" onClick={() => setCitationDialog(null)} />
+                </Dialog.CloseTrigger>
+                <Dialog.Body>
+                  {citationDialog?.source ? (
+                    <Box whiteSpace="pre-wrap" userSelect="text">
+                      <Text fontSize="sm" color="fg.muted" mb={3}>
+                        {t("file_search_source_title")}
+                      </Text>
+                      {citationDialog.source.text}
+                    </Box>
+                  ) : (
+                    <Text>{t("file_search_source_unavailable")}</Text>
+                  )}
+                </Dialog.Body>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
+      </>
     ),
-    [props.children]
+    [props.children, props.toolsUsed, style, citationDialog, t]
   );
 
   return rendered;
@@ -115,6 +187,7 @@ export const MessageRender = (props) => {
 
 type RendererProps = {
   children: React.ReactNode;
+  toolsUsed?: unknown[];
 };
 
 const Renderer = forwardRef<HTMLDivElement, RendererProps>(
@@ -128,6 +201,7 @@ const Renderer = forwardRef<HTMLDivElement, RendererProps>(
 type LazyRendererProps = {
   children: any;
   isVisible?: boolean;
+  toolsUsed?: unknown[];
 };
 
 export const LazyRenderer = (props: LazyRendererProps) => {
@@ -168,7 +242,9 @@ export const LazyRenderer = (props: LazyRendererProps) => {
   }, [isVisible]);
 
   return isVisible ? (
-    <Renderer ref={ref}>{props.children}</Renderer>
+    <Renderer ref={ref} toolsUsed={props.toolsUsed}>
+      {props.children}
+    </Renderer>
   ) : (
     <SkeletonText ref={ref} flex="1" noOfLines={10} gap={4} variant="pulse" />
   );

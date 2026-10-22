@@ -240,6 +240,9 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           file_search_call: "Documents",
           file_search_call_description:
             "Passages from your document collections were passed to the model.",
+          file_search_source_title: "Source excerpt",
+          file_search_source_unavailable:
+            "This source excerpt is not available in the chat history.",
           file_search_no_results: "No matching passages found.",
           file_search_failed: "Document search failed",
           file_search_failed_description:
@@ -697,6 +700,9 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           file_search_call: "Dokumente",
           file_search_call_description:
             "Textstellen aus Ihren Dokumentensammlungen wurden an das Modell übergeben.",
+          file_search_source_title: "Quelltextstelle",
+          file_search_source_unavailable:
+            "Diese Quelltextstelle ist im Chatverlauf nicht verfügbar.",
           file_search_no_results: "Keine passenden Textstellen gefunden.",
           file_search_failed: "Dokumentensuche fehlgeschlagen",
           file_search_failed_description:

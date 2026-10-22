@@ -219,7 +219,9 @@ export function MessageItem(props) {
         </HStack>
       </Card.Header>
       <Card.Body className={styles["message-body"]}>
-        <LazyRenderer isVisible={true}>{message}</LazyRenderer>
+        <LazyRenderer isVisible={true} toolsUsed={toolsUsed}>
+          {message}
+        </LazyRenderer>
         {images &&
           Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
             const storedImageUrl = image.url?.startsWith("opfs://")
