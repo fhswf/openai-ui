@@ -27,15 +27,17 @@ import {
   List,
 } from "@chakra-ui/react";
 import { Trans, useTranslation } from "react-i18next";
-import { IoLogoMarkdown, IoSettingsOutline } from "react-icons/io5";
+import { IoLogoMarkdown } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
 import {
+  LuDownload,
   LuEllipsis,
+  LuMessageSquarePlus,
   LuMenu,
+  LuSettings,
+  LuSlidersHorizontal,
 } from "react-icons/lu";
-import { MdGavel, MdOutlineSimCardDownload, MdVpnKey } from "react-icons/md";
-import { CgOptions } from "react-icons/cg";
-import { RiChatNewLine } from "react-icons/ri";
+import { MdGavel, MdVpnKey } from "react-icons/md";
 import { useGlobal } from "./context";
 import { useApps } from "./apps/context";
 import { useMessage } from "./hooks";
@@ -291,7 +293,7 @@ function ChatOptionsMenuContent({
           title={t("chat_options")}
           data-testid="chat-options-btn"
         >
-          <CgOptions aria-label={t("chat_options")} />
+          <LuSlidersHorizontal aria-label={t("chat_options")} />
         </IconButton>
       </Menu.Trigger>
       <Menu.Positioner>
@@ -496,7 +498,7 @@ function NewChatMenu({ apps, category, newChat }: NewChatMenuProps) {
           aria-label={t("new_chat")}
           className={chatStyles["new-chat-button"]}
         >
-          <RiChatNewLine aria-hidden="true" />
+          <LuMessageSquarePlus aria-hidden="true" />
           <span className={chatStyles["new-chat-label"]}>{t("new_chat")}</span>
         </Button>
       </Menu.Trigger>
@@ -548,7 +550,7 @@ function AssistantSettingsButton({
       title={t("chat_settings")}
       onClick={showSettings}
     >
-      <IoSettingsOutline />
+      <LuSettings />
     </IconButton>
   );
 }
@@ -564,7 +566,7 @@ function DownloadThreadMenu({ downloadThread }: DownloadThreadMenuProps) {
     <Menu.Root>
       <Menu.Trigger asChild>
         <IconButton variant="ghost" title={t("download_thread")}>
-          <MdOutlineSimCardDownload aria-label={t("download_thread")} />
+          <LuDownload aria-label={t("download_thread")} />
         </IconButton>
       </Menu.Trigger>
       <Menu.Content>

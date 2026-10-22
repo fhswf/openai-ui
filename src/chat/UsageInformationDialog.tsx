@@ -6,7 +6,7 @@ import {
     Portal,
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
-import { AiOutlineBarChart } from "react-icons/ai";
+import { LuChartNoAxesColumn } from "react-icons/lu";
 import { ErrorBoundary } from "react-error-boundary";
 import DashboardChart from "./DashboardChart";
 import styles from "./style/menu.module.less";
@@ -23,7 +23,7 @@ export function UsageInformationDialog() {
         <Dialog.Root lazyMount size="cover">
             <Dialog.Trigger data-testid="UsageInformationBtn" asChild>
                 <IconButton variant="ghost" title={t("usage_information")}>
-                    <AiOutlineBarChart aria-label={t("usage_information")} />
+                    <LuChartNoAxesColumn aria-label={t("usage_information")} />
                 </IconButton>
             </Dialog.Trigger>
             <Portal>
