@@ -34,6 +34,29 @@ import "katex/dist/katex.min.css";
 import { useTranslation } from "react-i18next";
 import { findFileSearchCitation } from "./utils/fileSearch";
 
+function CitationAnchor({
+  href,
+  children,
+  toolsUsed,
+  onOpenCitation,
+  ...rest
+}) {
+  return (
+    <a
+      href={href}
+      {...rest}
+      onClick={(event) => {
+        if (!href?.startsWith("#file-search/")) return;
+        event.preventDefault();
+        const source = findFileSearchCitation(href, toolsUsed || []);
+        onOpenCitation(source ? { source } : { unavailable: true });
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
 export const MessageRender = (props) => {
   const { options } = useGlobal();
   const { t } = useTranslation();
@@ -91,30 +114,13 @@ export const MessageRender = (props) => {
             rehypeKatex,
           ]}
           components={{
-            a({ href, children, ...rest }) {
-              const localCitation = href?.startsWith("#file-search/");
-              return (
-                <a
-                  href={href}
-                  {...rest}
-                  onClick={(event) => {
-                    if (!localCitation) return;
-                    event.preventDefault();
-                    const source = findFileSearchCitation(
-                      href,
-                      props.toolsUsed || []
-                    );
-                    setCitationDialog(
-                      source
-                        ? { source }
-                        : { unavailable: true }
-                    );
-                  }}
-                >
-                  {children}
-                </a>
-              );
-            },
+            a: (anchorProps) => (
+              <CitationAnchor
+                {...anchorProps}
+                toolsUsed={props.toolsUsed}
+                onOpenCitation={setCitationDialog}
+              />
+            ),
             code({ node, className, children, ...rest }) {
               const match = /language-(\w+)/.exec(className || "");
               return match ? (
