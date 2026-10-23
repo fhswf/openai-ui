@@ -49,22 +49,26 @@ import {
 } from "../service/zeroKnowledgeSync";
 import {
   applyGroupOperation,
-  createVaultGroupChat,
   decryptGroupEvent,
-  deleteGroupRoster as deleteSavedGroupRoster,
-  inviteVaultGroupMember,
   hasPendingLocalGroupChatChanges,
-  lookupGroupInviteTarget as lookupSavedGroupInviteTarget,
-  loadSavedGroupRosters,
-  removeVaultGroupMember,
   requeueGroupChatOperation,
   rememberAppliedGroupOperation,
-  saveGroupRoster as saveSavedGroupRoster,
   seedGroupChatRuntime,
   queueLocalGroupChatChanges,
   unwrapGroupEpochKeys,
   type GroupChatRuntime,
 } from "../service/groupChatSync";
+import {
+  deleteGroupRoster as deleteSavedGroupRoster,
+  lookupGroupInviteTarget as lookupSavedGroupInviteTarget,
+  loadSavedGroupRosters,
+  saveGroupRoster as saveSavedGroupRoster,
+} from "../service/groupChatRosters";
+import {
+  createVaultGroupChat,
+  inviteVaultGroupMember,
+  removeVaultGroupMember,
+} from "../service/groupChatMembership";
 import { GroupChatRealtimeClient } from "../service/groupChatRealtime";
 import { loadGroupChatCursor, saveGroupChatCursor } from "../service/groupChatLocalStore";
 import type { VaultGroupEvent } from "../service/chatVault";

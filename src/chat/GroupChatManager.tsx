@@ -11,7 +11,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { toaster } from "../components/ui/toaster";
 import type { VaultSharingActions } from "./context/types";
-import type { SavedGroupRoster } from "./service/groupChatSync";
+import type { SavedGroupRoster } from "./service/groupChatRosters";
 import type { VaultGroupChat } from "./service/chatVault";
 
 export type GroupManagementActions = Pick<

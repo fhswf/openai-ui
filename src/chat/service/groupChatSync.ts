@@ -1,37 +1,15 @@
 import type { Chat, Message } from "../context/types";
+import type { VaultGroupChat, VaultGroupEvent } from "./chatVault";
 import {
-  chatVault,
-  VaultError,
-  type VaultGroupChat,
-  type VaultGroupEvent,
-  type VaultGroupMember,
-  type VaultPublicKey,
-  type VaultUserKey,
-} from "./chatVault";
-import {
-  decryptChatData,
   decryptGroupChatEvent,
-  encryptChatData,
   encryptGroupChatEvent,
-  generateChatKey,
-  bufferToBase64Url,
-  LEGACY_RSA_KEY_ALGORITHM,
   unwrapChatKey,
-  wrapChatKey,
   type GroupChatEventContext,
 } from "../utils/zeroKnowledgeCrypto";
 import {
   enqueueGroupChatEvent,
   type GroupChatOutboxEvent,
 } from "./groupChatLocalStore";
-
-export type SavedGroupRoster = {
-  id: string;
-  name: string;
-  members: { userId: string; email: string; publicKeyFingerprint: string }[];
-};
-
-type EncryptedRosterCatalog = { version: 1; rosters: SavedGroupRoster[] };
 
 export type GroupChatRuntime = {
   group: VaultGroupChat;
@@ -60,11 +38,15 @@ export function hasPendingLocalGroupChatChanges(
     const id = String(message.id);
     currentIds.add(id);
     if (message.role === "assistant" && message.endTime == null) continue;
-    if (runtime.messageFingerprints.get(id) !== groupMessageFingerprint(message)) {
+    if (
+      runtime.messageFingerprints.get(id) !== groupMessageFingerprint(message)
+    ) {
       return true;
     }
   }
-  if ([...runtime.messageFingerprints.keys()].some((id) => !currentIds.has(id))) {
+  if (
+    [...runtime.messageFingerprints.keys()].some((id) => !currentIds.has(id))
+  ) {
     return true;
   }
   return runtime.titleFingerprint !== chat.title;
@@ -133,7 +115,10 @@ export async function decryptGroupEvent(
   return operation;
 }
 
-export function applyGroupOperation(chat: Chat, operation: GroupChatOperation): Chat {
+export function applyGroupOperation(
+  chat: Chat,
+  operation: GroupChatOperation
+): Chat {
   if (operation.type === "chat.title" && typeof operation.title === "string") {
     return { ...chat, title: operation.title };
   }
@@ -164,7 +149,8 @@ async function enqueueOperation(
 ): Promise<GroupChatOutboxEvent> {
   const epoch = runtime.group.currentEpoch;
   const key = runtime.epochKeys.get(epoch);
-  if (!key) throw new Error(`The key for group chat epoch ${epoch} is unavailable`);
+  if (!key)
+    throw new Error(`The key for group chat epoch ${epoch} is unavailable`);
   const eventId = crypto.randomUUID();
   const encrypted = await encryptGroupChatEvent(operation, key, {
     chatId,
@@ -258,305 +244,18 @@ export function rememberAppliedGroupOperation(
   }
 }
 
-async function getCatalog(
-  privateKey: CryptoKey
-): Promise<{ catalog: EncryptedRosterCatalog; key: CryptoKey; rev: number } | null> {
-  try {
-    const encrypted = await chatVault.getGroupCatalog();
-    const key = await unwrapChatKey(encrypted.selfEnvelope, privateKey);
-    const catalog = await decryptChatData<EncryptedRosterCatalog>(encrypted, key);
-    return { catalog, key, rev: encrypted.rev };
-  } catch (error) {
-    if (error instanceof VaultError && error.status === 404) return null;
-    throw error;
-  }
-}
-
-export async function loadSavedGroupRosters(
-  privateKey: CryptoKey
-): Promise<SavedGroupRoster[]> {
-  const saved = await getCatalog(privateKey);
-  return saved?.catalog.version === 1 ? saved.catalog.rosters : [];
-}
-
-export async function publicKeyFingerprint(key: VaultPublicKey): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(key.publicKey)
-  );
-  return bufferToBase64Url(digest);
-}
-
-export async function lookupGroupInviteTarget(
-  email: string
-): Promise<{ userId: string; email: string; publicKeyFingerprint: string }> {
-  const normalizedEmail = email.trim().toLowerCase();
-  if (!normalizedEmail) throw new Error("Enter a member email address");
-  const key = await chatVault.lookupKeyByEmail(normalizedEmail);
-  return {
-    userId: key.userId,
-    email: normalizedEmail,
-    publicKeyFingerprint: await publicKeyFingerprint(key),
-  };
-}
-
-export async function saveGroupRoster(
-  userKey: VaultUserKey,
-  privateKey: CryptoKey,
-  name: string,
-  emails: string[]
-): Promise<SavedGroupRoster[]> {
-  const cleanedName = name.trim();
-  if (!cleanedName) throw new Error("Enter a name for this group");
-  const uniqueEmails = [...new Set(emails.map((email) => email.trim().toLowerCase()).filter(Boolean))];
-  if (uniqueEmails.length < 1) throw new Error("Add at least one group member");
-
-  const members = await Promise.all(
-    uniqueEmails.map(async (email) => {
-      const key = await chatVault.lookupKeyByEmail(email);
-      if (key.userId === userKey.userId) {
-        throw new Error("Your account is added automatically to each group");
-      }
-      return {
-        userId: key.userId,
-        email,
-        publicKeyFingerprint: await publicKeyFingerprint(key),
-      };
-    })
-  );
-  if (new Set(members.map((member) => member.userId)).size !== members.length) {
-    throw new Error("The same account was added more than once");
-  }
-
-  const previous = await getCatalog(privateKey);
-  const roster: SavedGroupRoster = {
-    id: crypto.randomUUID(),
-    name: cleanedName,
-    members,
-  };
-  const next = {
-    version: 1 as const,
-    rosters: [...(previous?.catalog.rosters ?? []), roster],
-  };
-  const key = previous?.key ?? await generateChatKey();
-  const encrypted = await encryptChatData(next, key);
-  const wrapped = await wrapChatKey(
-    key,
-    userKey.publicKey,
-    userKey.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM
-  );
-  await chatVault.putGroupCatalog({
-    ...encrypted,
-    selfEnvelope: { recipientId: userKey.userId, ...wrapped },
-    ...(previous ? { baseRev: previous.rev } : {}),
-  });
-  return next.rosters;
-}
-
-export async function deleteGroupRoster(
-  userKey: VaultUserKey,
-  privateKey: CryptoKey,
-  rosterId: string
-): Promise<SavedGroupRoster[]> {
-  const previous = await getCatalog(privateKey);
-  if (!previous) return [];
-  const next = {
-    ...previous.catalog,
-    rosters: previous.catalog.rosters.filter((roster) => roster.id !== rosterId),
-  };
-  const encrypted = await encryptChatData(next, previous.key);
-  await chatVault.putGroupCatalog({
-    ...encrypted,
-    selfEnvelope: {
-      recipientId: userKey.userId,
-      ...(await wrapChatKey(
-        previous.key,
-        userKey.publicKey,
-        userKey.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM
-      )),
-    },
-    baseRev: previous.rev,
-  });
-  return next.rosters;
-}
-
-async function resolveRosterPublicKeys(
-  roster: SavedGroupRoster,
-  ownerId: string
-): Promise<{ userId: string; publicKey: VaultPublicKey }[]> {
-  const resolved = await Promise.all(
-    roster.members.map(async (member) => {
-      const publicKey = await chatVault.getPublicKey(member.userId);
-      const fingerprint = await publicKeyFingerprint(publicKey);
-      if (fingerprint !== member.publicKeyFingerprint) {
-        throw new Error(
-          `The registered key for ${member.email} changed. Verify their new key before sharing.`
-        );
-      }
-      return { userId: member.userId, publicKey };
-    })
-  );
-  if (resolved.some((member) => member.userId === ownerId)) {
-    throw new Error("The roster unexpectedly contains your account");
-  }
-  return resolved;
-}
-
-export async function createVaultGroupChat(
-  chatId: string,
-  roster: SavedGroupRoster,
-  userKey: VaultUserKey,
-  privateKey: CryptoKey,
-  chatKey: CryptoKey
-): Promise<VaultGroupChat> {
-  const recipientKeys = await resolveRosterPublicKeys(roster, userKey.userId);
-  const members = [userKey.userId, ...recipientKeys.map((member) => member.userId)];
-  const publicKeys = [
-    {
-      userId: userKey.userId,
-      publicKey: {
-        userId: userKey.userId,
-        publicKey: userKey.publicKey,
-        publicKeyAlgorithm: userKey.publicKeyAlgorithm,
-      } satisfies VaultPublicKey,
-    },
-    ...recipientKeys,
-  ];
-  const envelopes = await Promise.all(
-    publicKeys.map(async ({ userId, publicKey }) => ({
-      recipientId: userId,
-      ...(await wrapChatKey(
-        chatKey,
-        publicKey.publicKey,
-        publicKey.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM
-      )),
-    }))
-  );
-  await chatVault.createGroupChat(chatId, { members, envelopes });
-  const group = await chatVault.getGroupChat(chatId);
-  const keys = new Map([[1, chatKey]]);
-  for (const envelope of group.envelopes) {
-    if (!keys.has(envelope.epoch)) {
-      keys.set(envelope.epoch, await unwrapChatKey(envelope, privateKey));
-    }
-  }
-  return group;
-}
-
-async function rotateGroupMembership(
-  chatId: string,
-  group: VaultGroupChat,
-  epochKeys: Map<number, CryptoKey>,
-  memberIds: string[],
-  addedMemberIds: Set<string>
-): Promise<{ group: VaultGroupChat; epochKeys: Map<number, CryptoKey> }> {
-  const nextEpoch = group.currentEpoch + 1;
-  const nextKey = await generateChatKey();
-  const currentKeys = await Promise.all(
-    memberIds.map(async (userId) => ({
-      userId,
-      key: await chatVault.getPublicKey(userId),
-    }))
-  );
-  const envelopes: (Awaited<ReturnType<typeof wrapChatKey>> & {
-    recipientId: string;
-    epoch: number;
-  })[] = [];
-
-  for (const { userId, key } of currentKeys) {
-    envelopes.push({
-      recipientId: userId,
-      epoch: nextEpoch,
-      ...(await wrapChatKey(
-        nextKey,
-        key.publicKey,
-        key.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM
-      )),
-    });
-    if (addedMemberIds.has(userId)) {
-      for (const [epoch, epochKey] of epochKeys) {
-        envelopes.push({
-          recipientId: userId,
-          epoch,
-          ...(await wrapChatKey(
-            epochKey,
-            key.publicKey,
-            key.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM
-          )),
-        });
-      }
-    }
-  }
-
-  await chatVault.updateGroupMembership(chatId, {
-    baseEpoch: group.currentEpoch,
-    members: memberIds,
-    envelopes,
-  });
-  const updated = await chatVault.getGroupChat(chatId);
-  const nextEpochKeys = new Map(epochKeys);
-  nextEpochKeys.set(nextEpoch, nextKey);
-  return { group: updated, epochKeys: nextEpochKeys };
-}
-
-export async function inviteVaultGroupMember(
-  chatId: string,
-  group: VaultGroupChat,
-  epochKeys: Map<number, CryptoKey>,
-  email: string,
-  currentUserId: string,
-  expectedFingerprint: string
-): Promise<{ group: VaultGroupChat; epochKeys: Map<number, CryptoKey> }> {
-  if (group.ownerId !== currentUserId) {
-    throw new Error("Only the group owner can change membership");
-  }
-  for (let epoch = 1; epoch <= group.currentEpoch; epoch += 1) {
-    if (!epochKeys.has(epoch)) {
-      throw new Error(`The key for group chat epoch ${epoch} is unavailable`);
-    }
-  }
-  const recipient = await chatVault.lookupKeyByEmail(email.trim());
-  if ((await publicKeyFingerprint(recipient)) !== expectedFingerprint) {
-    throw new Error("The registered key changed. Verify the new fingerprint before inviting this member.");
-  }
-  if (recipient.userId === currentUserId) {
-    throw new Error("You are already a member of this group");
-  }
-  if (group.members.some((member) => member.userId === recipient.userId)) {
-    throw new Error("This person is already a member of the group");
-  }
-  return rotateGroupMembership(
-    chatId,
-    group,
-    epochKeys,
-    [...group.members.map((member) => member.userId), recipient.userId],
-    new Set([recipient.userId])
-  );
-}
-
-export async function removeVaultGroupMember(
-  chatId: string,
-  group: VaultGroupChat,
-  epochKeys: Map<number, CryptoKey>,
-  memberId: string,
-  currentUserId: string
-): Promise<{ group: VaultGroupChat; epochKeys: Map<number, CryptoKey> }> {
-  if (group.ownerId !== currentUserId) {
-    throw new Error("Only the group owner can change membership");
-  }
-  if (memberId === group.ownerId) {
-    throw new Error("The group owner cannot remove themself");
-  }
-  if (!group.members.some((member) => member.userId === memberId)) return { group, epochKeys };
-  return rotateGroupMembership(
-    chatId,
-    group,
-    epochKeys,
-    group.members.filter((member) => member.userId !== memberId).map((member) => member.userId),
-    new Set()
-  );
-}
-
-export function activeGroupMemberIds(group: VaultGroupChat): string[] {
-  return group.members.map((member: VaultGroupMember) => member.userId);
-}
+// Keep the previous service entry point available for existing consumers.
+export type { SavedGroupRoster } from "./groupChatRosters";
+export {
+  deleteGroupRoster,
+  loadSavedGroupRosters,
+  lookupGroupInviteTarget,
+  publicKeyFingerprint,
+  saveGroupRoster,
+} from "./groupChatRosters";
+export {
+  activeGroupMemberIds,
+  createVaultGroupChat,
+  inviteVaultGroupMember,
+  removeVaultGroupMember,
+} from "./groupChatMembership";

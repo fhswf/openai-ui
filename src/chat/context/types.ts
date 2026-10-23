@@ -170,12 +170,12 @@ export type VaultSharingActions = {
     expiresAt: string;
   }>;
   revokeChatShareLink: (chatId: string, token: string) => Promise<void>;
-  loadGroupRosters: () => Promise<import("../service/groupChatSync").SavedGroupRoster[]>;
+  loadGroupRosters: () => Promise<import("../service/groupChatRosters").SavedGroupRoster[]>;
   saveGroupRoster: (
     name: string,
     emails: string[]
-  ) => Promise<import("../service/groupChatSync").SavedGroupRoster[]>;
-  deleteGroupRoster: (rosterId: string) => Promise<import("../service/groupChatSync").SavedGroupRoster[]>;
+  ) => Promise<import("../service/groupChatRosters").SavedGroupRoster[]>;
+  deleteGroupRoster: (rosterId: string) => Promise<import("../service/groupChatRosters").SavedGroupRoster[]>;
   createGroupChatFromRoster: (chatId: string, rosterId: string) => Promise<void>;
   getGroupChatInfo: (chatId: string) => Promise<import("../service/chatVault").VaultGroupChat>;
   lookupGroupInviteTarget: (email: string) => Promise<{

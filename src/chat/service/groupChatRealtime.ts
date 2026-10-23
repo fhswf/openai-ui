@@ -69,7 +69,9 @@ export class GroupChatRealtimeClient {
   }
 
   setSubscriptions(subscriptions: GroupChatSubscription[]): void {
-    const next = new Map(subscriptions.map(({ chatId, cursor }) => [chatId, cursor]));
+    const next = new Map(
+      subscriptions.map(({ chatId, cursor }) => [chatId, cursor])
+    );
     if (this.ready && this.socket) {
       for (const chatId of this.subscriptions.keys()) {
         if (!next.has(chatId)) {
@@ -165,71 +167,92 @@ export class GroupChatRealtimeClient {
       return;
     }
 
-    if (message.type === "ready") {
-      this.ready = true;
-      this.reconnectDelay = 500;
-      this.subscribeAll();
-      await this.flushOutbox();
-      return;
+    switch (message.type) {
+      case "ready":
+        await this.handleReady();
+        break;
+      case "event":
+        await this.handleEvent(message);
+        break;
+      case "catchup_complete":
+        this.handleCatchupComplete(message);
+        break;
+      case "ack":
+        await this.handleAck(message);
+        break;
+      case "error":
+        await this.handleError(message);
+        break;
     }
+  }
 
-    if (message.type === "event" && message.event && typeof message.event === "object") {
-      const event = message.event as VaultGroupEvent;
-      const previous = this.cursors.get(event.chatId) ?? 0;
-      if (event.sequence <= previous) return;
-      const cursor = await this.callbacks.onEvent(event);
-      this.cursors.set(event.chatId, cursor);
-      return;
-    }
+  private async handleReady(): Promise<void> {
+    this.ready = true;
+    this.reconnectDelay = 500;
+    this.subscribeAll();
+    await this.flushOutbox();
+  }
 
-    if (message.type === "catchup_complete" && message.chatId) {
-      const chatId = String(message.chatId);
-      if (message.hasMore === true && this.subscriptions.has(chatId)) {
-        this.send({
-          type: "subscribe",
-          chatId,
-          after: this.cursors.get(chatId) ?? 0,
-        });
-      }
-      return;
-    }
+  private async handleEvent(message: Record<string, unknown>): Promise<void> {
+    if (!message.event || typeof message.event !== "object") return;
+    const event = message.event as VaultGroupEvent;
+    const previous = this.cursors.get(event.chatId) ?? 0;
+    if (event.sequence <= previous) return;
+    const cursor = await this.callbacks.onEvent(event);
+    this.cursors.set(event.chatId, cursor);
+  }
 
-    if (message.type === "ack" && typeof message.eventId === "string") {
-      await removeGroupChatOutboxEvent(message.eventId);
-      this.sent.delete(message.eventId);
+  private handleCatchupComplete(message: Record<string, unknown>): void {
+    if (!message.chatId) return;
+    const chatId = String(message.chatId);
+    if (message.hasMore !== true || !this.subscriptions.has(chatId)) return;
+    this.send({
+      type: "subscribe",
+      chatId,
+      after: this.cursors.get(chatId) ?? 0,
+    });
+  }
+
+  private async handleAck(message: Record<string, unknown>): Promise<void> {
+    if (typeof message.eventId !== "string") return;
+    await removeGroupChatOutboxEvent(message.eventId);
+    this.sent.delete(message.eventId);
+    void this.flushOutbox();
+  }
+
+  private async handleError(message: Record<string, unknown>): Promise<void> {
+    if (typeof message.requestId !== "string") return;
+    const eventId = message.requestId;
+    const code = String(message.code ?? "internal");
+    const event = await getGroupChatOutboxEvent(eventId);
+    this.sent.delete(eventId);
+    const detail = String(
+      message.message ?? "The group could not accept a pending message"
+    );
+
+    if (code === "conflict") {
+      await this.callbacks.onOutboxError?.(event, code, detail);
+      await removeGroupChatOutboxEvent(eventId);
       void this.flushOutbox();
       return;
     }
 
-    if (message.type === "error" && typeof message.requestId === "string") {
-      const eventId = message.requestId;
-      const code = String(message.code ?? "internal");
-      const event = await getGroupChatOutboxEvent(eventId);
-      this.sent.delete(eventId);
-      if (["conflict", "forbidden", "not_found", "invalid_payload"].includes(code)) {
-        if (code === "conflict") {
-          await this.callbacks.onOutboxError?.(
-            event,
-            code,
-            String(message.message ?? "The group could not accept a pending message")
-          );
-          await removeGroupChatOutboxEvent(eventId);
-        } else {
-          await removeGroupChatOutboxEvent(eventId);
-          await this.callbacks.onOutboxError?.(
-            event,
-            code,
-            String(message.message ?? "The group could not accept a pending message")
-          );
-        }
-        void this.flushOutbox();
-      } else if (this.retryTimer === null) {
-        this.retryTimer = window.setTimeout(() => {
-          this.retryTimer = null;
-          void this.flushOutbox();
-        }, 1500);
-      }
+    if (["forbidden", "not_found", "invalid_payload"].includes(code)) {
+      await removeGroupChatOutboxEvent(eventId);
+      await this.callbacks.onOutboxError?.(event, code, detail);
+      void this.flushOutbox();
+      return;
     }
+
+    this.scheduleOutboxRetry();
+  }
+
+  private scheduleOutboxRetry(): void {
+    if (this.retryTimer !== null) return;
+    this.retryTimer = window.setTimeout(() => {
+      this.retryTimer = null;
+      void this.flushOutbox();
+    }, 1500);
   }
 
   private async flushOutbox(): Promise<void> {

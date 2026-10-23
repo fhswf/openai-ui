@@ -384,48 +384,50 @@ async function getGroupStateIfAvailable(
   }
 }
 
-async function downloadGroupChat(
+async function decryptInitialGroupChat(
+  encrypted: VaultChat,
+  initialKey: CryptoKey | undefined
+): Promise<Chat | null> {
+  if (!initialKey) return null;
+  try {
+    return await decryptChatData<Chat>(encrypted, initialKey);
+  } catch (error) {
+    console.warn("Could not decrypt the initial group chat snapshot:", error);
+    return null;
+  }
+}
+
+async function createGroupChatTranscript(
   summary: VaultChatSummary,
-  privateKey: CryptoKey,
-  userKey: VaultUserKey,
-  cache: VaultSyncCache,
-  group: VaultGroupChat,
+  encrypted: VaultChat,
+  initialKey: CryptoKey | undefined,
   local?: Chat
-): Promise<DownloadedChat | null> {
-  const encrypted = await chatVault.getChat(summary.id);
-  const epochKeys = await unwrapGroupEpochKeys(group, privateKey);
-  const initialKey = epochKeys.get(1);
-  let chat: Chat | null = null;
-
-  if (initialKey) {
-    try {
-      chat = await decryptChatData<Chat>(encrypted, initialKey);
-    } catch (error) {
-      console.warn("Could not decrypt the initial group chat snapshot:", error);
-    }
-  }
-
-  if (!chat && local?.messages?.length) {
-    chat = { ...local, messages: [...local.messages] };
-  }
-  if (!chat) {
-    // New members without history access can still receive messages from the
-    // epoch they joined. The default invitation flow grants history, so this
-    // is only the fallback for a deliberately history-limited membership.
-    chat = {
-      title: summary.id,
-      app: 0,
-      id: summary.id,
-      ct: Date.now(),
-      messages: [],
-    };
-  }
-
+): Promise<Chat> {
+  const decrypted = await decryptInitialGroupChat(encrypted, initialKey);
+  // New members without history access can still receive messages from the
+  // epoch they joined. The default invitation flow grants history, so this
+  // fallback is for deliberately history-limited membership.
+  const chat =
+    decrypted ??
+    (local?.messages?.length
+      ? { ...local, messages: [...local.messages] }
+      : {
+          title: summary.id,
+          app: 0,
+          id: summary.id,
+          ct: Date.now(),
+          messages: [],
+        });
   chat.id = encrypted.id;
   chat.groupChat = true;
-  const id = String(encrypted.id);
-  const ownerId = encrypted.ownerId || summary.ownerId;
-  const runtime = seedGroupChatRuntime(group, epochKeys, 0, chat);
+  return chat;
+}
+
+async function replayGroupChatEvents(
+  id: string,
+  chat: Chat,
+  runtime: GroupChatRuntime
+): Promise<{ chat: Chat; cursor: number }> {
   let cursor = 0;
   let hasMore = true;
   while (hasMore) {
@@ -448,7 +450,21 @@ async function downloadGroupChat(
     hasMore = page.hasMore;
     if (page.events.length === 0) hasMore = false;
   }
+  return { chat, cursor };
+}
 
+async function cacheDownloadedGroupChat(
+  userKey: VaultUserKey,
+  id: string,
+  encrypted: VaultChat,
+  group: VaultGroupChat,
+  initialKey: CryptoKey | undefined,
+  chat: Chat,
+  cursor: number,
+  ownerId: string,
+  cache: VaultSyncCache,
+  runtime: GroupChatRuntime
+): Promise<void> {
   runtime.cursor = cursor;
   runtime.group = { ...group, cursor };
   cache.groupChats.set(id, runtime);
@@ -459,7 +475,42 @@ async function downloadGroupChat(
   ensureChatAttachmentIds(chat);
   cacheTranscript(cache, id, chat);
   await saveGroupChatCursor(userKey.userId, id, cursor);
-  return { chat, rev: encrypted.rev, ownerId };
+}
+
+async function downloadGroupChat(
+  summary: VaultChatSummary,
+  privateKey: CryptoKey,
+  userKey: VaultUserKey,
+  cache: VaultSyncCache,
+  group: VaultGroupChat,
+  local?: Chat
+): Promise<DownloadedChat | null> {
+  const encrypted = await chatVault.getChat(summary.id);
+  const epochKeys = await unwrapGroupEpochKeys(group, privateKey);
+  const initialKey = epochKeys.get(1);
+  const chat = await createGroupChatTranscript(
+    summary,
+    encrypted,
+    initialKey,
+    local
+  );
+  const id = String(encrypted.id);
+  const ownerId = encrypted.ownerId || summary.ownerId;
+  const runtime = seedGroupChatRuntime(group, epochKeys, 0, chat);
+  const replayed = await replayGroupChatEvents(id, chat, runtime);
+  await cacheDownloadedGroupChat(
+    userKey,
+    id,
+    encrypted,
+    group,
+    initialKey,
+    replayed.chat,
+    replayed.cursor,
+    ownerId,
+    cache,
+    runtime
+  );
+  return { chat: replayed.chat, rev: encrypted.rev, ownerId };
 }
 
 /**
