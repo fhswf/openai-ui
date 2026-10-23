@@ -41,6 +41,7 @@ import {
   removeFileFromVectorStore,
   renameVectorStore,
   searchVectorStore,
+  updateVectorStoreMetadata,
   uploadFileToVectorStore,
 } from "../vectorStores";
 
@@ -113,6 +114,22 @@ describe("vectorStores service", () => {
     );
     expect(client.delete).toHaveBeenCalledWith(
       "https://pgvector.example/vector_stores/vs1/"
+    );
+  });
+
+  it("updates only the metadata via the pgvector path without /v1", async () => {
+    const options = makeOptions("https://pgvector.example/v1/");
+
+    await updateVectorStoreMetadata(options, "vs1", {
+      owner: "x",
+      chunking: "precise",
+    });
+
+    expect(client.post).toHaveBeenCalledWith(
+      "https://pgvector.example/vector_stores/vs1/",
+      {
+        body: { metadata: { owner: "x", chunking: "precise" } },
+      }
     );
   });
 

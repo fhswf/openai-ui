@@ -5,6 +5,7 @@ import type {
   VectorStoreSearchResponse,
 } from "openai/resources/vector-stores/vector-stores.mjs";
 import type { VectorStoreFile } from "openai/resources/vector-stores/files.mjs";
+import type { Metadata } from "openai/resources/shared";
 import { Options } from "../context/types";
 import { defaultVectorStoreBaseUrl } from "../context/initState";
 import type { SemanticChunkingStrategy } from "../utils/chunking";
@@ -75,6 +76,25 @@ export async function renameVectorStore(
     legacyVectorStoreUrl(options, vectorStoreId),
     {
       body: { name },
+    }
+  );
+}
+
+/**
+ * Replaces the store's metadata. The service neither merges it with the
+ * stored metadata nor returns it, so pass the complete object and reload the
+ * stores afterwards.
+ */
+export async function updateVectorStoreMetadata(
+  options: Options,
+  vectorStoreId: string,
+  metadata: Metadata
+) {
+  const client = createVectorStoreClient(options);
+  return client.post<VectorStore>(
+    legacyVectorStoreUrl(options, vectorStoreId),
+    {
+      body: { metadata },
     }
   );
 }
