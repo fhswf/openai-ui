@@ -3,6 +3,7 @@ import { McpScopeDefinition, McpUserDataDiscovery } from "../context/types";
 
 const BLOCKED_FIELDS = new Set(["__proto__", "constructor", "prototype"]);
 const OPENID_CONFIGURATION_PATH = "/.well-known/openid-configuration";
+export const MCP_AUTH_KEY_ALGORITHM = "RSA-OAEP-256" as const;
 
 export const DEFAULT_MCP_USER_DATA: McpUserDataDiscovery = {
   scopes: [],
@@ -213,7 +214,10 @@ export async function fetchMcpPublicKey(
     for (const key of jwks.keys) {
       try {
         return {
-          publicKey: (await jose.importJWK(key, "RSA-OAEP")) as CryptoKey,
+          publicKey: (await jose.importJWK(
+            key,
+            MCP_AUTH_KEY_ALGORITHM
+          )) as CryptoKey,
         };
       } catch (error) {
         console.warn("Ignoring invalid JWKS key: %o", error);
