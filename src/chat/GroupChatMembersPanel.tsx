@@ -319,7 +319,7 @@ function GroupMemberList(
         <HStack key={member.userId} justify="space-between" align="start">
           <Text fontSize="sm" wordBreak="break-all">
             {member.userId}
-            {member.role === "owner" ? " · owner" : ""}
+            {member.role === "owner" ? ` · ${t("zk_group_creator")}` : ""}
           </Text>
           {props.isOwner && member.role !== "owner" && (
             <Button

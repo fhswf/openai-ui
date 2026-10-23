@@ -39,6 +39,7 @@ import {
   DrawerTitle,
 } from "../components/ui/drawer";
 import styles from "./style/sider.module.less";
+import "./style/markdown.less";
 import "katex/dist/katex.min.css";
 
 interface ReleaseMetadata {

@@ -8,9 +8,10 @@
 
 export type VaultUserKey = {
   userId: string;
-  credentialId: string;
-  credentialName?: string;
+  credentialId: string | null;
+  credentialName?: string | null;
   credentials?: VaultCredential[];
+  allowedOrigins?: string[];
   publicKey: string;
   /** Missing metadata identifies legacy RSA keys stored before algorithm tags. */
   publicKeyAlgorithm?: "RSA-OAEP-SHA256" | "ECDH-P256";
@@ -23,6 +24,7 @@ export type VaultCredential = {
   credentialId: string;
   name: string;
   createdAt: string;
+  canDelete?: boolean;
 };
 
 export type VaultPublicKey = {
@@ -219,12 +221,20 @@ export const chatVault = {
   registrationChallenge(
     options?: RequestOptions
   ): Promise<{ challenge: string }> {
-    return request("/keys/registration-challenge", { method: "POST" }, options);
+    return request(
+      "/keys/registration-challenge",
+      {
+        method: "POST",
+        body: JSON.stringify({ rpId: window.location.hostname }),
+      },
+      options
+    );
   },
 
   registerKey(
     payload: {
       credentialId: string;
+      rpId: string;
       credentialName: string;
       publicKey: string;
       publicKeyAlgorithm: "RSA-OAEP-SHA256" | "ECDH-P256";
@@ -244,12 +254,18 @@ export const chatVault = {
   },
 
   assertionChallenge(
-    credentialId: string,
+    credentialId?: string,
     options?: RequestOptions
   ): Promise<{ challenge: string }> {
     return request(
       "/keys/assertion-challenge",
-      { method: "POST", body: JSON.stringify({ credentialId }) },
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...(credentialId ? { credentialId } : {}),
+          rpId: window.location.hostname,
+        }),
+      },
       options
     );
   },
@@ -257,6 +273,7 @@ export const chatVault = {
   submitAssertion(
     payload: {
       credentialId: string;
+      rpId: string;
       challenge: string;
       authenticatorData: string;
       clientDataJSON: string;
@@ -272,7 +289,8 @@ export const chatVault = {
   },
 
   getMyKey(options?: RequestOptions): Promise<VaultUserKey> {
-    return request("/keys/me", {}, options);
+    const query = new URLSearchParams({ rpId: window.location.hostname });
+    return request(`/keys/me?${query}`, {}, options);
   },
 
   setIdentityDisclosure(
@@ -293,7 +311,13 @@ export const chatVault = {
   ): Promise<{ credentialId: string; credentialName: string }> {
     return request(
       `/keys/me/credentials/${encodeURIComponent(credentialId)}`,
-      { method: "PATCH", body: JSON.stringify({ credentialName }) },
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          credentialName,
+          rpId: window.location.hostname,
+        }),
+      },
       options
     );
   },
@@ -302,8 +326,9 @@ export const chatVault = {
     credentialId: string,
     options?: RequestOptions
   ): Promise<void> {
+    const query = new URLSearchParams({ rpId: window.location.hostname });
     return request(
-      `/keys/me/credentials/${encodeURIComponent(credentialId)}`,
+      `/keys/me/credentials/${encodeURIComponent(credentialId)}?${query}`,
       { method: "DELETE" },
       options
     );
@@ -332,7 +357,7 @@ export const chatVault = {
     );
   },
 
-  /** Opt out of central storage by removing the server-side key material. */
+  /** Delete the shared vault account and all of its registered passkeys. */
   deleteMyKey(options?: RequestOptions): Promise<void> {
     return request("/keys/me", { method: "DELETE" }, options);
   },

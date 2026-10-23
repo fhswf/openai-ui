@@ -66,11 +66,11 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_enabled: "Encrypted chat storage enabled",
           zk_storage_enabled_help:
             "Your chats and referenced files will now sync in encrypted form. The server cannot read their contents.",
-          zk_storage_disabled: "Encrypted chat storage disabled",
+          zk_storage_disabled: "Encrypted chat storage turned off on this site",
           zk_storage_disabled_help:
-            "All passkeys and the encrypted key were removed from the server. Existing server chats and files remain encrypted and can no longer be opened; chats already stored in this browser remain available locally.",
+            "This site's local key cache was cleared. The shared vault and passkeys remain available, including on other sites.",
           zk_storage_disable_confirm:
-            "Turn off encrypted chat storage? This deletes all registered passkeys and the encrypted key from the server. Server chat and file copies will remain encrypted but become inaccessible. Chats already stored in this browser remain available locally.",
+            "Turn off encrypted chat storage on this site? This clears this site's local key cache and setting. The shared vault and passkeys remain available.",
           zk_storage_checking: "Checking this device's recovery key…",
           zk_storage_unlocked: "This device can open your encrypted chats.",
           zk_storage_choose_other_passkey_help:
@@ -96,7 +96,7 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_passkey_deleted_help:
             "It was removed from this account. If you also want to remove it from your device or password manager, delete it there separately.",
           zk_storage_last_credential_help:
-            "At least one passkey must remain. Turn off encrypted chat storage to remove all passkeys.",
+            "This is the last passkey for the shared vault, so it cannot be removed here.",
           zk_storage_your_passkeys: "Your passkeys",
           zk_storage_active_passkey: "Currently unlocked with this passkey",
           zk_storage_default_passkey_name: "Passkey",
@@ -118,6 +118,26 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_passkey_added: "Passkey registered",
           zk_storage_passkey_added_help:
             "This passkey can now unlock your encrypted chats.",
+          zk_storage_no_passkey_for_site:
+            "The shared chat vault exists, but this site does not have a passkey yet. Open encrypted chat storage settings and choose “Create a passkey for this site” to link it.",
+          zk_storage_link_vault: "Create a passkey for this site",
+          zk_storage_link_another_site: "Link this vault to another site",
+          zk_storage_link_target_title: "Create a passkey for this site",
+          zk_storage_link_target_help:
+            "Copy this one-time request to a site where you already have a vault passkey. There, open encrypted chat settings, choose “Link this vault to another site,” paste the request, and copy the response back here. The backend never receives the codes or the private key. Keep this dialog open until linking is complete.",
+          zk_storage_link_source_title: "Link another site to this vault",
+          zk_storage_link_source_help:
+            "Paste a one-time request created on another allowed site. Check the destination address. After you confirm with a passkey, copy the response back to that site.",
+          zk_storage_link_request_code: "One-time request code",
+          zk_storage_link_response_code: "One-time response code",
+          zk_storage_link_target_origin: "Destination site: {{origin}}",
+          zk_storage_link_confirm:
+            "Create an encrypted link for {{origin}}? Continue only if you created the request on that site.",
+          zk_storage_link_prepare_response: "Confirm and create response",
+          zk_storage_link_response_ready: "Encrypted response created",
+          zk_storage_link_copy_code: "Copy code",
+          zk_storage_link_code_copied: "Code copied",
+          zk_storage_passkey_on_this_site: "Passkey saved on this site",
           zk_storage_prf_unsupported:
             "This passkey did not provide the PRF result required to decrypt your chats. Try a device and passkey provider that support PRF for this passkey. A regular passkey sign-in cannot unlock the encrypted chat key.",
           zk_storage_passkey_mismatch:
@@ -168,7 +188,10 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_group_saved_rosters: "Saved groups",
           zk_group_roster_name: "Group name",
           zk_group_roster_emails: "Member email addresses",
-          zk_group_roster_emails_help: "Enter one verified email address per line.",
+          zk_group_roster_emails_help:
+            "Enter one verified email address per line, or leave blank for a group just for you.",
+          zk_group_creator_member: "You (creator)",
+          zk_group_creator: "creator",
           zk_group_save_roster: "Save group",
           zk_group_delete_roster: "Delete group",
           zk_group_select_roster: "Choose a saved group",
@@ -659,11 +682,11 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_enabled: "Verschlüsselte Chatspeicherung aktiviert",
           zk_storage_enabled_help:
             "Ihre Chats und referenzierten Dateien werden jetzt verschlüsselt synchronisiert. Der Server kann ihre Inhalte nicht lesen.",
-          zk_storage_disabled: "Verschlüsselte Chatspeicherung deaktiviert",
+          zk_storage_disabled: "Verschlüsselte Chatspeicherung auf dieser Website ausgeschaltet",
           zk_storage_disabled_help:
-            "Alle Passkeys und der verschlüsselte Schlüssel wurden vom Server entfernt. Vorhandene Chats und Dateien auf dem Server bleiben verschlüsselt und können nicht mehr geöffnet werden. Chats, die bereits in diesem Browser gespeichert sind, bleiben lokal verfügbar.",
+            "Der lokale Schlüssel-Cache dieser Website wurde gelöscht. Der gemeinsame Speicher und die Passkeys bleiben verfügbar, auch auf anderen Websites.",
           zk_storage_disable_confirm:
-            "Verschlüsselte Chatspeicherung ausschalten? Dadurch werden alle registrierten Passkeys und der verschlüsselte Schlüssel vom Server gelöscht. Vorhandene Chats und Dateien auf dem Server bleiben verschlüsselt und sind nicht mehr zugänglich. Chats, die bereits in diesem Browser gespeichert sind, bleiben lokal verfügbar.",
+            "Verschlüsselte Chatspeicherung auf dieser Website ausschalten? Der lokale Schlüssel-Cache und die Einstellung dieser Website werden gelöscht. Der gemeinsame Speicher und die Passkeys bleiben verfügbar.",
           zk_storage_checking: "Wiederherstellungsschlüssel auf diesem Gerät wird geprüft …",
           zk_storage_unlocked: "Dieses Gerät kann Ihre verschlüsselten Chats öffnen.",
           zk_storage_choose_other_passkey_help:
@@ -689,7 +712,7 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_passkey_deleted_help:
             "Der Passkey wurde aus diesem Konto entfernt. Wenn Sie ihn auch von Ihrem Gerät oder aus dem Passwort-Manager löschen möchten, entfernen Sie ihn dort separat.",
           zk_storage_last_credential_help:
-            "Mindestens ein Passkey muss verbleiben. Deaktivieren Sie die verschlüsselte Chatspeicherung, um alle Passkeys zu entfernen.",
+            "Dies ist der letzte Passkey für den gemeinsamen Speicher und kann hier nicht entfernt werden.",
           zk_storage_your_passkeys: "Ihre Passkeys",
           zk_storage_active_passkey:
             "Auf diesem Gerät aktuell mit diesem Passkey entsperrt",
@@ -712,6 +735,26 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_passkey_added: "Passkey registriert",
           zk_storage_passkey_added_help:
             "Mit diesem Passkey können Sie jetzt Ihre verschlüsselten Chats entsperren.",
+          zk_storage_no_passkey_for_site:
+            "Der gemeinsame Chatspeicher ist vorhanden, aber für diese Website ist noch kein Passkey registriert. Öffnen Sie die Einstellungen der verschlüsselten Chatspeicherung und wählen Sie „Passkey für diese Website erstellen“, um sie zu verbinden.",
+          zk_storage_link_vault: "Passkey für diese Website erstellen",
+          zk_storage_link_another_site: "Diesen Speicher mit einer anderen Website verbinden",
+          zk_storage_link_target_title: "Passkey für diese Website erstellen",
+          zk_storage_link_target_help:
+            "Kopieren Sie diese einmalige Anfrage zu einer Website, auf der bereits ein Passkey für den Chatspeicher existiert. Öffnen Sie dort die Einstellungen der verschlüsselten Chats, wählen Sie „Diesen Speicher mit einer anderen Website verbinden“, fügen Sie die Anfrage ein und kopieren Sie die Antwort hierher zurück. Das Backend erhält weder die Codes noch den privaten Schlüssel. Lassen Sie diesen Dialog geöffnet, bis die Verbindung abgeschlossen ist.",
+          zk_storage_link_source_title: "Andere Website mit diesem Speicher verbinden",
+          zk_storage_link_source_help:
+            "Fügen Sie eine einmalige Anfrage von einer anderen erlaubten Website ein. Prüfen Sie die Zieladresse. Bestätigen Sie anschließend mit einem Passkey und kopieren Sie die Antwort zurück zu dieser Website.",
+          zk_storage_link_request_code: "Einmaliger Anfragecode",
+          zk_storage_link_response_code: "Einmaliger Antwortcode",
+          zk_storage_link_target_origin: "Zielwebsite: {{origin}}",
+          zk_storage_link_confirm:
+            "Eine verschlüsselte Verbindung für {{origin}} erstellen? Fahren Sie nur fort, wenn Sie die Anfrage auf dieser Website erstellt haben.",
+          zk_storage_link_prepare_response: "Bestätigen und Antwort erstellen",
+          zk_storage_link_response_ready: "Verschlüsselte Antwort erstellt",
+          zk_storage_link_copy_code: "Code kopieren",
+          zk_storage_link_code_copied: "Code kopiert",
+          zk_storage_passkey_on_this_site: "Auf dieser Website gespeicherter Passkey",
           zk_storage_prf_unsupported:
             "Dieser Passkey hat nicht das PRF-Ergebnis geliefert, das zum Entschlüsseln Ihrer Chats benötigt wird. Verwenden Sie ein Gerät und einen Passkey-Anbieter, die PRF für diesen Passkey unterstützen. Eine normale Passkey-Anmeldung kann den verschlüsselten Chatschlüssel nicht entsperren.",
           zk_storage_passkey_mismatch:
@@ -762,7 +805,10 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_group_saved_rosters: "Gespeicherte Gruppen",
           zk_group_roster_name: "Gruppenname",
           zk_group_roster_emails: "E-Mail-Adressen der Mitglieder",
-          zk_group_roster_emails_help: "Geben Sie pro Zeile eine verifizierte E-Mail-Adresse ein.",
+          zk_group_roster_emails_help:
+            "Geben Sie pro Zeile eine verifizierte E-Mail-Adresse ein oder lassen Sie das Feld für eine Gruppe nur für Sie leer.",
+          zk_group_creator_member: "Du (Ersteller)",
+          zk_group_creator: "Ersteller",
           zk_group_save_roster: "Gruppe speichern",
           zk_group_delete_roster: "Gruppe löschen",
           zk_group_select_roster: "Gespeicherte Gruppe auswählen",

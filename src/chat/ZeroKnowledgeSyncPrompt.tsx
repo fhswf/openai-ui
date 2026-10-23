@@ -67,15 +67,17 @@ export function ZeroKnowledgeSyncPrompt() {
   };
 
   const credentials: VaultCredential[] = userKey
-    ? userKey.credentials?.length
+    ? userKey.credentials
       ? userKey.credentials
-      : [
+      : userKey.credentialId
+        ? [
           {
             credentialId: userKey.credentialId,
             name: userKey.credentialName || t("zk_storage_default_passkey_name"),
             createdAt: "",
           },
-        ]
+          ]
+        : []
     : [];
 
   const unlock = async (credentialId: string) => {
@@ -144,6 +146,9 @@ export function ZeroKnowledgeSyncPrompt() {
                     {t("zk_storage_unlock_with", { name: credential.name })}
                   </Button>
                 ))}
+                {credentials.length === 0 && (
+                  <Text>{t("zk_storage_no_passkey_for_site")}</Text>
+                )}
               </Stack>
             </Dialog.Body>
             <Dialog.Footer>

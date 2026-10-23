@@ -104,7 +104,7 @@ async function saveRoster(input: SaveRosterInput): Promise<void> {
     .split(/[\n,]/)
     .map((email) => email.trim())
     .filter(Boolean);
-  if (!input.name.trim() || emails.length === 0) return;
+  if (!input.name.trim()) return;
   input.setBusy(true);
   try {
     input.onSaved(await input.save(input.name, emails));
@@ -140,6 +140,7 @@ type CreateGroupInput = {
   chatId: string;
   rosterId: string;
   verifiedRosterId: string;
+  requiresFingerprintVerification: boolean;
   create: GroupManagementActions["createGroupChatFromRoster"];
   confirmMessage: string;
   successTitle: string;
@@ -150,7 +151,8 @@ type CreateGroupInput = {
 async function createGroup(input: CreateGroupInput): Promise<void> {
   if (
     !input.rosterId ||
-    input.verifiedRosterId !== input.rosterId ||
+    (input.requiresFingerprintVerification &&
+      input.verifiedRosterId !== input.rosterId) ||
     !window.confirm(input.confirmMessage)
   )
     return;
@@ -261,6 +263,9 @@ function createCreateGroupCallback(input: RosterCallbackInput) {
       chatId: input.props.chatId,
       rosterId: input.state.selectedRosterId,
       verifiedRosterId: input.state.verifiedRosterId,
+      requiresFingerprintVerification: Boolean(
+        input.state.selectedRoster?.members.length
+      ),
       create: input.props.actions.createGroupChatFromRoster,
       confirmMessage: input.strings.confirmMessage,
       successTitle: input.strings.createdTitle,
@@ -357,6 +362,9 @@ function SelectedRosterDetails(props: GroupRosterViewProps) {
   if (!roster) return null;
   return (
     <Stack gap="1">
+      <Text fontSize="xs" color="fg.muted">
+        {t("zk_group_creator_member")}
+      </Text>
       {roster.members.map((member) => (
         <Text
           key={member.userId}
@@ -367,20 +375,27 @@ function SelectedRosterDetails(props: GroupRosterViewProps) {
           {member.email}: {member.publicKeyFingerprint}
         </Text>
       ))}
-      <Text fontSize="xs" color="fg.muted">
-        {t("zk_group_fingerprint_warning")}
-      </Text>
-      <label>
-        <input
-          type="checkbox"
-          checked={props.verifiedRosterId === roster.id}
-          onChange={(event) => props.onVerifyRoster(event.target.checked)}
-        />{" "}
-        {t("zk_group_fingerprint_verified")}
-      </label>
+      {roster.members.length > 0 && (
+        <>
+          <Text fontSize="xs" color="fg.muted">
+            {t("zk_group_fingerprint_warning")}
+          </Text>
+          <label>
+            <input
+              type="checkbox"
+              checked={props.verifiedRosterId === roster.id}
+              onChange={(event) => props.onVerifyRoster(event.target.checked)}
+            />{" "}
+            {t("zk_group_fingerprint_verified")}
+          </label>
+        </>
+      )}
       <HStack>
         <Button
-          disabled={props.busy || props.verifiedRosterId !== roster.id}
+          disabled={
+            props.busy ||
+            (roster.members.length > 0 && props.verifiedRosterId !== roster.id)
+          }
           loading={props.busy}
           onClick={props.onCreateGroup}
         >
@@ -423,7 +438,7 @@ function SaveRosterForm(props: GroupRosterViewProps) {
       <Button
         alignSelf="start"
         disabled={
-          props.busy || !props.rosterName.trim() || !props.rosterEmails.trim()
+          props.busy || !props.rosterName.trim()
         }
         loading={props.busy}
         onClick={props.onSaveRoster}

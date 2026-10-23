@@ -27,18 +27,26 @@ import {
   saveActiveCredentialId,
 } from "./utils/zeroKnowledgeKeystore";
 import {
+  completeVaultLink,
+  createVaultLinkRequest,
+  createVaultLinkResponse,
   enableZeroKnowledgeStorage,
   getZeroKnowledgeStorageErrorKey,
   isPrivateKeyForUser,
   registerAdditionalPasskey,
+  getVaultLinkRequestOrigin,
+  type VaultLinkTarget,
 } from "./utils/zeroKnowledgeStorage";
 
 type KeyStatus = "idle" | "checking" | "unlocked" | "locked";
 type RegistrationMode = "initial" | "additional" | null;
+type VaultLinkMode = "destination" | "source" | null;
+const DISCOVERABLE_PASSKEY = "__discoverable_passkey__";
 
 function getCredentials(key: VaultUserKey | null): VaultCredential[] {
   if (!key) return [];
-  if (key.credentials?.length) return key.credentials;
+  if (key.credentials) return key.credentials;
+  if (!key.credentialId) return [];
   return [
     {
       credentialId: key.credentialId,
@@ -70,6 +78,15 @@ export function ZeroKnowledgeStorageSetting() {
     null
   );
   const [editingCredentialName, setEditingCredentialName] = useState("");
+  const [vaultLinkMode, setVaultLinkMode] = useState<VaultLinkMode>(null);
+  const [vaultLinkTarget, setVaultLinkTarget] =
+    useState<VaultLinkTarget | null>(null);
+  const [vaultLinkRequestCode, setVaultLinkRequestCode] = useState("");
+  const [vaultLinkResponseCode, setVaultLinkResponseCode] = useState("");
+  const [vaultLinkOutputCode, setVaultLinkOutputCode] = useState("");
+  const [vaultLinkRequestedOrigin, setVaultLinkRequestedOrigin] = useState("");
+  const [vaultLinkSourceCredentialId, setVaultLinkSourceCredentialId] =
+    useState("");
 
   const credentials = useMemo(() => getCredentials(vaultKey), [vaultKey]);
 
@@ -101,16 +118,14 @@ export function ZeroKnowledgeStorageSetting() {
           privateKey &&
           (await isPrivateKeyForUser(privateKey, key));
         let activeCredentialId: string | null = null;
-        if (unlocked) {
-          try {
-            activeCredentialId = await loadActiveCredentialId();
-          } catch (error) {
-            console.warn("Could not load the active passkey indicator:", error);
-          }
+        try {
+          activeCredentialId = await loadActiveCredentialId();
+        } catch (error) {
+          console.warn("Could not load the active passkey indicator:", error);
         }
         const storedCredentialIsRegistered = getCredentials(key).some(
           (credential) => credential.credentialId === activeCredentialId
-        );
+        ) || getCredentials(key).length === 0;
         if (!cancelled) {
           setVaultKey(key);
           setActiveCredentialId(
@@ -146,8 +161,151 @@ export function ZeroKnowledgeStorageSetting() {
     setRegistrationMode(mode);
   };
 
+  const openVaultLinkDestination = async () => {
+    setVaultLinkMode("destination");
+    setVaultLinkTarget(null);
+    setVaultLinkResponseCode("");
+    setCredentialName("");
+    setBusy(true);
+    try {
+      setVaultLinkTarget(await createVaultLinkRequest());
+    } catch (error) {
+      setVaultLinkMode(null);
+      toaster.create({
+        title: t("zk_storage_error"),
+        description: error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openVaultLinkSource = () => {
+    setVaultLinkRequestCode("");
+    setVaultLinkOutputCode("");
+    setVaultLinkRequestedOrigin("");
+    setCredentialName("");
+    setVaultLinkSourceCredentialId(
+      activeCredentialId ??
+        credentials[0]?.credentialId ??
+        DISCOVERABLE_PASSKEY
+    );
+    setVaultLinkMode("source");
+  };
+
+  const createVaultLink = async () => {
+    if (!vaultLinkSourceCredentialId || !vaultLinkRequestCode.trim()) return;
+    if (
+      !vaultLinkRequestedOrigin ||
+      !window.confirm(
+        t("zk_storage_link_confirm", { origin: vaultLinkRequestedOrigin })
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const output = await createVaultLinkResponse(
+        vaultLinkRequestCode,
+        vaultLinkSourceCredentialId === DISCOVERABLE_PASSKEY
+          ? undefined
+          : vaultLinkSourceCredentialId
+      );
+      setVaultLinkOutputCode(output);
+      const updatedKey = await chatVault.getMyKey();
+      setVaultKey(updatedKey);
+      if (updatedKey.credentialId) markActiveCredential(updatedKey.credentialId);
+      toaster.create({
+        title: t("zk_storage_link_response_ready"),
+        duration: 5000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Could not prepare the vault link:", error);
+      toaster.create({
+        title: t("zk_storage_error"),
+        description: error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const finishVaultLink = async () => {
+    if (!vaultLinkTarget || !credentialName.trim() || !vaultLinkResponseCode.trim()) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const updatedKey = await completeVaultLink(
+        user,
+        credentialName,
+        vaultLinkTarget,
+        vaultLinkResponseCode
+      );
+      setVaultKey(updatedKey);
+      if (updatedKey.credentialId) markActiveCredential(updatedKey.credentialId);
+      setGeneral({ zkStorage: true });
+      setKeyStatus("unlocked");
+      setVaultLinkMode(null);
+      setVaultLinkTarget(null);
+      window.dispatchEvent(new Event("zk-storage-key-available"));
+      toaster.create({
+        title: t("zk_storage_passkey_added"),
+        description: t("zk_storage_passkey_added_help"),
+        duration: 6000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Could not link this site to the chat vault:", error);
+      toaster.create({
+        title: t("zk_storage_error"),
+        description: error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const closeRegistration = () => {
     if (!busy) setRegistrationMode(null);
+  };
+
+  const closeVaultLink = () => {
+    if (busy) return;
+    setVaultLinkMode(null);
+    setVaultLinkTarget(null);
+    setVaultLinkRequestCode("");
+    setVaultLinkResponseCode("");
+    setVaultLinkOutputCode("");
+  };
+
+  const updateVaultLinkRequestCode = (value: string) => {
+    setVaultLinkRequestCode(value);
+    try {
+      setVaultLinkRequestedOrigin(getVaultLinkRequestOrigin(value));
+    } catch {
+      setVaultLinkRequestedOrigin("");
+    }
+  };
+
+  const copyVaultLinkCode = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toaster.create({
+        title: t("zk_storage_link_code_copied"),
+        duration: 3000,
+        type: "success",
+      });
+    } catch (error) {
+      console.warn("Could not copy vault link code:", error);
+    }
   };
 
   const registerCredential = async () => {
@@ -167,7 +325,9 @@ export function ZeroKnowledgeStorageSetting() {
           credentialName,
         });
         setVaultKey(result.userKey);
-        markActiveCredential(result.userKey.credentialId);
+        if (result.userKey.credentialId) {
+          markActiveCredential(result.userKey.credentialId);
+        }
         setGeneral({ zkStorage: true });
         setKeyStatus("unlocked");
       }
@@ -367,10 +527,8 @@ export function ZeroKnowledgeStorageSetting() {
 
     setBusy(true);
     try {
-      await chatVault.deleteMyKey();
       await clearPrivateKey();
       setGeneral({ zkStorage: false });
-      setVaultKey(null);
       setKeyStatus("idle");
       setActiveCredentialId(null);
       toaster.create({
@@ -401,7 +559,13 @@ export function ZeroKnowledgeStorageSetting() {
         onChange={(event) => {
           if (event.target.checked) {
             if (vaultKey) {
-              setGeneral({ zkStorage: true });
+              if (credentials.length === 0 && activeCredentialId) {
+                void unlock(activeCredentialId);
+              } else if (credentials.length === 0) {
+                void openVaultLinkDestination();
+              } else {
+                setGeneral({ zkStorage: true });
+              }
             } else {
               openRegistration("initial");
             }
@@ -460,6 +624,40 @@ export function ZeroKnowledgeStorageSetting() {
       {vaultKey && (
         <Stack mt="3" align="start" gap="2" width="full">
           <Text fontWeight="semibold">{t("zk_storage_your_passkeys")}</Text>
+          {credentials.length === 0 && (
+            <Stack align="start" gap="2" width="full">
+              <Field.HelperText>
+                {t("zk_storage_no_passkey_for_site")}
+              </Field.HelperText>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={busy || loadingAccountKey}
+                loading={busy}
+                onClick={() => void openVaultLinkDestination()}
+              >
+                {t("zk_storage_link_vault")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={busy}
+                onClick={openVaultLinkSource}
+              >
+                {t("zk_storage_link_another_site")}
+              </Button>
+            </Stack>
+          )}
+          {credentials.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={openVaultLinkSource}
+            >
+              {t("zk_storage_link_another_site")}
+            </Button>
+          )}
           {credentials.map((credential) => (
             <Stack
               key={credential.credentialId}
@@ -544,7 +742,7 @@ export function ZeroKnowledgeStorageSetting() {
                       variant="ghost"
                       size="sm"
                       colorPalette="red"
-                      disabled={busy || credentials.length <= 1}
+                      disabled={busy || !(credential.canDelete ?? credentials.length > 1)}
                       onClick={() => void deleteCredential(credential)}
                     >
                       {t("zk_storage_delete_passkey")}
@@ -554,23 +752,203 @@ export function ZeroKnowledgeStorageSetting() {
               )}
             </Stack>
           ))}
-          {credentials.length <= 1 && (
+          {credentials.length === 1 && !credentials[0]?.canDelete && (
             <Field.HelperText>
               {t("zk_storage_last_credential_help")}
             </Field.HelperText>
           )}
           {keyStatus === "unlocked" && (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={busy}
-              onClick={() => openRegistration("additional")}
-            >
-              {t("zk_storage_add_passkey")}
-            </Button>
+            credentials.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={busy}
+                onClick={() => openRegistration("additional")}
+              >
+                {t("zk_storage_add_passkey")}
+              </Button>
+            )
           )}
         </Stack>
       )}
+
+      <Dialog.Root
+        open={vaultLinkMode !== null}
+        onOpenChange={(event) => {
+          if (!event.open) closeVaultLink();
+        }}
+        closeOnEscape={!busy}
+        closeOnInteractOutside={!busy}
+        size="lg"
+      >
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>
+                  {t(
+                    vaultLinkMode === "source"
+                      ? "zk_storage_link_source_title"
+                      : "zk_storage_link_target_title"
+                  )}
+                </Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                {vaultLinkMode === "destination" ? (
+                  <Stack gap="4" align="stretch">
+                    <Text>{t("zk_storage_link_target_help")}</Text>
+                    <Field.Root>
+                      <Field.Label>{t("zk_storage_link_request_code")}</Field.Label>
+                      <Input
+                        readOnly
+                        value={vaultLinkTarget?.requestCode ?? ""}
+                        aria-label={t("zk_storage_link_request_code")}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!vaultLinkTarget || busy}
+                        onClick={() =>
+                          vaultLinkTarget &&
+                          void copyVaultLinkCode(vaultLinkTarget.requestCode)
+                        }
+                      >
+                        {t("zk_storage_link_copy_code")}
+                      </Button>
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>{t("zk_storage_link_response_code")}</Field.Label>
+                      <Input
+                        value={vaultLinkResponseCode}
+                        onChange={(event) =>
+                          setVaultLinkResponseCode(event.target.value)
+                        }
+                        aria-label={t("zk_storage_link_response_code")}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>{t("zk_storage_passkey_name_label")}</Field.Label>
+                      <Input
+                        maxLength={80}
+                        value={credentialName}
+                        onChange={(event) => setCredentialName(event.target.value)}
+                        placeholder={t("zk_storage_passkey_name_placeholder")}
+                      />
+                    </Field.Root>
+                  </Stack>
+                ) : (
+                  <Stack gap="4" align="stretch">
+                    <Text>{t("zk_storage_link_source_help")}</Text>
+                    <Field.Root>
+                      <Field.Label>{t("zk_storage_link_request_code")}</Field.Label>
+                      <Input
+                        value={vaultLinkRequestCode}
+                        onChange={(event) =>
+                          updateVaultLinkRequestCode(event.target.value)
+                        }
+                        aria-label={t("zk_storage_link_request_code")}
+                      />
+                      {vaultLinkRequestedOrigin && (
+                        <Field.HelperText>
+                          {t("zk_storage_link_target_origin", {
+                            origin: vaultLinkRequestedOrigin,
+                          })}
+                        </Field.HelperText>
+                      )}
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>
+                        {t("zk_storage_confirm_with_passkey_label")}
+                      </Field.Label>
+                      <RadioGroup
+                        value={vaultLinkSourceCredentialId}
+                        onValueChange={(event) =>
+                          setVaultLinkSourceCredentialId(event.value)
+                        }
+                      >
+                        <Stack gap="2">
+                          {credentials.length > 0
+                            ? credentials.map((credential) => (
+                                <Radio
+                                  key={credential.credentialId}
+                                  value={credential.credentialId}
+                                >
+                                  {credential.name}
+                                </Radio>
+                              ))
+                            : activeCredentialId ? (
+                                <Radio value={activeCredentialId}>
+                                  {t("zk_storage_passkey_on_this_site")}
+                                </Radio>
+                              ) : (
+                                <Radio value={DISCOVERABLE_PASSKEY}>
+                                  {t("zk_storage_choose_passkey")}
+                                </Radio>
+                              )}
+                        </Stack>
+                      </RadioGroup>
+                    </Field.Root>
+                    {vaultLinkOutputCode && (
+                      <Field.Root>
+                        <Field.Label>
+                          {t("zk_storage_link_response_code")}
+                        </Field.Label>
+                        <Input readOnly value={vaultLinkOutputCode} />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void copyVaultLinkCode(vaultLinkOutputCode)}
+                        >
+                          {t("zk_storage_link_copy_code")}
+                        </Button>
+                      </Field.Root>
+                    )}
+                  </Stack>
+                )}
+              </Dialog.Body>
+              <Dialog.Footer>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={closeVaultLink}
+                >
+                  {t("zk_storage_cancel")}
+                </Button>
+                {vaultLinkMode === "destination" ? (
+                  <Button
+                    disabled={
+                      busy ||
+                      !vaultLinkTarget ||
+                      !credentialName.trim() ||
+                      !vaultLinkResponseCode.trim()
+                    }
+                    loading={busy}
+                    onClick={() => void finishVaultLink()}
+                  >
+                    {busy
+                      ? t("zk_storage_registering_passkey")
+                      : t("zk_storage_register_passkey")}
+                  </Button>
+                ) : (
+                  <Button
+                    disabled={
+                      busy ||
+                      !vaultLinkRequestCode.trim() ||
+                      !vaultLinkRequestedOrigin ||
+                      !vaultLinkSourceCredentialId
+                    }
+                    loading={busy}
+                    onClick={() => void createVaultLink()}
+                  >
+                    {t("zk_storage_link_prepare_response")}
+                  </Button>
+                )}
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
 
       <Dialog.Root
         open={registrationMode !== null}

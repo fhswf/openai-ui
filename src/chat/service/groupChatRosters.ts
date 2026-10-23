@@ -86,8 +86,6 @@ export async function saveGroupRoster(
       emails.map((email) => email.trim().toLowerCase()).filter(Boolean)
     ),
   ];
-  if (uniqueEmails.length < 1) throw new Error("Add at least one group member");
-
   const members = await Promise.all(
     uniqueEmails.map(async (email) => {
       const key = await chatVault.lookupKeyByEmail(email);
