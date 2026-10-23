@@ -27,6 +27,7 @@ const ICONS = {
 };
 
 interface OptionProps {
+  ariaLabel?: string;
   dataTestId?: string;
   expanded?: boolean;
   onClick: VoidFunction;
@@ -35,6 +36,7 @@ interface OptionProps {
 }
 
 function Option({
+  ariaLabel,
   dataTestId,
   expanded = false,
   onClick,
@@ -53,7 +55,7 @@ function Option({
       justifyContent="flex-start"
       variant="ghost"
       onClick={onClick}
-      aria-label={tooltip}
+      aria-label={ariaLabel ?? tooltip}
       {...testId}
     >
       <Icon />
@@ -61,7 +63,7 @@ function Option({
     </Button>
   ) : (
     <IconButton
-      aria-label={tooltip}
+      aria-label={ariaLabel ?? tooltip}
       variant="ghost"
       onClick={onClick}
       {...testId}
@@ -101,6 +103,13 @@ export function PrimarySidebarOptions({
         type={theme as keyof typeof ICONS}
         onClick={onToggleTheme}
         tooltip={t("Theme")}
+        ariaLabel={t(
+          theme === "dark"
+            ? "theme_switch_to_light"
+            : theme === "light"
+              ? "theme_switch_to_dark"
+              : "theme_toggle"
+        )}
         dataTestId="OptionDarkModeSelect"
         expanded={expanded}
       />

@@ -89,15 +89,18 @@ test.describe("Dark Mode", () => {
 
   test("Down Left Button (Theme toggle)", async ({ page }) => {
     const html = page.locator("html");
-
-    // Force light to start to match Cypress assumption
-    await page.evaluate(() =>
-      document.documentElement.setAttribute("data-theme", "light")
-    );
+    const configBtn = page.getByTestId("OpenConfigBtn");
+    await expect(configBtn).toBeVisible({ timeout: 10000 });
+    await configBtn.click();
+    await page.getByTestId("themeSelectlight").click({ force: true });
     await expect(html).toHaveAttribute("data-theme", "light");
+    await page.getByTestId("SettingsCloseBtn").click();
 
     const optionDarkModeSelect = page.getByTestId("OptionDarkModeSelect");
     await expect(optionDarkModeSelect).toBeVisible({ timeout: 10000 });
+    await expect(optionDarkModeSelect).toHaveAccessibleName(
+      /Switch to dark color scheme|Zum dunklen Farbschema wechseln/i
+    );
     await optionDarkModeSelect.click();
     await expect(html).toHaveAttribute("data-theme", "dark");
 
