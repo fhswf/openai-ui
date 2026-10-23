@@ -54,6 +54,15 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.55.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.55.0...openai-ui-v0.55.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* enhance dark mode accessibility and improve theme toggle functio… ([49748f8](https://github.com/fhswf/openai-ui/commit/49748f88791d07aa32220d955813b2a4b32db923))
+* enhance dark mode accessibility and improve theme toggle functionality ([ebe0c19](https://github.com/fhswf/openai-ui/commit/ebe0c192390f22694d68628149bcafb561315a2b))
+* sort merged chats by creation time in restoreVaultChats function ([1d61752](https://github.com/fhswf/openai-ui/commit/1d6175271a4b3cca4da0cb5e4196365f20f0a44f))
+
 ## [0.54.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.53.0...openai-ui-v0.54.0) (2026-10-18)
 
 
