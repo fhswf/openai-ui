@@ -40,3 +40,28 @@ export function chunkingStrategyFor(
       : choice.maxTokens;
   return { type: "semantic", semantic: { max_chunk_size_tokens: maxTokens } };
 }
+
+export type ChunkTokensValidation =
+  | { ok: true; value: number }
+  | { ok: false; error: "empty" | "not_integer" | "out_of_range" };
+
+/** Checks the text of the custom chunk size field. */
+export function validateChunkTokens(input: string): ChunkTokensValidation {
+  const trimmed = input.trim();
+  if (trimmed === "") {
+    return { ok: false, error: "empty" };
+  }
+
+  // Digits only, so "1e3", "0x100", "-5" or "12.5" are rejected even though
+  // Number() would accept them.
+  if (!/^\d+$/.test(trimmed)) {
+    return { ok: false, error: "not_integer" };
+  }
+
+  const numericValue = parseInt(trimmed, 10);
+  if (numericValue < MIN_CHUNK_TOKENS || numericValue > MAX_CHUNK_TOKENS) {
+    return { ok: false, error: "out_of_range" };
+  }
+
+  return { ok: true, value: numericValue };
+}
