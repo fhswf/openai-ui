@@ -12,11 +12,12 @@ const client = {
     search: vi.fn(),
     files: {
       list: vi.fn(),
-      uploadAndPoll: vi.fn(),
+      createAndPoll: vi.fn(),
       delete: vi.fn(),
     },
   },
   files: {
+    create: vi.fn(),
     retrieve: vi.fn(),
     delete: vi.fn(),
   },
@@ -135,14 +136,41 @@ describe("vectorStores service", () => {
     ]);
   });
 
-  it("uploads a file and attaches it to the vector store", async () => {
+  it("uploads a file and attaches it with the service default", async () => {
     const file = new File(["hello"], "notes.md", { type: "text/markdown" });
+    client.files.create.mockResolvedValue({ id: "file-1" });
 
     await uploadFileToVectorStore(makeOptions(), "vs1", file);
 
-    expect(client.vectorStores.files.uploadAndPoll).toHaveBeenCalledWith(
+    expect(client.files.create).toHaveBeenCalledWith({
+      file,
+      purpose: "assistants",
+    });
+    // toHaveBeenCalledWith ignores undefined properties, so check the body
+    // itself: without a strategy the request must stay unchanged.
+    const [storeId, body] =
+      client.vectorStores.files.createAndPoll.mock.calls[0];
+    expect(storeId).toBe("vs1");
+    expect(body).toEqual({ file_id: "file-1" });
+    expect(body).not.toHaveProperty("chunking_strategy");
+  });
+
+  it("attaches a file with the given chunking strategy", async () => {
+    const file = new File(["hello"], "notes.md", { type: "text/markdown" });
+    const strategy = {
+      type: "semantic" as const,
+      semantic: { max_chunk_size_tokens: 400 },
+    };
+    client.files.create.mockResolvedValue({ id: "file-1" });
+
+    await uploadFileToVectorStore(makeOptions(), "vs1", file, strategy);
+
+    expect(client.vectorStores.files.createAndPoll).toHaveBeenCalledWith(
       "vs1",
-      file
+      {
+        file_id: "file-1",
+        chunking_strategy: strategy,
+      }
     );
   });
 
