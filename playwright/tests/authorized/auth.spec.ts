@@ -263,35 +263,43 @@ async function waitForMcpAuthRefresh(
     staticLabel: string;
   }
 ) {
-  await expect(async () => {
-    const authWasRefreshed = await page.evaluate(
-      ({ staleAuthorization, staticToken, userLabel, staticLabel }) => {
-        const raw = localStorage.getItem("SESSIONS");
-        if (!raw) return false;
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          ({ staleAuthorization, staticToken, userLabel, staticLabel }) => {
+            const raw = localStorage.getItem("SESSIONS");
+            if (!raw) return null;
 
-        const session = JSON.parse(raw);
-        const tools = session?.options?.openai?.tools;
-        if (!tools || tools.dataType !== "Map") return false;
+            const session = JSON.parse(raw);
+            const tools = session?.options?.openai?.tools;
+            if (!tools || tools.dataType !== "Map") return null;
 
-        const findAuthorization = (label: string) => {
-          const entry = tools.value.find(([key]: [string]) => key === label);
-          return entry?.[1]?.authorization;
-        };
+            const findAuthorization = (label: string) => {
+              const entry = tools.value.find(
+                ([key]: [string]) => key === label
+              );
+              return entry?.[1]?.authorization;
+            };
 
-        const userAuth = findAuthorization(userLabel);
-        const staticAuth = findAuthorization(staticLabel);
+            const userAuth = findAuthorization(userLabel);
+            const staticAuth = findAuthorization(staticLabel);
 
-        return (
-          typeof userAuth === "string" &&
-          userAuth !== staleAuthorization &&
-          staticAuth === staticToken
-        );
-      },
-      args
-    );
-
-    expect(authWasRefreshed).toBe(true);
-  }).toPass({ timeout: 30000 });
+            return {
+              userAuthorizationRefreshed:
+                typeof userAuth === "string" &&
+                userAuth !== staleAuthorization,
+              staticAuthorizationPreserved: staticAuth === staticToken,
+            };
+          },
+          args
+        ),
+      { timeout: 30000, intervals: [250, 500, 1000] }
+    )
+    .toEqual({
+      userAuthorizationRefreshed: true,
+      staticAuthorizationPreserved: true,
+    });
 }
 
 test.describe("Authentication (fetchAndGetUser)", () => {
@@ -390,8 +398,23 @@ test.describe("Authentication (fetchAndGetUser)", () => {
     const userResponse = page.waitForResponse(userEndpointPattern);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await userResponse;
-    await waitForAuthenticatedShell(page);
-    await acceptTermsIfVisible(page);
+
+    // The user button renders before fetchAndGetUser finishes updating state.
+    const userInformation = page.getByTestId("UserInformation");
+    await expect(async () => {
+      if (!(await userInformation.isVisible())) {
+        await clickWithBackdropRetry(
+          page,
+          page.getByTestId("UserInformationBtn")
+        );
+      }
+      await expect(userInformation.getByText(updatedMcpUser.name)).toBeVisible({
+        timeout: 1000,
+      });
+      await expect(userInformation.getByText(updatedMcpUser.email)).toBeVisible({
+        timeout: 1000,
+      });
+    }).toPass({ timeout: APP_READY_TIMEOUT, intervals: [250, 500, 1000] });
 
     await waitForMcpAuthRefresh(page, {
       staleAuthorization,

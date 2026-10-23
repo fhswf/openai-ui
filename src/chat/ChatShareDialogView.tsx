@@ -14,6 +14,7 @@ import { LuShare, LuX } from "react-icons/lu";
 import { useTranslation } from "react-i18next";
 import { toaster } from "../components/ui/toaster";
 import type { VaultSharingActions } from "./context/types";
+import { GroupChatManager } from "./GroupChatManager";
 
 export type GeneratedLink = {
   url: string;
@@ -23,7 +24,18 @@ export type GeneratedLink = {
 
 type ShareActions = Pick<
   VaultSharingActions,
-  "shareChatWithUser" | "createChatShareLink" | "revokeChatShareLink"
+  | "shareChatWithUser"
+  | "createChatShareLink"
+  | "revokeChatShareLink"
+  | "loadGroupRosters"
+  | "saveGroupRoster"
+  | "deleteGroupRoster"
+  | "createGroupChatFromRoster"
+  | "getGroupChatInfo"
+  | "lookupGroupInviteTarget"
+  | "inviteGroupChatMember"
+  | "removeGroupChatMember"
+  | "isGroupChatOwner"
 >;
 
 type BusySetter = Dispatch<SetStateAction<boolean>>;
@@ -279,6 +291,7 @@ export type ShareDialogViewProps = {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   chatId: string;
+  isGroupChat: boolean;
   actions: ShareActions;
   email: string;
   setEmail: Dispatch<SetStateAction<string>>;
@@ -383,12 +396,20 @@ function useShareDialogHandlers(
 }
 
 function ChatShareDialogBody({
+  open,
+  chatId,
+  isGroupChat,
+  actions,
   generatedLink,
   busy,
   email,
   setEmail,
   handlers,
 }: {
+  open: boolean;
+  chatId: string;
+  isGroupChat: boolean;
+  actions: ShareActions;
   generatedLink: GeneratedLink | null;
   busy: boolean;
   email: string;
@@ -398,18 +419,28 @@ function ChatShareDialogBody({
   return (
     <Dialog.Body>
       <Stack gap="5">
-        <ChatShareLinkSection
-          generatedLink={generatedLink}
-          busy={busy}
-          onCreate={handlers.onCreate}
-          onCopy={handlers.onCopy}
-          onRevoke={handlers.onRevoke}
-        />
-        <ChatShareUserSection
-          email={email}
-          busy={busy}
-          setEmail={setEmail}
-          onShare={handlers.onShare}
+        {!isGroupChat && (
+          <>
+            <ChatShareLinkSection
+              generatedLink={generatedLink}
+              busy={busy}
+              onCreate={handlers.onCreate}
+              onCopy={handlers.onCopy}
+              onRevoke={handlers.onRevoke}
+            />
+            <ChatShareUserSection
+              email={email}
+              busy={busy}
+              setEmail={setEmail}
+              onShare={handlers.onShare}
+            />
+          </>
+        )}
+        <GroupChatManager
+          open={open}
+          chatId={chatId}
+          isGroupChat={isGroupChat}
+          actions={actions}
         />
       </Stack>
     </Dialog.Body>
@@ -450,6 +481,7 @@ export function ChatShareDialogView(props: ShareDialogViewProps) {
     open,
     setOpen,
     chatId,
+    isGroupChat,
     actions,
     email,
     setEmail,
@@ -477,6 +509,10 @@ export function ChatShareDialogView(props: ShareDialogViewProps) {
           </Dialog.CloseTrigger>
           <ShareDialogHeader />
           <ChatShareDialogBody
+            open={open}
+            chatId={chatId}
+            isGroupChat={isGroupChat}
+            actions={actions}
             generatedLink={generatedLink}
             busy={busy}
             email={email}

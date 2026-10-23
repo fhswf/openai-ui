@@ -38,6 +38,43 @@ export type VaultChatSummary = {
   rev: number;
 };
 
+export type VaultGroupEnvelope = Omit<VaultEnvelope, "recipientId"> & {
+  epoch: number;
+};
+
+export type VaultGroupMember = {
+  userId: string;
+  role: "owner" | "member";
+};
+
+export type VaultGroupChat = {
+  chatId: string;
+  ownerId: string;
+  currentEpoch: number;
+  cursor: number;
+  members: VaultGroupMember[];
+  envelopes: VaultGroupEnvelope[];
+};
+
+export type VaultGroupCatalog = {
+  ciphertext: string;
+  iv: string;
+  selfEnvelope: VaultEnvelope;
+  rev: number;
+  updatedAt: string;
+};
+
+export type VaultGroupEvent = {
+  chatId: string;
+  sequence: number;
+  eventId: string;
+  actorId: string;
+  epoch: number;
+  ciphertext: string;
+  iv: string;
+  createdAt: string;
+};
+
 export type VaultEnvelope = {
   recipientId: string;
   envelopeAlgorithm?:
@@ -304,6 +341,86 @@ export const chatVault = {
     return request("/chats", {}, options);
   },
 
+  getGroupCatalog(options?: RequestOptions): Promise<VaultGroupCatalog> {
+    return request("/group-catalog", {}, options);
+  },
+
+  putGroupCatalog(
+    payload: {
+      ciphertext: string;
+      iv: string;
+      selfEnvelope: VaultEnvelope;
+      baseRev?: number;
+    },
+    options?: RequestOptions
+  ): Promise<{ rev: number }> {
+    return request(
+      "/group-catalog",
+      { method: "PUT", body: JSON.stringify(payload) },
+      options
+    );
+  },
+
+  getGroupChat(
+    id: string,
+    options?: RequestOptions
+  ): Promise<VaultGroupChat> {
+    return request(`/chats/${encodeURIComponent(id)}/group`, {}, options);
+  },
+
+  createGroupChat(
+    id: string,
+    payload: { members: string[]; envelopes: VaultEnvelope[] },
+    options?: RequestOptions
+  ): Promise<{ chatId: string; ownerId: string; currentEpoch: number; members: string[] }> {
+    return request(
+      `/chats/${encodeURIComponent(id)}/group`,
+      { method: "POST", body: JSON.stringify(payload) },
+      options
+    );
+  },
+
+  updateGroupMembership(
+    id: string,
+    payload: {
+      baseEpoch: number;
+      members: string[];
+      envelopes: (VaultEnvelope & { epoch: number })[];
+    },
+    options?: RequestOptions
+  ): Promise<{ chatId: string; currentEpoch: number; members: string[] }> {
+    return request(
+      `/chats/${encodeURIComponent(id)}/group/membership`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      options
+    );
+  },
+
+  listGroupEvents(
+    id: string,
+    after = 0,
+    limit = 20,
+    options?: RequestOptions
+  ): Promise<{ events: VaultGroupEvent[]; nextCursor: number; hasMore: boolean }> {
+    return request(
+      `/chats/${encodeURIComponent(id)}/events?after=${after}&limit=${limit}`,
+      {},
+      options
+    );
+  },
+
+  appendGroupEvent(
+    id: string,
+    event: { eventId: string; epoch: number; ciphertext: string; iv: string },
+    options?: RequestOptions
+  ): Promise<{ chatId: string; eventId: string; sequence: number; duplicate: boolean; createdAt: string }> {
+    return request(
+      `/chats/${encodeURIComponent(id)}/events`,
+      { method: "POST", body: JSON.stringify(event) },
+      options
+    );
+  },
+
   getChat(id: string, options?: RequestOptions): Promise<VaultChat> {
     return request(`/chats/${encodeURIComponent(id)}`, {}, options);
   },
@@ -318,7 +435,10 @@ export const chatVault = {
       `/chats/${encodeURIComponent(chatId)}/attachments/${encodeURIComponent(attachmentId)}`,
       {
         method: "PUT",
-        body: ciphertext,
+        body: ciphertext.buffer.slice(
+          ciphertext.byteOffset,
+          ciphertext.byteOffset + ciphertext.byteLength
+        ) as ArrayBuffer,
         headers: { "Content-Type": "application/octet-stream" },
       },
       options

@@ -44,6 +44,12 @@ const CHAT_KEY_WRAP_INFO = "openai-ui-zk-chat-key-wrap-v1";
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+function copyToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
 /**
  * Fixed salt handed to the WebAuthn PRF extension. It is public (not a secret);
  * it only guarantees that registering and asserting derive the same value.
@@ -274,6 +280,70 @@ export async function decryptChatData<T = unknown>(
   return JSON.parse(decoder.decode(plaintext)) as T;
 }
 
+export type GroupChatEventContext = {
+  chatId: string;
+  eventId: string;
+  epoch: number;
+};
+
+const MAX_GROUP_EVENT_CIPHERTEXT_BYTES = 256 * 1024;
+
+function getGroupEventAdditionalData(context: GroupChatEventContext): ArrayBuffer {
+  const value = encoder.encode(
+    JSON.stringify([
+      "openai-ui-zk-group-event-v1",
+      context.chatId,
+      context.eventId,
+      context.epoch,
+    ])
+  );
+  return copyToArrayBuffer(value);
+}
+
+/** Encrypt a group event and bind its routing fields as AES-GCM AAD. */
+export async function encryptGroupChatEvent(
+  data: unknown,
+  chatKey: CryptoKey,
+  context: GroupChatEventContext
+): Promise<EncryptedPayload> {
+  const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
+  const plaintext = encoder.encode(JSON.stringify(data));
+  if (plaintext.byteLength + 16 > MAX_GROUP_EVENT_CIPHERTEXT_BYTES) {
+    throw new Error("This message is too large to sync to the group");
+  }
+  const ciphertext = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv: copyToArrayBuffer(iv),
+      additionalData: getGroupEventAdditionalData(context),
+    },
+    chatKey,
+    copyToArrayBuffer(plaintext)
+  );
+  return {
+    ciphertext: bufferToBase64Url(ciphertext),
+    iv: bufferToBase64Url(iv),
+  };
+}
+
+/** Decrypt a group event only when its authenticated routing fields match. */
+export async function decryptGroupChatEvent<T = unknown>(
+  payload: EncryptedPayload,
+  chatKey: CryptoKey,
+  context: GroupChatEventContext
+): Promise<T> {
+  const plaintext = await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: base64UrlToBuffer(payload.iv),
+      additionalData: getGroupEventAdditionalData(context),
+    },
+    chatKey,
+    base64UrlToBuffer(payload.ciphertext)
+  );
+  return JSON.parse(decoder.decode(plaintext)) as T;
+}
+
 /** Encrypt a file with its chat key; the returned binary is IV + AES-GCM data. */
 export async function encryptAttachmentData(
   data: ArrayBuffer | Uint8Array,
@@ -283,9 +353,9 @@ export async function encryptAttachmentData(
   const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
   const plaintext = data instanceof Uint8Array ? data : new Uint8Array(data);
   const ciphertext = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv, additionalData },
+    { name: "AES-GCM", iv: copyToArrayBuffer(iv), additionalData },
     chatKey,
-    plaintext
+    copyToArrayBuffer(plaintext)
   );
   const result = new Uint8Array(iv.byteLength + ciphertext.byteLength);
   result.set(iv, 0);
@@ -305,8 +375,8 @@ export async function decryptAttachmentData(
   if (bytes.byteLength < AES_GCM_IV_LENGTH + 16) {
     throw new Error("Encrypted attachment is incomplete");
   }
-  const iv = bytes.subarray(0, AES_GCM_IV_LENGTH);
-  const ciphertext = bytes.subarray(AES_GCM_IV_LENGTH);
+  const iv = copyToArrayBuffer(bytes.subarray(0, AES_GCM_IV_LENGTH));
+  const ciphertext = copyToArrayBuffer(bytes.subarray(AES_GCM_IV_LENGTH));
   return crypto.subtle.decrypt(
     { name: "AES-GCM", iv, additionalData },
     chatKey,
@@ -314,14 +384,107 @@ export async function decryptAttachmentData(
   );
 }
 
+const GROUP_ATTACHMENT_HEADER = new Uint8Array([0x5a, 0x4b, 0x47, 0x41, 1]);
+const GROUP_ATTACHMENT_HEADER_LENGTH = GROUP_ATTACHMENT_HEADER.length + 4;
+
+function toBytes(data: ArrayBuffer | Uint8Array): Uint8Array {
+  return data instanceof Uint8Array ? data : new Uint8Array(data);
+}
+
+/** Return the group epoch stored in a versioned group attachment, if present. */
+export function getGroupAttachmentEpoch(
+  data: ArrayBuffer | Uint8Array
+): number | null {
+  const bytes = toBytes(data);
+  if (
+    bytes.byteLength < GROUP_ATTACHMENT_HEADER_LENGTH + AES_GCM_IV_LENGTH + 16 ||
+    !GROUP_ATTACHMENT_HEADER.every((value, index) => bytes[index] === value)
+  ) {
+    return null;
+  }
+  const view = new DataView(
+    bytes.buffer,
+    bytes.byteOffset + GROUP_ATTACHMENT_HEADER.length,
+    4
+  );
+  const epoch = view.getUint32(0);
+  return epoch > 0 ? epoch : null;
+}
+
+/** Encrypt a group attachment with an epoch key and authenticate its epoch. */
+export async function encryptGroupAttachmentData(
+  data: ArrayBuffer | Uint8Array,
+  epochKey: CryptoKey,
+  context: Pick<GroupChatEventContext, "chatId" | "epoch"> & {
+    attachmentId: string;
+  }
+): Promise<Uint8Array> {
+  if (!Number.isSafeInteger(context.epoch) || context.epoch < 1) {
+    throw new Error("The group attachment epoch is invalid");
+  }
+  const encrypted = await encryptAttachmentData(
+    data,
+    epochKey,
+    getGroupAttachmentAdditionalData(
+      context.chatId,
+      context.attachmentId,
+      context.epoch
+    )
+  );
+  const header = new Uint8Array(GROUP_ATTACHMENT_HEADER_LENGTH);
+  header.set(GROUP_ATTACHMENT_HEADER, 0);
+  new DataView(header.buffer).setUint32(GROUP_ATTACHMENT_HEADER.length, context.epoch);
+  const result = new Uint8Array(header.byteLength + encrypted.byteLength);
+  result.set(header, 0);
+  result.set(encrypted, header.byteLength);
+  return result;
+}
+
+/** Decrypt an attachment only with the epoch encoded in its authenticated header. */
+export async function decryptGroupAttachmentData(
+  data: ArrayBuffer | Uint8Array,
+  epochKey: CryptoKey,
+  context: Pick<GroupChatEventContext, "chatId" | "epoch"> & {
+    attachmentId: string;
+  }
+): Promise<ArrayBuffer> {
+  const bytes = toBytes(data);
+  const epoch = getGroupAttachmentEpoch(bytes);
+  if (epoch === null || epoch !== context.epoch) {
+    throw new Error("The group attachment epoch does not match");
+  }
+  return decryptAttachmentData(
+    bytes.subarray(GROUP_ATTACHMENT_HEADER_LENGTH),
+    epochKey,
+    getGroupAttachmentAdditionalData(
+      context.chatId,
+      context.attachmentId,
+      context.epoch
+    )
+  );
+}
+
+/** Bind a group attachment to its chat, opaque ID and access-control epoch. */
+export function getGroupAttachmentAdditionalData(
+  chatId: string,
+  attachmentId: string,
+  epoch: number
+): ArrayBuffer {
+  return copyToArrayBuffer(
+    encoder.encode(
+      `openai-ui-zk-group-attachment-v1\u0000${chatId}\u0000${attachmentId}\u0000${epoch}`
+    )
+  );
+}
+
 /** Bind an attachment ciphertext to its chat and opaque storage ID. */
 export function getAttachmentAdditionalData(
   chatId: string,
   attachmentId: string
-): Uint8Array {
-  return encoder.encode(
+): ArrayBuffer {
+  return copyToArrayBuffer(encoder.encode(
     `openai-ui-zk-attachment-v1\u0000${chatId}\u0000${attachmentId}`
-  );
+  ));
 }
 
 /** Wrap K_chat for one recipient using ECDH by default or legacy RSA-OAEP. */
