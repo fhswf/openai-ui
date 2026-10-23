@@ -9,6 +9,7 @@ import {
   generateUserKeyPair,
   importPrivateKey,
   LEGACY_RSA_KEY_ALGORITHM,
+  type UserKeyAlgorithm,
   bufferToBase64Url,
   base64UrlToBuffer,
   unwrapChatKey,
@@ -499,11 +500,16 @@ export function getVaultLinkRequestOrigin(requestCode: string): string {
   return validateLinkOrigin(request.targetOrigin);
 }
 
-/** Unlock the vault on its existing site and encrypt it to the destination's one-time key. */
-export async function createVaultLinkResponse(
-  requestCode: string,
-  sourceCredentialId?: string
-): Promise<string> {
+type PreparedVaultLinkRequest = {
+  request: VaultLinkRequestPayload;
+  targetOrigin: string;
+  sourceOrigin: string;
+  targetPublicKey: CryptoKey;
+};
+
+async function prepareVaultLinkRequest(
+  requestCode: string
+): Promise<PreparedVaultLinkRequest> {
   const request = decodeVaultLinkCode<VaultLinkRequestPayload>(requestCode);
   if (
     request.type !== "openai-ui-vault-link-request" ||
@@ -517,7 +523,7 @@ export async function createVaultLinkResponse(
   validateTransferId(request.transferId);
   const targetOrigin = validateLinkOrigin(request.targetOrigin);
   const sourceOrigin = validateLinkOrigin(window.location.origin);
-  if (window.location.origin === targetOrigin) {
+  if (sourceOrigin === targetOrigin) {
     throw new Error("Choose a request from a different site");
   }
 
@@ -536,6 +542,14 @@ export async function createVaultLinkResponse(
     []
   );
 
+  return { request, targetOrigin, sourceOrigin, targetPublicKey };
+}
+
+async function requireVaultLinkSourceAccount(
+  prepared: PreparedVaultLinkRequest,
+  sourceCredentialId?: string
+): Promise<void> {
+  const { request, targetOrigin } = prepared;
   const current = await getCurrentUserKey();
   if (!current || current.userId !== request.userId) {
     throw new Error("The request belongs to a different signed-in account");
@@ -554,7 +568,11 @@ export async function createVaultLinkResponse(
   ) {
     throw new Error("Choose a passkey registered for this site");
   }
+}
 
+async function unlockVaultLinkSourceKey(
+  sourceCredentialId?: string
+): Promise<CryptoKey> {
   const challenge = await chatVault.assertionChallenge(sourceCredentialId);
   const assertion = await assertPasskeyWithResponse({
     credentialId: sourceCredentialId,
@@ -587,7 +605,14 @@ export async function createVaultLinkResponse(
   if (!(await isPrivateKeyForUser(privateKey, assertedKey))) {
     throw new Error("The selected passkey could not unlock the chat key");
   }
+  return privateKey;
+}
 
+async function encryptVaultLinkResponse(
+  prepared: PreparedVaultLinkRequest,
+  privateKey: CryptoKey
+): Promise<string> {
+  const { request, targetOrigin, sourceOrigin, targetPublicKey } = prepared;
   const sourcePair = (await crypto.subtle.generateKey(
     { name: "ECDH", namedCurve: "P-256" },
     true,
@@ -638,13 +663,32 @@ export async function createVaultLinkResponse(
   return encodeVaultLinkCode(response);
 }
 
-/** Import the one-time transfer on the destination and register its first passkey. */
-export async function completeVaultLink(
-  user: AuthenticatedUser,
-  credentialName: string,
-  target: VaultLinkTarget,
-  responseCode: string
-): Promise<VaultUserKey> {
+/** Unlock the vault on its existing site and encrypt it to the destination's one-time key. */
+export async function createVaultLinkResponse(
+  requestCode: string,
+  sourceCredentialId?: string
+): Promise<string> {
+  const prepared = await prepareVaultLinkRequest(requestCode);
+  await requireVaultLinkSourceAccount(prepared, sourceCredentialId);
+  const privateKey = await unlockVaultLinkSourceKey(sourceCredentialId);
+  return encryptVaultLinkResponse(prepared, privateKey);
+}
+
+type PreparedVaultLinkResponse = {
+  response: VaultLinkResponsePayload;
+  sourceOrigin: string;
+};
+
+type ImportedVaultLinkResponse = PreparedVaultLinkResponse & {
+  sourcePublicKey: CryptoKey;
+  iv: Uint8Array;
+  ciphertext: Uint8Array;
+};
+
+function prepareVaultLinkResponse(
+  responseCode: string,
+  target: VaultLinkTarget
+): PreparedVaultLinkResponse {
   const response = decodeVaultLinkCode<VaultLinkResponsePayload>(responseCode);
   if (
     response.type !== "openai-ui-vault-link-response" ||
@@ -658,19 +702,13 @@ export async function completeVaultLink(
   }
   validateTransferId(response.transferId);
   const sourceOrigin = validateLinkOrigin(response.sourceOrigin);
+  return { response, sourceOrigin };
+}
 
-  const existing = await getCurrentUserKey();
-  if (
-    !existing ||
-    existing.userId !== target.userId ||
-    existing.credentials?.length
-  ) {
-    throw new Error("This site already has a passkey or the account does not match");
-  }
-  if (!existing.allowedOrigins?.includes(sourceOrigin)) {
-    throw new Error("The sending site is not allowed to access this vault backend");
-  }
-
+async function importVaultLinkResponse(
+  prepared: PreparedVaultLinkResponse
+): Promise<ImportedVaultLinkResponse> {
+  const { response, sourceOrigin } = prepared;
   if (
     typeof response.publicKey !== "string" ||
     typeof response.iv !== "string" ||
@@ -695,6 +733,34 @@ export async function completeVaultLink(
     false,
     []
   );
+
+  return { ...prepared, sourcePublicKey, iv, ciphertext };
+}
+
+async function requireVaultLinkTargetVault(
+  target: VaultLinkTarget,
+  sourceOrigin: string
+): Promise<VaultUserKey> {
+  const existing = await getCurrentUserKey();
+  if (
+    !existing ||
+    existing.userId !== target.userId ||
+    existing.credentials?.length
+  ) {
+    throw new Error("This site already has a passkey or the account does not match");
+  }
+  if (!existing.allowedOrigins?.includes(sourceOrigin)) {
+    throw new Error("The sending site is not allowed to access this vault backend");
+  }
+  return existing;
+}
+
+async function decryptVaultLinkPrivateKey(
+  prepared: ImportedVaultLinkResponse,
+  target: VaultLinkTarget,
+  existing: VaultUserKey
+): Promise<{ pkcs8: ArrayBuffer; algorithm: UserKeyAlgorithm }> {
+  const { response, sourceOrigin, sourcePublicKey, iv, ciphertext } = prepared;
   const linkKey = await deriveVaultLinkKey(
     target.privateKey,
     sourcePublicKey,
@@ -714,8 +780,19 @@ export async function completeVaultLink(
     linkKey,
     ciphertext
   );
-  const algorithm = existing.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM;
-  let cachedPrivateKey: CryptoKey;
+  return {
+    pkcs8,
+    algorithm: existing.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM,
+  };
+}
+
+async function registerVaultLinkPasskey(
+  user: AuthenticatedUser,
+  credentialName: string,
+  existing: VaultUserKey,
+  pkcs8: ArrayBuffer,
+  algorithm: UserKeyAlgorithm
+): Promise<CryptoKey> {
   try {
     const privateKey = await importPrivateKey(pkcs8, algorithm, true);
     if (!(await isPrivateKeyForUser(privateKey, existing))) {
@@ -732,7 +809,7 @@ export async function completeVaultLink(
     });
     const kPass = await deriveKeyFromPrf(passkey.prfOutput);
     const encryptedPrivateKey = await encryptPrivateKey(privateKey, kPass);
-    cachedPrivateKey = await importPrivateKey(pkcs8, algorithm, false);
+    const cachedPrivateKey = await importPrivateKey(pkcs8, algorithm, false);
     await chatVault.registerKey({
       credentialId: passkey.credentialId,
       rpId: window.location.hostname,
@@ -745,9 +822,37 @@ export async function completeVaultLink(
       challenge: challenge.challenge,
       credentialPublicKey: passkey.credentialPublicKey,
     });
+    return cachedPrivateKey;
   } finally {
     new Uint8Array(pkcs8).fill(0);
   }
+}
+
+/** Import the one-time transfer on the destination and register its first passkey. */
+export async function completeVaultLink(
+  user: AuthenticatedUser,
+  credentialName: string,
+  target: VaultLinkTarget,
+  responseCode: string
+): Promise<VaultUserKey> {
+  const responseIdentity = prepareVaultLinkResponse(responseCode, target);
+  const existing = await requireVaultLinkTargetVault(
+    target,
+    responseIdentity.sourceOrigin
+  );
+  const prepared = await importVaultLinkResponse(responseIdentity);
+  const { pkcs8, algorithm } = await decryptVaultLinkPrivateKey(
+    prepared,
+    target,
+    existing
+  );
+  const cachedPrivateKey = await registerVaultLinkPasskey(
+    user,
+    credentialName,
+    existing,
+    pkcs8,
+    algorithm
+  );
   await savePrivateKey(cachedPrivateKey);
   return chatVault.getMyKey();
 }
