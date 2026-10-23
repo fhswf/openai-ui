@@ -464,7 +464,7 @@ export async function restoreVaultChats(
   for (const [id, chat] of restored) {
     if (!localIds.has(id)) merged.push(chat);
   }
-  return merged;
+  return merged.sort((left, right) => right.ct - left.ct);
 }
 
 /**
