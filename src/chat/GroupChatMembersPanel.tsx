@@ -14,6 +14,8 @@ type GroupMembersPanelProps = {
   open: boolean;
   chatId: string;
   actions: GroupManagementActions;
+  busy: boolean;
+  setBusy: (busy: boolean) => void;
 };
 
 type GroupMembersViewProps = {
@@ -189,55 +191,81 @@ type MemberCallbackInput = {
   confirmMessage: string;
 };
 
+function createEmailChangeCallback(input: MemberCallbackInput) {
+  return (email: string) => {
+    input.setInviteEmail(email);
+    input.setInviteTarget(null);
+    input.setInviteFingerprintVerified(false);
+  };
+}
+
+function createLookupCallback(
+  input: MemberCallbackInput,
+  onError: (error: unknown) => void
+) {
+  return () =>
+    void lookupInviteTarget({
+      actions: input.props.actions,
+      email: input.inviteEmail,
+      setBusy: input.setBusy,
+      setTarget: input.setInviteTarget,
+      setVerified: input.setInviteFingerprintVerified,
+      onError,
+    });
+}
+
+function createInviteCallback(
+  input: MemberCallbackInput,
+  reloadGroup: () => Promise<void>,
+  onError: (error: unknown) => void
+) {
+  return () =>
+    void inviteMember({
+      actions: input.props.actions,
+      chatId: input.props.chatId,
+      email: input.inviteEmail,
+      target: input.inviteTarget,
+      verified: input.inviteFingerprintVerified,
+      setBusy: input.setBusy,
+      setEmail: input.setInviteEmail,
+      setTarget: input.setInviteTarget,
+      setVerified: input.setInviteFingerprintVerified,
+      reloadGroup,
+      successTitle: input.addedTitle,
+      onError,
+    });
+}
+
+function createRemoveCallback(
+  input: MemberCallbackInput,
+  reloadGroup: () => Promise<void>,
+  onError: (error: unknown) => void
+) {
+  return (memberId: string) =>
+    void removeMember({
+      actions: input.props.actions,
+      chatId: input.props.chatId,
+      memberId,
+      setBusy: input.setBusy,
+      reloadGroup,
+      confirmMessage: input.confirmMessage,
+      successTitle: input.removedTitle,
+      onError,
+    });
+}
+
 function createMemberCallbacks(input: MemberCallbackInput) {
   const onError = (error: unknown) => reportGroupError(error, input.errorTitle);
-  const reloadGroup = async () => {
+  const reloadGroup = async () =>
     input.setGroup(
       await input.props.actions.getGroupChatInfo(input.props.chatId)
     );
-  };
   return {
-    onEmailChange: (email: string) => {
-      input.setInviteEmail(email);
-      input.setInviteTarget(null);
-      input.setInviteFingerprintVerified(false);
-    },
-    onLookup: () =>
-      void lookupInviteTarget({
-        actions: input.props.actions,
-        email: input.inviteEmail,
-        setBusy: input.setBusy,
-        setTarget: input.setInviteTarget,
-        setVerified: input.setInviteFingerprintVerified,
-        onError,
-      }),
-    onInvite: () =>
-      void inviteMember({
-        actions: input.props.actions,
-        chatId: input.props.chatId,
-        email: input.inviteEmail,
-        target: input.inviteTarget,
-        verified: input.inviteFingerprintVerified,
-        setBusy: input.setBusy,
-        setEmail: input.setInviteEmail,
-        setTarget: input.setInviteTarget,
-        setVerified: input.setInviteFingerprintVerified,
-        reloadGroup,
-        successTitle: input.addedTitle,
-        onError,
-      }),
+    onEmailChange: createEmailChangeCallback(input),
+    onLookup: createLookupCallback(input, onError),
+    onInvite: createInviteCallback(input, reloadGroup, onError),
     onVerifyFingerprint: input.setInviteFingerprintVerified,
-    onRemove: (memberId: string) =>
-      void removeMember({
-        actions: input.props.actions,
-        chatId: input.props.chatId,
-        memberId,
-        setBusy: input.setBusy,
-        reloadGroup,
-        confirmMessage: input.confirmMessage,
-        successTitle: input.removedTitle,
-        onError,
-      }),
+    onRemove: createRemoveCallback(input, reloadGroup, onError),
   };
 }
 
@@ -245,7 +273,6 @@ function useMemberControls(
   props: GroupMembersPanelProps,
   setGroup: MemberCallbackInput["setGroup"]
 ) {
-  const [busy, setBusy] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteTarget, setInviteTarget] = useState<GroupInviteTarget | null>(
     null
@@ -254,7 +281,7 @@ function useMemberControls(
     useState(false);
   const { t } = useTranslation();
   return {
-    busy,
+    busy: props.busy,
     inviteEmail,
     inviteTarget,
     inviteFingerprintVerified,
@@ -264,7 +291,7 @@ function useMemberControls(
       inviteEmail,
       inviteTarget,
       inviteFingerprintVerified,
-      setBusy,
+      setBusy: props.setBusy,
       setInviteEmail,
       setInviteTarget,
       setInviteFingerprintVerified,

@@ -466,7 +466,9 @@ type GroupChatCacheUpdate = {
   runtime: GroupChatRuntime;
 };
 
-async function cacheDownloadedGroupChat(input: GroupChatCacheUpdate): Promise<void> {
+async function cacheDownloadedGroupChat(
+  input: GroupChatCacheUpdate
+): Promise<void> {
   input.runtime.cursor = input.cursor;
   input.runtime.group = { ...input.group, cursor: input.cursor };
   input.cache.groupChats.set(input.id, input.runtime);

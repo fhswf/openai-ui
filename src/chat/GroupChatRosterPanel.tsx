@@ -19,6 +19,8 @@ type GroupRosterPanelProps = {
   open: boolean;
   chatId: string;
   actions: GroupManagementActions;
+  busy: boolean;
+  setBusy: (busy: boolean) => void;
 };
 
 type GroupRosterViewProps = {
@@ -78,6 +80,7 @@ function useLoadRosters(
   }, [
     props.active,
     props.open,
+    props.chatId,
     props.actions.loadGroupRosters,
     setLoading,
     setRosters,
@@ -175,73 +178,103 @@ type RosterValues = Omit<
   | "onSaveRoster"
 >;
 
-function createRosterCallbacks(
-  props: GroupRosterPanelProps,
-  state: RosterValues,
-  setters: {
-    setRosters: (rosters: SavedGroupRoster[]) => void;
-    setBusy: (busy: boolean) => void;
-    setSelectedRosterId: (rosterId: string) => void;
-    setVerifiedRosterId: (rosterId: string) => void;
-  },
-  strings: {
-    errorTitle: string;
-    successTitle: string;
-    createdTitle: string;
-    confirmMessage: string;
-  }
-) {
-  const onError = (error: unknown) =>
-    reportGroupError(error, strings.errorTitle);
+type RosterCallbackSetters = {
+  setRosters: (rosters: SavedGroupRoster[]) => void;
+  setBusy: (busy: boolean) => void;
+  setSelectedRosterId: (rosterId: string) => void;
+  setVerifiedRosterId: (rosterId: string) => void;
+};
+
+type RosterCallbackStrings = {
+  errorTitle: string;
+  successTitle: string;
+  createdTitle: string;
+  confirmMessage: string;
+};
+
+type RosterCallbackInput = {
+  props: GroupRosterPanelProps;
+  state: RosterValues;
+  setters: RosterCallbackSetters;
+  strings: RosterCallbackStrings;
+};
+
+function createRosterSelectionCallbacks(input: RosterCallbackInput) {
   return {
     onSelectRoster: (rosterId: string) => {
-      setters.setSelectedRosterId(rosterId);
-      setters.setVerifiedRosterId("");
+      input.setters.setSelectedRosterId(rosterId);
+      input.setters.setVerifiedRosterId("");
     },
     onVerifyRoster: (verified: boolean) =>
-      setters.setVerifiedRosterId(verified ? state.selectedRosterId : ""),
-    onSaveRoster: () =>
-      void saveRoster({
-        name: state.rosterName,
-        emailsText: state.rosterEmails,
-        save: props.actions.saveGroupRoster,
-        setBusy: setters.setBusy,
-        onSaved: (saved) => {
-          setters.setRosters(saved);
-          setters.setSelectedRosterId(saved[saved.length - 1]?.id ?? "");
-          state.onRosterNameChange("");
-          state.onRosterEmailsChange("");
-        },
-        onSuccess: () =>
-          toaster.create({
-            title: strings.successTitle,
-            duration: 4000,
-            type: "success",
-          }),
-        onError,
-      }),
-    onDeleteRoster: () =>
-      void deleteRoster({
-        rosterId: state.selectedRosterId,
-        remove: props.actions.deleteGroupRoster,
-        setBusy: setters.setBusy,
-        onDeleted: (saved) => {
-          setters.setRosters(saved);
-          setters.setSelectedRosterId(saved[0]?.id ?? "");
-        },
-        onError,
-      }),
-    onCreateGroup: () =>
-      void createGroup({
-        chatId: props.chatId,
-        rosterId: state.selectedRosterId,
-        verifiedRosterId: state.verifiedRosterId,
-        create: props.actions.createGroupChatFromRoster,
-        confirmMessage: strings.confirmMessage,
-        successTitle: strings.createdTitle,
-        setBusy: setters.setBusy,
-        onError,
-      }),
+      input.setters.setVerifiedRosterId(
+        verified ? input.state.selectedRosterId : ""
+      ),
+  };
+}
+
+function createSaveRosterCallback(input: RosterCallbackInput) {
+  const onError = (error: unknown) =>
+    reportGroupError(error, input.strings.errorTitle);
+  return () =>
+    void saveRoster({
+      name: input.state.rosterName,
+      emailsText: input.state.rosterEmails,
+      save: input.props.actions.saveGroupRoster,
+      setBusy: input.setters.setBusy,
+      onSaved: (saved) => {
+        input.setters.setRosters(saved);
+        input.setters.setSelectedRosterId(saved[saved.length - 1]?.id ?? "");
+        input.state.onRosterNameChange("");
+        input.state.onRosterEmailsChange("");
+      },
+      onSuccess: () =>
+        toaster.create({
+          title: input.strings.successTitle,
+          duration: 4000,
+          type: "success",
+        }),
+      onError,
+    });
+}
+
+function createDeleteRosterCallback(input: RosterCallbackInput) {
+  const onError = (error: unknown) =>
+    reportGroupError(error, input.strings.errorTitle);
+  return () =>
+    void deleteRoster({
+      rosterId: input.state.selectedRosterId,
+      remove: input.props.actions.deleteGroupRoster,
+      setBusy: input.setters.setBusy,
+      onDeleted: (saved) => {
+        input.setters.setRosters(saved);
+        input.setters.setSelectedRosterId(saved[0]?.id ?? "");
+      },
+      onError,
+    });
+}
+
+function createCreateGroupCallback(input: RosterCallbackInput) {
+  const onError = (error: unknown) =>
+    reportGroupError(error, input.strings.errorTitle);
+  return () =>
+    void createGroup({
+      chatId: input.props.chatId,
+      rosterId: input.state.selectedRosterId,
+      verifiedRosterId: input.state.verifiedRosterId,
+      create: input.props.actions.createGroupChatFromRoster,
+      confirmMessage: input.strings.confirmMessage,
+      successTitle: input.strings.createdTitle,
+      setBusy: input.setters.setBusy,
+      onError,
+    });
+}
+
+function createRosterCallbacks(input: RosterCallbackInput) {
+  return {
+    ...createRosterSelectionCallbacks(input),
+    onSaveRoster: createSaveRosterCallback(input),
+    onDeleteRoster: createDeleteRosterCallback(input),
+    onCreateGroup: createCreateGroupCallback(input),
   };
 }
 
@@ -251,7 +284,6 @@ function useRosterManager(props: GroupRosterPanelProps): GroupRosterViewProps {
   const [verifiedRosterId, setVerifiedRosterId] = useState("");
   const [rosterName, setRosterName] = useState("");
   const [rosterEmails, setRosterEmails] = useState("");
-  const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   useLoadRosters(props, { setRosters, setSelectedRosterId, setLoading });
   const { t } = useTranslation();
@@ -262,29 +294,29 @@ function useRosterManager(props: GroupRosterPanelProps): GroupRosterViewProps {
     verifiedRosterId,
     rosterName,
     rosterEmails,
-    busy,
+    busy: props.busy,
     loading,
     onRosterNameChange: setRosterName,
     onRosterEmailsChange: setRosterEmails,
   };
   return {
     ...state,
-    ...createRosterCallbacks(
+    ...createRosterCallbacks({
       props,
       state,
-      {
+      setters: {
         setRosters,
-        setBusy,
+        setBusy: props.setBusy,
         setSelectedRosterId,
         setVerifiedRosterId,
       },
-      {
+      strings: {
         errorTitle: t("share_chat_error"),
         successTitle: t("zk_group_save_roster"),
         createdTitle: t("zk_group_created"),
         confirmMessage: t("zk_group_convert_warning"),
-      }
-    ),
+      },
+    }),
   };
 }
 

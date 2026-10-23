@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Stack, Text } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { GroupChatMembersPanel } from "./GroupChatMembersPanel";
@@ -15,6 +16,7 @@ type GroupChatManagerProps = {
 
 export function GroupChatManager(props: GroupChatManagerProps) {
   const { t } = useTranslation();
+  const [busy, setBusy] = useState(false);
   return (
     <Stack gap="3" borderTopWidth="1px" pt="4">
       <Text fontWeight="semibold">{t("zk_group_title")}</Text>
@@ -23,12 +25,16 @@ export function GroupChatManager(props: GroupChatManagerProps) {
         open={props.open}
         chatId={props.chatId}
         actions={props.actions}
+        busy={busy}
+        setBusy={setBusy}
       />
       <GroupChatRosterPanel
         active={!props.isGroupChat}
         open={props.open}
         chatId={props.chatId}
         actions={props.actions}
+        busy={busy}
+        setBusy={setBusy}
       />
     </Stack>
   );
