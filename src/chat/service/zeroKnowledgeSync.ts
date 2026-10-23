@@ -466,28 +466,17 @@ type GroupChatCacheUpdate = {
   runtime: GroupChatRuntime;
 };
 
-async function cacheDownloadedGroupChat({
-  userKey,
-  id,
-  encrypted,
-  group,
-  initialKey,
-  chat,
-  cursor,
-  ownerId,
-  cache,
-  runtime,
-}: GroupChatCacheUpdate): Promise<void> {
-  runtime.cursor = cursor;
-  runtime.group = { ...group, cursor };
-  cache.groupChats.set(id, runtime);
-  cache.revisions.set(id, encrypted.rev);
-  cache.fingerprints.set(id, fingerprint(chat));
-  cache.owners.set(id, ownerId);
-  if (initialKey) cache.chatKeys.set(id, initialKey);
-  ensureChatAttachmentIds(chat);
-  cacheTranscript(cache, id, chat);
-  await saveGroupChatCursor(userKey.userId, id, cursor);
+async function cacheDownloadedGroupChat(input: GroupChatCacheUpdate): Promise<void> {
+  input.runtime.cursor = input.cursor;
+  input.runtime.group = { ...input.group, cursor: input.cursor };
+  input.cache.groupChats.set(input.id, input.runtime);
+  input.cache.revisions.set(input.id, input.encrypted.rev);
+  input.cache.fingerprints.set(input.id, fingerprint(input.chat));
+  input.cache.owners.set(input.id, input.ownerId);
+  if (input.initialKey) input.cache.chatKeys.set(input.id, input.initialKey);
+  ensureChatAttachmentIds(input.chat);
+  cacheTranscript(input.cache, input.id, input.chat);
+  await saveGroupChatCursor(input.userKey.userId, input.id, input.cursor);
 }
 
 async function downloadGroupChat(
