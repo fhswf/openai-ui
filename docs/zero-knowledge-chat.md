@@ -92,10 +92,21 @@ Registrierung, Assertion und Backend-Prüfung übereinstimmen. Ein Browserwechse
 auf demselben Hostnamen ist in Ordnung; `localhost`, `127.0.0.1` und ein
 Produktionshostname sind unterschiedliche RP-IDs.
 
-Bei lokaler Entwicklung verwendet die UI `localhost` als RP-ID. Vites
-API-Proxy leitet Anfragen standardmäßig an die gehostete API weiter, deren
-WebAuthn-RP-ID serverseitig konfiguriert ist. Für einen lokalen Proxy müssen UI
-und Backend auf denselben Wert eingestellt sein, zum Beispiel:
+Das Backend führt Passkeys pro RP-ID und liefert einer Website nur die
+Passkeys, die für deren Hostname gültig sind. Ein gemeinsamer Vault kann auf
+mehreren Websites trotzdem denselben privaten Benutzerschlüssel verwenden:
+Auf der zweiten Website erzeugt der Browser einen einmaligen ECDH-Anfragecode.
+Auf der ersten Website bestätigt der Nutzer einen vorhandenen Passkey und
+erzeugt damit einen verschlüsselten Antwortcode. Beide Codes werden direkt
+zwischen den Browsern kopiert; der Server erhält weder den privaten Schlüssel
+noch die Codes. Die neue Website entschlüsselt den Transfer nur im Browser,
+verschlüsselt den Schlüssel mit dem PRF-Ergebnis ihres neuen Passkeys und
+registriert diesen beim selben Vault.
+
+Bei lokaler Entwicklung verwendet die UI `localhost` als RP-ID. Neue
+Passkeys speichern ihre RP-ID einzeln im Backend. `WEBAUTHN_RP_ID` bleibt als
+Fallback für ältere Passkeys ohne RP-ID-Metadaten bestehen. Für lokale
+Entwicklung müssen UI-Origin und Backend-Allowlist zusammenpassen, zum Beispiel:
 
 ```env
 # openai-ui .env.local
@@ -106,8 +117,9 @@ WEBAUTHN_RP_ID=localhost
 WEBAUTHN_ORIGINS=http://localhost:5173
 ```
 
-Der Backend-Origin muss außerdem in `CORS_ORIGINS` erlaubt sein. Beide
-Browser müssen dieselbe UI-Origin und denselben Vault-Backend verwenden; ein
+Der Backend-Origin muss außerdem in `CORS_ORIGINS` erlaubt sein. Für mehrere
+Websites müssen alle Frontend-Origins in `WEBAUTHN_ORIGINS` und `CORS_ORIGINS`
+stehen und denselben Vault-Backend verwenden; ein
 Vault-Eintrag auf einem anderen Backend wird nicht automatisch übernommen.
 
 Zustände:
@@ -117,6 +129,7 @@ Zustände:
 | `disabled` | Default, kein Opt-in | nur lokale Speicherung |
 | `enabled-unlocked` | Opt-in + `SK_user` im IndexedDB vorhanden | Vault aktiv, Klartext-Chats verschlüsselt hoch/runter |
 | `enabled-locked` | Opt-in, aber `SK_user` fehlt (neues Gerät) | fragt beim Sitzungsstart nach Passkey (4.2) |
+| `vault-no-passkey-for-rp-id` | Gemeinsamer Vault vorhanden, aber kein Passkey für diese Website | Einstellungen bieten an, die Website mit einem bestehenden Passkey zu verbinden |
 
 ### 4.1 Registrierung / erstes Gerät (nach Opt-in)
 
@@ -141,8 +154,11 @@ Zustände:
    `ECDH-P256` gespeichert. Ältere Schlüssel ohne dieses Feld gelten als RSA.
 9. `SK_user` in IndexedDB cachen, Zustand -> `enabled-unlocked`.
 
-Beim Deaktivieren (Toggle aus) wird `DELETE /api/zk/keys/me` angeboten und der
-IndexedDB-Cache via `clearPrivateKey()` geleert.
+Beim Ausschalten (Toggle aus) werden nur die lokale Einstellung und der
+IndexedDB-Cache via `clearPrivateKey()` geleert. Der gemeinsame Vault und seine
+Passkeys bleiben für andere Websites verfügbar. Einzelne Passkeys können in
+den Einstellungen entfernt werden; der API-Endpunkt `DELETE /api/zk/keys/me`
+löscht weiterhin den gesamten gemeinsamen Schlüsselaccount.
 
 Auf einem bereits entsperrten Gerät kann der Nutzer weitere benannte Passkeys
 registrieren. Jeder Passkey erhält eine eigene, mit seinem PRF-Output

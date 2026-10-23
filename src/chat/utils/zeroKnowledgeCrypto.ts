@@ -216,10 +216,18 @@ export async function decryptPrivateKey(
     base64UrlToBuffer(encrypted.encryptedKey)
   );
 
+  return importPrivateKey(decrypted, algorithm, extractable);
+}
+
+export async function importPrivateKey(
+  pkcs8: BufferSource,
+  algorithm: UserKeyAlgorithm = DEFAULT_USER_KEY_ALGORITHM,
+  extractable = false
+): Promise<CryptoKey> {
   if (algorithm === DEFAULT_USER_KEY_ALGORITHM) {
     return crypto.subtle.importKey(
       "pkcs8",
-      decrypted,
+      pkcs8,
       { name: "ECDH", namedCurve: "P-256" },
       extractable,
       ["deriveBits"]
@@ -228,7 +236,7 @@ export async function decryptPrivateKey(
 
   return crypto.subtle.importKey(
     "pkcs8",
-    decrypted,
+    pkcs8,
     { name: "RSA-OAEP", hash: "SHA-256" },
     extractable,
     ["decrypt", "unwrapKey"]

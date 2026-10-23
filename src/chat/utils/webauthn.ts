@@ -167,22 +167,27 @@ export async function registerPasskey(params: {
  * yields byte-identical output for the same credential.
  */
 export async function assertPasskeyWithResponse(params: {
-  credentialId: string;
+  credentialId?: string;
   challenge: ArrayBuffer;
   rpId?: string;
 }): Promise<AssertedPasskey> {
+  const rpId = params.rpId ?? window.location.hostname;
   const assertion = (await navigator.credentials.get({
     publicKey: {
       challenge: params.challenge,
-      rpId: params.rpId ?? window.location.hostname,
+      rpId,
       // The UI has the user choose a named credential first. Constraining the
       // assertion here keeps the browser prompt aligned with that choice.
-      allowCredentials: [
-        {
-          id: base64UrlToBuffer(params.credentialId),
-          type: "public-key",
-        },
-      ],
+      ...(params.credentialId
+        ? {
+            allowCredentials: [
+              {
+                id: base64UrlToBuffer(params.credentialId),
+                type: "public-key" as const,
+              },
+            ],
+          }
+        : {}),
       userVerification: "required",
       extensions: {
         prf: { eval: { first: getPrfSalt() } },
@@ -195,7 +200,7 @@ export async function assertPasskeyWithResponse(params: {
   }
 
   const credentialId = bufferToBase64Url(assertion.rawId);
-  if (credentialId !== params.credentialId) {
+  if (params.credentialId && credentialId !== params.credentialId) {
     throw new UnexpectedPasskeyError();
   }
 
@@ -214,10 +219,11 @@ export async function assertPasskey(params: {
   challenge: ArrayBuffer;
   rpId?: string;
 }): Promise<ArrayBuffer> {
+  const rpId = params.rpId ?? window.location.hostname;
   const assertion = (await navigator.credentials.get({
     publicKey: {
       challenge: params.challenge,
-      rpId: params.rpId ?? window.location.hostname,
+      rpId,
       allowCredentials: [
         {
           id: base64UrlToBuffer(params.credentialId),
