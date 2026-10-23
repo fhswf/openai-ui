@@ -29,17 +29,6 @@ export function useOptions() {
 
   const setGeneral = (data = {}) => {
     console.log("setGeneral: %o", data);
-    const nextTheme = "theme" in data ? data.theme : options.general.theme;
-    const nextSize = "size" in data ? data.size : options.general.size;
-
-    if (
-      typeof nextTheme === "string" &&
-      typeof nextSize === "string" &&
-      ("theme" in data || "size" in data)
-    ) {
-      applyDocumentAppearance(nextTheme, nextSize);
-    }
-
     setOptions({
       type: OptionActionType.GENERAL,
       data,
