@@ -31,7 +31,11 @@ import { consumeLoginRetry } from "../utils/loginRetry";
 import { useDebounce } from "../hooks/useDebounce";
 import { toaster } from "../../components/ui/toaster";
 import { t } from "i18next";
-import { chatVault, type VaultUserKey } from "../service/chatVault";
+import {
+  chatVault,
+  type VaultGroupChat,
+  type VaultUserKey,
+} from "../service/chatVault";
 import {
   createVaultSyncCache,
   demoteVaultChat,
@@ -39,15 +43,39 @@ import {
   markVaultChats,
   restoreVaultChats,
   searchVaultChats,
+  syncGroupChatAttachments,
   syncVaultChats,
   type VaultSyncCache,
 } from "../service/zeroKnowledgeSync";
+import {
+  applyGroupOperation,
+  createVaultGroupChat,
+  decryptGroupEvent,
+  deleteGroupRoster as deleteSavedGroupRoster,
+  inviteVaultGroupMember,
+  hasPendingLocalGroupChatChanges,
+  lookupGroupInviteTarget as lookupSavedGroupInviteTarget,
+  loadSavedGroupRosters,
+  removeVaultGroupMember,
+  requeueGroupChatOperation,
+  rememberAppliedGroupOperation,
+  saveGroupRoster as saveSavedGroupRoster,
+  seedGroupChatRuntime,
+  queueLocalGroupChatChanges,
+  unwrapGroupEpochKeys,
+  type GroupChatRuntime,
+} from "../service/groupChatSync";
+import { GroupChatRealtimeClient } from "../service/groupChatRealtime";
+import { loadGroupChatCursor, saveGroupChatCursor } from "../service/groupChatLocalStore";
+import type { VaultGroupEvent } from "../service/chatVault";
 import { loadPrivateKey } from "../utils/zeroKnowledgeKeystore";
 import { isPrivateKeyForUser } from "../utils/zeroKnowledgeStorage";
 import { matchesChatQuery } from "../utils/chatSearch";
 import {
   bufferToBase64Url,
   decryptAttachmentData,
+  decryptGroupAttachmentData,
+  getGroupAttachmentEpoch,
   LEGACY_RSA_KEY_ALGORITHM,
   getAttachmentAdditionalData,
   unwrapChatKey,
@@ -132,6 +160,9 @@ export const ChatProvider = ({ children }) => {
   const vaultSyncRunning = useRef(false);
   const vaultSyncRequested = useRef(false);
   const hydratedChats = useRef<Set<string>>(new Set());
+  const groupRealtime = useRef<GroupChatRealtimeClient | null>(null);
+  const groupLocalSyncRunning = useRef(false);
+  const groupLocalSyncRequested = useRef(false);
 
   useEffect(() => {
     latestState.current = state;
@@ -331,6 +362,157 @@ export const ChatProvider = ({ children }) => {
     return unwrapChatKey(envelope, credentials.privateKey);
   }, [syncVaultBeforeSharing]);
 
+  const requireVaultCredentials = useCallback(() => {
+    const credentials = vaultCredentials.current;
+    if (!credentials || !latestState.current.options.general.zkStorage) {
+      throw new Error("Unlock encrypted chat storage before managing groups");
+    }
+    return credentials;
+  }, []);
+
+  const getGroupRuntime = useCallback(async (chatId: string): Promise<GroupChatRuntime> => {
+    const credentials = requireVaultCredentials();
+    const cached = vaultCache.current.groupChats.get(chatId);
+    if (cached) return cached;
+
+    const group = await chatVault.getGroupChat(chatId);
+    const epochKeys = await unwrapGroupEpochKeys(group, credentials.privateKey);
+    const chat =
+      vaultCache.current.transcripts.get(chatId) ??
+      latestState.current.chat.find((item) => String(item.id) === chatId);
+    if (!chat) throw new Error("The group chat is not available on this device");
+    const cursor = await loadGroupChatCursor(credentials.userKey.userId, chatId);
+    const runtime = seedGroupChatRuntime(
+      group,
+      epochKeys,
+      cursor,
+      { ...chat, groupChat: true }
+    );
+    vaultCache.current.groupChats.set(chatId, runtime);
+    if (epochKeys.has(1)) vaultCache.current.chatKeys.set(chatId, epochKeys.get(1)!);
+    return runtime;
+  }, [requireVaultCredentials]);
+
+  const loadGroupRosters = useCallback(async () => {
+    const { privateKey } = requireVaultCredentials();
+    return loadSavedGroupRosters(privateKey);
+  }, [requireVaultCredentials]);
+
+  const saveGroupRoster = useCallback(async (name: string, emails: string[]) => {
+    const { privateKey, userKey } = requireVaultCredentials();
+    return saveSavedGroupRoster(userKey, privateKey, name, emails);
+  }, [requireVaultCredentials]);
+
+  const deleteGroupRoster = useCallback(async (rosterId: string) => {
+    const { privateKey, userKey } = requireVaultCredentials();
+    return deleteSavedGroupRoster(userKey, privateKey, rosterId);
+  }, [requireVaultCredentials]);
+
+  const createGroupChatFromRoster = useCallback(async (
+    chatId: string,
+    rosterId: string
+  ) => {
+    const credentials = requireVaultCredentials();
+    await syncVaultBeforeSharing();
+    const current = latestState.current.chat.find(
+      (item) => String(item.id) === chatId
+    );
+    if (!current) throw new Error("The selected chat is no longer available");
+    if (current.groupChat || vaultCache.current.groupChats.has(chatId)) {
+      throw new Error("This chat is already a group chat");
+    }
+    const rosters = await loadSavedGroupRosters(credentials.privateKey);
+    const roster = rosters.find((item) => item.id === rosterId);
+    if (!roster) throw new Error("The saved group could not be found");
+
+    let fullChat = current;
+    if (current.vault && !current.messages?.length) {
+      fullChat = await hydrateVaultChat(
+        current,
+        credentials.privateKey,
+        credentials.userKey,
+        vaultCache.current
+      );
+    }
+    const chatKey =
+      vaultCache.current.chatKeys.get(chatId) ??
+      (await getChatKeyForSharing(chatId));
+    const group = await createVaultGroupChat(
+      chatId,
+      roster,
+      credentials.userKey,
+      credentials.privateKey,
+      chatKey
+    );
+    const groupedChat = { ...fullChat, groupChat: true };
+    vaultCache.current.owners.set(chatId, group.ownerId);
+    vaultCache.current.chatKeys.set(chatId, chatKey);
+    vaultCache.current.groupChats.set(
+      chatId,
+      seedGroupChatRuntime(group, new Map([[1, chatKey]]), 0, groupedChat)
+    );
+    vaultCache.current.transcripts.set(chatId, groupedChat);
+    dispatch({
+      type: GlobalActionType.SET_STATE,
+      payload: {
+        chat: latestState.current.chat.map((item) =>
+          String(item.id) === chatId ? groupedChat : item
+        ),
+      },
+    });
+  }, [dispatch, getChatKeyForSharing, requireVaultCredentials, syncVaultBeforeSharing]);
+
+  const getGroupChatInfo = useCallback(
+    (chatId: string) => chatVault.getGroupChat(chatId),
+    []
+  );
+
+  const lookupGroupInviteTarget = useCallback(
+    (email: string) => lookupSavedGroupInviteTarget(email),
+    []
+  );
+
+  const inviteGroupChatMember = useCallback(async (
+    chatId: string,
+    email: string,
+    expectedFingerprint: string
+  ) => {
+    const credentials = requireVaultCredentials();
+    const runtime = await getGroupRuntime(chatId);
+    const updated = await inviteVaultGroupMember(
+      chatId,
+      runtime.group,
+      runtime.epochKeys,
+      email,
+      credentials.userKey.userId,
+      expectedFingerprint
+    );
+    runtime.group = updated.group;
+    runtime.epochKeys = updated.epochKeys;
+  }, [getGroupRuntime, requireVaultCredentials]);
+
+  const removeGroupChatMember = useCallback(async (chatId: string, memberId: string) => {
+    const credentials = requireVaultCredentials();
+    const runtime = await getGroupRuntime(chatId);
+    const updated = await removeVaultGroupMember(
+      chatId,
+      runtime.group,
+      runtime.epochKeys,
+      memberId,
+      credentials.userKey.userId
+    );
+    runtime.group = updated.group;
+    runtime.epochKeys = updated.epochKeys;
+  }, [getGroupRuntime, requireVaultCredentials]);
+
+  const isGroupChatOwner = useCallback((chatId: string) => {
+    const credentials = vaultCredentials.current;
+    return Boolean(
+      credentials &&
+      vaultCache.current.owners.get(chatId) === credentials.userKey.userId
+    );
+  }, []);
+
   const shareChatWithUser = useCallback(
     async (chatId: string, email: string) => {
       const chatKey = await getChatKeyForSharing(chatId);
@@ -397,16 +579,32 @@ export const ChatProvider = ({ children }) => {
 
     setVaultAttachmentResolver({
       async load(chatId, attachmentId, filename) {
-        const chatKey = vaultCache.current.chatKeys.get(chatId);
-        if (!chatKey) {
-          throw new Error("The encryption key for this chat is unavailable");
-        }
         const encrypted = await chatVault.getAttachment(chatId, attachmentId);
-        const plaintext = await decryptAttachmentData(
-          encrypted,
-          chatKey,
-          getAttachmentAdditionalData(chatId, attachmentId)
-        );
+        const epoch = getGroupAttachmentEpoch(encrypted);
+        let plaintext: ArrayBuffer;
+        if (epoch !== null) {
+          const epochKey = vaultCache.current.groupChats
+            .get(chatId)
+            ?.epochKeys.get(epoch);
+          if (!epochKey) {
+            throw new Error(`The key for group chat epoch ${epoch} is unavailable`);
+          }
+          plaintext = await decryptGroupAttachmentData(encrypted, epochKey, {
+            chatId,
+            attachmentId,
+            epoch,
+          });
+        } else {
+          const chatKey = vaultCache.current.chatKeys.get(chatId);
+          if (!chatKey) {
+            throw new Error("The encryption key for this chat is unavailable");
+          }
+          plaintext = await decryptAttachmentData(
+            encrypted,
+            chatKey,
+            getAttachmentAdditionalData(chatId, attachmentId)
+          );
+        }
         const file = new File([plaintext], filename, {
           type: getInputFileMimeType(filename),
         });
@@ -444,16 +642,32 @@ export const ChatProvider = ({ children }) => {
 
     setVaultAttachmentResolver({
       async load(chatId, attachmentId, filename) {
-        const chatKey = vaultCache.current.chatKeys.get(chatId);
-        if (!chatKey) {
-          throw new Error("The encryption key for this chat is unavailable");
-        }
         const encrypted = await chatVault.getAttachment(chatId, attachmentId);
-        const plaintext = await decryptAttachmentData(
-          encrypted,
-          chatKey,
-          getAttachmentAdditionalData(chatId, attachmentId)
-        );
+        const epoch = getGroupAttachmentEpoch(encrypted);
+        let plaintext: ArrayBuffer;
+        if (epoch !== null) {
+          const epochKey = vaultCache.current.groupChats
+            .get(chatId)
+            ?.epochKeys.get(epoch);
+          if (!epochKey) {
+            throw new Error(`The key for group chat epoch ${epoch} is unavailable`);
+          }
+          plaintext = await decryptGroupAttachmentData(encrypted, epochKey, {
+            chatId,
+            attachmentId,
+            epoch,
+          });
+        } else {
+          const chatKey = vaultCache.current.chatKeys.get(chatId);
+          if (!chatKey) {
+            throw new Error("The encryption key for this chat is unavailable");
+          }
+          plaintext = await decryptAttachmentData(
+            encrypted,
+            chatKey,
+            getAttachmentAdditionalData(chatId, attachmentId)
+          );
+        }
         const file = new File([plaintext], filename, {
           type: getInputFileMimeType(filename),
         });
@@ -547,6 +761,172 @@ export const ChatProvider = ({ children }) => {
     },
     [dispatch]
   );
+
+  const applyIncomingGroupEvent = useCallback(async (incoming: VaultGroupEvent) => {
+    const credentials = vaultCredentials.current;
+    const chatId = incoming.chatId;
+    const runtime = vaultCache.current.groupChats.get(chatId);
+    if (!credentials || !runtime) return runtime?.cursor ?? 0;
+
+    const applyOne = async (event: VaultGroupEvent) => {
+      if (event.sequence <= runtime.cursor) return;
+      const keyAvailable = runtime.epochKeys.has(event.epoch);
+      try {
+        const operation = await decryptGroupEvent(event, runtime);
+        const currentChat =
+          vaultCache.current.transcripts.get(chatId) ??
+          latestState.current.chat.find((item) => String(item.id) === chatId);
+        if (currentChat) {
+          const updated = applyGroupOperation(currentChat, operation);
+          vaultCache.current.transcripts.set(chatId, updated);
+          rememberAppliedGroupOperation(runtime, operation);
+          const visible = latestState.current.chat.find(
+            (item) => String(item.id) === chatId
+          );
+          if (visible && (!visible.vault || visible.messages?.length)) {
+            applyChatUpdates(new Map([[chatId, updated]]));
+          }
+        }
+      } catch (error) {
+        if (keyAvailable) {
+          console.warn("Ignoring an unreadable group chat event:", error);
+        }
+      }
+      runtime.cursor = event.sequence;
+      runtime.group = { ...runtime.group, cursor: event.sequence };
+      await saveGroupChatCursor(credentials.userKey.userId, chatId, event.sequence);
+    };
+
+    // If a live notification arrives out of order, fill the sequence gap from
+    // the durable REST log before applying it.
+    while (runtime.cursor + 1 < incoming.sequence) {
+      const page = await chatVault.listGroupEvents(chatId, runtime.cursor, 20);
+      if (page.events.length === 0) break;
+      for (const event of page.events) {
+        await applyOne(event);
+        if (runtime.cursor >= incoming.sequence) break;
+      }
+    }
+    await applyOne(incoming);
+    return runtime.cursor;
+  }, [applyChatUpdates]);
+
+  const groupChatIdsKey = (state.chat ?? [])
+    .filter((chat) => chat.groupChat)
+    .map((chat) => String(chat.id))
+    .sort()
+    .join("\u0000");
+
+  useEffect(() => {
+    if (!zkStorageEnabled || !vaultReady || !groupChatIdsKey) return;
+    const subscriptions = groupChatIdsKey
+      .split("\u0000")
+      .filter(Boolean)
+      .flatMap((chatId) => {
+        const runtime = vaultCache.current.groupChats.get(chatId);
+        return runtime ? [{ chatId, cursor: runtime.cursor }] : [];
+      });
+    if (!subscriptions.length) return;
+
+    const client = new GroupChatRealtimeClient({
+      onEvent: applyIncomingGroupEvent,
+      onOutboxError: async (event, code, message) => {
+        if (code === "conflict" && event) {
+          try {
+            const credentials = vaultCredentials.current;
+            const runtime = vaultCache.current.groupChats.get(event.chatId);
+            if (!credentials || !runtime) throw new Error(message);
+            const operation = await decryptGroupEvent(event, runtime);
+            const latestGroup = await chatVault.getGroupChat(event.chatId);
+            const latestKeys = await unwrapGroupEpochKeys(
+              latestGroup,
+              credentials.privateKey
+            );
+            const combinedKeys = new Map(runtime.epochKeys);
+            for (const [epoch, key] of latestKeys) combinedKeys.set(epoch, key);
+            runtime.group = latestGroup;
+            runtime.epochKeys = combinedKeys;
+            await requeueGroupChatOperation(event.chatId, runtime, operation);
+            return;
+          } catch (error) {
+            console.warn("Could not refresh a group's key epoch:", error);
+          }
+        }
+        toaster.create({
+          title: t("zk_group_pending_event_error"),
+          description: message,
+          duration: 8000,
+          type: "error",
+        });
+      },
+    });
+    groupRealtime.current = client;
+    client.setSubscriptions(subscriptions);
+    client.start();
+    return () => {
+      client.stop();
+      if (groupRealtime.current === client) groupRealtime.current = null;
+    };
+  }, [
+    zkStorageEnabled,
+    vaultReady,
+    vaultIdentity,
+    vaultUnlockRevision,
+    groupChatIdsKey,
+    applyIncomingGroupEvent,
+  ]);
+
+  useEffect(() => {
+    if (!zkStorageEnabled || !vaultReady) return;
+    if (groupLocalSyncRunning.current) {
+      groupLocalSyncRequested.current = true;
+      return;
+    }
+    groupLocalSyncRunning.current = true;
+    const syncLocalGroupEvents = async () => {
+      try {
+        do {
+          groupLocalSyncRequested.current = false;
+          for (const chat of latestState.current.chat ?? []) {
+            if (!chat.groupChat) continue;
+            const chatId = String(chat.id);
+            const runtime = vaultCache.current.groupChats.get(chatId);
+            if (!runtime) continue;
+            const credentials = vaultCredentials.current;
+            if (!credentials) continue;
+            if (!hasPendingLocalGroupChatChanges(chat, runtime)) continue;
+            const latestGroup = await chatVault.getGroupChat(chatId);
+            const latestKeys = await unwrapGroupEpochKeys(
+              latestGroup,
+              credentials.privateKey
+            );
+            const combinedKeys = new Map(runtime.epochKeys);
+            for (const [epoch, key] of latestKeys) combinedKeys.set(epoch, key);
+            runtime.group = latestGroup;
+            runtime.epochKeys = combinedKeys;
+            await syncGroupChatAttachments(
+              chat,
+              credentials.userKey,
+              vaultCache.current
+            );
+            const queued = await queueLocalGroupChatChanges(chat, runtime);
+            if (queued) groupRealtime.current?.flushPendingEvents();
+          }
+        } while (groupLocalSyncRequested.current);
+      } catch (error) {
+        console.error("Could not queue group chat changes:", error);
+        toaster.create({
+          title: t("zk_group_pending_event_error"),
+          description: error instanceof Error ? error.message : t("unknown_error"),
+          duration: 8000,
+          type: "error",
+        });
+      } finally {
+        groupLocalSyncRunning.current = false;
+      }
+    };
+    void syncLocalGroupEvents();
+  }, [state.chat, zkStorageEnabled, vaultReady]);
 
   const replaceChat = useCallback(
     (chat: Chat) => {
@@ -709,6 +1089,15 @@ export const ChatProvider = ({ children }) => {
         shareChatWithUser,
         createChatShareLink,
         revokeChatShareLink,
+        loadGroupRosters,
+        saveGroupRoster,
+        deleteGroupRoster,
+        createGroupChatFromRoster,
+        getGroupChatInfo,
+        lookupGroupInviteTarget,
+        inviteGroupChatMember,
+        removeGroupChatMember,
+        isGroupChatOwner,
         importSharedChat,
         vaultReady,
       }}

@@ -170,6 +170,26 @@ export type VaultSharingActions = {
     expiresAt: string;
   }>;
   revokeChatShareLink: (chatId: string, token: string) => Promise<void>;
+  loadGroupRosters: () => Promise<import("../service/groupChatSync").SavedGroupRoster[]>;
+  saveGroupRoster: (
+    name: string,
+    emails: string[]
+  ) => Promise<import("../service/groupChatSync").SavedGroupRoster[]>;
+  deleteGroupRoster: (rosterId: string) => Promise<import("../service/groupChatSync").SavedGroupRoster[]>;
+  createGroupChatFromRoster: (chatId: string, rosterId: string) => Promise<void>;
+  getGroupChatInfo: (chatId: string) => Promise<import("../service/chatVault").VaultGroupChat>;
+  lookupGroupInviteTarget: (email: string) => Promise<{
+    userId: string;
+    email: string;
+    publicKeyFingerprint: string;
+  }>;
+  inviteGroupChatMember: (
+    chatId: string,
+    email: string,
+    expectedFingerprint: string
+  ) => Promise<void>;
+  removeGroupChatMember: (chatId: string, memberId: string) => Promise<void>;
+  isGroupChatOwner: (chatId: string) => boolean;
   /** Add a decrypted chat-link copy to local history. */
   importSharedChat: (chat: Chat) => void;
 };
@@ -209,6 +229,8 @@ export type Chat = {
   messages: Messages;
   error?: any;
   botStarts?: boolean;
+  /** This chat uses the encrypted append-only group event protocol. */
+  groupChat?: boolean;
   /**
    * Set when only a lightweight placeholder for this chat is stored locally.
    * The transcript still lives in the encrypted vault and is fetched on demand.

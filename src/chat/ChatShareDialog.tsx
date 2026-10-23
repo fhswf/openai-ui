@@ -11,6 +11,15 @@ export function ChatShareDialog() {
     shareChatWithUser,
     createChatShareLink,
     revokeChatShareLink,
+    loadGroupRosters,
+    saveGroupRoster,
+    deleteGroupRoster,
+    createGroupChatFromRoster,
+    getGroupChatInfo,
+    lookupGroupInviteTarget,
+    inviteGroupChatMember,
+    removeGroupChatMember,
+    isGroupChatOwner,
   } = useGlobal();
   const selectedChat = chat?.[currentChat];
   const chatId = selectedChat ? String(selectedChat.id) : "";
@@ -33,7 +42,21 @@ export function ChatShareDialog() {
       open={open}
       setOpen={setOpen}
       chatId={chatId}
-      actions={{ shareChatWithUser, createChatShareLink, revokeChatShareLink }}
+      isGroupChat={Boolean(selectedChat?.groupChat)}
+      actions={{
+        shareChatWithUser,
+        createChatShareLink,
+        revokeChatShareLink,
+        loadGroupRosters,
+        saveGroupRoster,
+        deleteGroupRoster,
+        createGroupChatFromRoster,
+        getGroupChatInfo,
+        lookupGroupInviteTarget,
+        inviteGroupChatMember,
+        removeGroupChatMember,
+        isGroupChatOwner,
+      }}
       email={email}
       setEmail={setEmail}
       busy={busy}

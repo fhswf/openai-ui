@@ -1,8 +1,10 @@
 # Zero-knowledge group chats
 
-Status: the backend API is implemented in `openai-proxy`. Frontend group
-management, event encryption and merge, offline outbox, and live UI integration
-remain to be implemented.
+Status: the backend API and the first frontend implementation are in place.
+The client stores encrypted rosters, converts a chat to a group, manages owner
+membership changes, encrypts event updates, and synchronizes through an
+authenticated WebSocket with a durable encrypted-event outbox and cursor
+catch-up.
 
 ## Recommendation
 
@@ -34,16 +36,17 @@ delivery and history.
 - Each chat has a random AES-GCM `K_chat`; the client can wrap it separately
   for each user's public key. The server stores opaque ciphertext and one key
   envelope per recipient. See [zero-knowledge chat design](zero-knowledge-chat.md).
-- A user with an envelope can list and download the shared chat. The UI can
-  share a chat with one user at a time.
-- The backend currently allows only the owner to overwrite a chat or upload
-  and delete attachments. The UI restores chats at bootstrap and syncs local
-  changes; it has no live remote-update channel.
+- A user with an envelope can list and download the shared chat. Existing
+  one-to-one share and link flows remain available for regular chats.
+- Group membership controls who can append encrypted events. The owner changes
+  membership; active members can post messages. The client restores event
+  history at bootstrap and uses WebSockets for live delivery and cursor
+  catch-up.
 
-There is a contract mismatch to resolve: the frontend design document says an
-envelope holder may read or change a chat, while the current proxy `PUT`
-handler restricts overwrites to the owner. Group writes need an explicit
-authorization model in the proxy and matching frontend documentation.
+Group chats do not overwrite the whole transcript. The proxy persists events
+and authorizes each append against the active member list and current key
+epoch. Attachments created in a group use the current epoch key, while
+pre-conversion attachments continue to use the original chat key.
 
 ## Group and membership model
 
@@ -168,23 +171,29 @@ not signatures.
    authentication/subscription/broadcast. Implement both MongoDB and in-memory
    stores. Enforce owner-only membership changes and member-only event writes.
    *(Implemented in the backend.)*
-4. **Add client event crypto and sync.** Extend `zeroKnowledgeCrypto.ts` for
-   event encryption with authenticated context. Add a WebSocket client with
-   reconnect/backoff and cursor catch-up. Persist outgoing events and cursors
-   locally; merge events by ID and sequence.
-5. **Integrate chat behavior.** Render messages from the merged event stream,
-   handle concurrent posts and assistant replies, and make attachments
-   available to authorized members. Keep attachment bytes encrypted client-side.
-6. **Add membership lifecycle.** Implement invite, remove, epoch rotation, and
-   the chosen history policy. Keep existing one-to-one shares working; provide
-   an explicit conversion path if existing shared chats should become
-   collaborative group chats.
+4. **Add client event crypto and sync.** Implemented: event encryption binds
+   chat ID, event ID, and epoch; the WebSocket client reconnects with backoff;
+   IndexedDB stores the pending-event outbox and durable cursors; incoming
+   events merge by sequence and message ID.
+5. **Integrate chat behavior.** Implemented: local messages, edits, deletions,
+   and title changes become encrypted events. Group attachments use their
+   creation epoch key so removal prevents access to attachments uploaded in
+   later epochs. Existing attachments retain their original encryption.
+6. **Add membership lifecycle.** Implemented: saved roster selection, key
+   fingerprint display, explicit conversion, owner invite/remove controls, and
+   epoch rotation. New members receive history by default. Existing regular
+   chat shares and links remain available until conversion.
 
 ## Main files and repositories
 
 - Frontend crypto and vault sync: `src/chat/utils/zeroKnowledgeCrypto.ts`,
   `src/chat/service/chatVault.ts`, `src/chat/service/zeroKnowledgeSync.ts`, and
   `src/chat/context/index.tsx`.
+- Group roster, event, and real-time client code:
+  `src/chat/service/groupChatSync.ts`,
+  `src/chat/service/groupChatRealtime.ts`,
+  `src/chat/service/groupChatLocalStore.ts`, and
+  `src/chat/GroupChatManager.tsx`.
 - Existing share UI: `src/chat/ChatShareDialog.tsx` and
   `src/chat/ChatShareDialogView.tsx`.
 - Backend API and storage: `openai-proxy/src/zk/router.ts`,
