@@ -22,6 +22,15 @@ export type SavedGroupRoster = {
 
 type EncryptedRosterCatalog = { version: 1; rosters: SavedGroupRoster[] };
 
+export function isGroupRosterCatalogDecryptionFailure(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "OperationError"
+  );
+}
+
 async function getCatalog(
   privateKey: CryptoKey
 ): Promise<{
@@ -155,4 +164,32 @@ export async function deleteGroupRoster(
     baseRev: previous.rev,
   });
   return next.rosters;
+}
+
+/** Replace an unreadable saved-roster catalog with an empty catalog. */
+export async function resetSavedGroupRosters(
+  userKey: VaultUserKey
+): Promise<SavedGroupRoster[]> {
+  let baseRev = 0;
+  try {
+    const existing = await chatVault.getGroupCatalog();
+    baseRev = existing.rev;
+  } catch (error) {
+    if (!(error instanceof VaultError && error.status === 404)) throw error;
+  }
+
+  const catalog: EncryptedRosterCatalog = { version: 1, rosters: [] };
+  const key = await generateChatKey();
+  const encrypted = await encryptChatData(catalog, key);
+  const wrapped = await wrapChatKey(
+    key,
+    userKey.publicKey,
+    userKey.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM
+  );
+  await chatVault.putGroupCatalog({
+    ...encrypted,
+    selfEnvelope: { recipientId: userKey.userId, ...wrapped },
+    baseRev,
+  });
+  return [];
 }

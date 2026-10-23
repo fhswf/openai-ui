@@ -63,6 +63,7 @@ import {
   deleteGroupRoster as deleteSavedGroupRoster,
   lookupGroupInviteTarget as lookupSavedGroupInviteTarget,
   loadSavedGroupRosters,
+  resetSavedGroupRosters,
   saveGroupRoster as saveSavedGroupRoster,
 } from "../service/groupChatRosters";
 import {
@@ -405,6 +406,11 @@ export const ChatProvider = ({ children }) => {
   const loadGroupRosters = useCallback(async () => {
     const { privateKey } = requireVaultCredentials();
     return loadSavedGroupRosters(privateKey);
+  }, [requireVaultCredentials]);
+
+  const resetGroupRosters = useCallback(async () => {
+    const { userKey } = requireVaultCredentials();
+    return resetSavedGroupRosters(userKey);
   }, [requireVaultCredentials]);
 
   const saveGroupRoster = useCallback(async (name: string, emails: string[]) => {
@@ -1167,6 +1173,7 @@ export const ChatProvider = ({ children }) => {
         createChatShareLink,
         revokeChatShareLink,
         loadGroupRosters,
+        resetGroupRosters,
         saveGroupRoster,
         deleteGroupRoster,
         createGroupChatFromRoster,

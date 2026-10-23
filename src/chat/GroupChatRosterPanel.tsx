@@ -10,7 +10,10 @@ import {
 } from "@chakra-ui/react";
 import { useTranslation } from "react-i18next";
 import { toaster } from "../components/ui/toaster";
-import type { SavedGroupRoster } from "./service/groupChatRosters";
+import {
+  isGroupRosterCatalogDecryptionFailure,
+  type SavedGroupRoster,
+} from "./service/groupChatRosters";
 import type { GroupManagementActions } from "./groupChatManagerTypes";
 import { reportGroupError } from "./groupChatManagerUtils";
 
@@ -32,6 +35,7 @@ type GroupRosterViewProps = {
   rosterEmails: string;
   busy: boolean;
   loading: boolean;
+  catalogUnreadable: boolean;
   onSelectRoster: (rosterId: string) => void;
   onVerifyRoster: (verified: boolean) => void;
   onRosterNameChange: (name: string) => void;
@@ -39,12 +43,14 @@ type GroupRosterViewProps = {
   onCreateGroup: () => void;
   onDeleteRoster: () => void;
   onSaveRoster: () => void;
+  onResetCatalog: () => void;
 };
 
 type RosterStateSetters = {
   setRosters: (rosters: SavedGroupRoster[]) => void;
   setSelectedRosterId: Dispatch<SetStateAction<string>>;
   setLoading: (loading: boolean) => void;
+  setCatalogUnreadable: (unreadable: boolean) => void;
 };
 
 function useLoadRosters(
@@ -52,11 +58,17 @@ function useLoadRosters(
   setters: RosterStateSetters
 ) {
   const { t } = useTranslation();
-  const { setRosters, setSelectedRosterId, setLoading } = setters;
+  const {
+    setRosters,
+    setSelectedRosterId,
+    setLoading,
+    setCatalogUnreadable,
+  } = setters;
   useEffect(() => {
     if (!props.active || !props.open) return;
     let current = true;
     setLoading(true);
+    setCatalogUnreadable(false);
     void props.actions
       .loadGroupRosters()
       .then((saved) => {
@@ -69,7 +81,11 @@ function useLoadRosters(
         );
       })
       .catch((error) => {
-        if (current) reportGroupError(error, t("share_chat_error"));
+        if (!current) return;
+        if (isGroupRosterCatalogDecryptionFailure(error)) {
+          setCatalogUnreadable(true);
+        }
+        reportGroupError(error, t("zk_group_catalog_load_error"));
       })
       .finally(() => {
         if (current) setLoading(false);
@@ -85,6 +101,7 @@ function useLoadRosters(
     setLoading,
     setRosters,
     setSelectedRosterId,
+    setCatalogUnreadable,
     t,
   ]);
 }
@@ -178,6 +195,7 @@ type RosterValues = Omit<
   | "onCreateGroup"
   | "onDeleteRoster"
   | "onSaveRoster"
+  | "onResetCatalog"
 >;
 
 type RosterCallbackSetters = {
@@ -290,8 +308,33 @@ function useRosterManager(props: GroupRosterPanelProps): GroupRosterViewProps {
   const [rosterName, setRosterName] = useState("");
   const [rosterEmails, setRosterEmails] = useState("");
   const [loading, setLoading] = useState(false);
-  useLoadRosters(props, { setRosters, setSelectedRosterId, setLoading });
+  const [catalogUnreadable, setCatalogUnreadable] = useState(false);
+  useLoadRosters(props, {
+    setRosters,
+    setSelectedRosterId,
+    setLoading,
+    setCatalogUnreadable,
+  });
   const { t } = useTranslation();
+  const resetCatalog = () => {
+    if (!window.confirm(t("zk_group_catalog_reset_confirm"))) return;
+    props.setBusy(true);
+    void props.actions
+      .resetGroupRosters()
+      .then((saved) => {
+        setRosters(saved);
+        setSelectedRosterId("");
+        setVerifiedRosterId("");
+        setCatalogUnreadable(false);
+        toaster.create({
+          title: t("zk_group_catalog_reset_success"),
+          duration: 5000,
+          type: "success",
+        });
+      })
+      .catch((error) => reportGroupError(error, t("zk_group_catalog_reset_error")))
+      .finally(() => props.setBusy(false));
+  };
   const state = {
     rosters,
     selectedRoster: rosters.find((roster) => roster.id === selectedRosterId),
@@ -301,6 +344,7 @@ function useRosterManager(props: GroupRosterPanelProps): GroupRosterViewProps {
     rosterEmails,
     busy: props.busy,
     loading,
+    catalogUnreadable,
     onRosterNameChange: setRosterName,
     onRosterEmailsChange: setRosterEmails,
   };
@@ -316,12 +360,13 @@ function useRosterManager(props: GroupRosterPanelProps): GroupRosterViewProps {
         setVerifiedRosterId,
       },
       strings: {
-        errorTitle: t("share_chat_error"),
+        errorTitle: t("zk_group_catalog_load_error"),
         successTitle: t("zk_group_save_roster"),
         createdTitle: t("zk_group_created"),
         confirmMessage: t("zk_group_convert_warning"),
       },
     }),
+    onResetCatalog: resetCatalog,
   };
 }
 
@@ -451,6 +496,23 @@ function SaveRosterForm(props: GroupRosterViewProps) {
 
 function GroupRosterView(props: GroupRosterViewProps) {
   const { t } = useTranslation();
+  if (props.catalogUnreadable) {
+    return (
+      <Stack gap="2">
+        <Text color="fg.muted" fontSize="sm">
+          {t("zk_group_catalog_unreadable")}
+        </Text>
+        <Button
+          variant="outline"
+          disabled={props.busy || props.loading}
+          loading={props.busy}
+          onClick={props.onResetCatalog}
+        >
+          {t("zk_group_catalog_reset")}
+        </Button>
+      </Stack>
+    );
+  }
   return (
     <>
       <Text color="fg.muted" fontSize="sm">

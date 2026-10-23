@@ -173,6 +173,7 @@ export type VaultSharingActions = {
   }>;
   revokeChatShareLink: (chatId: string, token: string) => Promise<void>;
   loadGroupRosters: () => Promise<import("../service/groupChatRosters").SavedGroupRoster[]>;
+  resetGroupRosters: () => Promise<import("../service/groupChatRosters").SavedGroupRoster[]>;
   saveGroupRoster: (
     name: string,
     emails: string[]

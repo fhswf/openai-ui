@@ -199,6 +199,14 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_group_title: "Group chat",
           zk_group_help:
             "Save a private roster, then convert this chat to a group. Group members can post messages and see the shared history.",
+          zk_group_catalog_load_error: "Saved groups could not be loaded",
+          zk_group_catalog_unreadable:
+            "The saved group list cannot be opened with this vault key. Resetting deletes saved roster templates only; existing group chats are not affected.",
+          zk_group_catalog_reset: "Reset saved group list",
+          zk_group_catalog_reset_confirm:
+            "Permanently delete the saved group roster templates and start with an empty list? Existing group chats and their history will not be affected.",
+          zk_group_catalog_reset_success: "Saved group list reset",
+          zk_group_catalog_reset_error: "Saved group list could not be reset",
           zk_group_saved_rosters: "Saved groups",
           zk_group_roster_name: "Group name",
           zk_group_roster_emails: "Member email addresses",
@@ -830,6 +838,14 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_group_title: "Gruppenchat",
           zk_group_help:
             "Speichern Sie eine private Mitgliederliste und wandeln Sie diesen Chat in einen Gruppenchat um. Gruppenmitglieder können Nachrichten senden und den gemeinsamen Verlauf sehen.",
+          zk_group_catalog_load_error: "Gespeicherte Gruppen konnten nicht geladen werden",
+          zk_group_catalog_unreadable:
+            "Die gespeicherte Gruppenliste lässt sich mit diesem Speicherschlüssel nicht öffnen. Beim Zurücksetzen werden nur die Gruppenvorlagen gelöscht; bestehende Gruppenchats bleiben erhalten.",
+          zk_group_catalog_reset: "Gruppenliste zurücksetzen",
+          zk_group_catalog_reset_confirm:
+            "Gespeicherte Gruppenvorlagen endgültig löschen und mit einer leeren Liste beginnen? Bestehende Gruppenchats und deren Verlauf bleiben erhalten.",
+          zk_group_catalog_reset_success: "Gruppenliste zurückgesetzt",
+          zk_group_catalog_reset_error: "Gruppenliste konnte nicht zurückgesetzt werden",
           zk_group_saved_rosters: "Gespeicherte Gruppen",
           zk_group_roster_name: "Gruppenname",
           zk_group_roster_emails: "E-Mail-Adressen der Mitglieder",
