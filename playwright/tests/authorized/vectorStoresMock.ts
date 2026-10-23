@@ -1,17 +1,46 @@
 import type { Request, Route } from "@playwright/test";
 
+export interface MockChunkingStrategy {
+  type: "semantic";
+  semantic: { max_chunk_size_tokens: number };
+}
+
 export interface MockFile {
   id: string;
   filename: string;
+  /* Set when the file is attached; each test attaches a file only once. */
+  chunkingStrategy?: MockChunkingStrategy;
 }
 
 export interface MockStore {
   id: string;
   name: string;
   files: MockFile[];
+  metadata: Record<string, string>;
 }
 
 export const EXCERPT = "Die Klausur findet am 12. Februar im Raum H 101 statt.";
+
+const DEFAULT_CHUNKING_STRATEGY: MockChunkingStrategy = {
+  type: "semantic",
+  semantic: { max_chunk_size_tokens: 1600 },
+};
+
+/*
+ * Like litellm-pgvector: "static" is processed and reported as "semantic",
+ * and a missing or "auto" strategy falls back to semantic with 1600 tokens.
+ */
+function effectiveChunkingStrategy(requested: any): MockChunkingStrategy {
+  const maxTokens =
+    requested?.type === "semantic"
+      ? requested.semantic?.max_chunk_size_tokens
+      : requested?.type === "static"
+      ? requested.static?.max_chunk_size_tokens
+      : undefined;
+  return typeof maxTokens === "number"
+    ? { type: "semantic", semantic: { max_chunk_size_tokens: maxTokens } }
+    : DEFAULT_CHUNKING_STRATEGY;
+}
 
 /*
  * In-memory stand-in for the litellm-pgvector service, including its
@@ -21,16 +50,26 @@ export class MockVectorStoreService {
   stores: MockStore[] = [];
   files = new Map<string, MockFile>();
   requests: string[] = [];
+  /* Bodies of `POST /v1/vector_stores/{id}/files`, to check the strategy. */
+  attachRequests: any[] = [];
   private nextId = 1;
 
   private id(prefix: string) {
     return `${prefix}${this.nextId++}`;
   }
 
-  addStore(name: string, filenames: string[] = []) {
-    const store: MockStore = { id: this.id("vs"), name, files: [] };
+  addStore(
+    name: string,
+    filenames: string[] = [],
+    metadata: Record<string, string> = {}
+  ) {
+    const store: MockStore = { id: this.id("vs"), name, files: [], metadata };
     for (const filename of filenames) {
-      const file = { id: this.id("file"), filename };
+      const file = {
+        id: this.id("file"),
+        filename,
+        chunkingStrategy: DEFAULT_CHUNKING_STRATEGY,
+      };
       this.files.set(file.id, file);
       store.files.push(file);
     }
@@ -53,7 +92,7 @@ export class MockVectorStoreService {
         cancelled: 0,
         in_progress: 0,
       },
-      metadata: {},
+      metadata: store.metadata,
     };
   }
 
@@ -66,6 +105,7 @@ export class MockVectorStoreService {
       last_error: null,
       usage_bytes: 0,
       vector_store_id: store.id,
+      chunking_strategy: file.chunkingStrategy ?? { type: "other" },
     };
   }
 
@@ -101,9 +141,13 @@ export class MockVectorStoreService {
   ) {
     if (path !== "/v1/vector_stores") return false;
     if (method === "GET") {
-      await this.list(route, this.stores.map((store) => this.storeJson(store)));
+      await this.list(
+        route,
+        this.stores.map((store) => this.storeJson(store))
+      );
     } else if (method === "POST") {
-      const store = this.addStore(request.postDataJSON().name);
+      const body = request.postDataJSON();
+      const store = this.addStore(body.name, [], body.metadata ?? {});
       await this.json(route, this.storeJson(store));
     } else {
       return false;
@@ -122,8 +166,14 @@ export class MockVectorStoreService {
     const store = this.stores.find((item) => item.id === match[1]);
     if (!store) return this.notFound(route);
     if (method === "POST") {
-      store.name = request.postDataJSON().name;
-      await this.json(route, this.storeJson(store));
+      // Like litellm-pgvector: only given fields change, metadata is replaced
+      // as a whole (an empty object is ignored), and the response has none.
+      const body = request.postDataJSON();
+      if (body.name) store.name = body.name;
+      if (body.metadata && Object.keys(body.metadata).length > 0) {
+        store.metadata = body.metadata;
+      }
+      await this.json(route, { ...this.storeJson(store), metadata: null });
       return true;
     }
     if (method === "DELETE") {
@@ -180,8 +230,11 @@ export class MockVectorStoreService {
       return true;
     }
     if (!fileId && method === "POST") {
-      const file = this.files.get(request.postDataJSON().file_id);
+      const body = request.postDataJSON();
+      this.attachRequests.push(body);
+      const file = this.files.get(body.file_id);
       if (!file) return this.notFound(route);
+      file.chunkingStrategy = effectiveChunkingStrategy(body.chunking_strategy);
       store.files.push(file);
       await this.json(route, this.attachmentJson(store, file));
       return true;
@@ -240,4 +293,3 @@ export class MockVectorStoreService {
     return true;
   }
 }
-
