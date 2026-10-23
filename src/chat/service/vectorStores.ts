@@ -1,4 +1,5 @@
 import type {
+  FileChunkingStrategyParam,
   VectorStore,
   VectorStoreDeleted,
   VectorStoreSearchResponse,
@@ -6,6 +7,7 @@ import type {
 import type { VectorStoreFile } from "openai/resources/vector-stores/files.mjs";
 import { Options } from "../context/types";
 import { defaultVectorStoreBaseUrl } from "../context/initState";
+import type { SemanticChunkingStrategy } from "../utils/chunking";
 import { createClient } from "./openai";
 
 /*
@@ -121,14 +123,25 @@ export async function listVectorStoreFiles(
 /**
  * Uploads a file and attaches it to the vector store. Resolves once the
  * service has finished parsing and embedding (status completed or failed).
+ * Without a chunking strategy the service uses its default.
  */
 export async function uploadFileToVectorStore(
   options: Options,
   vectorStoreId: string,
-  file: File
+  file: File,
+  chunkingStrategy?: SemanticChunkingStrategy
 ) {
   const client = createVectorStoreClient(options);
-  return client.vectorStores.files.uploadAndPoll(vectorStoreId, file);
+  // Same requests as `uploadAndPoll`, which cannot pass a chunking strategy.
+  const uploaded = await client.files.create({ file, purpose: "assistants" });
+  return client.vectorStores.files.createAndPoll(vectorStoreId, {
+    file_id: uploaded.id,
+    // litellm-pgvector accepts "semantic", which the SDK types do not know.
+    ...(chunkingStrategy && {
+      chunking_strategy:
+        chunkingStrategy as unknown as FileChunkingStrategyParam,
+    }),
+  });
 }
 
 /** Removes the attachment but keeps the uploaded file. */
