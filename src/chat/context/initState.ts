@@ -15,7 +15,7 @@ export const defaultVectorStoreBaseUrl =
   import.meta.env.VITE_VECTOR_STORE_BASE_URL ||
   "https://pgvector.fh-swf.cloud/v1";
 
-export const defaultOpenAIModel = "gpt-4o-mini";
+export const defaultOpenAIModel = "gpt-6-luna";
 
 export const initState: GlobalState = {
   current: 0,
