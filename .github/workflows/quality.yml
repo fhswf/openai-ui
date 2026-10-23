@@ -43,10 +43,40 @@ jobs:
         path: dist/
         retention-days: 1
 
+  playwright-browsers:
+    name: Install Playwright browsers
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - run: corepack enable && corepack prepare yarn@stable --activate
+    - uses: actions/setup-node@v5
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+        cache-dependency-path: '**/yarn.lock'
+    - name: Install dependencies
+      run: yarn install --immutable
+    - name: Get Playwright version
+      run: echo "PLAYWRIGHT_VERSION=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_ENV
+    - name: Cache Playwright browsers
+      id: playwright-cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+    - name: Install Playwright browsers
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      run: npx playwright install chromium firefox webkit chrome msedge
+
   playwright-auth:
     name: Playwright Auth Setup
     timeout-minutes: 15
-    needs: build
+    needs: [build, playwright-browsers]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -69,11 +99,16 @@ jobs:
     - name: Get Playwright version
       run: echo "PLAYWRIGHT_VERSION=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_ENV
     - name: Cache Playwright browsers
+      id: playwright-cache
       uses: actions/cache@v6
       with:
         path: ~/.cache/ms-playwright
-        key: ${{ runner.os }}-playwright-chromium-${{ env.PLAYWRIGHT_VERSION }}
-    - name: Install Chromium
+        key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+    - name: Install Playwright system dependencies
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      run: npx playwright install-deps chromium
+    - name: Install Chromium if the browser cache is unavailable
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
       run: npx playwright install --with-deps chromium
     - name: Create authenticated storage state
       run: npx playwright test --project=setup
@@ -129,11 +164,16 @@ jobs:
     - name: Get Playwright version
       run: echo "PLAYWRIGHT_VERSION=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_ENV
     - name: Cache Playwright browsers
+      id: playwright-cache
       uses: actions/cache@v6
       with:
         path: ~/.cache/ms-playwright
-        key: ${{ runner.os }}-playwright-chromium-${{ env.PLAYWRIGHT_VERSION }}
-    - name: Install Chromium
+        key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+    - name: Install Playwright system dependencies
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      run: npx playwright install-deps chromium
+    - name: Install Chromium if the browser cache is unavailable
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
       run: npx playwright install --with-deps chromium
     - name: Run Chromium shard
       run: npx playwright test --no-deps --project=chromium --shard=${{ matrix.shard }}/${{ matrix.total_shards }}
@@ -196,11 +236,16 @@ jobs:
     - name: Get Playwright version
       run: echo "PLAYWRIGHT_VERSION=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_ENV
     - name: Cache Playwright browsers
+      id: playwright-cache
       uses: actions/cache@v6
       with:
         path: ~/.cache/ms-playwright
-        key: ${{ runner.os }}-playwright-all-${{ env.PLAYWRIGHT_VERSION }}
-    - name: Install Playwright browsers
+        key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+    - name: Install Playwright system dependencies
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      run: npx playwright install-deps chromium firefox webkit
+    - name: Install Playwright browsers if the browser cache is unavailable
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
       run: npx playwright install --with-deps chromium firefox webkit chrome msedge
     - name: Run cross-browser smoke
       run: npx playwright test --no-deps --project=firefox --project=webkit --project='Mobile Chrome' --project='Mobile Safari' --project='Microsoft Edge' --project='Google Chrome'
