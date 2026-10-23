@@ -86,6 +86,11 @@
   --text-color-gray: #a7acbb;
 }
 
+// Keep portalled Chakra dialog links above the WCAG text contrast threshold.
+[data-theme="dark"] [role="dialog"] a {
+  color: #80c5ff !important;
+}
+
 [data-size="small"] {
   --font-size-base: 12px;
 }

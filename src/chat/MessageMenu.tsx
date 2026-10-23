@@ -42,6 +42,7 @@ export function MessageMenu() {
     currentChat,
     searchChats,
     vaultReady,
+    deleteUnreadableVaultChat,
   } = useGlobal();
   const { apps, category } = useApps();
   const { t } = useTranslation();
@@ -51,6 +52,7 @@ export function MessageMenu() {
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<Chat[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [deletingChatId, setDeletingChatId] = useState<string | null>(null);
 
   const lazyHistory = options.general.zkLazyHistory ?? false;
 
@@ -68,6 +70,32 @@ export function MessageMenu() {
   const deleteChat = (id) => {
     const index = chat.findIndex((item) => item.id == id);
     removeChat(index);
+  };
+
+  const deleteUnreadableChat = async (item: Chat) => {
+    if (!item.vault?.canDelete || !vaultReady) return;
+    if (!window.confirm(t("zk_chat_delete_unreadable_confirm"))) return;
+
+    const id = String(item.id);
+    setDeletingChatId(id);
+    try {
+      await deleteUnreadableVaultChat(id);
+      toaster.create({
+        title: t("zk_chat_deleted"),
+        duration: 5000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Could not delete the undecryptable encrypted chat:", error);
+      toaster.create({
+        title: t("zk_storage_error"),
+        description: error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    } finally {
+      setDeletingChatId(null);
+    }
   };
 
   // Searching must cover the complete history, so placeholders are loaded from
@@ -224,7 +252,12 @@ export function MessageMenu() {
                         justifyContent="space-between"
                         alignItems="baseline"
                       >
-                        <Heading>{c.title}</Heading>
+                        <Heading>
+                          {c.title ||
+                            (c.vault?.restoreError
+                              ? t("zk_chat_decryption_failed_title")
+                              : t("empty_chat"))}
+                        </Heading>
                         <Spacer />
                         <Text textStyle="xs">
                           {new Date(c.ct).toLocaleString()}
@@ -234,13 +267,29 @@ export function MessageMenu() {
                     <Card.Body>
                       <Card.Description className={styles.description} asChild>
                         <Text>
-                          {c.messages?.length
+                          {c.vault?.restoreError
+                            ? t("zk_chat_decryption_failed")
+                            : c.messages?.length
                             ? getTitle(
                                 c.messages.filter((m) => m.role == "user")
                               )
                             : c.vault?.preview}
                         </Text>
                       </Card.Description>
+                      {c.vault?.restoreError && (
+                        <>
+                          <Text color="fg.muted" mt="2" fontSize="sm">
+                            {t(
+                              c.vault.canDelete
+                                ? "zk_chat_decryption_failed_owner_help"
+                                : "zk_chat_decryption_failed_shared_help"
+                            )}
+                          </Text>
+                          <Text color="fg.muted" mt="1" fontSize="xs">
+                            {t("zk_chat_id", { id: String(c.id) })}
+                          </Text>
+                        </>
+                      )}
                       {c.messages?.length
                         ? getImage(c.messages.filter((m) => m.role == "user"))
                         : null}
@@ -255,10 +304,27 @@ export function MessageMenu() {
                           variant="ghost"
                           size="xs"
                           focusRing="none"
-                          title={t("delete_chat")}
+                          title={
+                            c.vault?.restoreError
+                              ? c.vault.canDelete
+                                ? t("zk_chat_delete_unreadable")
+                                : t("zk_chat_delete_unreadable_owner_only")
+                              : t("delete_chat")
+                          }
+                          disabled={
+                            deletingChatId === String(c.id) ||
+                            Boolean(
+                              c.vault?.restoreError &&
+                                (!c.vault.canDelete || !vaultReady)
+                            )
+                          }
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteChat(c.id);
+                            if (c.vault?.restoreError) {
+                              void deleteUnreadableChat(c);
+                            } else {
+                              deleteChat(c.id);
+                            }
                           }}
                         >
                           <MdOutlineDeleteOutline />

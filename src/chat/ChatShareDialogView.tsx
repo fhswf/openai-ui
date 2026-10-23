@@ -28,6 +28,7 @@ type ShareActions = Pick<
   | "createChatShareLink"
   | "revokeChatShareLink"
   | "loadGroupRosters"
+  | "resetGroupRosters"
   | "saveGroupRoster"
   | "deleteGroupRoster"
   | "createGroupChatFromRoster"

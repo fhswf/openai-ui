@@ -3,6 +3,7 @@ import type { VaultSharingActions } from "./context/types";
 export type GroupManagementActions = Pick<
   VaultSharingActions,
   | "loadGroupRosters"
+  | "resetGroupRosters"
   | "saveGroupRoster"
   | "deleteGroupRoster"
   | "createGroupChatFromRoster"
