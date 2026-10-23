@@ -123,3 +123,28 @@ export async function saveGroupChatCursor(
     store.put(cursor, cursorKey(userId, chatId))
   );
 }
+
+export async function removeGroupChatLocalData(
+  userId: string,
+  chatId: string
+): Promise<void> {
+  const database = await openDatabase();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(
+      [OUTBOX_STORE, CURSOR_STORE],
+      "readwrite"
+    );
+    const outbox = transaction.objectStore(OUTBOX_STORE);
+    const request = outbox.getAll() as IDBRequest<GroupChatOutboxEvent[]>;
+    request.onsuccess = () => {
+      for (const event of request.result) {
+        if (event.chatId === chatId) outbox.delete(event.eventId);
+      }
+    };
+    request.onerror = () => reject(request.error);
+    transaction.objectStore(CURSOR_STORE).delete(cursorKey(userId, chatId));
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+}

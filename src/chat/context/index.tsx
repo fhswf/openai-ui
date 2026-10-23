@@ -45,6 +45,7 @@ import {
   searchVaultChats,
   syncGroupChatAttachments,
   syncVaultChats,
+  isVaultDecryptionFailure,
   type VaultSyncCache,
 } from "../service/zeroKnowledgeSync";
 import {
@@ -70,7 +71,11 @@ import {
   removeVaultGroupMember,
 } from "../service/groupChatMembership";
 import { GroupChatRealtimeClient } from "../service/groupChatRealtime";
-import { loadGroupChatCursor, saveGroupChatCursor } from "../service/groupChatLocalStore";
+import {
+  loadGroupChatCursor,
+  removeGroupChatLocalData,
+  saveGroupChatCursor,
+} from "../service/groupChatLocalStore";
 import type { VaultGroupEvent } from "../service/chatVault";
 import { loadPrivateKey } from "../utils/zeroKnowledgeKeystore";
 import { isPrivateKeyForUser } from "../utils/zeroKnowledgeStorage";
@@ -212,7 +217,7 @@ export const ChatProvider = ({ children }) => {
     fetchAndGetUser(
       dispatch,
       () => latestState.current.options,
-      actionList.setOptions,
+      (optionAction) => latestActions.current.setOptions(optionAction),
       () => {
         // Resume the request that triggered the login redirect now that the
         // session is valid again. Use the latest actions so the retry sees the
@@ -939,6 +944,58 @@ export const ChatProvider = ({ children }) => {
     [applyChatUpdates]
   );
 
+  const deleteUnreadableVaultChat = useCallback(
+    async (id: string) => {
+      const credentials = requireVaultCredentials();
+      const chat = latestState.current.chat?.find(
+        (item) => String(item.id) === id
+      );
+      const descriptor = chat?.vault;
+      if (!chat || descriptor?.restoreError !== "decrypt_failed") {
+        throw new Error("This chat is not marked as undecryptable");
+      }
+      const ownerId = vaultCache.current.owners.get(id) ?? descriptor.ownerId;
+      if (ownerId !== credentials.userKey.userId) {
+        throw new Error("Only the owner can delete this encrypted chat");
+      }
+
+      await chatVault.deleteChat(id);
+      try {
+        await removeGroupChatLocalData(credentials.userKey.userId, id);
+      } catch (error) {
+        console.warn("Could not clear local group chat sync data:", error);
+      }
+      hydratedChats.current.delete(id);
+      const cache = vaultCache.current;
+      cache.revisions.delete(id);
+      cache.fingerprints.delete(id);
+      cache.owners.delete(id);
+      cache.chatKeys.delete(id);
+      cache.groupChats.delete(id);
+      cache.transcripts.delete(id);
+      cache.attachmentIds.delete(id);
+      for (const key of cache.attachmentFingerprints.keys()) {
+        if (key.startsWith(`${id}\u0000`)) {
+          cache.attachmentFingerprints.delete(key);
+        }
+      }
+
+      const current = latestState.current;
+      const index = current.chat.findIndex((item) => String(item.id) === id);
+      if (index < 0) return;
+      const nextChat = current.chat.filter((item) => String(item.id) !== id);
+      const currentChat =
+        index === current.currentChat && index > 0
+          ? index - 1
+          : Math.min(current.currentChat, Math.max(nextChat.length - 1, 0));
+      dispatch({
+        type: GlobalActionType.SET_STATE,
+        payload: { chat: nextChat, currentChat },
+      });
+    },
+    [dispatch, requireVaultCredentials]
+  );
+
   // Fetch the transcript of a placeholder chat when it is opened.
   const loadChatMessages = useCallback(
     async (id: number | string) => {
@@ -947,6 +1004,7 @@ export const ChatProvider = ({ children }) => {
         (item) => String(item.id) === key
       );
       if (!chat?.vault || chat.messages?.length) return;
+      const descriptor = chat.vault;
       if (hydratedChats.current.has(key)) return;
       const credentials = vaultCredentials.current;
       if (!credentials) return;
@@ -963,6 +1021,21 @@ export const ChatProvider = ({ children }) => {
         );
       } catch (error) {
         hydratedChats.current.delete(key);
+        if (isVaultDecryptionFailure(error)) {
+          const ownerId =
+            vaultCache.current.owners.get(key) ?? descriptor.ownerId;
+          vaultCache.current.revisions.set(key, descriptor.rev);
+          vaultCache.current.owners.set(key, ownerId);
+          replaceChat({
+            ...chat,
+            vault: {
+              ...descriptor,
+              restoreError: "decrypt_failed",
+              canDelete: ownerId === credentials.userKey.userId,
+            },
+          });
+          return;
+        }
         throw error;
       }
     },
@@ -1104,6 +1177,7 @@ export const ChatProvider = ({ children }) => {
         isGroupChatOwner,
         importSharedChat,
         vaultReady,
+        deleteUnreadableVaultChat,
       }}
     >
       <MessagesContext.Provider value={dispatch}>

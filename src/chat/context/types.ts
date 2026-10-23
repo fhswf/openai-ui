@@ -158,6 +158,8 @@ export type GlobalActions = {
   searchChats: (query: string) => Promise<Chat[]>;
   /** True once the encrypted vault has been unlocked for this session. */
   vaultReady: boolean;
+  /** Permanently delete an undecryptable chat owned by the current account. */
+  deleteUnreadableVaultChat: (id: string) => Promise<void>;
 };
 
 export type VaultSharingActions = {
@@ -248,6 +250,10 @@ export type ChatVaultDescriptor = {
   /** Plaintext of the first user message, used as a local search fallback. */
   preview: string;
   updatedAt: number;
+  /** The server chat exists, but its key envelope could not be opened. */
+  restoreError?: "decrypt_failed";
+  /** Only the owner can permanently delete the server record. */
+  canDelete?: boolean;
 };
 
 export type App = {

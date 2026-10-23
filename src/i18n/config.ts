@@ -147,6 +147,20 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_rp_id_mismatch:
             "The chat service and this page disagree on the site name the passkey is bound to. For local development, use a backend configured with WEBAUTHN_RP_ID=localhost; Vite otherwise proxies requests to the hosted API by default.",
           zk_storage_sync_error: "Encrypted chat sync failed",
+          zk_chat_decryption_failed_title: "Encrypted chat could not be opened",
+          zk_chat_decryption_failed:
+            "This chat's key envelope could not be opened with your vault key.",
+          zk_chat_id: "Chat ID: {{id}}",
+          zk_chat_decryption_failed_owner_help:
+            "Delete it from the server if you no longer need this chat. This permanently removes its messages, events, and attachments.",
+          zk_chat_decryption_failed_shared_help:
+            "Only the chat owner can delete it from the server. Ask the owner to remove or re-share the chat.",
+          zk_chat_delete_unreadable: "Delete from server",
+          zk_chat_delete_unreadable_confirm:
+            "Permanently delete this encrypted chat and its messages, events, and attachments from the server?",
+          zk_chat_delete_unreadable_owner_only:
+            "Only the chat owner can delete this encrypted chat from the server.",
+          zk_chat_deleted: "Encrypted chat deleted",
           zk_storage_unlock: "Unlock this device",
           zk_storage_unlocking: "Unlocking…",
           zk_storage_error: "Encrypted chat storage could not be changed",
@@ -764,6 +778,20 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_rp_id_mismatch:
             "Der Chatdienst und diese Seite verwenden unterschiedliche Hostnamen für den Passkey. Konfigurieren Sie für die lokale Entwicklung das Backend mit WEBAUTHN_RP_ID=localhost. Vite leitet Anfragen standardmäßig an die gehostete API weiter.",
           zk_storage_sync_error: "Synchronisierung der verschlüsselten Chats fehlgeschlagen",
+          zk_chat_decryption_failed_title: "Verschlüsselter Chat konnte nicht geöffnet werden",
+          zk_chat_decryption_failed:
+            "Der Schlüsselumschlag dieses Chats konnte mit Ihrem Speicherschlüssel nicht geöffnet werden.",
+          zk_chat_id: "Chat-ID: {{id}}",
+          zk_chat_decryption_failed_owner_help:
+            "Löschen Sie den Chat vom Server, wenn Sie ihn nicht mehr benötigen. Dabei werden Nachrichten, Ereignisse und Anhänge endgültig entfernt.",
+          zk_chat_decryption_failed_shared_help:
+            "Nur der Chat-Eigentümer kann ihn vom Server löschen. Bitten Sie den Eigentümer, den Chat zu entfernen oder erneut freizugeben.",
+          zk_chat_delete_unreadable: "Vom Server löschen",
+          zk_chat_delete_unreadable_confirm:
+            "Diesen verschlüsselten Chat samt Nachrichten, Ereignissen und Anhängen endgültig vom Server löschen?",
+          zk_chat_delete_unreadable_owner_only:
+            "Nur der Chat-Eigentümer kann diesen verschlüsselten Chat vom Server löschen.",
+          zk_chat_deleted: "Verschlüsselter Chat gelöscht",
           zk_storage_unlock: "Dieses Gerät entsperren",
           zk_storage_unlocking: "Wird entsperrt …",
           zk_storage_error: "Die verschlüsselte Chatspeicherung konnte nicht geändert werden",

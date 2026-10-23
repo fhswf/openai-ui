@@ -527,7 +527,8 @@ async function downloadChat(
   userKey: VaultUserKey,
   cache: VaultSyncCache,
   local?: Chat,
-  knownGroup?: VaultGroupChat | null
+  knownGroup?: VaultGroupChat | null,
+  options: { throwOnDecryptFailure?: boolean } = {}
 ): Promise<DownloadedChat | null> {
   const group = knownGroup === undefined
     ? await getGroupStateIfAvailable(summary.id)
@@ -564,8 +565,51 @@ async function downloadChat(
     return { chat, rev: encrypted.rev, ownerId };
   } catch (error) {
     console.warn("Could not decrypt vault chat %s:", summary.id, error);
+    if (options.throwOnDecryptFailure && isVaultDecryptionFailure(error)) {
+      throw error;
+    }
     return null;
   }
+}
+
+export function isVaultDecryptionFailure(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "OperationError"
+  );
+}
+
+function createUnreadableVaultChat(
+  summary: VaultChatSummary,
+  userKey: VaultUserKey,
+  local?: Chat,
+  group?: VaultGroupChat | null
+): Chat {
+  const ownerId = summary.ownerId || group?.ownerId || userKey.userId;
+  const updatedAt = Date.parse(summary.updatedAt);
+  const chatTime = Number.isFinite(updatedAt) ? updatedAt : Date.now();
+  return {
+    ...(local ?? {
+      title: "",
+      app: 0,
+      id: summary.id,
+      ct: chatTime,
+      messages: [],
+    }),
+    id: summary.id,
+    groupChat: Boolean(group) || local?.groupChat,
+    vault: {
+      rev: summary.rev,
+      ownerId,
+      messageCount: local?.vault?.messageCount ?? local?.messages?.length ?? 0,
+      preview: local?.vault?.preview ?? "",
+      updatedAt: chatTime,
+      restoreError: "decrypt_failed",
+      canDelete: ownerId === userKey.userId,
+    },
+  };
 }
 
 /**
@@ -593,14 +637,27 @@ export async function restoreVaultChats(
     const local = localById.get(summary.id);
     const group = await getGroupStateIfAvailable(summary.id);
     if (group) {
-      const downloaded = await downloadChat(
-        summary,
-        privateKey,
-        userKey,
-        cache,
-        local,
-        group
-      );
+      let downloaded: DownloadedChat | null;
+      try {
+        downloaded = await downloadChat(
+          summary,
+          privateKey,
+          userKey,
+          cache,
+          local,
+          group,
+          { throwOnDecryptFailure: true }
+        );
+      } catch (error) {
+        if (!isVaultDecryptionFailure(error)) throw error;
+        cache.revisions.set(summary.id, summary.rev);
+        cache.owners.set(summary.id, summary.ownerId || group.ownerId);
+        restored.set(
+          summary.id,
+          createUnreadableVaultChat(summary, userKey, local, group)
+        );
+        continue;
+      }
       if (downloaded) {
         restored.set(
           summary.id,
@@ -642,14 +699,27 @@ export async function restoreVaultChats(
       continue;
     }
 
-    const downloaded = await downloadChat(
-      summary,
-      privateKey,
-      userKey,
-      cache,
-      local,
-      null
-    );
+    let downloaded: DownloadedChat | null;
+    try {
+      downloaded = await downloadChat(
+        summary,
+        privateKey,
+        userKey,
+        cache,
+        local,
+        null,
+        { throwOnDecryptFailure: true }
+      );
+    } catch (error) {
+      if (!isVaultDecryptionFailure(error)) throw error;
+      cache.revisions.set(summary.id, summary.rev);
+      cache.owners.set(summary.id, summary.ownerId);
+      restored.set(
+        summary.id,
+        createUnreadableVaultChat(summary, userKey, local)
+      );
+      continue;
+    }
     if (!downloaded) {
       if (summary.ownerId === userKey.userId && local?.messages?.length) {
         // The remote copy cannot be opened with the current key. Leave it out
@@ -723,7 +793,10 @@ export async function hydrateVaultChat(
     },
     privateKey,
     userKey,
-    cache
+    cache,
+    undefined,
+    undefined,
+    { throwOnDecryptFailure: true }
   );
   if (!downloaded) {
     throw new Error("Could not load the encrypted chat");
@@ -799,6 +872,7 @@ export async function syncVaultChats(
 ): Promise<void> {
   const currentIds = new Set(chats.map(chatId));
   for (const chat of chats) {
+    if (chat.vault?.restoreError) continue;
     ensureChatAttachmentIds(chat);
     const id = chatId(chat);
     if (chat.groupChat || cache.groupChats.has(id)) {
