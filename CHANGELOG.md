@@ -54,6 +54,19 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.57.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.56.0...openai-ui-v0.57.0) (2026-10-23)
+
+
+### Features
+
+* Add reset functionality for unreadable group rosters and enhance error handling ([c902191](https://github.com/fhswf/openai-ui/commit/c902191cc88fce9a89172ce9fd842695c6d5a9be))
+* Implement functionality to delete undecryptable chats and enhance error handling ([4c27511](https://github.com/fhswf/openai-ui/commit/4c27511ec5b2ecaa6db2b5658085041cba0b66dd))
+
+
+### Bug Fixes
+
+* Update dark theme link color for improved contrast in Chakra dialogs ([043cb22](https://github.com/fhswf/openai-ui/commit/043cb228da05928f880c79e7a4cb7d6f11e01022))
+
 ## [0.56.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.55.1...openai-ui-v0.56.0) (2026-10-23)
 
 
