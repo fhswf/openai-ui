@@ -453,18 +453,31 @@ async function replayGroupChatEvents(
   return { chat, cursor };
 }
 
-async function cacheDownloadedGroupChat(
-  userKey: VaultUserKey,
-  id: string,
-  encrypted: VaultChat,
-  group: VaultGroupChat,
-  initialKey: CryptoKey | undefined,
-  chat: Chat,
-  cursor: number,
-  ownerId: string,
-  cache: VaultSyncCache,
-  runtime: GroupChatRuntime
-): Promise<void> {
+type GroupChatCacheUpdate = {
+  userKey: VaultUserKey;
+  id: string;
+  encrypted: VaultChat;
+  group: VaultGroupChat;
+  initialKey: CryptoKey | undefined;
+  chat: Chat;
+  cursor: number;
+  ownerId: string;
+  cache: VaultSyncCache;
+  runtime: GroupChatRuntime;
+};
+
+async function cacheDownloadedGroupChat({
+  userKey,
+  id,
+  encrypted,
+  group,
+  initialKey,
+  chat,
+  cursor,
+  ownerId,
+  cache,
+  runtime,
+}: GroupChatCacheUpdate): Promise<void> {
   runtime.cursor = cursor;
   runtime.group = { ...group, cursor };
   cache.groupChats.set(id, runtime);
@@ -498,18 +511,18 @@ async function downloadGroupChat(
   const ownerId = encrypted.ownerId || summary.ownerId;
   const runtime = seedGroupChatRuntime(group, epochKeys, 0, chat);
   const replayed = await replayGroupChatEvents(id, chat, runtime);
-  await cacheDownloadedGroupChat(
+  await cacheDownloadedGroupChat({
     userKey,
     id,
     encrypted,
     group,
     initialKey,
-    replayed.chat,
-    replayed.cursor,
+    chat: replayed.chat,
+    cursor: replayed.cursor,
     ownerId,
     cache,
-    runtime
-  );
+    runtime,
+  });
   return { chat: replayed.chat, rev: encrypted.rev, ownerId };
 }
 

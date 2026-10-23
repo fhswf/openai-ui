@@ -36,6 +36,41 @@ function reportGroupError(error: unknown, title: string) {
   });
 }
 
+type SaveRosterParams = {
+  rosterName: string;
+  rosterEmails: string;
+  saveGroupRoster: GroupManagementActions["saveGroupRoster"];
+  setBusy: (busy: boolean) => void;
+  onSaved: (rosters: SavedGroupRoster[]) => void;
+  onSuccess: () => void;
+  onError: (error: unknown) => void;
+};
+
+async function saveRoster({
+  rosterName,
+  rosterEmails,
+  saveGroupRoster: save,
+  setBusy,
+  onSaved,
+  onSuccess,
+  onError,
+}: SaveRosterParams): Promise<void> {
+  const emails = rosterEmails
+    .split(/[\n,]/)
+    .map((email) => email.trim())
+    .filter(Boolean);
+  if (!rosterName.trim() || emails.length === 0) return;
+  setBusy(true);
+  try {
+    onSaved(await save(rosterName, emails));
+    onSuccess();
+  } catch (error) {
+    onError(error);
+  } finally {
+    setBusy(false);
+  }
+}
+
 export function GroupChatManager({
   open,
   chatId,
@@ -111,31 +146,6 @@ export function GroupChatManager({
 
   const reloadGroup = async () => {
     setGroup(await actions.getGroupChatInfo(chatId));
-  };
-
-  const saveRoster = async () => {
-    const emails = rosterEmails
-      .split(/[\n,]/)
-      .map((email) => email.trim())
-      .filter(Boolean);
-    if (!rosterName.trim() || emails.length === 0) return;
-    setBusy(true);
-    try {
-      const saved = await actions.saveGroupRoster(rosterName, emails);
-      setRosters(saved);
-      setSelectedRosterId(saved[saved.length - 1]?.id ?? "");
-      setRosterName("");
-      setRosterEmails("");
-      toaster.create({
-        title: t("zk_group_save_roster"),
-        duration: 4000,
-        type: "success",
-      });
-    } catch (error) {
-      reportGroupError(error, t("share_chat_error"));
-    } finally {
-      setBusy(false);
-    }
   };
 
   const deleteRoster = async () => {
@@ -410,7 +420,28 @@ export function GroupChatManager({
               alignSelf="start"
               disabled={busy || !rosterName.trim() || !rosterEmails.trim()}
               loading={busy}
-              onClick={() => void saveRoster()}
+              onClick={() =>
+                void saveRoster({
+                  rosterName,
+                  rosterEmails,
+                  saveGroupRoster: actions.saveGroupRoster,
+                  setBusy,
+                  onSaved: (saved) => {
+                    setRosters(saved);
+                    setSelectedRosterId(saved[saved.length - 1]?.id ?? "");
+                    setRosterName("");
+                    setRosterEmails("");
+                  },
+                  onSuccess: () =>
+                    toaster.create({
+                      title: t("zk_group_save_roster"),
+                      duration: 4000,
+                      type: "success",
+                    }),
+                  onError: (error) =>
+                    reportGroupError(error, t("share_chat_error")),
+                })
+              }
             >
               {t("zk_group_save_roster")}
             </Button>
