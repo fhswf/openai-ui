@@ -54,6 +54,27 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.56.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.55.1...openai-ui-v0.56.0) (2026-10-23)
+
+
+### Features
+
+* add busy state management to GroupChatManager, GroupChatMembersPanel, and GroupChatRosterPanel ([6193714](https://github.com/fhswf/openai-ui/commit/61937143e492c232d288f970bf15e7889540db8d))
+* add documentation for zero-knowledge group chats and event sync… ([b5eef7b](https://github.com/fhswf/openai-ui/commit/b5eef7b720518bb72c6639ac3350111f6d8a24c4))
+* add GroupChatMembersPanel and related utilities for group member management ([8718d4b](https://github.com/fhswf/openai-ui/commit/8718d4bebbd691ada402ae111b345666c29493e9))
+* add markdown styling to ChatSideBarOverlays and clean up setGeneral logic in useOptions ([c9b3b79](https://github.com/fhswf/openai-ui/commit/c9b3b79d2e2a0ba4c8d127d71dae8758a1381c91))
+* enhance group roster management by adding fingerprint verification and improving email input handling ([c4e3519](https://github.com/fhswf/openai-ui/commit/c4e3519e8d1aee92ac1a0fd5ec9716df6ed8007f))
+* Enhance zero-knowledge storage functionality and user experience ([30e730f](https://github.com/fhswf/openai-ui/commit/30e730f428884139a2b70c6967416994ad3e1cae))
+* implement saveRoster function for group roster management ([48e5684](https://github.com/fhswf/openai-ui/commit/48e5684019788383deae0de9a1d27eab705d5dd1))
+* Override Chakra link color for improved dark-theme contrast ([6c4ae3d](https://github.com/fhswf/openai-ui/commit/6c4ae3d189cea8bcec529c035ad963be2db118aa))
+* Update MCP authentication key algorithm usage and enhance chat … ([0c6f3f0](https://github.com/fhswf/openai-ui/commit/0c6f3f0ce530666338fde360ecc84db55e49bd94))
+* Update MCP authentication key algorithm usage and enhance chat label styling ([f5e8b24](https://github.com/fhswf/openai-ui/commit/f5e8b24b797c12c257ad42c15242e7a1901cb782))
+
+
+### Bug Fixes
+
+* **test:** refactor authentication wait logic to use polling for improved reliability ([e95e0b1](https://github.com/fhswf/openai-ui/commit/e95e0b19c903959c7067197747b1a8dfbd7d30c1))
+
 ## [0.55.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.55.0...openai-ui-v0.55.1) (2026-10-23)
 
 
