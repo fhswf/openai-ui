@@ -31,6 +31,7 @@ import { consumeLoginRetry } from "../utils/loginRetry";
 import { useDebounce } from "../hooks/useDebounce";
 import { toaster } from "../../components/ui/toaster";
 import { t } from "i18next";
+import i18n from "../../i18n/config";
 import {
   chatVault,
   type VaultGroupChat,
@@ -48,6 +49,11 @@ import {
   isVaultDecryptionFailure,
   type VaultSyncCache,
 } from "../service/zeroKnowledgeSync";
+import {
+  restoreVaultSettings,
+  syncVaultSettings,
+  type VaultSettingsSyncState,
+} from "../service/zeroKnowledgeSettings";
 import {
   applyGroupOperation,
   decryptGroupEvent,
@@ -159,12 +165,17 @@ export const ChatProvider = ({ children }) => {
     privateKey: CryptoKey;
     userKey: VaultUserKey;
   } | null>(null);
+  const vaultSettingsState = useRef<VaultSettingsSyncState | null>(null);
+  const vaultSettingsSyncRunning = useRef(false);
+  const vaultSettingsSyncRequested = useRef(false);
   const vaultBootstrap = useRef<{
     key: string;
     promise: Promise<{
       privateKey: CryptoKey;
       userKey: VaultUserKey;
       chats: Chat[];
+      options: GlobalState["options"];
+      settingsSyncState: VaultSettingsSyncState;
     } | null>;
   } | null>(null);
   const vaultSyncRunning = useRef(false);
@@ -246,6 +257,7 @@ export const ChatProvider = ({ children }) => {
       setVaultReady(false);
       vaultCredentials.current = null;
       vaultCache.current = createVaultSyncCache();
+      vaultSettingsState.current = null;
       vaultBootstrap.current = null;
       return () => {
         cancelled = true;
@@ -256,6 +268,7 @@ export const ChatProvider = ({ children }) => {
     if (vaultBootstrap.current?.key !== bootstrapKey) {
       vaultCredentials.current = null;
       vaultCache.current = createVaultSyncCache();
+      vaultSettingsState.current = null;
       hydratedChats.current = new Set();
       const cache = vaultCache.current;
       const promise = (async () => {
@@ -265,14 +278,45 @@ export const ChatProvider = ({ children }) => {
           return null;
         }
         const localState = reduceState(latestState.current);
+        let settings: Awaited<ReturnType<typeof restoreVaultSettings>>;
+        try {
+          settings = await restoreVaultSettings(
+            localState.options,
+            privateKey,
+            userKey
+          );
+        } catch (error) {
+          console.error("Could not restore encrypted settings:", error);
+          toaster.create({
+            title: t("zk_storage_sync_error"),
+            description:
+              error instanceof Error ? error.message : t("unknown_error"),
+            duration: 8000,
+            type: "error",
+          });
+          settings = {
+            options: localState.options,
+            syncState: {
+              rev: 0,
+              fingerprint: "",
+              available: false,
+            },
+          };
+        }
         const chats = await restoreVaultChats(
           localState.chat,
           privateKey,
           userKey,
           cache,
-          { lazy: lazyHistory }
+          { lazy: settings.options.general.zkLazyHistory ?? lazyHistory }
         );
-        return { privateKey, userKey, chats };
+        return {
+          privateKey,
+          userKey,
+          chats,
+          options: settings.options,
+          settingsSyncState: settings.syncState,
+        };
       })();
       vaultBootstrap.current = { key: bootstrapKey, promise };
     }
@@ -285,6 +329,10 @@ export const ChatProvider = ({ children }) => {
           privateKey: result.privateKey,
           userKey: result.userKey,
         };
+        vaultSettingsState.current = result.settingsSyncState;
+        if (result.options.general.language) {
+          void i18n.changeLanguage(result.options.general.language);
+        }
         const current = latestState.current;
         const selectedId = current.chat?.at(current.currentChat)?.id;
         const selectedIndex = result.chats.findIndex(
@@ -299,7 +347,11 @@ export const ChatProvider = ({ children }) => {
               );
         dispatch({
           type: GlobalActionType.SET_STATE,
-          payload: { chat: result.chats, currentChat },
+          payload: {
+            chat: result.chats,
+            currentChat,
+            options: result.options,
+          },
         });
         setVaultReady(true);
       })
@@ -753,6 +805,56 @@ export const ChatProvider = ({ children }) => {
     const timeout = window.setTimeout(() => void sync(), 800);
     return () => window.clearTimeout(timeout);
   }, [state.chat, zkStorageEnabled, vaultReady]);
+
+  useEffect(() => {
+    if (!zkStorageEnabled || !vaultReady) return;
+
+    const sync = async () => {
+      if (vaultSettingsSyncRunning.current) {
+        vaultSettingsSyncRequested.current = true;
+        return;
+      }
+
+      vaultSettingsSyncRunning.current = true;
+      try {
+        do {
+          vaultSettingsSyncRequested.current = false;
+          const credentials = vaultCredentials.current;
+          const syncState = vaultSettingsState.current;
+          if (
+            !credentials ||
+            !syncState ||
+            !latestState.current.options.general.zkStorage
+          ) {
+            break;
+          }
+          vaultSettingsState.current = await syncVaultSettings(
+            latestState.current.options,
+            credentials.userKey,
+            syncState
+          );
+        } while (vaultSettingsSyncRequested.current);
+      } catch (error) {
+        console.error("Could not sync encrypted settings:", error);
+        toaster.create({
+          title: t("zk_storage_sync_error"),
+          description:
+            error instanceof Error ? error.message : t("unknown_error"),
+          duration: 8000,
+          type: "error",
+        });
+      } finally {
+        vaultSettingsSyncRunning.current = false;
+        if (vaultSettingsSyncRequested.current) {
+          vaultSettingsSyncRequested.current = false;
+          window.setTimeout(() => void sync(), 0);
+        }
+      }
+    };
+
+    const timeout = window.setTimeout(() => void sync(), 800);
+    return () => window.clearTimeout(timeout);
+  }, [state.options, zkStorageEnabled, vaultReady]);
 
   // Replace several chats at once. `latestState.current` is not updated until
   // the next render, so one dispatch per chat would apply every update to the

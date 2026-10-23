@@ -60,31 +60,31 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           theme_switch_to_light: "Switch to light color scheme",
           theme_toggle: "Toggle color scheme",
           language_help: "Select a language for the user interface.",
-          zk_storage_label: "Encrypted cross-device chat storage",
+          zk_storage_label: "Encrypted cross-device storage",
           zk_storage_help:
-            "Chats and their referenced files are encrypted in this browser before they are synced. Files download only when opened or needed for a request. A passkey with WebAuthn PRF support is required.",
+            "Your chat history and settings, including API credentials, are encrypted in this browser before they sync. Referenced files download only when opened or needed for a request. A passkey with WebAuthn PRF support is required.",
           zk_storage_enabled: "Encrypted chat storage enabled",
           zk_storage_enabled_help:
-            "Your chats and referenced files will now sync in encrypted form. The server cannot read their contents.",
+            "Your chats, settings, and referenced files will now sync in encrypted form. The server cannot read their contents.",
           zk_storage_disabled: "Encrypted chat storage turned off on this site",
           zk_storage_disabled_help:
             "This site's local key cache was cleared. The shared vault and passkeys remain available, including on other sites.",
           zk_storage_disable_confirm:
             "Turn off encrypted chat storage on this site? This clears this site's local key cache and setting. The shared vault and passkeys remain available.",
           zk_storage_checking: "Checking this device's recovery key…",
-          zk_storage_unlocked: "This device can open your encrypted chats.",
+          zk_storage_unlocked: "This device can open your encrypted chats and settings.",
           zk_storage_choose_other_passkey_help:
-            "You are still signed in to the same account. Choose a passkey below to unlock the same chat key with that passkey.",
+            "You are still signed in to the same account. Choose a passkey below to unlock your synced chats and settings.",
           zk_storage_locked_help:
-            "Choose a registered passkey or device to unlock chats stored on your account.",
+            "Choose a registered passkey or device to unlock chats and settings stored on your account.",
           zk_storage_locked:
-            "Unlock with your passkey to access your encrypted chats on this device.",
-          zk_storage_sync_prompt_title: "Encrypted chats are available",
+            "Unlock with your passkey to access your encrypted chats and settings on this device.",
+          zk_storage_sync_prompt_title: "Encrypted chats and settings are available",
           zk_storage_sync_prompt_description:
-            "You enabled encrypted chat storage before. Choose one of your registered passkeys or devices to sync your chats on this device.",
-          zk_storage_sync_prompt_action: "Unlock and sync chats",
+            "You enabled encrypted storage before. Choose one of your registered passkeys or devices to sync your chats and settings on this device.",
+          zk_storage_sync_prompt_action: "Unlock and sync",
           zk_storage_sync_prompt_later: "Not now",
-          zk_storage_choose_passkey: "Choose a passkey or device to unlock your chats:",
+          zk_storage_choose_passkey: "Choose a passkey or device to unlock your chats and settings:",
           zk_storage_unlock_with: "Unlock with {{name}}",
           zk_storage_rename_passkey: "Rename",
           zk_storage_save_name: "Save name",
@@ -139,7 +139,7 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_link_code_copied: "Code copied",
           zk_storage_passkey_on_this_site: "Passkey saved on this site",
           zk_storage_prf_unsupported:
-            "This passkey did not provide the PRF result required to decrypt your chats. Try a device and passkey provider that support PRF for this passkey. A regular passkey sign-in cannot unlock the encrypted chat key.",
+            "This passkey did not provide the PRF result required to decrypt your chats and settings. Try a device and passkey provider that support PRF for this passkey. A regular passkey sign-in cannot unlock the encrypted data.",
           zk_storage_passkey_mismatch:
             "The selected passkey is not the one registered for encrypted chat storage. Use the passkey created when you enabled this feature.",
           zk_storage_passkey_unavailable:
@@ -698,31 +698,31 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           help_gravatar:
             "Falls Sie bei Gravatar registriert sind, aktivieren Sie diese Option, um Ihr Profilbild anzuzeigen. Gravatar ist ein Dienst, der Ihr Profilbild anhand Ihrer E-Mail-Adresse erkennt. <strong>Achtung</strong>: Ihre IP-Adresse wird an Gravatar übertragen.",
           gravatar: "Gravatar",
-          zk_storage_label: "Verschlüsselte geräteübergreifende Chatspeicherung",
+          zk_storage_label: "Verschlüsselter geräteübergreifender Speicher",
           zk_storage_help:
-            "Chats und ihre referenzierten Dateien werden in diesem Browser verschlüsselt, bevor sie synchronisiert werden. Dateien werden erst beim Anzeigen oder für eine Anfrage geladen. Erforderlich ist ein Passkey mit WebAuthn-PRF-Unterstützung.",
+            "Ihr Chat-Verlauf und Ihre Einstellungen einschließlich API-Zugangsdaten werden in diesem Browser verschlüsselt, bevor sie synchronisiert werden. Referenzierte Dateien werden erst beim Anzeigen oder für eine Anfrage geladen. Erforderlich ist ein Passkey mit WebAuthn-PRF-Unterstützung.",
           zk_storage_enabled: "Verschlüsselte Chatspeicherung aktiviert",
           zk_storage_enabled_help:
-            "Ihre Chats und referenzierten Dateien werden jetzt verschlüsselt synchronisiert. Der Server kann ihre Inhalte nicht lesen.",
+            "Ihre Chats, Einstellungen und referenzierten Dateien werden jetzt verschlüsselt synchronisiert. Der Server kann ihre Inhalte nicht lesen.",
           zk_storage_disabled: "Verschlüsselte Chatspeicherung auf dieser Website ausgeschaltet",
           zk_storage_disabled_help:
             "Der lokale Schlüssel-Cache dieser Website wurde gelöscht. Der gemeinsame Speicher und die Passkeys bleiben verfügbar, auch auf anderen Websites.",
           zk_storage_disable_confirm:
             "Verschlüsselte Chatspeicherung auf dieser Website ausschalten? Der lokale Schlüssel-Cache und die Einstellung dieser Website werden gelöscht. Der gemeinsame Speicher und die Passkeys bleiben verfügbar.",
           zk_storage_checking: "Wiederherstellungsschlüssel auf diesem Gerät wird geprüft …",
-          zk_storage_unlocked: "Dieses Gerät kann Ihre verschlüsselten Chats öffnen.",
+          zk_storage_unlocked: "Dieses Gerät kann Ihre verschlüsselten Chats und Einstellungen öffnen.",
           zk_storage_choose_other_passkey_help:
-            "Sie sind weiterhin bei demselben Konto angemeldet. Wählen Sie unten einen Passkey, um denselben Chatschlüssel damit zu entsperren.",
+            "Sie sind weiterhin bei demselben Konto angemeldet. Wählen Sie unten einen Passkey, um Ihre synchronisierten Chats und Einstellungen zu entsperren.",
           zk_storage_locked_help:
-            "Wählen Sie einen registrierten Passkey oder ein Gerät, um die Chats Ihres Kontos zu entsperren.",
+            "Wählen Sie einen registrierten Passkey oder ein Gerät, um die Chats und Einstellungen Ihres Kontos zu entsperren.",
           zk_storage_locked:
-            "Entsperren Sie Ihre verschlüsselten Chats auf diesem Gerät mit Ihrem Passkey.",
-          zk_storage_sync_prompt_title: "Verschlüsselte Chats sind verfügbar",
+            "Entsperren Sie Ihre verschlüsselten Chats und Einstellungen auf diesem Gerät mit Ihrem Passkey.",
+          zk_storage_sync_prompt_title: "Verschlüsselte Chats und Einstellungen sind verfügbar",
           zk_storage_sync_prompt_description:
-            "Sie haben die verschlüsselte Chatspeicherung bereits aktiviert. Wählen Sie einen Ihrer registrierten Passkeys oder Geräte, um Ihre Chats auf diesem Gerät zu synchronisieren.",
-          zk_storage_sync_prompt_action: "Chats entsperren und synchronisieren",
+            "Sie haben den verschlüsselten Speicher bereits aktiviert. Wählen Sie einen Ihrer registrierten Passkeys oder Geräte, um Ihre Chats und Einstellungen auf diesem Gerät zu synchronisieren.",
+          zk_storage_sync_prompt_action: "Entsperren und synchronisieren",
           zk_storage_sync_prompt_later: "Später",
-          zk_storage_choose_passkey: "Wählen Sie einen Passkey oder ein Gerät zum Entsperren Ihrer Chats:",
+          zk_storage_choose_passkey: "Wählen Sie einen Passkey oder ein Gerät zum Entsperren Ihrer Chats und Einstellungen:",
           zk_storage_unlock_with: "Mit {{name}} entsperren",
           zk_storage_rename_passkey: "Umbenennen",
           zk_storage_save_name: "Namen speichern",
@@ -778,7 +778,7 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_link_code_copied: "Code kopiert",
           zk_storage_passkey_on_this_site: "Auf dieser Website gespeicherter Passkey",
           zk_storage_prf_unsupported:
-            "Dieser Passkey hat nicht das PRF-Ergebnis geliefert, das zum Entschlüsseln Ihrer Chats benötigt wird. Verwenden Sie ein Gerät und einen Passkey-Anbieter, die PRF für diesen Passkey unterstützen. Eine normale Passkey-Anmeldung kann den verschlüsselten Chatschlüssel nicht entsperren.",
+            "Dieser Passkey hat nicht das PRF-Ergebnis geliefert, das zum Entschlüsseln Ihrer Chats und Einstellungen benötigt wird. Verwenden Sie ein Gerät und einen Passkey-Anbieter, die PRF für diesen Passkey unterstützen. Eine normale Passkey-Anmeldung kann die verschlüsselten Daten nicht entsperren.",
           zk_storage_passkey_mismatch:
             "Der ausgewählte Passkey ist nicht der für die verschlüsselte Chatspeicherung registrierte. Verwenden Sie den Passkey, den Sie bei der Aktivierung dieser Funktion erstellt haben.",
           zk_storage_passkey_unavailable:
