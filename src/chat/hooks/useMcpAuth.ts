@@ -10,6 +10,7 @@ import {
   fetchMcpPublicKey,
   hasDefinedOwnValue,
   isRecord,
+  MCP_AUTH_KEY_ALGORITHM,
   normalizeScopeDefinitions,
   resolvePublicKey,
 } from "./mcpAuthHelpers";
@@ -325,7 +326,7 @@ function encryptPayload(
 
   return new jose.EncryptJWT({ data })
     .setProtectedHeader({
-      alg: "RSA-OAEP",
+      alg: MCP_AUTH_KEY_ALGORITHM,
       enc: "A256GCM",
     })
     .setIssuedAt(issuedAt)

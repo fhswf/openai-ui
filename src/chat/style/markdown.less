@@ -27,7 +27,8 @@
 
   [data-theme="dark"] & a,
   [data-theme="dark"] & a.chakra-link {
-    color: #80c5ff;
+    // Override Chakra's generated link color to keep dark-theme contrast.
+    color: #80c5ff !important;
     text-decoration: underline;
   }
 
