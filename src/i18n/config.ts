@@ -86,6 +86,30 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           zk_storage_sync_prompt_later: "Not now",
           zk_storage_choose_passkey: "Choose a passkey or device to unlock your chats and settings:",
           zk_storage_unlock_with: "Unlock with {{name}}",
+          zk_storage_discoverable_passkey: "Any passkey available on this device",
+          zk_master_key_backup_title: "Master key backup",
+          zk_master_key_backup_help:
+            "Create an encrypted backup of the private key that opens your synced chats and settings. Exporting requires a fresh passkey confirmation.",
+          zk_master_key_backup_export: "Export backup",
+          zk_master_key_backup_import: "Restore backup",
+          zk_master_key_backup_export_title: "Export encrypted master key",
+          zk_master_key_backup_import_title: "Restore master key",
+          zk_master_key_backup_export_help:
+            "The downloaded file contains only an encrypted key. Anyone with both the file and its passphrase can open your encrypted chats and settings. Store them separately and keep both somewhere safe.",
+          zk_master_key_backup_import_help:
+            "Restore a backup on this signed-in account. The key is checked against this account's public vault key and saved in this browser's protected key cache.",
+          zk_master_key_backup_passkey: "Confirm with a passkey",
+          zk_master_key_backup_password: "Backup passphrase",
+          zk_master_key_backup_password_confirm: "Confirm passphrase",
+          zk_master_key_backup_password_help:
+            "Use at least 16 characters. This passphrase encrypts the backup and cannot be recovered if you forget it.",
+          zk_master_key_backup_file: "Encrypted backup file",
+          zk_master_key_backup_exported: "Encrypted master key backup downloaded",
+          zk_master_key_backup_restored: "Master key restored",
+          zk_master_key_backup_restored_help:
+            "This browser can now open your encrypted chats and settings.",
+          zk_master_key_backup_restore_error:
+            "Could not restore the master key backup",
           zk_storage_rename_passkey: "Rename",
           zk_storage_save_name: "Save name",
           zk_storage_delete_passkey: "Delete",
@@ -724,6 +748,30 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           zk_storage_sync_prompt_later: "Später",
           zk_storage_choose_passkey: "Wählen Sie einen Passkey oder ein Gerät zum Entsperren Ihrer Chats und Einstellungen:",
           zk_storage_unlock_with: "Mit {{name}} entsperren",
+          zk_storage_discoverable_passkey: "Einen verfügbaren Passkey auf diesem Gerät verwenden",
+          zk_master_key_backup_title: "Sicherung des Hauptschlüssels",
+          zk_master_key_backup_help:
+            "Erstellen Sie eine verschlüsselte Sicherung des privaten Schlüssels, der Ihre synchronisierten Chats und Einstellungen öffnet. Für den Export ist eine erneute Bestätigung mit einem Passkey erforderlich.",
+          zk_master_key_backup_export: "Sicherung exportieren",
+          zk_master_key_backup_import: "Sicherung wiederherstellen",
+          zk_master_key_backup_export_title: "Verschlüsselten Hauptschlüssel exportieren",
+          zk_master_key_backup_import_title: "Hauptschlüssel wiederherstellen",
+          zk_master_key_backup_export_help:
+            "Die heruntergeladene Datei enthält nur einen verschlüsselten Schlüssel. Wer sowohl die Datei als auch das Kennwort besitzt, kann Ihre verschlüsselten Chats und Einstellungen öffnen. Bewahren Sie beides getrennt und sicher auf.",
+          zk_master_key_backup_import_help:
+            "Stellen Sie die Sicherung für dieses angemeldete Konto wieder her. Der Schlüssel wird mit dem öffentlichen Speicherschlüssel des Kontos abgeglichen und im geschützten Schlüssel-Cache dieses Browsers gespeichert.",
+          zk_master_key_backup_passkey: "Mit einem Passkey bestätigen",
+          zk_master_key_backup_password: "Kennwort der Sicherung",
+          zk_master_key_backup_password_confirm: "Kennwort bestätigen",
+          zk_master_key_backup_password_help:
+            "Verwenden Sie mindestens 16 Zeichen. Dieses Kennwort verschlüsselt die Sicherung und kann bei Verlust nicht wiederhergestellt werden.",
+          zk_master_key_backup_file: "Verschlüsselte Sicherungsdatei",
+          zk_master_key_backup_exported: "Verschlüsselte Hauptschlüssel-Sicherung heruntergeladen",
+          zk_master_key_backup_restored: "Hauptschlüssel wiederhergestellt",
+          zk_master_key_backup_restored_help:
+            "Dieser Browser kann Ihre verschlüsselten Chats und Einstellungen jetzt öffnen.",
+          zk_master_key_backup_restore_error:
+            "Die Hauptschlüssel-Sicherung konnte nicht wiederhergestellt werden",
           zk_storage_rename_passkey: "Umbenennen",
           zk_storage_save_name: "Namen speichern",
           zk_storage_delete_passkey: "Löschen",

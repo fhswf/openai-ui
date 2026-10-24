@@ -18,6 +18,10 @@ const HKDF_INFO_SOURCE = "sk-encryption";
 
 const AES_KEY_LENGTH = 256;
 const AES_GCM_IV_LENGTH = 12;
+const BACKUP_SALT_LENGTH = 16;
+const BACKUP_PBKDF2_ITERATIONS = 600_000;
+const MAX_BACKUP_CIPHERTEXT_BYTES = 64 * 1024;
+const USER_KEY_BACKUP_FORMAT = "openai-ui-vault-master-key-backup";
 export const PRF_SALT_LENGTH = 32;
 export const DEFAULT_RSA_MODULUS_LENGTH = 4096;
 export const DEFAULT_USER_KEY_ALGORITHM = "ECDH-P256" as const;
@@ -29,6 +33,20 @@ export const RSA_ENVELOPE_ALGORITHM = "RSA-OAEP-SHA256" as const;
 export type UserKeyAlgorithm =
   | typeof DEFAULT_USER_KEY_ALGORITHM
   | typeof LEGACY_RSA_KEY_ALGORITHM;
+
+type UserKeyBackup = {
+  format: typeof USER_KEY_BACKUP_FORMAT;
+  version: 1;
+  algorithm: UserKeyAlgorithm;
+  kdf: {
+    name: "PBKDF2";
+    hash: "SHA-256";
+    iterations: typeof BACKUP_PBKDF2_ITERATIONS;
+    salt: string;
+  };
+  cipher: { name: "AES-GCM"; iv: string };
+  ciphertext: string;
+};
 export type EnvelopeAlgorithm =
   | typeof ECDH_ENVELOPE_ALGORITHM
   | typeof RSA_ENVELOPE_ALGORITHM;
@@ -215,8 +233,11 @@ export async function decryptPrivateKey(
     kPass,
     base64UrlToBuffer(encrypted.encryptedKey)
   );
-
-  return importPrivateKey(decrypted, algorithm, extractable);
+  try {
+    return await importPrivateKey(decrypted, algorithm, extractable);
+  } finally {
+    new Uint8Array(decrypted).fill(0);
+  }
 }
 
 export async function importPrivateKey(
@@ -241,6 +262,165 @@ export async function importPrivateKey(
     extractable,
     ["decrypt", "unwrapKey"]
   );
+}
+
+async function deriveBackupEncryptionKey(
+  passphrase: string,
+  salt: Uint8Array,
+  usages: KeyUsage[]
+): Promise<CryptoKey> {
+  const passphraseBytes = encoder.encode(passphrase);
+  try {
+    const baseKey = await crypto.subtle.importKey(
+      "raw",
+      passphraseBytes,
+      "PBKDF2",
+      false,
+      ["deriveKey"]
+    );
+    return await crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        hash: "SHA-256",
+        salt,
+        iterations: BACKUP_PBKDF2_ITERATIONS,
+      },
+      baseKey,
+      { name: "AES-GCM", length: AES_KEY_LENGTH },
+      false,
+      usages
+    );
+  } finally {
+    passphraseBytes.fill(0);
+  }
+}
+
+function validateBackupPassphrase(passphrase: string): void {
+  if (typeof passphrase !== "string" || Array.from(passphrase).length < 16) {
+    throw new Error("Use a backup passphrase with at least 16 characters");
+  }
+  if (passphrase.length > 1024) {
+    throw new Error("The backup passphrase is too long");
+  }
+}
+
+function backupAdditionalData(algorithm: UserKeyAlgorithm): Uint8Array {
+  return encoder.encode(`${USER_KEY_BACKUP_FORMAT}:1:${algorithm}`);
+}
+
+/** Create a password-encrypted backup; the private key itself is never written to disk. */
+export async function encryptUserKeyBackup(
+  privateKey: CryptoKey,
+  algorithm: UserKeyAlgorithm,
+  passphrase: string
+): Promise<string> {
+  validateBackupPassphrase(passphrase);
+  const expectedName =
+    algorithm === DEFAULT_USER_KEY_ALGORITHM ? "ECDH" : "RSA-OAEP";
+  if (privateKey.algorithm.name !== expectedName || !privateKey.extractable) {
+    throw new Error("An extractable vault key is required to create this backup");
+  }
+
+  const salt = crypto.getRandomValues(new Uint8Array(BACKUP_SALT_LENGTH));
+  const iv = crypto.getRandomValues(new Uint8Array(AES_GCM_IV_LENGTH));
+  const backupKey = await deriveBackupEncryptionKey(passphrase, salt, ["encrypt"]);
+  const pkcs8 = await crypto.subtle.exportKey("pkcs8", privateKey);
+  try {
+    const ciphertext = await crypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv,
+        additionalData: backupAdditionalData(algorithm),
+      },
+      backupKey,
+      pkcs8
+    );
+    const backup: UserKeyBackup = {
+      format: USER_KEY_BACKUP_FORMAT,
+      version: 1,
+      algorithm,
+      kdf: {
+        name: "PBKDF2",
+        hash: "SHA-256",
+        iterations: BACKUP_PBKDF2_ITERATIONS,
+        salt: bufferToBase64Url(salt),
+      },
+      cipher: { name: "AES-GCM", iv: bufferToBase64Url(iv) },
+      ciphertext: bufferToBase64Url(ciphertext),
+    };
+    return JSON.stringify(backup, null, 2);
+  } finally {
+    new Uint8Array(pkcs8).fill(0);
+  }
+}
+
+/** Decrypt and validate an encrypted vault-key backup. The caller must erase pkcs8 after importing it. */
+export async function decryptUserKeyBackup(
+  backupJson: string,
+  passphrase: string
+): Promise<{ pkcs8: ArrayBuffer; algorithm: UserKeyAlgorithm }> {
+  validateBackupPassphrase(passphrase);
+  if (typeof backupJson !== "string" || backupJson.length > 128 * 1024) {
+    throw new Error("The master key backup file is invalid or too large");
+  }
+
+  let backup: UserKeyBackup;
+  try {
+    backup = JSON.parse(backupJson) as UserKeyBackup;
+  } catch {
+    throw new Error("The master key backup file is not valid JSON");
+  }
+  if (
+    backup?.format !== USER_KEY_BACKUP_FORMAT ||
+    backup.version !== 1 ||
+    (backup.algorithm !== DEFAULT_USER_KEY_ALGORITHM &&
+      backup.algorithm !== LEGACY_RSA_KEY_ALGORITHM) ||
+    backup.kdf?.name !== "PBKDF2" ||
+    backup.kdf.hash !== "SHA-256" ||
+    backup.kdf.iterations !== BACKUP_PBKDF2_ITERATIONS ||
+    backup.cipher?.name !== "AES-GCM"
+  ) {
+    throw new Error("This is not a supported master key backup file");
+  }
+
+  let salt: ArrayBuffer;
+  let iv: ArrayBuffer;
+  let ciphertext: ArrayBuffer;
+  try {
+    salt = base64UrlToBuffer(backup.kdf.salt);
+    iv = base64UrlToBuffer(backup.cipher.iv);
+    ciphertext = base64UrlToBuffer(backup.ciphertext);
+  } catch {
+    throw new Error("The master key backup file is invalid");
+  }
+  if (
+    salt.byteLength !== BACKUP_SALT_LENGTH ||
+    iv.byteLength !== AES_GCM_IV_LENGTH ||
+    ciphertext.byteLength < 16 ||
+    ciphertext.byteLength > MAX_BACKUP_CIPHERTEXT_BYTES
+  ) {
+    throw new Error("The master key backup file is invalid");
+  }
+
+  const backupKey = await deriveBackupEncryptionKey(
+    passphrase,
+    new Uint8Array(salt),
+    ["decrypt"]
+  );
+  try {
+    const pkcs8 = await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv,
+        additionalData: backupAdditionalData(backup.algorithm),
+      },
+      backupKey,
+      ciphertext
+    );
+    return { pkcs8, algorithm: backup.algorithm };
+  } catch {
+    throw new Error("Could not decrypt the backup; check the passphrase and file");
+  }
 }
 
 export async function generateChatKey(): Promise<CryptoKey> {

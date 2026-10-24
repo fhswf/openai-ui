@@ -215,6 +215,29 @@ bleibt gerätebezogen und wird nicht synchronisiert, damit ein Passkey die
 Speicherung nicht ohne ausdrückliche Aktivierung auf einem neuen Gerät
 einschaltet. Änderungen werden mit einer Revision abgeglichen.
 
+### 4.3.2 Hauptschlüssel sichern und wiederherstellen
+
+In den Einstellungen kann der Nutzer eine verschlüsselte Sicherungsdatei für
+`SK_user` exportieren. Dafür ist eine frische Bestätigung mit einem
+registrierten Passkey erforderlich. Der Nutzer wählt zusätzlich ein Kennwort
+mit mindestens 16 Zeichen. Der Browser leitet daraus mit PBKDF2-HMAC-SHA-256
+(600.000 Iterationen, zufälliger 16-Byte-Salt) einen AES-256-GCM-Schlüssel ab
+und verschlüsselt den PKCS#8-Schlüssel mit einer zufälligen 12-Byte-Nonce. Die
+Datei enthält Formatversion, Algorithmus, KDF-Parameter, Salt, Nonce und
+Chiffrat. Sie enthält weder den privaten Schlüssel im Klartext noch das
+Kennwort.
+
+Beim Wiederherstellen entschlüsselt der Browser die Datei nur im Arbeitsspeicher,
+prüft den Schlüssel gegen den öffentlichen Vault-Schlüssel des angemeldeten
+Kontos und speichert eine nicht exportierbare Kopie im lokalen IndexedDB-Cache.
+Der Schlüssel wird dabei nicht an den Server übertragen. Eine falsche
+Passphrase, beschädigte Datei oder ein Backup für ein anderes Konto wird
+abgewiesen. Datei und Kennwort müssen getrennt aufbewahrt werden: Wer beide
+besitzt, kann die verschlüsselten Chats und Einstellungen lesen. Ohne das
+Kennwort lässt sich die Sicherung nicht wiederherstellen. Der Wiederherstellungs-
+Flow richtet den lokalen Schlüssel-Cache ein; bestehende Passkeys werden dadurch
+nicht geändert.
+
 ### 4.4 Chat wiederherstellen
 
 1. `GET /zk/chats` (Liste) bzw. `GET /zk/chats/{id}`.

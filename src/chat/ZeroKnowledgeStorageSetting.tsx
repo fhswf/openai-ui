@@ -34,6 +34,8 @@ import {
   getZeroKnowledgeStorageErrorKey,
   isPrivateKeyForUser,
   registerAdditionalPasskey,
+  exportVaultMasterKeyBackup,
+  restoreVaultMasterKeyBackup,
   getVaultLinkRequestOrigin,
   type VaultLinkTarget,
 } from "./utils/zeroKnowledgeStorage";
@@ -41,6 +43,7 @@ import {
 type KeyStatus = "idle" | "checking" | "unlocked" | "locked";
 type RegistrationMode = "initial" | "additional" | null;
 type VaultLinkMode = "destination" | "source" | null;
+type MasterKeyBackupMode = "export" | "import" | null;
 const DISCOVERABLE_PASSKEY = "__discoverable_passkey__";
 
 function getCredentials(key: VaultUserKey | null): VaultCredential[] {
@@ -86,6 +89,16 @@ export function ZeroKnowledgeStorageSetting() {
   const [vaultLinkOutputCode, setVaultLinkOutputCode] = useState("");
   const [vaultLinkRequestedOrigin, setVaultLinkRequestedOrigin] = useState("");
   const [vaultLinkSourceCredentialId, setVaultLinkSourceCredentialId] =
+    useState("");
+  const [masterKeyBackupMode, setMasterKeyBackupMode] =
+    useState<MasterKeyBackupMode>(null);
+  const [masterKeyBackupPassword, setMasterKeyBackupPassword] = useState("");
+  const [masterKeyBackupConfirmation, setMasterKeyBackupConfirmation] =
+    useState("");
+  const [masterKeyBackupFile, setMasterKeyBackupFile] = useState<File | null>(
+    null
+  );
+  const [masterKeyBackupCredentialId, setMasterKeyBackupCredentialId] =
     useState("");
 
   const credentials = useMemo(() => getCredentials(vaultKey), [vaultKey]);
@@ -275,6 +288,117 @@ export function ZeroKnowledgeStorageSetting() {
 
   const closeRegistration = () => {
     if (!busy) setRegistrationMode(null);
+  };
+
+  const openMasterKeyBackup = (mode: Exclude<MasterKeyBackupMode, null>) => {
+    setMasterKeyBackupPassword("");
+    setMasterKeyBackupConfirmation("");
+    setMasterKeyBackupFile(null);
+    setMasterKeyBackupCredentialId(
+      activeCredentialId ??
+        credentials[0]?.credentialId ??
+        DISCOVERABLE_PASSKEY
+    );
+    setMasterKeyBackupMode(mode);
+  };
+
+  const closeMasterKeyBackup = () => {
+    if (busy) return;
+    setMasterKeyBackupMode(null);
+    setMasterKeyBackupPassword("");
+    setMasterKeyBackupConfirmation("");
+    setMasterKeyBackupFile(null);
+  };
+
+  const masterKeyBackupPasswordIsLongEnough =
+    Array.from(masterKeyBackupPassword).length >= 16;
+
+  const exportMasterKeyBackup = async () => {
+    if (
+      !masterKeyBackupPasswordIsLongEnough ||
+      masterKeyBackupPassword !== masterKeyBackupConfirmation
+    ) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const backup = await exportVaultMasterKeyBackup(
+        masterKeyBackupPassword,
+        masterKeyBackupCredentialId === DISCOVERABLE_PASSKEY
+          ? undefined
+          : masterKeyBackupCredentialId
+      );
+      const url = URL.createObjectURL(
+        new Blob([backup], { type: "application/json" })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "openai-ui-master-key-backup.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setMasterKeyBackupMode(null);
+      setMasterKeyBackupPassword("");
+      setMasterKeyBackupConfirmation("");
+      toaster.create({
+        title: t("zk_master_key_backup_exported"),
+        duration: 6000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Could not export the vault master key backup:", error);
+      toaster.create({
+        title: t("zk_storage_error"),
+        description: error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const importMasterKeyBackup = async () => {
+    if (!masterKeyBackupFile || !masterKeyBackupPasswordIsLongEnough) return;
+    setBusy(true);
+    try {
+      if (masterKeyBackupFile.size > 128 * 1024) {
+        throw new Error("The master key backup file is invalid or too large");
+      }
+      const updatedKey = await restoreVaultMasterKeyBackup(
+        await masterKeyBackupFile.text(),
+        masterKeyBackupPassword
+      );
+      await clearActiveCredentialId().catch((error) => {
+        console.warn("Could not clear the active passkey indicator:", error);
+      });
+      setVaultKey(updatedKey);
+      setActiveCredentialId(null);
+      setGeneral({ zkStorage: true });
+      setKeyStatus("unlocked");
+      setMasterKeyBackupMode(null);
+      setMasterKeyBackupPassword("");
+      setMasterKeyBackupConfirmation("");
+      setMasterKeyBackupFile(null);
+      window.dispatchEvent(new Event("zk-storage-key-available"));
+      toaster.create({
+        title: t("zk_master_key_backup_restored"),
+        description: t("zk_master_key_backup_restored_help"),
+        duration: 7000,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Could not restore the vault master key backup:", error);
+      toaster.create({
+        title: t("zk_master_key_backup_restore_error"),
+        description: error instanceof Error ? error.message : t("unknown_error"),
+        duration: 8000,
+        type: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
   };
 
   const closeVaultLink = () => {
@@ -623,6 +747,33 @@ export function ZeroKnowledgeStorageSetting() {
       )}
       {vaultKey && (
         <Stack mt="3" align="start" gap="2" width="full">
+          <Text fontWeight="semibold">{t("zk_master_key_backup_title")}</Text>
+          <Field.HelperText>
+            {t("zk_master_key_backup_help")}
+          </Field.HelperText>
+          <Stack direction="row" gap="2" wrap="wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy || loadingAccountKey}
+              onClick={() => openMasterKeyBackup("export")}
+            >
+              {t("zk_master_key_backup_export")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy || loadingAccountKey}
+              onClick={() => openMasterKeyBackup("import")}
+            >
+              {t("zk_master_key_backup_import")}
+            </Button>
+          </Stack>
+        </Stack>
+      )}
+
+      {vaultKey && (
+        <Stack mt="3" align="start" gap="2" width="full">
           <Text fontWeight="semibold">{t("zk_storage_your_passkeys")}</Text>
           {credentials.length === 0 && (
             <Stack align="start" gap="2" width="full">
@@ -942,6 +1093,161 @@ export function ZeroKnowledgeStorageSetting() {
                     onClick={() => void createVaultLink()}
                   >
                     {t("zk_storage_link_prepare_response")}
+                  </Button>
+                )}
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+
+      <Dialog.Root
+        open={masterKeyBackupMode !== null}
+        onOpenChange={(event) => {
+          if (!event.open) closeMasterKeyBackup();
+        }}
+        closeOnEscape={!busy}
+        closeOnInteractOutside={!busy}
+        size="md"
+      >
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>
+                  {t(
+                    masterKeyBackupMode === "export"
+                      ? "zk_master_key_backup_export_title"
+                      : "zk_master_key_backup_import_title"
+                  )}
+                </Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                {masterKeyBackupMode === "export" ? (
+                  <Stack gap="4" align="stretch">
+                    <Text>{t("zk_master_key_backup_export_help")}</Text>
+                    <Field.Root>
+                      <Field.Label>
+                        {t("zk_master_key_backup_passkey")}
+                      </Field.Label>
+                      <RadioGroup
+                        value={masterKeyBackupCredentialId}
+                        onValueChange={(event) =>
+                          setMasterKeyBackupCredentialId(event.value)
+                        }
+                      >
+                        <Stack gap="2">
+                          {credentials.map((credential) => (
+                            <Radio
+                              key={credential.credentialId}
+                              value={credential.credentialId}
+                            >
+                              {credential.name}
+                            </Radio>
+                          ))}
+                          <Radio value={DISCOVERABLE_PASSKEY}>
+                            {t("zk_storage_discoverable_passkey")}
+                          </Radio>
+                        </Stack>
+                      </RadioGroup>
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>
+                        {t("zk_master_key_backup_password")}
+                      </Field.Label>
+                      <Input
+                        type="password"
+                        autoComplete="new-password"
+                        maxLength={1024}
+                        value={masterKeyBackupPassword}
+                        onChange={(event) =>
+                          setMasterKeyBackupPassword(event.target.value)
+                        }
+                      />
+                      <Field.HelperText>
+                        {t("zk_master_key_backup_password_help")}
+                      </Field.HelperText>
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>
+                        {t("zk_master_key_backup_password_confirm")}
+                      </Field.Label>
+                      <Input
+                        type="password"
+                        autoComplete="new-password"
+                        maxLength={1024}
+                        value={masterKeyBackupConfirmation}
+                        onChange={(event) =>
+                          setMasterKeyBackupConfirmation(event.target.value)
+                        }
+                      />
+                    </Field.Root>
+                  </Stack>
+                ) : (
+                  <Stack gap="4" align="stretch">
+                    <Text>{t("zk_master_key_backup_import_help")}</Text>
+                    <Field.Root>
+                      <Field.Label>{t("zk_master_key_backup_file")}</Field.Label>
+                      <Input
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={(event) =>
+                          setMasterKeyBackupFile(
+                            event.target.files?.[0] ?? null
+                          )
+                        }
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>
+                        {t("zk_master_key_backup_password")}
+                      </Field.Label>
+                      <Input
+                        type="password"
+                        autoComplete="current-password"
+                        maxLength={1024}
+                        value={masterKeyBackupPassword}
+                        onChange={(event) =>
+                          setMasterKeyBackupPassword(event.target.value)
+                        }
+                      />
+                    </Field.Root>
+                  </Stack>
+                )}
+              </Dialog.Body>
+              <Dialog.Footer>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={closeMasterKeyBackup}
+                >
+                  {t("zk_storage_cancel")}
+                </Button>
+                {masterKeyBackupMode === "export" ? (
+                  <Button
+                    disabled={
+                      busy ||
+                      !masterKeyBackupPasswordIsLongEnough ||
+                      masterKeyBackupPassword !== masterKeyBackupConfirmation ||
+                      !masterKeyBackupCredentialId
+                    }
+                    loading={busy}
+                    onClick={() => void exportMasterKeyBackup()}
+                  >
+                    {t("zk_master_key_backup_export")}
+                  </Button>
+                ) : (
+                  <Button
+                    disabled={
+                      busy ||
+                      !masterKeyBackupFile ||
+                      !masterKeyBackupPasswordIsLongEnough
+                    }
+                    loading={busy}
+                    onClick={() => void importMasterKeyBackup()}
+                  >
+                    {t("zk_master_key_backup_import")}
                   </Button>
                 )}
               </Dialog.Footer>
