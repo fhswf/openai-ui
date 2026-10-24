@@ -1,4 +1,9 @@
-import { GlobalState, GlobalAction, GlobalActionType } from "./types";
+import {
+  GlobalState,
+  GlobalAction,
+  GlobalActionType,
+  OptionActionType,
+} from "./types";
 
 // TODO: refactor this to use proper actions and types
 export default function reduce(
@@ -16,6 +21,20 @@ export default function reduce(
         ...state,
         ...payload,
       };
+
+    case GlobalActionType.SET_OPTIONS: {
+      const { type: optionType, data } = payload;
+      return {
+        ...state,
+        options: {
+          ...state.options,
+          [optionType]: {
+            ...state.options[optionType],
+            ...data,
+          },
+        },
+      };
+    }
 
     default:
       return state;

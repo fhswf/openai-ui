@@ -2,7 +2,11 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatProvider, useGlobal } from "../index";
-import type { GlobalActions, GlobalState } from "../types";
+import {
+  OptionActionType,
+  type GlobalActions,
+  type GlobalState,
+} from "../types";
 import { saveState } from "../../utils/settings";
 
 vi.mock("../../utils", () => ({
@@ -99,6 +103,44 @@ describe("ChatProvider draft persistence", () => {
       vi.advanceTimersByTime(300);
     });
     expect(saveState).toHaveBeenCalledTimes(1);
+  });
+
+  it("merges delayed option updates into the latest settings", () => {
+    const delayedSetOptions = latest.setOptions;
+    const existingApiKey = latest.options.openai.apiKey;
+
+    act(() => {
+      latest.setOptions({
+        type: OptionActionType.GENERAL,
+        data: { theme: "dark" },
+      });
+    });
+
+    const tools = new Map(latest.options.openai.tools);
+    tools.set("New MCP server", {
+      type: "mcp",
+      server_label: "new_server",
+      server_url: "https://example.com/mcp",
+      require_approval: "never",
+    });
+    act(() => {
+      delayedSetOptions({
+        type: OptionActionType.OPENAI,
+        data: { tools },
+      });
+    });
+
+    expect(latest.options.general.theme).toBe("dark");
+    expect(latest.options.openai.apiKey).toBe(existingApiKey);
+    expect(latest.options.openai.tools.get("New MCP server")).toMatchObject({
+      server_label: "new_server",
+      server_url: "https://example.com/mcp",
+    });
+    expect(
+      vi.mocked(saveState).mock.lastCall?.[0].options.openai.tools.get(
+        "New MCP server"
+      )
+    ).toMatchObject({ server_label: "new_server" });
   });
 
   it("saves immediately when typing and another action share a render", () => {

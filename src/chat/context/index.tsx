@@ -244,8 +244,9 @@ export const ChatProvider = ({ children }) => {
 
   const zkStorageEnabled = state.options.general.zkStorage ?? false;
   const lazyHistory = state.options.general.zkLazyHistory ?? false;
-  const vaultIdentity =
-    state.user?.sub ?? state.user?.id ?? state.user?.email ?? null;
+  const vaultIdentity = state.user?.affiliations?.["fh-swf.de"]
+    ? state.user?.sub ?? state.user?.id ?? state.user?.email ?? null
+    : null;
 
   useEffect(() => {
     let cancelled = false;
