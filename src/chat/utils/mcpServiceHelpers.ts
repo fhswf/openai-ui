@@ -31,6 +31,7 @@ interface UpdateOpenAiOptionsArgs {
   openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
   tools?: Map<string, Tool>;
+  toolsEnabled?: Set<string>;
 }
 
 interface OpenConsentPromptArgs {
@@ -51,6 +52,9 @@ function updateOpenAiOptions(args: UpdateOpenAiOptionsArgs): void {
   }
   if (args.mcpAuthConfigs) {
     nextData.mcpAuthConfigs = args.mcpAuthConfigs;
+  }
+  if (args.toolsEnabled) {
+    nextData.toolsEnabled = args.toolsEnabled;
   }
 
   args.setOptions({
@@ -180,6 +184,11 @@ export function getAuthorizationResult(args: {
 
 export function persistMcpService(args: PersistMcpServiceArgs): void {
   const nextAuthConfig = normalizeMcpAuthConfig(args.form.authConfig);
+  const collections = {
+    mcpAuthConfigs: new Map(args.collections.mcpAuthConfigs),
+    tools: new Map(args.collections.tools),
+    toolsEnabled: new Set(args.collections.toolsEnabled),
+  };
   // The display name is the human-readable key; renaming it moves the tool
   // (and its auth config / enabled flag) to the new key.
   const targetKey = args.form.label;
@@ -192,19 +201,20 @@ export function persistMcpService(args: PersistMcpServiceArgs): void {
     nextAuthConfig.userData.consentPrompted = true;
   }
 
-  cleanupRenamedTool(args.collections, args.editingKey, targetKey);
+  cleanupRenamedTool(collections, args.editingKey, targetKey);
   args.setEditingKey(null);
-  args.collections.tools.set(
+  collections.tools.set(
     targetKey,
     createMcpToolDefinition(args.form, args.resultAuthorization)
   );
-  args.collections.mcpAuthConfigs.set(targetKey, nextAuthConfig);
+  collections.mcpAuthConfigs.set(targetKey, nextAuthConfig);
 
   updateOpenAiOptions({
-    mcpAuthConfigs: args.collections.mcpAuthConfigs,
+    mcpAuthConfigs: collections.mcpAuthConfigs,
     openai: args.openai,
     setOptions: args.setOptions,
-    tools: args.collections.tools,
+    tools: collections.tools,
+    toolsEnabled: collections.toolsEnabled,
   });
 }
 
@@ -214,18 +224,25 @@ export function deleteMcpService(args: {
   openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
 }): void {
-  if (!args.collections.tools.has(args.key)) {
+  const collections = {
+    mcpAuthConfigs: new Map(args.collections.mcpAuthConfigs),
+    tools: new Map(args.collections.tools),
+    toolsEnabled: new Set(args.collections.toolsEnabled),
+  };
+  if (!collections.tools.has(args.key)) {
     console.error(`Tool with key ${args.key} does not exist.`);
     return;
   }
 
-  args.collections.tools.delete(args.key);
-  args.collections.toolsEnabled.delete(args.key);
-  args.collections.mcpAuthConfigs.delete(args.key);
+  collections.tools.delete(args.key);
+  collections.toolsEnabled.delete(args.key);
+  collections.mcpAuthConfigs.delete(args.key);
   updateOpenAiOptions({
+    mcpAuthConfigs: collections.mcpAuthConfigs,
     openai: args.openai,
     setOptions: args.setOptions,
-    tools: args.collections.tools,
+    tools: collections.tools,
+    toolsEnabled: collections.toolsEnabled,
   });
 }
 

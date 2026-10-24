@@ -6,7 +6,7 @@ import { createVectorStore } from "./service/vectorStores";
 import { showVectorStoreError } from "./vectorStoreDialogUtils";
 
 interface CreateVectorStoreFormProps {
-  onCreated: VoidFunction;
+  onCreated: (store: { id: string; name: string }) => void;
   options: Options;
 }
 
@@ -23,9 +23,9 @@ export function CreateVectorStoreForm({
     if (!trimmed) return;
     setSaving(true);
     try {
-      await createVectorStore(options, trimmed);
+      const store = await createVectorStore(options, trimmed);
       setName("");
-      onCreated();
+      onCreated({ id: store.id, name: store.name || trimmed });
     } catch (error) {
       showVectorStoreError(t("vector_store_create_error"), error);
     } finally {

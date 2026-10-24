@@ -20,6 +20,7 @@ import { listVectorStores } from "./service/vectorStores";
 import { showVectorStoreError } from "./vectorStoreDialogUtils";
 import { CreateVectorStoreForm } from "./CreateVectorStoreForm";
 import { VectorStoreRow } from "./VectorStoreRow";
+import { registerVectorStore } from "./utils/fileSearch";
 
 function useVectorStores(options: Options, open: boolean) {
   const { t } = useTranslation();
@@ -84,6 +85,13 @@ function VectorStoresDialogBody({ open }: { open: boolean }) {
   );
   const { stores, refresh } = useVectorStores(options, open);
   const handleChanged = useCallback(() => void refresh(), [refresh]);
+  const handleCreated = useCallback(
+    (store: { id: string; name: string }) => {
+      updateRegistry((registry) => registerVectorStore(registry, store));
+      void refresh();
+    },
+    [refresh, updateRegistry]
+  );
 
   return (
     <Dialog.Body
@@ -91,7 +99,7 @@ function VectorStoresDialogBody({ open }: { open: boolean }) {
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => event.preventDefault()}
     >
-      <CreateVectorStoreForm options={options} onCreated={handleChanged} />
+      <CreateVectorStoreForm options={options} onCreated={handleCreated} />
       <Separator marginBlock={4} />
       <Text fontWeight="bold" marginBlockEnd={2}>
         {t("vector_stores")}
