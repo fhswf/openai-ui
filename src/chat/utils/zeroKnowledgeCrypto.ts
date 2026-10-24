@@ -354,12 +354,7 @@ export async function encryptUserKeyBackup(
   }
 }
 
-/** Decrypt and validate an encrypted vault-key backup. The caller must erase pkcs8 after importing it. */
-export async function decryptUserKeyBackup(
-  backupJson: string,
-  passphrase: string
-): Promise<{ pkcs8: ArrayBuffer; algorithm: UserKeyAlgorithm }> {
-  validateBackupPassphrase(passphrase);
+function parseUserKeyBackup(backupJson: string): UserKeyBackup {
   if (typeof backupJson !== "string" || backupJson.length > 128 * 1024) {
     throw new Error("The master key backup file is invalid or too large");
   }
@@ -370,6 +365,7 @@ export async function decryptUserKeyBackup(
   } catch {
     throw new Error("The master key backup file is not valid JSON");
   }
+
   if (
     backup?.format !== USER_KEY_BACKUP_FORMAT ||
     backup.version !== 1 ||
@@ -382,7 +378,10 @@ export async function decryptUserKeyBackup(
   ) {
     throw new Error("This is not a supported master key backup file");
   }
+  return backup;
+}
 
+function decodeUserKeyBackupFields(backup: UserKeyBackup) {
   let salt: ArrayBuffer;
   let iv: ArrayBuffer;
   let ciphertext: ArrayBuffer;
@@ -393,6 +392,7 @@ export async function decryptUserKeyBackup(
   } catch {
     throw new Error("The master key backup file is invalid");
   }
+
   if (
     salt.byteLength !== BACKUP_SALT_LENGTH ||
     iv.byteLength !== AES_GCM_IV_LENGTH ||
@@ -401,6 +401,17 @@ export async function decryptUserKeyBackup(
   ) {
     throw new Error("The master key backup file is invalid");
   }
+  return { salt, iv, ciphertext };
+}
+
+/** Decrypt and validate an encrypted vault-key backup. The caller must erase pkcs8 after importing it. */
+export async function decryptUserKeyBackup(
+  backupJson: string,
+  passphrase: string
+): Promise<{ pkcs8: ArrayBuffer; algorithm: UserKeyAlgorithm }> {
+  validateBackupPassphrase(passphrase);
+  const backup = parseUserKeyBackup(backupJson);
+  const { salt, iv, ciphertext } = decodeUserKeyBackupFields(backup);
 
   const backupKey = await deriveBackupEncryptionKey(
     passphrase,
