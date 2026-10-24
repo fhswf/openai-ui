@@ -11,6 +11,7 @@ export enum GlobalActionType {
   CHANGE_MESSAGE = "CHANGE_MESSAGE",
   IS_CONFIG = "IS_CONFIG",
   START_CHAT = "START_CHAT",
+  SET_OPTIONS = "SET_OPTIONS",
 }
 
 export enum OptionActionType {
@@ -121,7 +122,8 @@ export type GlobalAction =
   | { type: GlobalActionType.SET_STATE; payload: Partial<GlobalState> }
   | { type: GlobalActionType.CHANGE_MESSAGE; payload: Partial<GlobalState> }
   | { type: GlobalActionType.IS_CONFIG; payload: Partial<GlobalState> }
-  | { type: GlobalActionType.START_CHAT; payload: Partial<GlobalState> };
+  | { type: GlobalActionType.START_CHAT; payload: Partial<GlobalState> }
+  | { type: GlobalActionType.SET_OPTIONS; payload: OptionAction };
 
 export type OptionAction =
   | { type: OptionActionType.GENERAL; data: Partial<GeneralOptions> }

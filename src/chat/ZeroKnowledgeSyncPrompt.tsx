@@ -18,7 +18,9 @@ export function ZeroKnowledgeSyncPrompt() {
   const { user, options } = useGlobal();
   const { setGeneral } = useOptions();
   const enabled = options.general.zkStorage ?? false;
-  const identityValue = user?.sub ?? user?.id ?? user?.email ?? null;
+  const identityValue = user?.affiliations?.["fh-swf.de"]
+    ? user?.sub ?? user?.id ?? user?.email ?? null
+    : null;
   const identity = identityValue == null ? null : String(identityValue);
   const [availableFor, setAvailableFor] = useState<string | null>(null);
   const [userKey, setUserKey] = useState<VaultUserKey | null>(null);

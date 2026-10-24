@@ -16,6 +16,12 @@ test('No Affiliation Access Denied', async ({ browser }) => {
         serviceWorkers: 'block',
     });
     const page = await context.newPage();
+    let requestedVaultKey = false;
+    page.on('request', (request) => {
+        if (new URL(request.url()).pathname.startsWith('/api/zk/keys/me')) {
+            requestedVaultKey = true;
+        }
+    });
 
     await page.route(userEndpointPattern, async (route) => {
         await route.fulfill({
@@ -32,5 +38,6 @@ test('No Affiliation Access Denied', async ({ browser }) => {
 
     await expect(noAccessMessage).toBeVisible();
     await expect(noAccessMessage).toContainText(noAffiliationUser.preferred_username);
+    expect(requestedVaultKey).toBe(false);
     await context.close();
 });

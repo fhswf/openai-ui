@@ -3,7 +3,10 @@ import { createRoot } from "react-dom/client";
 import ChatApp from "./chat/ChatApp";
 import { Provider } from "./components/ui/provider";
 import * as Sentry from "@sentry/react";
+import { installUnauthorizedFetchRedirect } from "./chat/utils/loginRetry";
 import "./i18n/config.ts";
+
+installUnauthorizedFetchRedirect();
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js").catch((error) => {

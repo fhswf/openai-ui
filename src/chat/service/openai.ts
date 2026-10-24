@@ -20,7 +20,7 @@ import {
 } from "openai/resources/responses/responses.mjs";
 import { toaster } from "../../components/ui/toaster";
 import { showMcpApprovalToast } from "../component/McpToast";
-import { beginLoginRedirect } from "../utils/loginRetry";
+import { redirectToLogin } from "../utils/loginRetry";
 import {
   getAttachmentStorageId,
   readOpfsFileAsDataUrl,
@@ -303,7 +303,7 @@ export async function createResponse(
           duration: 2000,
           type: "info",
         });
-        window.location.assign(beginLoginRedirect({ retry: true }));
+        redirectToLogin({ retry: true });
         return;
       }
 

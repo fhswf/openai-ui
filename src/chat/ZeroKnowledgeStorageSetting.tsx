@@ -64,7 +64,9 @@ export function ZeroKnowledgeStorageSetting() {
   const { setGeneral } = useOptions();
   const enabled = options.general.zkStorage ?? false;
   const lazyHistory = options.general.zkLazyHistory ?? false;
-  const userIdentity = user?.sub ?? user?.id ?? user?.email ?? null;
+  const userIdentity = user?.affiliations?.["fh-swf.de"]
+    ? user?.sub ?? user?.id ?? user?.email ?? null
+    : null;
   const [busy, setBusy] = useState(false);
   const [keyStatus, setKeyStatus] = useState<KeyStatus>("idle");
   const [vaultKey, setVaultKey] = useState<VaultUserKey | null>(null);
