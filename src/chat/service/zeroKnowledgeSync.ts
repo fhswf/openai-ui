@@ -1,209 +1,45 @@
 import { v5 as uuidv5 } from "uuid";
-import type { Chat, ChatVaultDescriptor } from "../context/types";
+import type { Chat } from "../context/types";
 import {
   chatVault,
-  VaultError,
-  type VaultChat,
   type VaultChatSummary,
   type VaultGroupChat,
   type VaultUserKey,
 } from "./chatVault";
+import { matchesChatQuery } from "../utils/chatSearch";
+import { ensureChatAttachmentIds } from "../utils/chatAttachments";
 import {
-  decryptAttachmentData,
-  decryptChatData,
-  encryptAttachmentData,
-  encryptGroupAttachmentData,
-  encryptChatData,
-  generateChatKey,
-  getAttachmentAdditionalData,
-  LEGACY_RSA_KEY_ALGORITHM,
-  unwrapChatKey,
-  wrapChatKey,
-} from "../utils/zeroKnowledgeCrypto";
+  cacheTranscript,
+  chatId,
+  createVaultSyncCache,
+  describeVaultChat,
+  demoteVaultChat,
+  fingerprint,
+  isLegacyNumericChatId,
+  markVaultChats,
+  toVaultPlaceholder,
+  withDescriptor,
+  type VaultSyncCache,
+} from "./zeroKnowledgeSyncCache";
 import {
-  applyGroupOperation,
-  decryptGroupEvent,
-  rememberAppliedGroupOperation,
-  seedGroupChatRuntime,
-  unwrapGroupEpochKeys,
-  type GroupChatRuntime,
-} from "./groupChatSync";
-import {
-  loadGroupChatCursor,
-  saveGroupChatCursor,
-} from "./groupChatLocalStore";
-import { messageToPlainText, matchesChatQuery } from "../utils/chatSearch";
-import { getAttachmentStorageId, getOpfsFile } from "../utils/attachments";
-import {
-  ensureChatAttachmentIds,
-  getChatAttachmentReferences,
-} from "../utils/chatAttachments";
+  downloadChat,
+  getGroupStateIfAvailable,
+  isVaultDecryptionFailure,
+  uploadChat,
+  type DownloadedChat,
+} from "./zeroKnowledgeSyncTransfers";
+import { syncChatAttachments } from "./zeroKnowledgeSyncAttachments";
 
-export type VaultSyncCache = {
-  revisions: Map<string, number>;
-  fingerprints: Map<string, string>;
-  owners: Map<string, string>;
-  chatKeys: Map<string, CryptoKey>;
-  /**
-   * Full transcripts fetched during this session. Lazy history keeps these in
-   * memory only, so the localStorage copy stays a small placeholder list.
-   */
-  transcripts: Map<string, Chat>;
-  attachmentFingerprints: Map<string, string>;
-  attachmentIds: Map<string, Set<string>>;
-  groupChats: Map<string, GroupChatRuntime>;
+export {
+  createVaultSyncCache,
+  describeVaultChat,
+  demoteVaultChat,
+  markVaultChats,
+  toVaultPlaceholder,
 };
-
-/** Upper bound for the in-memory transcript cache (oldest entries are dropped). */
-const MAX_CACHED_TRANSCRIPTS = 20;
-
-function cacheTranscript(cache: VaultSyncCache, id: string, chat: Chat): void {
-  cache.transcripts.set(id, chat);
-  while (cache.transcripts.size > MAX_CACHED_TRANSCRIPTS) {
-    const oldest = cache.transcripts.keys().next().value;
-    if (oldest === undefined || oldest === id) break;
-    cache.transcripts.delete(oldest);
-  }
-}
-
-export function createVaultSyncCache(): VaultSyncCache {
-  return {
-    revisions: new Map(),
-    fingerprints: new Map(),
-    owners: new Map(),
-    chatKeys: new Map(),
-    transcripts: new Map(),
-    attachmentFingerprints: new Map(),
-    attachmentIds: new Map(),
-    groupChats: new Map(),
-  };
-}
-
-const PREVIEW_LENGTH = 500;
-
-function attachmentCacheKey(chatId: string, attachmentId: string): string {
-  return `${chatId}\u0000${attachmentId}`;
-}
-
-async function syncChatAttachments(
-  chat: Chat,
-  id: string,
-  chatKey: CryptoKey,
-  cache: VaultSyncCache,
-  options: {
-    forceReencrypt?: boolean;
-    previousChatKey?: CryptoKey;
-    attachmentEpoch?: number;
-    skipDelete?: boolean;
-  } = {}
-): Promise<void> {
-  const references = getChatAttachmentReferences(chat);
-  const knownOnServer = new Set(cache.attachmentIds.get(id) ?? []);
-  const currentIds = new Set<string>();
-  for (const reference of references) {
-    const attachmentId = await getAttachmentStorageId(
-      reference.attachmentId,
-      reference.opfsName
-    );
-    currentIds.add(attachmentId);
-    if (!knownOnServer.has(attachmentId)) {
-      if (await chatVault.hasAttachment(id, attachmentId)) {
-        knownOnServer.add(attachmentId);
-      }
-    }
-    const cacheKey = attachmentCacheKey(id, attachmentId);
-    const additionalData = getAttachmentAdditionalData(id, attachmentId);
-    let data: ArrayBuffer;
-    let fingerprint: string;
-    try {
-      // Prefer local files during normal sync. A key rotation must also
-      // re-encrypt remote-only attachments with the new chat key.
-      const file = await getOpfsFile(reference.opfsName);
-      data = await file.arrayBuffer();
-      fingerprint = `${reference.opfsName}:${file.size}:${file.lastModified}`;
-    } catch {
-      if (
-        !options.forceReencrypt ||
-        !options.previousChatKey ||
-        !knownOnServer.has(attachmentId)
-      ) {
-        continue;
-      }
-      try {
-        const encrypted = await chatVault.getAttachment(id, attachmentId);
-        data = await decryptAttachmentData(
-          encrypted,
-          options.previousChatKey,
-          additionalData
-        );
-        fingerprint = `${reference.opfsName}:${
-          reference.size ?? "unknown"
-        }`;
-      } catch {
-        continue;
-      }
-    }
-    if (!options.forceReencrypt && knownOnServer.has(attachmentId)) {
-      const previousFingerprint = cache.attachmentFingerprints.get(cacheKey);
-      if (previousFingerprint === fingerprint) continue;
-      if (previousFingerprint === undefined) {
-        cache.attachmentFingerprints.set(cacheKey, fingerprint);
-        continue;
-      }
-    }
-
-    const encrypted = options.attachmentEpoch
-      ? await encryptGroupAttachmentData(data, chatKey, {
-          chatId: id,
-          attachmentId,
-          epoch: options.attachmentEpoch,
-        })
-      : await encryptAttachmentData(data, chatKey, additionalData);
-    await chatVault.putAttachment(id, attachmentId, encrypted);
-    knownOnServer.add(attachmentId);
-    cache.attachmentFingerprints.set(cacheKey, fingerprint);
-  }
-
-  const previouslySynced = cache.attachmentIds.get(id) ?? new Set<string>();
-  if (!options.skipDelete) {
-    for (const removedId of previouslySynced) {
-      if (currentIds.has(removedId)) continue;
-      await chatVault.deleteAttachment(id, removedId);
-      knownOnServer.delete(removedId);
-      cache.attachmentFingerprints.delete(attachmentCacheKey(id, removedId));
-    }
-  }
-  cache.attachmentIds.set(id, knownOnServer);
-}
-
-/** Upload a group's attachment bytes before publishing events that reference them. */
-export async function syncGroupChatAttachments(
-  chat: Chat,
-  userKey: VaultUserKey,
-  cache: VaultSyncCache
-): Promise<void> {
-  const id = chatId(chat);
-  const runtime = cache.groupChats.get(id);
-  if (!runtime || !chat.messages?.length) return;
-  if (!runtime.group.members.some((member) => member.userId === userKey.userId)) {
-    throw new Error("You are no longer an active member of this group");
-  }
-  const epoch = runtime.group.currentEpoch;
-  const epochKey = runtime.epochKeys.get(epoch);
-  if (!epochKey) throw new Error(`The key for group chat epoch ${epoch} is unavailable`);
-  await syncChatAttachments(chat, id, epochKey, cache, {
-    attachmentEpoch: epoch,
-    skipDelete: true,
-  });
-}
-
-function chatId(chat: Chat): string {
-  return String(chat.id);
-}
-
-function isLegacyNumericChatId(id: string): boolean {
-  return /^\d+$/.test(id);
-}
+export type { VaultSyncCache } from "./zeroKnowledgeSyncCache";
+export { isVaultDecryptionFailure } from "./zeroKnowledgeSyncTransfers";
+export { syncGroupChatAttachments } from "./zeroKnowledgeSyncAttachments";
 
 function migrateLegacyChatId(chat: Chat, userId: string): Chat {
   const id = chatId(chat);
@@ -215,392 +51,6 @@ function migrateLegacyChatId(chat: Chat, userId: string): Chat {
     ...chat,
     id: uuidv5(`openai-ui:legacy-chat:${userId}:${id}`, uuidv5.URL),
   };
-}
-
-function fingerprint(chat: Chat): string {
-  // The `vault` descriptor is local bookkeeping only; it must not influence
-  // change detection, otherwise marking a chat as vault-backed would look like
-  // a content edit and trigger an unnecessary upload.
-  const { vault, ...content } = chat;
-  return JSON.stringify(content);
-}
-
-function firstUserPreview(chat: Chat): string {
-  const message =
-    chat.messages.find((item) => item.role === "user") ?? chat.messages[0];
-  if (!message) return "";
-  return messageToPlainText(message).slice(0, PREVIEW_LENGTH);
-}
-
-/** Build the small descriptor that stands in for a vault chat locally. */
-export function describeVaultChat(
-  chat: Chat,
-  ownerId: string,
-  rev: number
-): ChatVaultDescriptor {
-  return {
-    rev,
-    ownerId,
-    messageCount: chat.messages.length,
-    preview: firstUserPreview(chat),
-    updatedAt: chat.ct,
-  };
-}
-
-/**
- * Add or refresh the vault descriptor of every chat that lives in the vault.
- * Keeping the marker lets the persistence layer drop transcripts that can be
- * re-downloaded. Returns null when nothing changed.
- */
-export function markVaultChats(
-  chats: Chat[],
-  cache: VaultSyncCache,
-  userKey: VaultUserKey
-): Chat[] | null {
-  let changed = false;
-  const marked = chats.map((chat) => {
-    const id = chatId(chat);
-    const rev = cache.revisions.get(id);
-    if (rev === undefined) {
-      return chat;
-    }
-    const ownerId = cache.owners.get(id) ?? userKey.userId;
-
-    if (chat.vault) {
-      if (chat.vault.rev === rev && chat.vault.ownerId === ownerId) {
-        return chat;
-      }
-      changed = true;
-      // A placeholder has no messages, so keep its stored count and preview.
-      return {
-        ...chat,
-        vault: chat.messages?.length
-          ? describeVaultChat(chat, ownerId, rev)
-          : { ...chat.vault, rev, ownerId },
-      };
-    }
-
-    changed = true;
-    return {
-      ...chat,
-      vault: describeVaultChat(chat, ownerId, rev),
-    };
-  });
-  return changed ? marked : null;
-}
-
-/**
- * Reduce a full transcript to the small descriptor that is kept in
- * localStorage. The messages are dropped and fetched from the vault on demand.
- */
-export function toVaultPlaceholder(
-  chat: Chat,
-  ownerId: string,
-  rev: number
-): Chat {
-  return {
-    title: chat.title,
-    app: chat.app,
-    id: chat.id,
-    thread: chat.thread,
-    ct: chat.ct,
-    botStarts: chat.botStarts,
-    groupChat: chat.groupChat,
-    messages: [],
-    vault: describeVaultChat(chat, ownerId, rev),
-  };
-}
-
-/**
- * Reduce a hydrated vault chat back to its lightweight placeholder, keeping the
- * vault descriptor so the transcript can be fetched again on demand.
- */
-export function demoteVaultChat(chat: Chat): Chat {
-  const descriptor = chat.vault;
-  if (!descriptor) return chat;
-  return {
-    ...toVaultPlaceholder(chat, descriptor.ownerId, descriptor.rev),
-    vault: {
-      ...descriptor,
-      messageCount: chat.messages?.length ?? descriptor.messageCount,
-    },
-  };
-}
-
-async function uploadChat(
-  chat: Chat,
-  userKey: VaultUserKey,
-  cache: VaultSyncCache
-): Promise<void> {
-  const id = chatId(chat);
-  if (isLegacyNumericChatId(id) && !cache.owners.has(id)) {
-    throw new Error(
-      `Refusing to create a vault chat with legacy numeric ID ${id}`
-    );
-  }
-  ensureChatAttachmentIds(chat);
-  // Keys unwrapped from the vault are deliberately non-extractable, so they
-  // cannot be wrapped again. Only reuse an extractable key we generated here;
-  // otherwise create a fresh one for this upload.
-  const cachedKey = cache.chatKeys.get(id);
-  const rotatesChatKey = cachedKey?.extractable !== true;
-  const chatKey =
-    cachedKey?.extractable === true ? cachedKey : await generateChatKey();
-  const encryptedChat = await encryptChatData(chat, chatKey);
-  const wrappedKey = await wrapChatKey(
-    chatKey,
-    userKey.publicKey,
-    userKey.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM
-  );
-  const payload = {
-    ...encryptedChat,
-    selfEnvelope: {
-      recipientId: userKey.userId,
-      ...wrappedKey,
-    },
-    baseRev: cache.revisions.get(id),
-  };
-  let uploaded: VaultChat;
-  try {
-    uploaded = await chatVault.putChat(id, payload);
-  } catch (error) {
-    if (
-      !(error instanceof VaultError) ||
-      error.status !== 409 ||
-      error.currentRev === undefined
-    ) {
-      throw error;
-    }
-    cache.revisions.set(id, error.currentRev);
-    uploaded = await chatVault.putChat(id, {
-      ...payload,
-      baseRev: error.currentRev,
-    });
-  }
-
-  cache.revisions.set(id, uploaded.rev);
-  cache.owners.set(id, uploaded.ownerId || userKey.userId);
-  await syncChatAttachments(chat, id, chatKey, cache, {
-    forceReencrypt: rotatesChatKey,
-    previousChatKey: cachedKey,
-  });
-  cache.chatKeys.set(id, chatKey);
-  cache.fingerprints.set(id, fingerprint(chat));
-}
-
-type DownloadedChat = {
-  chat: Chat;
-  rev: number;
-  ownerId: string;
-};
-
-async function getGroupStateIfAvailable(
-  chatId: string
-): Promise<VaultGroupChat | null> {
-  if (typeof chatVault.getGroupChat !== "function") return null;
-  try {
-    return await chatVault.getGroupChat(chatId);
-  } catch (error) {
-    if (error instanceof VaultError && error.status === 404) return null;
-    throw error;
-  }
-}
-
-async function decryptInitialGroupChat(
-  encrypted: VaultChat,
-  initialKey: CryptoKey | undefined
-): Promise<Chat | null> {
-  if (!initialKey) return null;
-  try {
-    return await decryptChatData<Chat>(encrypted, initialKey);
-  } catch (error) {
-    console.warn("Could not decrypt the initial group chat snapshot:", error);
-    return null;
-  }
-}
-
-async function createGroupChatTranscript(
-  summary: VaultChatSummary,
-  encrypted: VaultChat,
-  initialKey: CryptoKey | undefined,
-  local?: Chat
-): Promise<Chat> {
-  const decrypted = await decryptInitialGroupChat(encrypted, initialKey);
-  // New members without history access can still receive messages from the
-  // epoch they joined. The default invitation flow grants history, so this
-  // fallback is for deliberately history-limited membership.
-  const chat =
-    decrypted ??
-    (local?.messages?.length
-      ? { ...local, messages: [...local.messages] }
-      : {
-          title: summary.id,
-          app: 0,
-          id: summary.id,
-          ct: Date.now(),
-          messages: [],
-        });
-  chat.id = encrypted.id;
-  chat.groupChat = true;
-  return chat;
-}
-
-async function replayGroupChatEvents(
-  id: string,
-  chat: Chat,
-  runtime: GroupChatRuntime
-): Promise<{ chat: Chat; cursor: number }> {
-  let cursor = 0;
-  let hasMore = true;
-  while (hasMore) {
-    const page = await chatVault.listGroupEvents(id, cursor, 20);
-    for (const event of page.events) {
-      if (event.sequence <= cursor) continue;
-      try {
-        const operation = await decryptGroupEvent(event, runtime);
-        chat = applyGroupOperation(chat, operation);
-        rememberAppliedGroupOperation(runtime, operation);
-      } catch (error) {
-        // A member without an old epoch key cannot read those historical
-        // events. Continue at the next sequence, where their key may apply.
-        if (runtime.epochKeys.has(event.epoch)) {
-          console.warn("Could not decrypt a group chat event:", error);
-        }
-      }
-      cursor = event.sequence;
-    }
-    hasMore = page.hasMore;
-    if (page.events.length === 0) hasMore = false;
-  }
-  return { chat, cursor };
-}
-
-type GroupChatCacheUpdate = {
-  userKey: VaultUserKey;
-  id: string;
-  encrypted: VaultChat;
-  group: VaultGroupChat;
-  initialKey: CryptoKey | undefined;
-  chat: Chat;
-  cursor: number;
-  ownerId: string;
-  cache: VaultSyncCache;
-  runtime: GroupChatRuntime;
-};
-
-async function cacheDownloadedGroupChat(
-  input: GroupChatCacheUpdate
-): Promise<void> {
-  input.runtime.cursor = input.cursor;
-  input.runtime.group = { ...input.group, cursor: input.cursor };
-  input.cache.groupChats.set(input.id, input.runtime);
-  input.cache.revisions.set(input.id, input.encrypted.rev);
-  input.cache.fingerprints.set(input.id, fingerprint(input.chat));
-  input.cache.owners.set(input.id, input.ownerId);
-  if (input.initialKey) input.cache.chatKeys.set(input.id, input.initialKey);
-  ensureChatAttachmentIds(input.chat);
-  cacheTranscript(input.cache, input.id, input.chat);
-  await saveGroupChatCursor(input.userKey.userId, input.id, input.cursor);
-}
-
-async function downloadGroupChat(
-  summary: VaultChatSummary,
-  privateKey: CryptoKey,
-  userKey: VaultUserKey,
-  cache: VaultSyncCache,
-  group: VaultGroupChat,
-  local?: Chat
-): Promise<DownloadedChat | null> {
-  const encrypted = await chatVault.getChat(summary.id);
-  const epochKeys = await unwrapGroupEpochKeys(group, privateKey);
-  const initialKey = epochKeys.get(1);
-  const chat = await createGroupChatTranscript(
-    summary,
-    encrypted,
-    initialKey,
-    local
-  );
-  const id = String(encrypted.id);
-  const ownerId = encrypted.ownerId || summary.ownerId;
-  const runtime = seedGroupChatRuntime(group, epochKeys, 0, chat);
-  const replayed = await replayGroupChatEvents(id, chat, runtime);
-  await cacheDownloadedGroupChat({
-    userKey,
-    id,
-    encrypted,
-    group,
-    initialKey,
-    chat: replayed.chat,
-    cursor: replayed.cursor,
-    ownerId,
-    cache,
-    runtime,
-  });
-  return { chat: replayed.chat, rev: encrypted.rev, ownerId };
-}
-
-/**
- * Download and decrypt one remote chat. Returns null when the current key
- * cannot open it (missing envelope or failed decryption).
- */
-async function downloadChat(
-  summary: VaultChatSummary,
-  privateKey: CryptoKey,
-  userKey: VaultUserKey,
-  cache: VaultSyncCache,
-  local?: Chat,
-  knownGroup?: VaultGroupChat | null,
-  options: { throwOnDecryptFailure?: boolean } = {}
-): Promise<DownloadedChat | null> {
-  const group = knownGroup === undefined
-    ? await getGroupStateIfAvailable(summary.id)
-    : knownGroup;
-  if (group) {
-    return downloadGroupChat(summary, privateKey, userKey, cache, group, local);
-  }
-
-  const encrypted = await chatVault.getChat(summary.id);
-  const envelope = encrypted.envelopes.find(
-    (item) => item.recipientId === userKey.userId
-  );
-  if (!envelope) {
-    console.warn(
-      "No decryption key is available for vault chat %s",
-      summary.id
-    );
-    return null;
-  }
-
-  try {
-    const chatKey = await unwrapChatKey(envelope, privateKey);
-    const chat = await decryptChatData<Chat>(encrypted, chatKey);
-    chat.id = encrypted.id;
-    const id = String(encrypted.id);
-    const ownerId = encrypted.ownerId || summary.ownerId;
-    cache.revisions.set(id, encrypted.rev);
-    cache.fingerprints.set(id, fingerprint(chat));
-    cache.owners.set(id, ownerId);
-    cache.chatKeys.set(id, chatKey);
-    // Preserve the pre-migration fingerprint above so sync writes newly
-    // assigned IDs back into the encrypted chat.
-    ensureChatAttachmentIds(chat);
-    return { chat, rev: encrypted.rev, ownerId };
-  } catch (error) {
-    console.warn("Could not decrypt vault chat %s:", summary.id, error);
-    if (options.throwOnDecryptFailure && isVaultDecryptionFailure(error)) {
-      throw error;
-    }
-    return null;
-  }
-}
-
-export function isVaultDecryptionFailure(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "name" in error &&
-    error.name === "OperationError"
-  );
 }
 
 function createUnreadableVaultChat(
@@ -697,7 +147,11 @@ export async function restoreVaultChats(
         restored.set(
           summary.id,
           lazy
-            ? toVaultPlaceholder(downloaded.chat, downloaded.ownerId, downloaded.rev)
+            ? toVaultPlaceholder(
+                downloaded.chat,
+                downloaded.ownerId,
+                downloaded.rev
+              )
             : downloaded.chat
         );
       } else if (local) {
@@ -843,24 +297,6 @@ export async function hydrateVaultChat(
   return withDescriptor(downloaded.chat, chat, cache, userKey);
 }
 
-function withDescriptor(
-  chat: Chat,
-  previous: Chat,
-  cache: VaultSyncCache,
-  userKey: VaultUserKey
-): Chat {
-  const id = chatId(chat);
-  return {
-    ...chat,
-    id: previous.id,
-    vault: describeVaultChat(
-      chat,
-      cache.owners.get(id) ?? previous.vault?.ownerId ?? userKey.userId,
-      cache.revisions.get(id) ?? previous.vault?.rev ?? 0
-    ),
-  };
-}
-
 /**
  * Search the complete history, including chats that are only placeholders.
  * Placeholders are downloaded one at a time and kept hydrated only when they
@@ -954,7 +390,8 @@ export async function syncVaultChats(
     cache.transcripts.delete(id);
     cache.attachmentIds.delete(id);
     for (const key of cache.attachmentFingerprints.keys()) {
-      if (key.startsWith(`${id}\u0000`)) cache.attachmentFingerprints.delete(key);
+      if (key.startsWith(`${id}\u0000`))
+        cache.attachmentFingerprints.delete(key);
     }
   }
 }
