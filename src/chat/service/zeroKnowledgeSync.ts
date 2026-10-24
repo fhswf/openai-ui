@@ -332,11 +332,13 @@ async function uploadChat(
   userKey: VaultUserKey,
   cache: VaultSyncCache
 ): Promise<void> {
-  ensureChatAttachmentIds(chat);
   const id = chatId(chat);
   if (isLegacyNumericChatId(id) && !cache.owners.has(id)) {
-    throw new Error(`Refusing to create a vault chat with legacy numeric ID ${id}`);
+    throw new Error(
+      `Refusing to create a vault chat with legacy numeric ID ${id}`
+    );
   }
+  ensureChatAttachmentIds(chat);
   // Keys unwrapped from the vault are deliberately non-extractable, so they
   // cannot be wrapped again. Only reuse an extractable key we generated here;
   // otherwise create a fresh one for this upload.
