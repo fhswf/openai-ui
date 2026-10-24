@@ -54,6 +54,23 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.58.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.57.0...openai-ui-v0.58.0) (2026-10-24)
+
+
+### Features
+
+* Enhance vector store creation with polling for store availability and update link colors in SidebarAboutDialog ([9463977](https://github.com/fhswf/openai-ui/commit/9463977288ec02e25f3e909b5f4a46c80cfe47d0))
+* Ensure chat attachment IDs are validated before creating vault chats ([3e86e02](https://github.com/fhswf/openai-ui/commit/3e86e02705342679315a4c5cf1ca5f768778c4d8))
+* Implement encrypted settings synchronization and restore functionality ([9abfced](https://github.com/fhswf/openai-ui/commit/9abfcedd73c32882093b7267ce099a92471dcd74))
+* Implement master key backup and restore functionality with encryption ([8963faf](https://github.com/fhswf/openai-ui/commit/8963faf970a256e3fb1ae7be59e7ce9446e75dfc))
+* Implement zero knowledge sync cache and attachment handling for chat functionality ([4ef0da0](https://github.com/fhswf/openai-ui/commit/4ef0da0ba2e5ae111981bb7d4cced84b9730dac6))
+* Migrate legacy numeric chat IDs to UUIDs for improved uniqueness and consistency ([fa2194d](https://github.com/fhswf/openai-ui/commit/fa2194d2075778d5a97336c0fc2efdd5d4b5bd41))
+* Refactor chat key preparation and upload process for improved error handling and attachment synchronization ([50657a8](https://github.com/fhswf/openai-ui/commit/50657a813da066d684e17ea0a14538e914c50d6d))
+* Refactor user key backup decryption process for improved readability and validation ([d6c0848](https://github.com/fhswf/openai-ui/commit/d6c08481cff029699e1d0f8ad453cd010fecad20))
+* Update CreateVectorStoreForm to return store details on creation and register vector store in settings ([f11047e](https://github.com/fhswf/openai-ui/commit/f11047ea777f938fce4adb536e4e4d58a9924a2f))
+* Update default OpenAI model to gpt-6-luna ([a6c6d14](https://github.com/fhswf/openai-ui/commit/a6c6d14057e5f1d00356f8f706fba3838cf4d109))
+* Update default OpenAI model to gpt-6-luna ([71107f3](https://github.com/fhswf/openai-ui/commit/71107f3232a50a52c638f09a62a8c91e092930a1))
+
 ## [0.57.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.56.0...openai-ui-v0.57.0) (2026-10-23)
 
 
