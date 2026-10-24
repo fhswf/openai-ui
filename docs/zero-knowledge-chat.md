@@ -1,7 +1,7 @@
 # Zero-Knowledge, geräteübergreifende Chats
 
-Status: Frontend-Opt-in, Schlüsselverwaltung, verschlüsselte Chat-Synchronisierung
-und Chat-Freigaben sind in diesem Repo implementiert. Das Proxy-Backend `fhswf/openai-proxy` muss die
+Status: Frontend-Opt-in, Schlüsselverwaltung, verschlüsselte Synchronisierung von
+Chats und Einstellungen sowie Chat-Freigaben sind in diesem Repo implementiert. Das Proxy-Backend `fhswf/openai-proxy` muss die
 unten beschriebene `/api/zk`-API bereitstellen, einschließlich Prüfung von
 WebAuthn-Assertions und getrennter Speicherung der beiden Public Keys.
 
@@ -13,12 +13,14 @@ verfügbar sind und mit anderen Nutzern geteilt werden können.
 
 Ziele
 
-- Chats geräteübergreifend speichern und laden.
+- Chats und Einstellungen geräteübergreifend speichern und laden.
 - Vertraulichkeit gegen den Server und gegen Netzwerk-Angreifer. Der
   Server speichert ausschließlich Chiffrat und Schlüssel-Hüllen.
 - Teilen eines Chats mit anderen Nutzern, ohne das gesamte Chiffrat neu zu
   verschlüsseln.
 - Kein Klartext-Private-Key verlässt jemals das Gerät.
+- Einstellungen einschließlich API-Zugangsdaten werden mit einem eigenen
+  zufälligen Schlüssel verschlüsselt und sind nur auf entsperrten Geräten lesbar.
 - Wiederherstellung des eigenen Schlüssels auf einem neuen Gerät über den
   Passkey (WebAuthn PRF).
 - **Opt-in:** Die zentrale Speicherung ist standardmäßig aus. Schlüsselpaar,
@@ -41,7 +43,7 @@ Nicht-Ziele (bewusste Grenzen)
 
 | Angreifer | Kann lesen? | Begründung |
 | --- | --- | --- |
-| Server-/DB-Betreiber | nein | sieht nur AES-GCM-Chiffrat und verschlüsselte Schlüssel-Hüllen |
+| Server-/DB-Betreiber | nein | sieht nur AES-GCM-Chiffrat und verschlüsselte Schlüssel-Hüllen, auch für Einstellungen |
 | Netzwerk (TLS-terminierender Proxy) | nein | Klartext existiert nur im Browser |
 | Anderer Nutzer ohne Freigabe | nein | besitzt keine Hülle für `K_chat` |
 | Nutzer mit Freigabe | ja | besitzt `Enc(PK_empf, K_chat)` |
@@ -171,7 +173,7 @@ dabei gleich.
 2. Die App fragt `GET /zk/keys/me` ab. Wenn für das Konto bereits ein
    Vault-Schlüssel existiert, zeigt sie die Namen aller registrierten
    Passkeys/Geräte. Der Nutzer wählt eines aus, bevor die App die
-   verschlüsselten Chats auf diesem Gerät entsperrt und synchronisiert. Die
+   verschlüsselten Chats und Einstellungen auf diesem Gerät entsperrt und synchronisiert. Die
    lokale Einstellung wird erst nach erfolgreichem Entsperren aktiviert.
 3. Ist IndexedDB leer, liefert `GET /zk/keys/me` die Credential-IDs und Namen
    sowie den öffentlichen Schlüssel und Algorithmus, aber noch nicht
@@ -183,8 +185,8 @@ dabei gleich.
    auch `encryptedSK` und IV.
 6. PRF-Output -> `K_pass` (identisch zu 4.1) und `encryptedSK` damit
    entschlüsseln -> `SK_user`.
-7. `SK_user` in IndexedDB cachen, Chat entsperren und die Synchronisierung
-   starten.
+7. `SK_user` in IndexedDB cachen, Einstellungen und Chats entsperren und die
+   Synchronisierung starten.
 
 ### 4.3 Chat speichern
 
@@ -200,6 +202,41 @@ dabei gleich.
    beim Wiederherstellen eines Chats nicht mitgeladen, sondern erst beim
    Anzeigen, Herunterladen oder Senden an das Modell abgerufen. AES-GCM bindet
    jede Datei zusätzlich an ihre Chat-ID und ihre zufällige Anhang-ID.
+
+### 4.3.1 Einstellungen synchronisieren
+
+Wenn die verschlüsselte Speicherung aktiviert ist, werden die App-Einstellungen
+automatisch in einem eigenen Konto-Dokument synchronisiert. API-Schlüssel,
+Endpunkte, Modellparameter, Werkzeuge und persönliche Einstellungen werden vor
+dem Upload im Browser mit einem zufälligen AES-GCM-Schlüssel verschlüsselt.
+Dieser Schlüssel wird mit dem öffentlichen Vault-Schlüssel verpackt. Der Server
+speichert nur Chiffrat und Schlüssel-Hülle. Die Opt-in-Option `zkStorage` selbst
+bleibt gerätebezogen und wird nicht synchronisiert, damit ein Passkey die
+Speicherung nicht ohne ausdrückliche Aktivierung auf einem neuen Gerät
+einschaltet. Änderungen werden mit einer Revision abgeglichen.
+
+### 4.3.2 Hauptschlüssel sichern und wiederherstellen
+
+In den Einstellungen kann der Nutzer eine verschlüsselte Sicherungsdatei für
+`SK_user` exportieren. Dafür ist eine frische Bestätigung mit einem
+registrierten Passkey erforderlich. Der Nutzer wählt zusätzlich ein Kennwort
+mit mindestens 16 Zeichen. Der Browser leitet daraus mit PBKDF2-HMAC-SHA-256
+(600.000 Iterationen, zufälliger 16-Byte-Salt) einen AES-256-GCM-Schlüssel ab
+und verschlüsselt den PKCS#8-Schlüssel mit einer zufälligen 12-Byte-Nonce. Die
+Datei enthält Formatversion, Algorithmus, KDF-Parameter, Salt, Nonce und
+Chiffrat. Sie enthält weder den privaten Schlüssel im Klartext noch das
+Kennwort.
+
+Beim Wiederherstellen entschlüsselt der Browser die Datei nur im Arbeitsspeicher,
+prüft den Schlüssel gegen den öffentlichen Vault-Schlüssel des angemeldeten
+Kontos und speichert eine nicht exportierbare Kopie im lokalen IndexedDB-Cache.
+Der Schlüssel wird dabei nicht an den Server übertragen. Eine falsche
+Passphrase, beschädigte Datei oder ein Backup für ein anderes Konto wird
+abgewiesen. Datei und Kennwort müssen getrennt aufbewahrt werden: Wer beide
+besitzt, kann die verschlüsselten Chats und Einstellungen lesen. Ohne das
+Kennwort lässt sich die Sicherung nicht wiederherstellen. Der Wiederherstellungs-
+Flow richtet den lokalen Schlüssel-Cache ein; bestehende Passkeys werden dadurch
+nicht geändert.
 
 ### 4.4 Chat wiederherstellen
 

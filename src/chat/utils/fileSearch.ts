@@ -390,6 +390,22 @@ export function setVectorStoreInChat(
   return { tools, toolsEnabled };
 }
 
+/** Registers a store in settings without enabling it for chat requests. */
+export function registerVectorStore(
+  registry: ToolRegistry,
+  store: { id: string; name: string }
+): ToolRegistry {
+  const existingKey = findFileSearchToolKey(registry.tools, store.id);
+  if (existingKey) {
+    return renameVectorStoreInChat(registry, store);
+  }
+
+  const tools = new Map(registry.tools);
+  const key = uniqueToolKey(tools, store.name, store.id);
+  tools.set(key, createFileSearchTool(store.id));
+  return { tools, toolsEnabled: new Set(registry.toolsEnabled) };
+}
+
 /** Keeps the tool label in sync after a vector store was renamed. */
 export function renameVectorStoreInChat(
   registry: ToolRegistry,

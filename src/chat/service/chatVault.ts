@@ -66,6 +66,14 @@ export type VaultGroupCatalog = {
   updatedAt: string;
 };
 
+export type VaultSettings = {
+  ciphertext: string;
+  iv: string;
+  selfEnvelope: VaultEnvelope;
+  rev: number;
+  updatedAt: string;
+};
+
 export type VaultGroupEvent = {
   chatId: string;
   sequence: number;
@@ -381,6 +389,26 @@ export const chatVault = {
   ): Promise<{ rev: number }> {
     return request(
       "/group-catalog",
+      { method: "PUT", body: JSON.stringify(payload) },
+      options
+    );
+  },
+
+  getSettings(options?: RequestOptions): Promise<VaultSettings> {
+    return request("/settings", {}, options);
+  },
+
+  putSettings(
+    payload: {
+      ciphertext: string;
+      iv: string;
+      selfEnvelope: VaultEnvelope;
+      baseRev?: number;
+    },
+    options?: RequestOptions
+  ): Promise<{ rev: number }> {
+    return request(
+      "/settings",
       { method: "PUT", body: JSON.stringify(payload) },
       options
     );

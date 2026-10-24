@@ -29,6 +29,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+import { useColorModeValue } from "../components/ui/color-mode";
 import {
   DrawerBackdrop,
   DrawerBody,
@@ -65,6 +66,7 @@ export function SidebarAboutDialog({
   termsText,
 }: SidebarAboutDialogProps) {
   const { t } = useTranslation();
+  const aboutLinkColor = useColorModeValue("blue.700", "blue.200");
 
   return (
     <DialogRoot
@@ -94,6 +96,7 @@ export function SidebarAboutDialog({
               Version:{" "}
               <Link
                 target="blank"
+                color={aboutLinkColor}
                 href={`https://github.com/fhswf/openai-ui/releases/tag/openai-ui-v${metadata.release}`}
               >
                 {metadata.release}
@@ -101,6 +104,7 @@ export function SidebarAboutDialog({
               (
               <Link
                 target="blank"
+                color={aboutLinkColor}
                 href={`https://github.com/fhswf/openai-ui/commit/${metadata.build_sha}`}
               >
                 commit {String(metadata.build_sha).substring(0, 7)}
@@ -109,6 +113,11 @@ export function SidebarAboutDialog({
             </Text>
           ) : null}
           <Markdown
+            components={{
+              a: ({ node: _node, ...props }) => (
+                <Link color={aboutLinkColor} {...props} />
+              ),
+            }}
             remarkPlugins={[remarkGfm, remarkMath, smartypants]}
             rehypePlugins={[rehypeKatex]}
           >

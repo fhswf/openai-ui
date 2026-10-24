@@ -22,7 +22,7 @@ export const initState: GlobalState = {
   chat: [
     {
       title: t("chatbot_title"),
-      id: 1,
+      id: uuidv7(),
       ct: Date.now(),
       thread: "",
       botStarts: false,

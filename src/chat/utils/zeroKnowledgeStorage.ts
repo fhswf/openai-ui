@@ -3,7 +3,9 @@ import {
   decryptPrivateKey,
   DEFAULT_USER_KEY_ALGORITHM,
   deriveKeyFromPrf,
+  decryptUserKeyBackup,
   encryptPrivateKey,
+  encryptUserKeyBackup,
   exportPublicKey,
   generateChatKey,
   generateUserKeyPair,
@@ -572,7 +574,7 @@ async function requireVaultLinkSourceAccount(
 
 async function unlockVaultLinkSourceKey(
   sourceCredentialId?: string
-): Promise<CryptoKey> {
+): Promise<{ privateKey: CryptoKey; algorithm: UserKeyAlgorithm }> {
   const challenge = await chatVault.assertionChallenge(sourceCredentialId);
   const assertion = await assertPasskeyWithResponse({
     credentialId: sourceCredentialId,
@@ -596,16 +598,18 @@ async function unlockVaultLinkSourceKey(
     throw new Error("The server did not release the encrypted chat key");
   }
   const kPass = await deriveKeyFromPrf(assertion.prfOutput);
+  const algorithm =
+    assertedKey.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM;
   const privateKey = await decryptPrivateKey(
     { encryptedKey: assertedKey.encryptedSk, iv: assertedKey.encryptedSkIv },
     kPass,
-    assertedKey.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM,
+    algorithm,
     true
   );
   if (!(await isPrivateKeyForUser(privateKey, assertedKey))) {
     throw new Error("The selected passkey could not unlock the chat key");
   }
-  return privateKey;
+  return { privateKey, algorithm };
 }
 
 async function encryptVaultLinkResponse(
@@ -670,8 +674,49 @@ export async function createVaultLinkResponse(
 ): Promise<string> {
   const prepared = await prepareVaultLinkRequest(requestCode);
   await requireVaultLinkSourceAccount(prepared, sourceCredentialId);
-  const privateKey = await unlockVaultLinkSourceKey(sourceCredentialId);
-  return encryptVaultLinkResponse(prepared, privateKey);
+  const unlocked = await unlockVaultLinkSourceKey(sourceCredentialId);
+  return encryptVaultLinkResponse(prepared, unlocked.privateKey);
+}
+
+/** Export the vault private key only after a fresh passkey assertion. */
+export async function exportVaultMasterKeyBackup(
+  passphrase: string,
+  sourceCredentialId?: string
+): Promise<string> {
+  const unlocked = await unlockVaultLinkSourceKey(sourceCredentialId);
+  return encryptUserKeyBackup(
+    unlocked.privateKey,
+    unlocked.algorithm,
+    passphrase
+  );
+}
+
+/** Restore a password-encrypted backup into the non-extractable local key cache. */
+export async function restoreVaultMasterKeyBackup(
+  backupJson: string,
+  passphrase: string
+): Promise<VaultUserKey> {
+  const { pkcs8, algorithm } = await decryptUserKeyBackup(
+    backupJson,
+    passphrase
+  );
+  try {
+    const userKey = await chatVault.getMyKey();
+    const registeredAlgorithm =
+      userKey.publicKeyAlgorithm ?? LEGACY_RSA_KEY_ALGORITHM;
+    if (algorithm !== registeredAlgorithm) {
+      throw new Error("This backup belongs to a different vault key");
+    }
+    const exportableKey = await importPrivateKey(pkcs8, algorithm, true);
+    if (!(await isPrivateKeyForUser(exportableKey, userKey))) {
+      throw new Error("This backup does not match the signed-in account's vault");
+    }
+    const cachedKey = await importPrivateKey(pkcs8, algorithm, false);
+    await savePrivateKey(cachedKey);
+    return userKey;
+  } finally {
+    new Uint8Array(pkcs8).fill(0);
+  }
 }
 
 type PreparedVaultLinkResponse = {
