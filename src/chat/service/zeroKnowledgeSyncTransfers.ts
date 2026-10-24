@@ -34,6 +34,43 @@ import {
 } from "./zeroKnowledgeSyncCache";
 import { syncChatAttachments } from "./zeroKnowledgeSyncAttachments";
 
+async function prepareChatKey(
+  id: string,
+  cache: VaultSyncCache
+): Promise<{ key: CryptoKey; previousKey?: CryptoKey; rotates: boolean }> {
+  const previousKey = cache.chatKeys.get(id);
+  const rotates = previousKey?.extractable !== true;
+  return {
+    key:
+      previousKey?.extractable === true ? previousKey : await generateChatKey(),
+    previousKey,
+    rotates,
+  };
+}
+
+async function putChatWithRevision(
+  id: string,
+  payload: Parameters<typeof chatVault.putChat>[1],
+  cache: VaultSyncCache
+): Promise<VaultChat> {
+  try {
+    return await chatVault.putChat(id, payload);
+  } catch (error) {
+    if (
+      !(error instanceof VaultError) ||
+      error.status !== 409 ||
+      error.currentRev === undefined
+    ) {
+      throw error;
+    }
+    cache.revisions.set(id, error.currentRev);
+    return chatVault.putChat(id, {
+      ...payload,
+      baseRev: error.currentRev,
+    });
+  }
+}
+
 export async function uploadChat(
   chat: Chat,
   userKey: VaultUserKey,
@@ -49,10 +86,11 @@ export async function uploadChat(
   // Keys unwrapped from the vault are deliberately non-extractable, so they
   // cannot be wrapped again. Only reuse an extractable key we generated here;
   // otherwise create a fresh one for this upload.
-  const cachedKey = cache.chatKeys.get(id);
-  const rotatesChatKey = cachedKey?.extractable !== true;
-  const chatKey =
-    cachedKey?.extractable === true ? cachedKey : await generateChatKey();
+  const {
+    key: chatKey,
+    previousKey,
+    rotates,
+  } = await prepareChatKey(id, cache);
   const encryptedChat = await encryptChatData(chat, chatKey);
   const wrappedKey = await wrapChatKey(
     chatKey,
@@ -67,29 +105,12 @@ export async function uploadChat(
     },
     baseRev: cache.revisions.get(id),
   };
-  let uploaded: VaultChat;
-  try {
-    uploaded = await chatVault.putChat(id, payload);
-  } catch (error) {
-    if (
-      !(error instanceof VaultError) ||
-      error.status !== 409 ||
-      error.currentRev === undefined
-    ) {
-      throw error;
-    }
-    cache.revisions.set(id, error.currentRev);
-    uploaded = await chatVault.putChat(id, {
-      ...payload,
-      baseRev: error.currentRev,
-    });
-  }
-
+  const uploaded = await putChatWithRevision(id, payload, cache);
   cache.revisions.set(id, uploaded.rev);
   cache.owners.set(id, uploaded.ownerId || userKey.userId);
   await syncChatAttachments(chat, id, chatKey, cache, {
-    forceReencrypt: rotatesChatKey,
-    previousChatKey: cachedKey,
+    forceReencrypt: rotates,
+    previousChatKey: previousKey,
   });
   cache.chatKeys.set(id, chatKey);
   cache.fingerprints.set(id, fingerprint(chat));
