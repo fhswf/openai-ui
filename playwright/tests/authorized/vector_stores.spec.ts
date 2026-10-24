@@ -31,6 +31,9 @@ async function createStore(
 ) {
   await page.getByTestId("vector-store-name-input").fill(name);
   await page.getByTestId("vector-store-create-btn").click();
+  await expect
+    .poll(() => service.stores.find((s) => s.name === name))
+    .toBeDefined();
   const store = service.stores.find((s) => s.name === name);
   expect(store).toBeDefined();
   const row = page.getByTestId(`vector-store-${store!.id}`);
