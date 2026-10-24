@@ -1,3 +1,4 @@
+import { v5 as uuidv5 } from "uuid";
 import type { Chat, ChatVaultDescriptor } from "../context/types";
 import {
   chatVault,
@@ -200,6 +201,22 @@ function chatId(chat: Chat): string {
   return String(chat.id);
 }
 
+function isLegacyNumericChatId(id: string): boolean {
+  return /^\d+$/.test(id);
+}
+
+function migrateLegacyChatId(chat: Chat, userId: string): Chat {
+  const id = chatId(chat);
+  if (!isLegacyNumericChatId(id)) return chat;
+
+  // Derive this ID from the account and old ID so retries and other devices
+  // converge on the same replacement while different accounts stay isolated.
+  return {
+    ...chat,
+    id: uuidv5(`openai-ui:legacy-chat:${userId}:${id}`, uuidv5.URL),
+  };
+}
+
 function fingerprint(chat: Chat): string {
   // The `vault` descriptor is local bookkeeping only; it must not influence
   // change detection, otherwise marking a chat as vault-backed would look like
@@ -317,6 +334,9 @@ async function uploadChat(
 ): Promise<void> {
   ensureChatAttachmentIds(chat);
   const id = chatId(chat);
+  if (isLegacyNumericChatId(id) && !cache.owners.has(id)) {
+    throw new Error(`Refusing to create a vault chat with legacy numeric ID ${id}`);
+  }
   // Keys unwrapped from the vault are deliberately non-extractable, so they
   // cannot be wrapped again. Only reuse an extractable key we generated here;
   // otherwise create a fresh one for this upload.
@@ -630,7 +650,20 @@ export async function restoreVaultChats(
 ): Promise<Chat[]> {
   const lazy = options.lazy ?? false;
   const summaries = await chatVault.listChats();
-  const localById = new Map(localChats.map((chat) => [chatId(chat), chat]));
+  const ownedChatIds = new Set(
+    summaries
+      .filter((summary) => summary.ownerId === userKey.userId)
+      .map((summary) => summary.id)
+  );
+  const normalizedLocalChats = localChats.map((chat) => {
+    const id = chatId(chat);
+    return isLegacyNumericChatId(id) && !ownedChatIds.has(id)
+      ? migrateLegacyChatId(chat, userKey.userId)
+      : chat;
+  });
+  const localById = new Map(
+    normalizedLocalChats.map((chat) => [chatId(chat), chat])
+  );
   const restored = new Map<string, Chat>();
 
   for (const summary of summaries) {
@@ -751,15 +784,17 @@ export async function restoreVaultChats(
     );
   }
 
-  const localIds = new Set(localChats.map(chatId));
-  for (const chat of localChats) {
+  const localIds = new Set(normalizedLocalChats.map(chatId));
+  for (const chat of normalizedLocalChats) {
     if (!restored.has(chatId(chat))) {
       if (chat.groupChat) continue;
       await uploadChat(chat, userKey, cache);
     }
   }
 
-  const merged = localChats.map((chat) => restored.get(chatId(chat)) ?? chat);
+  const merged = normalizedLocalChats.map(
+    (chat) => restored.get(chatId(chat)) ?? chat
+  );
   for (const [id, chat] of restored) {
     if (!localIds.has(id)) merged.push(chat);
   }
