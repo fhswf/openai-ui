@@ -303,6 +303,50 @@ async function waitForMcpAuthRefresh(
 }
 
 test.describe("Authentication (fetchAndGetUser)", () => {
+  test("redirects to login when the startup vault key request returns 401", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      localStorage.removeItem("SESSIONS");
+      localStorage.removeItem("CHAT_HISTORY");
+    });
+
+    const loginResponse = page.waitForResponse(
+      (response) =>
+        matchesPath(response.url(), loginPathPattern) &&
+        response.status() === 200
+    );
+
+    await page.route(userEndpointPattern, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockUser),
+      });
+    });
+    await page.route("**/api/zk/keys/me**", async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "Missing authenticated user" }),
+      });
+    });
+    await page.route(loginEndpointPattern, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/html",
+        body: '<html lang=""><body>Login</body></html>',
+      });
+    });
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await loginResponse;
+    await expect(page).toHaveURL(loginEndpointPattern, {
+      timeout: APP_READY_TIMEOUT,
+    });
+    await expect(page.getByText("Login")).toBeVisible();
+  });
+
   test("redirects to login when user endpoint returns 401", async ({
     page,
   }) => {

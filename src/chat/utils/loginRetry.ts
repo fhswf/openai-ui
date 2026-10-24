@@ -1,4 +1,5 @@
 export const LOGIN_RETRY_KEY = "LOGIN_RETRY_PENDING";
+let loginRedirectStarted = false;
 
 export function getLoginUrl(): string {
   const isLocalOrigin =
@@ -70,6 +71,59 @@ export function beginLoginRedirect(options: { retry?: boolean } = {}): string {
     markLoginRetry();
   }
   return getLoginUrl();
+}
+
+export function redirectToLogin(options: { retry?: boolean } = {}): void {
+  if (options.retry) {
+    markLoginRetry();
+  }
+  if (loginRedirectStarted) return;
+  loginRedirectStarted = true;
+
+  const fragment = new URLSearchParams(window.location.hash.slice(1));
+  if (fragment.has("zkShare")) {
+    try {
+      sessionStorage.setItem("pending-zk-chat-share", window.location.hash);
+    } catch (error) {
+      console.warn(
+        "Unable to preserve the chat share link for sign-in:",
+        error
+      );
+    }
+  }
+
+  window.location.assign(getLoginUrl());
+}
+
+export function installUnauthorizedFetchRedirect(): void {
+  const originalFetch = globalThis.fetch.bind(globalThis);
+  globalThis.fetch = async (...args: Parameters<typeof fetch>) => {
+    const response = await originalFetch(...args);
+    const requestUrl =
+      typeof args[0] === "string" || args[0] instanceof URL
+        ? args[0].toString()
+        : args[0].url;
+
+    try {
+      const url = new URL(requestUrl, window.location.href);
+      const isSameOriginApi =
+        url.origin === window.location.origin &&
+        url.pathname.startsWith("/api/") &&
+        !/^\/api\/(?:login|callback|logout)(?:\/|$)/.test(url.pathname);
+
+      if (response.status === 401 && isSameOriginApi) {
+        // OpenAI API requests keep their existing retry-after-login behavior.
+        redirectToLogin({ retry: /^\/api\/v1(?:\/|$)/.test(url.pathname) });
+      }
+    } catch (error) {
+      console.warn(
+        "Unable to check whether an unauthorized request needs login:",
+        error
+      );
+    }
+
+    return response;
+  };
 }
 
 /**
