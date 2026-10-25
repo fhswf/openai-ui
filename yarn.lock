@@ -6630,9 +6630,9 @@ __metadata:
   linkType: hard
 
 "fast-uri@npm:^3.0.1":
-  version: 3.1.7
-  resolution: "fast-uri@npm:3.1.7"
-  checksum: 10c0/ca2baa4bde48fc7322bdc692c6636975943ebe4f6dd97e07d70b14e0ab85af2ff30de90f550f5ec2956684fe208e150d85d6cb5f3c74438c8ac1bf86bd435c13
+  version: 3.1.9
+  resolution: "fast-uri@npm:3.1.9"
+  checksum: 10c0/052757540d8c0bbc16bb124a45b8f5cb5d0932f9b89f019221ee41cdb3cafc1db44b2e809d6b888b87922af3e5560a863124454e9d9193e1fc955887357b5add
   languageName: node
   linkType: hard
 
@@ -8346,14 +8346,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"katex@npm:^0.18.3":
-  version: 0.18.3
-  resolution: "katex@npm:0.18.3"
+"katex@npm:^0.18.4":
+  version: 0.18.4
+  resolution: "katex@npm:0.18.4"
   dependencies:
     commander: "npm:^8.3.0"
   bin:
     katex: cli.js
-  checksum: 10c0/b30cdb9552b5278f16567d207571dbbbe84c7710f10b94e02249e0e10b850073bfc751df16aabe39d78038589e0d9829bf162bd672d9d054a59123f69f44d8c9
+  checksum: 10c0/a8ecf3079c1748c15856b25f4175a98b6fc5d8e7f567afe8dcf4f63673159036fd2c50527621ec338c6144ae8e18a0103ffd820e175165f6659881c9d9a711b9
   languageName: node
   linkType: hard
 
@@ -9711,7 +9711,7 @@ __metadata:
     i18next-http-backend: "npm:^4.0.2"
     jose: "npm:^6.1.3"
     jsdom: "npm:^30.0.1"
-    katex: "npm:^0.18.3"
+    katex: "npm:^0.18.4"
     less: "npm:^4.2.2"
     less-loader: "npm:^11.1.0"
     mini-css-extract-plugin: "npm:^2.7.5"
@@ -12883,9 +12883,9 @@ __metadata:
   linkType: hard
 
 "undici@npm:^8.4.1, undici@npm:^8.9.0":
-  version: 8.11.2
-  resolution: "undici@npm:8.11.2"
-  checksum: 10c0/106f6991178fb7562fd90cdec7993c5f807a9428682306091f0c4b27fc474ec291f868e29972c6252988bf061ad193df943b3b99e775be157a28d92bbb95699d
+  version: 8.12.3
+  resolution: "undici@npm:8.12.3"
+  checksum: 10c0/714919e62b4160eea195fb35c7f5c4907235741e47bfde8a014ac58f6d24df13434e23400d7f48e2c455fd2b259d27f07fce514f04a5b4e99936ba62cbc4bb71
   languageName: node
   linkType: hard
 
