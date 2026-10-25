@@ -98,19 +98,13 @@ export default function action(
 
   const setOptions = ({ type, data }: OptionAction) => {
     console.log("set options: ", type, data);
-    const options = { ...state.options };
-    if (type === OptionActionType.OPENAI) {
-      options[type] = { ...options[type], ...data };
-    } else if (type === OptionActionType.GENERAL) {
-      options[type] = { ...options[type], ...data };
-      if (data.language) {
-        i18next.changeLanguage(data.language);
-      }
-    } else if (type === OptionActionType.ACCOUNT) {
-      options[type] = { ...options[type], ...data };
+    if (type === OptionActionType.GENERAL && data.language) {
+      i18next.changeLanguage(data.language);
     }
-    console.log("set options: ", options);
-    setState({ options });
+    dispatch({
+      type: GlobalActionType.SET_OPTIONS,
+      payload: { type, data },
+    });
   };
 
   const startChat = (

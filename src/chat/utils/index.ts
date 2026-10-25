@@ -19,7 +19,7 @@ import {
   isMcpAuthorizationIncomplete,
   normalizeMcpAuthConfig,
 } from "../hooks/useMcpAuth";
-import { getLoginUrl } from "./loginRetry";
+import { redirectToLogin } from "./loginRetry";
 
 export * from "./options";
 export * from "./attachments";
@@ -127,17 +127,8 @@ export function fetchAndGetUser(
     .then((res) => {
       console.log("getting user: ", res.status);
       if (res.status === 401) {
-        const fragment = new URLSearchParams(window.location.hash.slice(1));
-        if (fragment.has("zkShare")) {
-          try {
-            sessionStorage.setItem("pending-zk-chat-share", window.location.hash);
-          } catch (error) {
-            console.warn("Unable to preserve the chat share link for sign-in:", error);
-          }
-        }
-        const loginUrl = getLoginUrl();
-        console.log("unauthorized, redirecting to login: %s", loginUrl);
-        window.location.assign(loginUrl);
+        console.log("unauthorized, redirecting to login");
+        redirectToLogin();
         throw new Error("unauthorized");
       }
 
