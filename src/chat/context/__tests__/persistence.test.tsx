@@ -173,7 +173,6 @@ describe("ChatProvider draft persistence", () => {
         },
         key,
         onEditTool: vi.fn(),
-        openai: latest.options.openai,
         setOptions: latest.setOptions,
         tool,
       });
@@ -181,9 +180,9 @@ describe("ChatProvider draft persistence", () => {
 
     expect(latest.options.openai.toolsEnabled.has(key)).toBe(true);
     expect(
-      vi.mocked(saveState).mock.lastCall?.[0].options.openai.toolsEnabled.has(
-        key
-      )
+      vi
+        .mocked(saveState)
+        .mock.lastCall?.[0].options.openai.toolsEnabled.has(key)
     ).toBe(true);
   });
 

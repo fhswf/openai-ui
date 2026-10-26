@@ -38,9 +38,11 @@ describe("updateToolSelection", () => {
       type: OptionActionType.OPENAI,
       data: { toolsEnabled: new Set(["Web Search", serverKey]) },
     });
-    expect(setOptions.mock.lastCall?.[0].data.toolsEnabled).not.toBe(
-      toolsEnabled
-    );
+    const action = setOptions.mock.lastCall?.[0];
+    expect(action?.type).toBe(OptionActionType.OPENAI);
+    if (action?.type === OptionActionType.OPENAI) {
+      expect(action.data.toolsEnabled).not.toBe(toolsEnabled);
+    }
     expect(onEditTool).not.toHaveBeenCalled();
   });
 

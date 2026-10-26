@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import {
   GlobalActions,
   McpAuthConfig,
+  OpenAIOptions,
   OptionActionType,
   Tool,
 } from "../context/types";

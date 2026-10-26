@@ -43,6 +43,29 @@ jobs:
         path: dist/
         retention-days: 1
 
+  unit-tests:
+    name: Unit tests
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v6
+    - run: corepack enable && corepack prepare yarn@stable --activate
+    - uses: actions/setup-node@v5
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+        cache-dependency-path: '**/yarn.lock'
+    - name: Install dependencies
+      run: yarn install --immutable
+    - name: Run MCP state regression tests
+      run: >-
+        yarn test:unit
+        src/chat/utils/__tests__/mcpServiceHelpers.test.ts
+        src/chat/utils/__tests__/index.test.ts
+        src/chat/context/__tests__/persistence.test.tsx
+
   playwright-browsers:
     name: Install Playwright browsers
     timeout-minutes: 20
