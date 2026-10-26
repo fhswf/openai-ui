@@ -410,6 +410,44 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           vector_store_base_url: "Document collections API URL",
           vector_store_base_url_help:
             "Endpoint of the vector store service (litellm-pgvector) that stores your document collections and files.",
+          vector_store_chunking_title: "Splitting of new files",
+          vector_store_chunking_granularity: "Granularity",
+          vector_store_chunking_granularity_help:
+            "How finely new files are split into sections.",
+          vector_store_chunking_preview: "How a document is split",
+          vector_store_chunking_precise: "Precise",
+          vector_store_chunking_precise_help:
+            "For vocabulary, FAQs, regulations and other short sections.",
+          vector_store_chunking_balanced: "Balanced",
+          vector_store_chunking_balanced_help: "Default. Suits most documents.",
+          vector_store_chunking_context: "More context",
+          vector_store_chunking_context_help:
+            "For lecture notes, essays and long derivations.",
+          vector_store_chunking_custom: "Custom size ({{size}})",
+          vector_store_chunking_custom_title: "Custom section size",
+          vector_store_chunking_custom_text:
+            "New files are split into sections of up to {{size}} tokens. Choose a level to return to a preset.",
+          vector_store_chunking_tokens: "tokens",
+          vector_store_chunking_new_files_only:
+            "Applies only to files you upload from now on. Files already in the collection stay as they are.",
+          vector_store_chunking_advanced: "Advanced",
+          vector_store_chunking_custom_label: "Exact section size",
+          vector_store_chunking_custom_help:
+            "In tokens (word pieces), from {{min}} to {{max}}. Paragraphs and tables are never split, so a section can be larger.",
+          vector_store_chunking_apply: "Apply",
+          vector_store_chunking_error_empty: "Please enter a size.",
+          vector_store_chunking_error_not_integer:
+            "Please enter a whole number.",
+          vector_store_chunking_error_out_of_range:
+            "Please enter a number from {{min}} to {{max}}.",
+          vector_store_chunking_save_error: "Could not save the setting",
+          vector_store_file_chunking: "Split: {{name}}",
+          vector_store_chunking_ask_title: "How should these files be split?",
+          vector_store_chunking_ask_upload: "Upload",
+          vector_store_chunking_ask_setting:
+            "Ask how to split files on every upload",
+          vector_store_chunking_ask_setting_help:
+            "Otherwise the setting of the collection is used.",
           "MCP Services": "MCP Services",
           mcp_approval_request: "MCP Approval Request",
           mcp_approval_request_description:
@@ -996,6 +1034,47 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           vector_store_base_url: "API-URL für Dokumentensammlungen",
           vector_store_base_url_help:
             "Endpunkt des Vector-Store-Dienstes (litellm-pgvector), in dem Ihre Dokumentensammlungen und Dateien gespeichert werden.",
+          vector_store_chunking_title: "Aufteilung neuer Dateien",
+          vector_store_chunking_granularity: "Granularität",
+          vector_store_chunking_granularity_help:
+            "Wie stark neue Dateien in Abschnitte geteilt werden.",
+          vector_store_chunking_preview: "So wird ein Dokument aufgeteilt",
+          vector_store_chunking_precise: "Präzise",
+          vector_store_chunking_precise_help:
+            "Für Vokabular, FAQs, Ordnungen und andere kurze Abschnitte.",
+          vector_store_chunking_balanced: "Ausgewogen",
+          vector_store_chunking_balanced_help:
+            "Standard. Passt für die meisten Dokumente.",
+          vector_store_chunking_context: "Viel Zusammenhang",
+          vector_store_chunking_context_help:
+            "Für Skripte, Aufsätze und lange Herleitungen.",
+          vector_store_chunking_custom: "Eigene Größe ({{size}})",
+          vector_store_chunking_custom_title: "Eigene Abschnittsgröße",
+          vector_store_chunking_custom_text:
+            "Neue Dateien werden in Abschnitte mit bis zu {{size}} Tokens aufgeteilt. Wählen Sie eine Stufe, um zur Voreinstellung zurückzukehren.",
+          vector_store_chunking_tokens: "Tokens",
+          vector_store_chunking_new_files_only:
+            "Gilt nur für Dateien, die Sie ab jetzt hochladen. Bereits vorhandene Dateien bleiben unverändert.",
+          vector_store_chunking_advanced: "Erweitert",
+          vector_store_chunking_custom_label: "Genaue Abschnittsgröße",
+          vector_store_chunking_custom_help:
+            "In Tokens (Wortteilen), von {{min}} bis {{max}}. Absätze und Tabellen werden nie geteilt, ein Abschnitt kann daher größer werden.",
+          vector_store_chunking_apply: "Übernehmen",
+          vector_store_chunking_error_empty: "Bitte geben Sie eine Größe ein.",
+          vector_store_chunking_error_not_integer:
+            "Bitte geben Sie eine ganze Zahl ein.",
+          vector_store_chunking_error_out_of_range:
+            "Bitte geben Sie eine Zahl von {{min}} bis {{max}} ein.",
+          vector_store_chunking_save_error:
+            "Einstellung konnte nicht gespeichert werden",
+          vector_store_file_chunking: "Aufteilung: {{name}}",
+          vector_store_chunking_ask_title:
+            "Wie sollen diese Dateien aufgeteilt werden?",
+          vector_store_chunking_ask_upload: "Hochladen",
+          vector_store_chunking_ask_setting:
+            "Bei jedem Upload nach der Aufteilung fragen",
+          vector_store_chunking_ask_setting_help:
+            "Sonst gilt die Einstellung der Sammlung.",
           organization_id: "Organisations-ID",
           organization_id_help:
             "Hier können Sie eine eigene Organisations-ID eingeben.",
