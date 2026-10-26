@@ -96,14 +96,17 @@ export default function action(
     });
   };
 
-  const setOptions = ({ type, data }: OptionAction) => {
-    console.log("set options: ", type, data);
-    if (type === OptionActionType.GENERAL && data.language) {
-      i18next.changeLanguage(data.language);
+  const setOptions = (optionAction: OptionAction) => {
+    console.log("set options: ", optionAction.type, optionAction.data);
+    if (
+      optionAction.type === OptionActionType.GENERAL &&
+      optionAction.data.language
+    ) {
+      i18next.changeLanguage(optionAction.data.language);
     }
     dispatch({
       type: GlobalActionType.SET_OPTIONS,
-      payload: { type, data },
+      payload: optionAction,
     });
   };
 
