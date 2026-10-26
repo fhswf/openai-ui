@@ -6,6 +6,7 @@ import {
   mockResponsesEndpoint,
   mockUserEndpoint,
 } from "../testHelpers";
+import { MockVectorStoreService } from "./vectorStoresMock";
 
 const wcagTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
@@ -96,6 +97,57 @@ test.describe("Accessibility", () => {
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
   });
+
+  for (const theme of ["light", "dark"] as const) {
+    test(`document splitting settings have no WCAG 2.1 A/AA violations in ${theme} theme`, async ({
+      page,
+      isMobile,
+    }) => {
+      test.skip(isMobile, "Uses the desktop toolbar layout");
+      const service = new MockVectorStoreService();
+      const store = service.addStore("Skript");
+      await page.route(/pgvector\.fh-swf\.cloud/, (route) =>
+        service.handle(route)
+      );
+      await setTheme(page, theme);
+
+      await page.getByTestId("chat-options-btn").click();
+      await page.getByTestId("documents-menu-trigger").hover();
+      await page.getByTestId("vector-stores-manage").click();
+      await page
+        .getByTestId(`vector-store-${store.id}`)
+        .getByRole("button", { name: /Dateien anzeigen|Show files/ })
+        .click();
+
+      const toggle = page.getByTestId(
+        `vector-store-chunking-toggle-${store.id}`
+      );
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      await expect(
+        page.getByRole("radiogroup", {
+          name: /Aufteilung neuer Dateien|Splitting of new files/,
+        })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("radio", { name: /Präzise|Precise/ })
+      ).toHaveCount(1);
+
+      await page.getByTestId("chunking-advanced-toggle").click();
+      const input = page.getByTestId("chunking-custom-input");
+      await expect(input).toHaveAccessibleName(
+        /Genaue Abschnittsgröße|Exact section size/
+      );
+      await input.fill("99");
+      await page.getByTestId("chunking-custom-apply").click();
+      await expect(input).toHaveAccessibleDescription(
+        /Bitte geben Sie eine Zahl|Please enter a number/
+      );
+
+      await expectNoWcagViolations(page);
+    });
+  }
 
   test("chat view and about dialog have no WCAG 2.1 A/AA violations in dark theme", async ({
     page,

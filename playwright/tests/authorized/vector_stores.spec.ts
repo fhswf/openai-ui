@@ -49,6 +49,14 @@ async function expandStore(page: Page, id: string) {
   await expect(page.getByTestId(`vector-store-dropzone-${id}`)).toBeVisible();
 }
 
+async function uploadMarkdown(page: Page, id: string, name: string) {
+  await page.getByTestId(`vector-store-upload-${id}`).setInputFiles({
+    name,
+    mimeType: "text/markdown",
+    buffer: Buffer.from("# Notes"),
+  });
+}
+
 test.describe("Document collections (vector stores)", () => {
   let service: MockVectorStoreService;
 
@@ -180,6 +188,73 @@ test.describe("Document collections (vector stores)", () => {
       page.getByText("Dateityp wird nicht unterstützt")
     ).toBeVisible();
     expect(service.files.size).toBe(0);
+  });
+
+  test("uploads new files with the collection's splitting setting", async ({
+    page,
+  }) => {
+    const store = service.addStore("Skript");
+    await openVectorStoresDialog(page);
+    await expandStore(page, store.id);
+    const setting = page.getByTestId(`vector-store-chunking-${store.id}`);
+    await expect(setting).toContainText(/Ausgewogen|Balanced/);
+
+    // Without a choice, the attach request stays as before.
+    await uploadMarkdown(page, store.id, "notes.md");
+    await expect.poll(() => service.attachRequests.length).toBe(1);
+    expect(service.attachRequests[0]).not.toHaveProperty("chunking_strategy");
+
+    await page.getByTestId(`vector-store-chunking-toggle-${store.id}`).click();
+    await page.getByTestId("chunking-preset-precise").click();
+    await expect.poll(() => store.metadata.chunking).toBe("precise");
+    expect(service.requests).toContain(`POST /vector_stores/${store.id}/`);
+    await expect(setting).toContainText(/Präzise|Precise/);
+
+    await uploadMarkdown(page, store.id, "glossar.md");
+    await expect.poll(() => service.attachRequests.length).toBe(2);
+    expect(service.attachRequests[1].chunking_strategy).toEqual({
+      type: "semantic",
+      semantic: { max_chunk_size_tokens: 400 },
+    });
+  });
+
+  test("validates and stores a custom section size", async ({ page }) => {
+    const store = service.addStore("Skript", [], { chunking: "context" });
+    await openVectorStoresDialog(page);
+    await expandStore(page, store.id);
+    const setting = page.getByTestId(`vector-store-chunking-${store.id}`);
+    await expect(setting).toContainText(/Viel Zusammenhang|More context/);
+
+    await page.getByTestId(`vector-store-chunking-toggle-${store.id}`).click();
+    await page.getByTestId("chunking-advanced-toggle").click();
+    const input = page.getByTestId("chunking-custom-input");
+
+    // An invalid size shows an error and is not stored.
+    await input.fill("99");
+    await page.getByTestId("chunking-custom-apply").click();
+    await expect(input).toHaveAttribute("aria-invalid", "true");
+    await expect(
+      page.getByText(/Bitte geben Sie eine Zahl|Please enter a number/)
+    ).toBeVisible();
+    expect(store.metadata).toEqual({ chunking: "context" });
+
+    await input.fill("1234");
+    await input.press("Enter");
+    await expect.poll(() => store.metadata.chunking).toBe("1234");
+    await expect(setting).toContainText("1234");
+    await expect(input).not.toHaveAttribute("aria-invalid", "true");
+    // No preset is selected while a custom size is active.
+    await expect(page.getByTestId("chunking-preset-context")).toHaveAttribute(
+      "data-state",
+      "unchecked"
+    );
+
+    await uploadMarkdown(page, store.id, "skript.md");
+    await expect.poll(() => service.attachRequests.length).toBe(1);
+    expect(service.attachRequests[0].chunking_strategy).toEqual({
+      type: "semantic",
+      semantic: { max_chunk_size_tokens: 1234 },
+    });
   });
 
   test("searches active collections through a client-side function tool", async ({
