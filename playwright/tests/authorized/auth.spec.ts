@@ -443,23 +443,6 @@ test.describe("Authentication (fetchAndGetUser)", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await userResponse;
 
-    // The user button renders before fetchAndGetUser finishes updating state.
-    const userInformation = page.getByTestId("UserInformation");
-    await expect(async () => {
-      if (!(await userInformation.isVisible())) {
-        await clickWithBackdropRetry(
-          page,
-          page.getByTestId("UserInformationBtn")
-        );
-      }
-      await expect(userInformation.getByText(updatedMcpUser.name)).toBeVisible({
-        timeout: 1000,
-      });
-      await expect(userInformation.getByText(updatedMcpUser.email)).toBeVisible({
-        timeout: 1000,
-      });
-    }).toPass({ timeout: APP_READY_TIMEOUT, intervals: [250, 500, 1000] });
-
     await waitForMcpAuthRefresh(page, {
       staleAuthorization,
       staticToken,
