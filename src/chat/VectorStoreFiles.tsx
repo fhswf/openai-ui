@@ -1,21 +1,26 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Badge,
+  Box,
   Button,
   HStack,
   IconButton,
+  Popover,
   Spinner,
   Stack,
   Text,
 } from "@chakra-ui/react";
 import type { VectorStore } from "openai/resources/vector-stores/vector-stores.mjs";
 import { useTranslation } from "react-i18next";
+import { LuChevronDown } from "react-icons/lu";
 import { MdDelete, MdOutlineFileUpload } from "react-icons/md";
+import { ChunkingSettings, chunkingChoiceName } from "./ChunkingSettings";
 import { Options } from "./context/types";
 import {
   VectorStoreFileWithName,
   deleteFile,
   listVectorStoreFiles,
+  updateVectorStoreMetadata,
   uploadFileToVectorStore,
 } from "./service/vectorStores";
 import {
@@ -23,6 +28,12 @@ import {
   extractFiles,
   isInputFile,
 } from "./utils/attachments";
+import {
+  ChunkingChoice,
+  chunkingChoiceFromMetadata,
+  chunkingStrategyFor,
+  metadataWithChunkingChoice,
+} from "./utils/chunking";
 import {
   showVectorStoreError,
   withVectorStoreFileMimeType,
@@ -44,6 +55,79 @@ function FileStatusBadge({ status }: { status: string }) {
   );
 }
 
+interface ChunkingSettingRowProps {
+  onChange: (choice: ChunkingChoice) => void;
+  storeId: string;
+  value: ChunkingChoice;
+}
+
+function ChunkingSettingRow({
+  onChange,
+  storeId,
+  value,
+}: ChunkingSettingRowProps) {
+  const { t } = useTranslation();
+  const name = chunkingChoiceName(t, value);
+  return (
+    <HStack gap={2.5} flexWrap="wrap" justifyContent="flex-end">
+      <Text fontSize="xs" color="fg.muted">
+        {t("vector_store_chunking_title")}
+      </Text>
+      {/*
+       * Not portalled: the dialog's focus trap would otherwise block the
+       * inputs in the popover.
+       */}
+      <Popover.Root
+        lazyMount
+        unmountOnExit
+        positioning={{ placement: "bottom-end", fitViewport: true }}
+      >
+        <Popover.Trigger asChild>
+          <Button
+            variant="outline"
+            size="xs"
+            borderRadius="full"
+            gap={1.5}
+            // The visible text alone ("Precise") lacks context for screen readers.
+            aria-label={`${t("vector_store_chunking_title")}: ${name}`}
+            css={{
+              "& [data-chevron]": { transition: "transform 0.16s" },
+              "&[data-state=open] [data-chevron]": {
+                transform: "rotate(180deg)",
+              },
+            }}
+            data-testid={`vector-store-chunking-toggle-${storeId}`}
+          >
+            <Box
+              width="7px"
+              height="7px"
+              borderRadius="full"
+              backgroundColor="blue.solid"
+            />
+            <span data-testid={`vector-store-chunking-${storeId}`}>{name}</span>
+            <Box as="span" data-chevron="" color="fg.muted">
+              <LuChevronDown />
+            </Box>
+          </Button>
+        </Popover.Trigger>
+        <Popover.Positioner>
+          <Popover.Content
+            width="340px"
+            maxWidth="calc(100vw - 32px)"
+            // Scrolls instead of leaving the window once "Advanced" is open.
+            maxHeight="var(--available-height)"
+            overflowY="auto"
+            padding={4}
+            borderRadius="xl"
+          >
+            <ChunkingSettings value={value} onChange={onChange} />
+          </Popover.Content>
+        </Popover.Positioner>
+      </Popover.Root>
+    </HStack>
+  );
+}
+
 interface VectorStoreFilesProps {
   options: Options;
   onFilesChanged: VoidFunction;
@@ -60,6 +144,10 @@ export function VectorStoreFiles({
   const [uploading, setUploading] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // The store's metadata is the source of truth; this copy updates at once.
+  const [chunking, setChunking] = useState(() =>
+    chunkingChoiceFromMetadata(store.metadata)
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadFiles = useCallback(async () => {
@@ -86,7 +174,8 @@ export function VectorStoreFiles({
         const result = await uploadFileToVectorStore(
           options,
           store.id,
-          withVectorStoreFileMimeType(file)
+          withVectorStoreFileMimeType(file),
+          chunkingStrategyFor(chunking)
         );
         if (result.status === "failed") {
           showVectorStoreError(
@@ -104,6 +193,24 @@ export function VectorStoreFiles({
       }
       await loadFiles();
       onFilesChanged();
+    }
+  };
+
+  const handleChunkingChange = async (choice: ChunkingChoice) => {
+    const previous = chunking;
+    setChunking(choice);
+    try {
+      // The service replaces the metadata, so send it complete.
+      await updateVectorStoreMetadata(
+        options,
+        store.id,
+        metadataWithChunkingChoice(store.metadata, choice)
+      );
+      // The update response has no metadata, so reload the stores.
+      onFilesChanged();
+    } catch (error) {
+      setChunking(previous);
+      showVectorStoreError(t("vector_store_chunking_save_error"), error);
     }
   };
 
@@ -219,6 +326,11 @@ export function VectorStoreFiles({
           <FileStatusBadge status="in_progress" />
         </HStack>
       ))}
+      <ChunkingSettingRow
+        storeId={store.id}
+        value={chunking}
+        onChange={(choice) => void handleChunkingChange(choice)}
+      />
       <HStack>
         <input
           type="file"
