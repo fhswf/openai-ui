@@ -54,6 +54,15 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.59.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.58.0...openai-ui-v0.59.0) (2026-10-25)
+
+
+### Features
+
+* Implement redirectToLogin function and update login handling in various components ([1bb8ebb](https://github.com/fhswf/openai-ui/commit/1bb8ebb8c1f0049048de48c8de88fb26efa966a7))
+* Implement redirectToLogin function and update login handling in… ([4df8806](https://github.com/fhswf/openai-ui/commit/4df880621f97214485665971ab472405b06adc4e))
+* Update user identity handling based on affiliations and enhance option setting actions ([6fd7894](https://github.com/fhswf/openai-ui/commit/6fd789492a446b38399273ea887b2de4df65d94e))
+
 ## [0.58.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.57.0...openai-ui-v0.58.0) (2026-10-24)
 
 
