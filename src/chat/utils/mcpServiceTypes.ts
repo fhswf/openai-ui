@@ -4,7 +4,6 @@ import type { TFunction } from "i18next";
 import {
   GlobalActions,
   McpAuthConfig,
-  OpenAIOptions,
   Tool,
 } from "../context/types";
 
@@ -66,7 +65,6 @@ export interface SaveMcpServiceArgs {
   editingKey: string | null;
   form: McpToolFormState;
   getAuthorization: McpAuthorizationGetter;
-  openai: OpenAIOptions;
   setEditingKey: React.Dispatch<React.SetStateAction<string | null>>;
   setOptions: GlobalActions["setOptions"];
   t: TFunction;
@@ -76,7 +74,6 @@ export interface PersistMcpServiceArgs {
   collections: McpToolCollections;
   editingKey: string | null;
   form: McpToolFormState;
-  openai: OpenAIOptions;
   resultAuthorization?: string;
   setEditingKey: React.Dispatch<React.SetStateAction<string | null>>;
   setOptions: GlobalActions["setOptions"];
@@ -85,12 +82,10 @@ export interface PersistMcpServiceArgs {
 export interface DeleteMcpServiceArgs {
   collections: McpToolCollections;
   key: string;
-  openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
 }
 
 export interface DeleteMcpServiceHandlerArgs extends McpToolCollections {
-  openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
 }
 
@@ -98,7 +93,6 @@ export interface SaveMcpServiceHandlerArgs extends McpToolCollections {
   editingKey: string | null;
   form: McpToolFormState;
   getAuthorization: McpAuthorizationGetter;
-  openai: OpenAIOptions;
   setEditingKey: React.Dispatch<React.SetStateAction<string | null>>;
   setOptions: GlobalActions["setOptions"];
   t: TFunction;
@@ -115,7 +109,6 @@ export interface ToolSelectionArgs {
   collections: McpToolCollections;
   key: string;
   onEditTool: React.Dispatch<EditToolRequest>;
-  openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
   tool: Tool;
 }
@@ -128,6 +121,5 @@ export interface EditToolHandlerArgs extends McpEditorSetters {
 export interface ToolChangeHandlerArgs {
   collections: McpToolCollections;
   onEditTool: React.Dispatch<EditToolRequest>;
-  openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
 }
