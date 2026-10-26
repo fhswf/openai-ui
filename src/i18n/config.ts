@@ -442,12 +442,6 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "Please enter a number from {{min}} to {{max}}.",
           vector_store_chunking_save_error: "Could not save the setting",
           vector_store_file_chunking: "Split: {{name}}",
-          vector_store_chunking_ask_title: "How should these files be split?",
-          vector_store_chunking_ask_upload: "Upload",
-          vector_store_chunking_ask_setting:
-            "Ask how to split files on every upload",
-          vector_store_chunking_ask_setting_help:
-            "Otherwise the setting of the collection is used.",
           "MCP Services": "MCP Services",
           mcp_approval_request: "MCP Approval Request",
           mcp_approval_request_description:
@@ -1068,13 +1062,6 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           vector_store_chunking_save_error:
             "Einstellung konnte nicht gespeichert werden",
           vector_store_file_chunking: "Aufteilung: {{name}}",
-          vector_store_chunking_ask_title:
-            "Wie sollen diese Dateien aufgeteilt werden?",
-          vector_store_chunking_ask_upload: "Hochladen",
-          vector_store_chunking_ask_setting:
-            "Bei jedem Upload nach der Aufteilung fragen",
-          vector_store_chunking_ask_setting_help:
-            "Sonst gilt die Einstellung der Sammlung.",
           organization_id: "Organisations-ID",
           organization_id_help:
             "Hier können Sie eine eigene Organisations-ID eingeben.",
