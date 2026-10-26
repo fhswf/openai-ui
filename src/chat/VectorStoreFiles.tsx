@@ -31,6 +31,7 @@ import {
 import {
   ChunkingChoice,
   chunkingChoiceFromMetadata,
+  chunkingChoiceFromStrategy,
   chunkingStrategyFor,
   metadataWithChunkingChoice,
 } from "./utils/chunking";
@@ -52,6 +53,19 @@ function FileStatusBadge({ status }: { status: string }) {
     <Badge colorPalette={FILE_STATUS_COLORS[status] ?? "gray"} size="sm">
       {t(`vector_store_file_status_${status}`)}
     </Badge>
+  );
+}
+
+function FileChunkingLabel({ strategy }: { strategy: unknown }) {
+  const { t } = useTranslation();
+  const choice = chunkingChoiceFromStrategy(strategy);
+  if (!choice) return null;
+  return (
+    <Text fontSize="xs" color="fg.muted" flexShrink={0}>
+      {t("vector_store_file_chunking", {
+        name: chunkingChoiceName(t, choice),
+      })}
+    </Text>
   );
 }
 
@@ -279,12 +293,17 @@ export function VectorStoreFiles({
         </Text>
       )}
       {files?.map((file) => (
-        <HStack key={file.id} justifyContent="space-between">
+        <HStack
+          key={file.id}
+          justifyContent="space-between"
+          data-testid={`vector-store-file-${file.id}`}
+        >
           <HStack minWidth={0}>
             <Text fontSize="sm" truncate>
               {file.filename ?? file.id}
             </Text>
             <FileStatusBadge status={file.status} />
+            <FileChunkingLabel strategy={file.chunking_strategy} />
           </HStack>
           {confirmDeleteId === file.id ? (
             <HStack gap={1} flexShrink={0}>
