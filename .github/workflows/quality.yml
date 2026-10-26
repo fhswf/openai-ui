@@ -65,6 +65,16 @@ jobs:
         src/chat/utils/__tests__/mcpServiceHelpers.test.ts
         src/chat/utils/__tests__/index.test.ts
         src/chat/context/__tests__/persistence.test.tsx
+        --reporter=default
+        --reporter=json
+        --outputFile=unit-test-results.json
+    - uses: actions/upload-artifact@v7
+      if: ${{ always() }}
+      with:
+        name: unit-test-results
+        path: unit-test-results.json
+        if-no-files-found: ignore
+        retention-days: 30
 
   playwright-browsers:
     name: Install Playwright browsers
@@ -303,11 +313,12 @@ jobs:
 
   quality-summary:
     name: Quality Summary
-    needs: [playwright-chromium, playwright-smoke]
+    needs: [unit-tests, playwright-chromium, playwright-smoke]
     runs-on: ubuntu-24.04
     if: ${{ always() && !cancelled() }}
     permissions:
       contents: read
+      issues: write
       pull-requests: write
     steps:
     - uses: actions/checkout@v5
@@ -322,6 +333,7 @@ jobs:
     - name: Install dependencies
       run: yarn install --immutable
     - uses: actions/download-artifact@v8
+      continue-on-error: true
       with:
         pattern: nyc-output-*
         path: .nyc_output/
@@ -335,73 +347,188 @@ jobs:
         fi
     - uses: actions/download-artifact@v8
       if: github.event_name == 'pull_request'
+      continue-on-error: true
       with:
         pattern: playwright-results-*
         path: playwright-results/
         merge-multiple: true
+    - name: Download unit-test results
+      if: github.event_name == 'pull_request'
+      uses: actions/download-artifact@v8
+      continue-on-error: true
+      with:
+        name: unit-test-results
+        path: unit-test-results/
     - name: Comment Test Report on PR
       uses: actions/github-script@v7
       if: github.event_name == 'pull_request'
+      env:
+        UNIT_TEST_STATUS: ${{ needs.unit-tests.result }}
+        PLAYWRIGHT_CHROMIUM_STATUS: ${{ needs.playwright-chromium.result }}
+        PLAYWRIGHT_SMOKE_STATUS: ${{ needs.playwright-smoke.result }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       with:
         script: |
           const fs = require('fs');
           const path = require('path');
-          const resultsDir = 'playwright-results';
-          if (!fs.existsSync(resultsDir)) {
-            console.log('No Playwright result artifacts found.');
-            return;
-          }
-
-          const totals = {
+          const unitResultsDir = 'unit-test-results';
+          const playwrightResultsDir = 'playwright-results';
+          const unitTotals = {
+            passed: 0,
+            failed: 0,
+            skipped: 0,
+            total: 0,
+            failedSuites: 0,
+            failures: [],
+          };
+          const playwrightTotals = {
             expected: 0,
             unexpected: 0,
             flaky: 0,
             skipped: 0,
             duration: 0,
-            failed: new Set(),
+            failures: [],
           };
 
-          for (const file of fs.readdirSync(resultsDir).filter((name) => name.endsWith('.json'))) {
-            const report = JSON.parse(fs.readFileSync(path.join(resultsDir, file), 'utf8'));
-            const stats = report.stats || {};
-            totals.expected += stats.expected || 0;
-            totals.unexpected += stats.unexpected || 0;
-            totals.flaky += stats.flaky || 0;
-            totals.skipped += stats.skipped || 0;
-            totals.duration += stats.duration || 0;
+          if (fs.existsSync(unitResultsDir)) {
+            for (const file of fs.readdirSync(unitResultsDir).filter((name) => name.endsWith('.json'))) {
+              const report = JSON.parse(fs.readFileSync(path.join(unitResultsDir, file), 'utf8'));
+              unitTotals.passed += report.numPassedTests || 0;
+              unitTotals.failed += report.numFailedTests || 0;
+              unitTotals.skipped += (report.numPendingTests || 0) + (report.numTodoTests || 0);
+              unitTotals.total += report.numTotalTests || 0;
+              unitTotals.failedSuites += report.numFailedTestSuites || 0;
 
-            for (const suite of report.suites || []) {
-              for (const spec of suite.specs || []) {
-                for (const test of spec.tests || []) {
-                  if ((test.outcome || test.expectedStatus) === 'unexpected') {
-                    totals.failed.add(spec.title);
+              for (const testFile of report.testResults || []) {
+                let foundFailedAssertion = false;
+                for (const assertion of testFile.assertionResults || []) {
+                  if (assertion.status === 'failed') {
+                    foundFailedAssertion = true;
+                    unitTotals.failures.push({
+                      name: assertion.fullName || assertion.title || testFile.name,
+                      file: path.relative(process.cwd(), testFile.name),
+                      error: (assertion.failureMessages || []).join('\n'),
+                    });
                   }
+                }
+                if (testFile.status === 'failed' && !foundFailedAssertion) {
+                  unitTotals.failures.push({
+                    name: testFile.name,
+                    file: path.relative(process.cwd(), testFile.name),
+                    error: testFile.message || 'Test file failed before assertions ran.',
+                  });
                 }
               }
             }
           }
 
-          let body = `### Playwright Test Results\n\n`;
-          body += `- **Passed:** ${totals.expected}\n`;
-          body += `- **Failed:** ${totals.unexpected}\n`;
-          body += `- **Flaky:** ${totals.flaky}\n`;
-          body += `- **Skipped:** ${totals.skipped}\n`;
-          body += `- **Total Runtime Across Jobs:** ${(totals.duration / 1000).toFixed(1)}s\n\n`;
-
-          if (totals.failed.size > 0) {
-            body += `<details><summary>Failed Tests Details</summary>\n\n`;
-            for (const title of totals.failed) {
-              body += `- ${title}\n`;
+          function collectPlaywrightFailures(suite, parents = [], parentFile = '') {
+            const suiteTitles = suite.title ? [...parents, suite.title] : parents;
+            const suiteFile = suite.file || parentFile;
+            for (const spec of suite.specs || []) {
+              for (const test of spec.tests || []) {
+                if (test.outcome !== 'unexpected') continue;
+                const failedResults = (test.results || []).filter((result) =>
+                  ['failed', 'timedOut', 'interrupted'].includes(result.status)
+                );
+                const errors = failedResults.flatMap((result) =>
+                  (result.errors || (result.error ? [result.error] : [])).map((error) =>
+                    [error.message, error.stack].filter(Boolean).join('\n')
+                  )
+                );
+                playwrightTotals.failures.push({
+                  name: [...suiteTitles, spec.title, test.projectName].filter(Boolean).join(' / '),
+                  file: spec.file || suiteFile,
+                  line: spec.line || spec.location?.line,
+                  error: errors.join('\n\n') || 'No error details were included in the Playwright JSON report.',
+                });
+              }
             }
+            for (const child of suite.suites || []) {
+              collectPlaywrightFailures(child, suiteTitles, suiteFile);
+            }
+          }
+
+          let playwrightReportCount = 0;
+          if (fs.existsSync(playwrightResultsDir)) {
+            for (const file of fs.readdirSync(playwrightResultsDir).filter((name) => name.endsWith('.json'))) {
+              const report = JSON.parse(fs.readFileSync(path.join(playwrightResultsDir, file), 'utf8'));
+              const stats = report.stats || {};
+              playwrightReportCount++;
+              playwrightTotals.expected += stats.expected || 0;
+              playwrightTotals.unexpected += stats.unexpected || 0;
+              playwrightTotals.flaky += stats.flaky || 0;
+              playwrightTotals.skipped += stats.skipped || 0;
+              playwrightTotals.duration += stats.duration || 0;
+              for (const suite of report.suites || []) {
+                collectPlaywrightFailures(suite);
+              }
+            }
+          }
+
+          const unitStatus = process.env.UNIT_TEST_STATUS || 'unknown';
+          const chromiumStatus = process.env.PLAYWRIGHT_CHROMIUM_STATUS || 'unknown';
+          const smokeStatus = process.env.PLAYWRIGHT_SMOKE_STATUS || 'unknown';
+          let body = `### CI Test Results\n\n`;
+          body += `- **Unit tests (MCP state regression):** ${unitStatus} — ${unitTotals.passed} passed, ${unitTotals.failed} failed, ${unitTotals.skipped} skipped (${unitTotals.total} total; ${unitTotals.failedSuites} failed suites)\n`;
+          body += `- **Playwright Chromium:** ${chromiumStatus}\n`;
+          body += `- **Playwright cross-browser smoke:** ${smokeStatus} — ${playwrightTotals.expected} passed, ${playwrightTotals.unexpected} failed, ${playwrightTotals.flaky} flaky, ${playwrightTotals.skipped} skipped\n`;
+          body += `- **Playwright runtime across jobs:** ${(playwrightTotals.duration / 1000).toFixed(1)}s\n\n`;
+          if (unitStatus !== 'success' && unitTotals.total === 0) {
+            body += `Unit-test details were unavailable in the uploaded JSON report; see the workflow run for the failing step output.\n\n`;
+          }
+          if (playwrightReportCount === 0) {
+            body += `Playwright JSON reports were unavailable; see the workflow run for job logs and uploaded reports.\n\n`;
+          }
+
+          function escapeInline(value) {
+            return String(value).replace(/[\\`*_{}\[\]()#+.!|>~-]/g, '\\$&');
+          }
+
+          function appendFailures(label, failures) {
+            if (failures.length === 0) return;
+            body += `<details><summary>${label} (${failures.length})</summary>\n\n`;
+            for (const failure of failures.slice(0, 10)) {
+              const location = [failure.file, failure.line].filter(Boolean).join(':');
+              body += `- **${escapeInline(failure.name)}**${location ? ` — \`${escapeInline(location)}\`` : ''}\n`;
+              if (failure.error) {
+                const error = String(failure.error)
+                  .replace(/```/g, '`\\`\\``')
+                  .slice(0, 2000);
+                body += `\n  \`\`\`text\n  ${error.replace(/\n/g, '\n  ')}\n  \`\`\`\n`;
+              }
+            }
+            if (failures.length > 10) body += `\n- ...and ${failures.length - 10} more failures.\n`;
             body += `\n</details>\n`;
           }
 
-          await github.rest.issues.createComment({
-            issue_number: context.issue.number,
+          appendFailures('Failed unit tests', unitTotals.failures);
+          appendFailures('Failed Playwright tests', playwrightTotals.failures);
+          body += `\n[View workflow run and test artifacts](${process.env.RUN_URL})\n\n<!-- quality-test-summary -->`;
+
+          const comments = await github.paginate(github.rest.issues.listComments, {
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body,
+            issue_number: context.issue.number,
+            per_page: 100,
           });
+          const existing = comments.find((comment) =>
+            comment.body?.includes('<!-- quality-test-summary -->')
+          );
+          const commentOptions = {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body,
+          };
+          if (existing) {
+            await github.rest.issues.updateComment({
+              ...commentOptions,
+              comment_id: existing.id,
+            });
+          } else {
+            await github.rest.issues.createComment(commentOptions);
+          }
     - name: SonarQube
       uses: sonarsource/sonarqube-scan-action@v8
       env:
