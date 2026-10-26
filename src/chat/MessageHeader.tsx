@@ -348,7 +348,6 @@ function createChatOptionsMenuHandlers(
   const handleToolChange = createToolChangeHandler({
     collections: args,
     onEditTool: handleEditTool,
-    openai: args.openai,
     setOptions: args.setOptions,
   });
 

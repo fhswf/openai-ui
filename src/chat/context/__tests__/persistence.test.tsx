@@ -6,8 +6,10 @@ import {
   OptionActionType,
   type GlobalActions,
   type GlobalState,
+  type Tool,
 } from "../types";
 import { saveState } from "../../utils/settings";
+import { updateToolSelection } from "../../utils/mcpServiceHelpers";
 
 vi.mock("../../utils", () => ({
   fetchAndGetUser: vi.fn(),
@@ -141,6 +143,48 @@ describe("ChatProvider draft persistence", () => {
         "New MCP server"
       )
     ).toMatchObject({ server_label: "new_server" });
+  });
+
+  it("persists an enabled MCP tool in settings", () => {
+    const key = "New MCP server";
+    const tool: Tool.Mcp = {
+      type: "mcp",
+      server_label: "new_server",
+      server_url: "https://example.com/mcp",
+      require_approval: "never",
+    };
+    const tools = new Map(latest.options.openai.tools);
+    tools.set(key, tool);
+
+    act(() => {
+      latest.setOptions({
+        type: OptionActionType.OPENAI,
+        data: { tools },
+      });
+    });
+
+    act(() => {
+      updateToolSelection({
+        checkedChange: true,
+        collections: {
+          mcpAuthConfigs: latest.options.openai.mcpAuthConfigs ?? new Map(),
+          tools: latest.options.openai.tools,
+          toolsEnabled: latest.options.openai.toolsEnabled,
+        },
+        key,
+        onEditTool: vi.fn(),
+        openai: latest.options.openai,
+        setOptions: latest.setOptions,
+        tool,
+      });
+    });
+
+    expect(latest.options.openai.toolsEnabled.has(key)).toBe(true);
+    expect(
+      vi.mocked(saveState).mock.lastCall?.[0].options.openai.toolsEnabled.has(
+        key
+      )
+    ).toBe(true);
   });
 
   it("saves immediately when typing and another action share a render", () => {

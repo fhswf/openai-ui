@@ -3,7 +3,6 @@ import type { TFunction } from "i18next";
 import {
   GlobalActions,
   McpAuthConfig,
-  OpenAIOptions,
   OptionActionType,
   Tool,
 } from "../context/types";
@@ -28,7 +27,6 @@ interface AuthorizationResult {
 
 interface UpdateOpenAiOptionsArgs {
   mcpAuthConfigs?: Map<string, McpAuthConfig>;
-  openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
   tools?: Map<string, Tool>;
   toolsEnabled?: Set<string>;
@@ -39,13 +37,12 @@ interface OpenConsentPromptArgs {
   key: string;
   mcpAuthConfig: McpAuthConfig | undefined;
   onEditTool: React.Dispatch<EditToolRequest>;
-  openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
   tool: Tool.Mcp;
 }
 
 function updateOpenAiOptions(args: UpdateOpenAiOptionsArgs): void {
-  const nextData: Partial<OpenAIOptions> = { ...args.openai };
+  const nextData: Partial<OpenAIOptions> = {};
 
   if (args.tools) {
     nextData.tools = args.tools;
@@ -64,16 +61,18 @@ function updateOpenAiOptions(args: UpdateOpenAiOptionsArgs): void {
 }
 
 function setToolEnabled(
-  collections: McpToolCollections,
+  toolsEnabled: Set<string>,
   key: string,
   checked: boolean
-): void {
+): Set<string> {
+  const nextToolsEnabled = new Set(toolsEnabled);
   if (checked) {
-    collections.toolsEnabled.add(key);
-    return;
+    nextToolsEnabled.add(key);
+    return nextToolsEnabled;
   }
 
-  collections.toolsEnabled.delete(key);
+  nextToolsEnabled.delete(key);
+  return nextToolsEnabled;
 }
 
 function shouldPromptForConsent(
@@ -106,17 +105,22 @@ function markConsentPrompted(
 }
 
 function openConsentPrompt(args: OpenConsentPromptArgs): void {
-  setToolEnabled(args.collections, args.key, true);
+  const toolsEnabled = setToolEnabled(
+    args.collections.toolsEnabled,
+    args.key,
+    true
+  );
+  const mcpAuthConfigs = new Map(args.collections.mcpAuthConfigs);
 
   const nextAuthConfig = markConsentPrompted(args.mcpAuthConfig);
   if (nextAuthConfig) {
-    args.collections.mcpAuthConfigs.set(args.key, nextAuthConfig);
+    mcpAuthConfigs.set(args.key, nextAuthConfig);
   }
 
   updateOpenAiOptions({
-    mcpAuthConfigs: args.collections.mcpAuthConfigs,
-    openai: args.openai,
+    mcpAuthConfigs,
     setOptions: args.setOptions,
+    toolsEnabled,
   });
   args.onEditTool({ key: args.key, tool: args.tool, consentPrompt: true });
 }
@@ -211,7 +215,6 @@ export function persistMcpService(args: PersistMcpServiceArgs): void {
 
   updateOpenAiOptions({
     mcpAuthConfigs: collections.mcpAuthConfigs,
-    openai: args.openai,
     setOptions: args.setOptions,
     tools: collections.tools,
     toolsEnabled: collections.toolsEnabled,
@@ -221,7 +224,6 @@ export function persistMcpService(args: PersistMcpServiceArgs): void {
 export function deleteMcpService(args: {
   collections: McpToolCollections;
   key: string;
-  openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
 }): void {
   const collections = {
@@ -239,7 +241,6 @@ export function deleteMcpService(args: {
   collections.mcpAuthConfigs.delete(args.key);
   updateOpenAiOptions({
     mcpAuthConfigs: collections.mcpAuthConfigs,
-    openai: args.openai,
     setOptions: args.setOptions,
     tools: collections.tools,
     toolsEnabled: collections.toolsEnabled,
@@ -259,16 +260,19 @@ export function updateToolSelection(args: ToolSelectionArgs): void {
       key: args.key,
       mcpAuthConfig,
       onEditTool: args.onEditTool,
-      openai: args.openai,
       setOptions: args.setOptions,
       tool: args.tool,
     });
     return;
   }
 
-  setToolEnabled(args.collections, args.key, checked);
+  const toolsEnabled = setToolEnabled(
+    args.collections.toolsEnabled,
+    args.key,
+    checked
+  );
   updateOpenAiOptions({
-    openai: args.openai,
     setOptions: args.setOptions,
+    toolsEnabled,
   });
 }

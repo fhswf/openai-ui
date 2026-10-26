@@ -149,24 +149,54 @@ export function fetchAndGetUser(
 
       // Discover MCP auth configs for all configured servers
       if (setOptions && currentOptions.openai?.tools instanceof Map) {
-        const tools = new Map(currentOptions.openai.tools);
-        const configs =
+        const originalTools = new Map(currentOptions.openai.tools);
+        const tools = new Map(originalTools);
+        const originalConfigs =
           currentOptions.openai.mcpAuthConfigs instanceof Map
             ? new Map(currentOptions.openai.mcpAuthConfigs)
             : new Map<string, McpAuthConfig>();
-        const toolsEnabled =
-          currentOptions.openai.toolsEnabled instanceof Set
-            ? new Set(currentOptions.openai.toolsEnabled)
-            : new Set<string>();
+        const configs = new Map(originalConfigs);
 
         await refreshMcpConfigs(tools, configs);
         await refreshMcpAuthorizations(tools, configs, user);
 
-        Array.from(tools.entries()).forEach(([key, tool]) => {
+        const latestOpenAI = getOptions().openai ?? currentOptions.openai;
+        const latestTools =
+          latestOpenAI.tools instanceof Map
+            ? new Map(latestOpenAI.tools)
+            : new Map(originalTools);
+        const latestConfigs =
+          latestOpenAI.mcpAuthConfigs instanceof Map
+            ? new Map(latestOpenAI.mcpAuthConfigs)
+            : new Map(originalConfigs);
+        const toolsEnabled =
+          latestOpenAI.toolsEnabled instanceof Set
+            ? new Set(latestOpenAI.toolsEnabled)
+            : new Set<string>();
+
+        for (const [key, originalTool] of originalTools) {
+          const refreshedTool = tools.get(key);
+          if (
+            latestTools.get(key) === originalTool &&
+            refreshedTool !== undefined
+          ) {
+            latestTools.set(key, refreshedTool);
+          }
+          const originalConfig = originalConfigs.get(key);
+          const refreshedConfig = configs.get(key);
+          if (
+            latestConfigs.get(key) === originalConfig &&
+            refreshedConfig !== undefined
+          ) {
+            latestConfigs.set(key, refreshedConfig);
+          }
+        }
+
+        Array.from(latestTools.entries()).forEach(([key, tool]) => {
           if (!isMcpTool(tool)) return;
 
           const config = normalizeMcpAuthConfig(
-            configs.get(key) ?? DEFAULT_MCP_AUTH_CONFIG
+            latestConfigs.get(key) ?? DEFAULT_MCP_AUTH_CONFIG
           );
 
           if (
@@ -180,8 +210,8 @@ export function fetchAndGetUser(
         setOptions({
           type: OptionActionType.OPENAI,
           data: {
-            mcpAuthConfigs: configs,
-            tools,
+            mcpAuthConfigs: latestConfigs,
+            tools: latestTools,
             toolsEnabled,
           },
         });

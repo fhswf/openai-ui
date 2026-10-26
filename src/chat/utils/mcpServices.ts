@@ -264,7 +264,6 @@ export async function saveMcpService(args: SaveMcpServiceArgs): Promise<void> {
     collections: args.collections,
     editingKey: args.editingKey,
     form: args.form,
-    openai: args.openai,
     resultAuthorization: result.authorization,
     setEditingKey: args.setEditingKey,
     setOptions: args.setOptions,
@@ -296,7 +295,6 @@ export function createToolChangeHandler(
       collections: args.collections,
       key,
       onEditTool: args.onEditTool,
-      openai: args.openai,
       setOptions: args.setOptions,
       tool,
     });
@@ -316,7 +314,6 @@ export function createDeleteMcpServiceHandler(
     deleteMcpService({
       collections: args,
       key,
-      openai: args.openai,
       setOptions: args.setOptions,
     });
   };
@@ -331,7 +328,6 @@ export function createSaveMcpServiceHandler(
       editingKey: args.editingKey,
       form: args.form,
       getAuthorization: args.getAuthorization,
-      openai: args.openai,
       setEditingKey: args.setEditingKey,
       setOptions: args.setOptions,
       t: args.t,
