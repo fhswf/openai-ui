@@ -216,6 +216,33 @@ test.describe("Document collections (vector stores)", () => {
       type: "semantic",
       semantic: { max_chunk_size_tokens: 400 },
     });
+
+    // The file list shows how each file was split.
+    const [notes, glossar] = store.files;
+    await expect(
+      page.getByTestId(`vector-store-file-${notes.id}`)
+    ).toContainText(/Aufteilung: Ausgewogen|Split: Balanced/);
+    await expect(
+      page.getByTestId(`vector-store-file-${glossar.id}`)
+    ).toContainText(/Aufteilung: Präzise|Split: Precise/);
+  });
+
+  test("shows no splitting for files processed before it was stored", async ({
+    page,
+  }) => {
+    const store = service.addStore("Skript", ["alt.pdf", "neu.pdf"]);
+    const [old, current] = store.files;
+    // The service reports { type: "other" } for such files.
+    delete old.chunkingStrategy;
+    await openVectorStoresDialog(page);
+    await expandStore(page, store.id);
+
+    await expect(
+      page.getByTestId(`vector-store-file-${current.id}`)
+    ).toContainText(/Aufteilung: Ausgewogen|Split: Balanced/);
+    const oldRow = page.getByTestId(`vector-store-file-${old.id}`);
+    await expect(oldRow).toContainText("alt.pdf");
+    await expect(oldRow).not.toContainText(/Aufteilung|Split/);
   });
 
   test("validates and stores a custom section size", async ({ page }) => {
@@ -255,6 +282,9 @@ test.describe("Document collections (vector stores)", () => {
       type: "semantic",
       semantic: { max_chunk_size_tokens: 1234 },
     });
+    await expect(
+      page.getByTestId(`vector-store-file-${store.files[0].id}`)
+    ).toContainText(/Eigene Größe \(1234\)|Custom size \(1234\)/);
   });
 
   test("searches active collections through a client-side function tool", async ({
