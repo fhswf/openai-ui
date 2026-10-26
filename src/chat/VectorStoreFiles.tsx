@@ -75,6 +75,11 @@ interface ChunkingSettingRowProps {
   value: ChunkingChoice;
 }
 
+const ROTATE_CHEVRON_WHEN_OPEN = {
+  "& [data-chevron]": { transition: "transform 0.16s" },
+  "&[data-state=open] [data-chevron]": { transform: "rotate(180deg)" },
+};
+
 function ChunkingSettingRow({
   onChange,
   storeId,
@@ -83,7 +88,7 @@ function ChunkingSettingRow({
   const { t } = useTranslation();
   const name = chunkingChoiceName(t, value);
   return (
-    <HStack gap={2.5} flexWrap="wrap" justifyContent="flex-end">
+    <HStack gap="2.5" flexWrap="wrap" justifyContent="flex-end">
       <Text fontSize="xs" color="fg.muted">
         {t("vector_store_chunking_title")}
       </Text>
@@ -101,44 +106,62 @@ function ChunkingSettingRow({
             variant="outline"
             size="xs"
             borderRadius="full"
-            gap={1.5}
+            gap="1.5"
             // The visible text alone ("Precise") lacks context for screen readers.
             aria-label={`${t("vector_store_chunking_title")}: ${name}`}
-            css={{
-              "& [data-chevron]": { transition: "transform 0.16s" },
-              "&[data-state=open] [data-chevron]": {
-                transform: "rotate(180deg)",
-              },
-            }}
+            css={ROTATE_CHEVRON_WHEN_OPEN}
             data-testid={`vector-store-chunking-toggle-${storeId}`}
           >
-            <Box
-              width="7px"
-              height="7px"
-              borderRadius="full"
-              backgroundColor="blue.solid"
-            />
-            <span data-testid={`vector-store-chunking-${storeId}`}>{name}</span>
-            <Box as="span" data-chevron="" color="fg.muted">
-              <LuChevronDown />
-            </Box>
+            <ChunkingTriggerLabel name={name} storeId={storeId} />
           </Button>
         </Popover.Trigger>
-        <Popover.Positioner>
-          <Popover.Content
-            width="340px"
-            maxWidth="calc(100vw - 32px)"
-            // Scrolls instead of leaving the window once "Advanced" is open.
-            maxHeight="var(--available-height)"
-            overflowY="auto"
-            padding={4}
-            borderRadius="xl"
-          >
-            <ChunkingSettings value={value} onChange={onChange} />
-          </Popover.Content>
-        </Popover.Positioner>
+        <ChunkingPopover value={value} onChange={onChange} />
       </Popover.Root>
     </HStack>
+  );
+}
+
+function ChunkingTriggerLabel({
+  name,
+  storeId,
+}: {
+  name: string;
+  storeId: string;
+}) {
+  return (
+    <>
+      <Box
+        width="7px"
+        height="7px"
+        borderRadius="full"
+        backgroundColor="blue.solid"
+      />
+      <span data-testid={`vector-store-chunking-${storeId}`}>{name}</span>
+      <Box as="span" data-chevron="" color="fg.muted">
+        <LuChevronDown />
+      </Box>
+    </>
+  );
+}
+
+function ChunkingPopover({
+  onChange,
+  value,
+}: Omit<ChunkingSettingRowProps, "storeId">) {
+  return (
+    <Popover.Positioner>
+      <Popover.Content
+        width="340px"
+        maxWidth="calc(100vw - 32px)"
+        // Scrolls instead of leaving the window once "Advanced" is open.
+        maxHeight="var(--available-height)"
+        overflowY="auto"
+        padding={4}
+        borderRadius="xl"
+      >
+        <ChunkingSettings value={value} onChange={onChange} />
+      </Popover.Content>
+    </Popover.Positioner>
   );
 }
 

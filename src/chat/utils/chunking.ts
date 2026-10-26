@@ -88,30 +88,25 @@ function maxTokensFromStrategy(strategy: unknown): number | undefined {
   }
 
   if (strategy.type === "semantic" && "semantic" in strategy) {
-    const inner = strategy.semantic;
-    if (
-      typeof inner === "object" &&
-      inner !== null &&
-      "max_chunk_size_tokens" in inner
-    ) {
-      const value = inner.max_chunk_size_tokens;
-      return typeof value === "number" ? value : undefined;
-    }
+    return readMaxTokens(strategy.semantic);
   }
-
   if (strategy.type === "static" && "static" in strategy) {
-    const inner = strategy.static;
-    if (
-      typeof inner === "object" &&
-      inner !== null &&
-      "max_chunk_size_tokens" in inner
-    ) {
-      const value = inner.max_chunk_size_tokens;
-      return typeof value === "number" ? value : undefined;
-    }
+    return readMaxTokens(strategy.static);
   }
-
   return undefined;
+}
+
+/** Reads `max_chunk_size_tokens` from the inner object of a strategy. */
+function readMaxTokens(inner: unknown): number | undefined {
+  if (
+    typeof inner !== "object" ||
+    inner === null ||
+    !("max_chunk_size_tokens" in inner)
+  ) {
+    return undefined;
+  }
+  const value = inner.max_chunk_size_tokens;
+  return typeof value === "number" ? value : undefined;
 }
 
 function choiceForTokens(maxTokens: number): ChunkingChoice {
