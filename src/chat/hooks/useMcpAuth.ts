@@ -316,6 +316,7 @@ export function useMcpAuthDiscovery({
 function encryptPayload(
   data: Record<string, unknown>,
   publicKey: CryptoKey,
+  keyId: string | undefined,
   consentGranted: boolean
 ): Promise<string | undefined> {
   if (!consentGranted) {
@@ -328,6 +329,7 @@ function encryptPayload(
     .setProtectedHeader({
       alg: MCP_AUTH_KEY_ALGORITHM,
       enc: "A256GCM",
+      ...(keyId ? { kid: keyId } : {}),
     })
     .setIssuedAt(issuedAt)
     .setExpirationTime(issuedAt + MCP_AUTH_TOKEN_LIFETIME_SECONDS)
@@ -361,12 +363,13 @@ async function getUserDataAuthorization(
 
   try {
     const discovery = await fetchMcpDiscoveryMetadata(serverUrl);
-    const publicKey = resolvePublicKey(
+    const { key: publicKey, keyId } = resolvePublicKey(
       await fetchMcpPublicKey(discovery.jwksUri)
     );
     return await encryptPayload(
       filteredData,
       publicKey,
+      keyId,
       config.userData.consentGranted
     );
   } catch (error) {
