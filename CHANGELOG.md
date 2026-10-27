@@ -54,6 +54,35 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.60.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.59.0...openai-ui-v0.60.0) (2026-10-27)
+
+
+### Features
+
+* add unit tests for MCP state regression and refactor related test logic ([f90c748](https://github.com/fhswf/openai-ui/commit/f90c74846e308145ce29e782ee18a7310dd56b70))
+* **i18n:** add chunking texts ([abeb47f](https://github.com/fhswf/openai-ui/commit/abeb47f2c8a0e1167cedd1a121bb62119ee146e4))
+* **vector-stores:** add chunking presets and strategy mapping ([f722605](https://github.com/fhswf/openai-ui/commit/f722605f89cc1d6ef1d263b0873da96784413a6a))
+* **vector-stores:** add chunking settings component ([8bccce1](https://github.com/fhswf/openai-ui/commit/8bccce1d2e0bf23f93dcefd13c424dcdb3322a70))
+* **vector-stores:** let users choose how new files are split ([3ab87a3](https://github.com/fhswf/openai-ui/commit/3ab87a3036503d847e7c88c5b9c2fa458eaa9922))
+* **vector-stores:** map stored chunking strategies to presets ([3f8be69](https://github.com/fhswf/openai-ui/commit/3f8be697f4a3ff2931ae2f24cea15260318282c8))
+* **vector-stores:** send chunking strategy when attaching files ([c6039eb](https://github.com/fhswf/openai-ui/commit/c6039eb1a8f604bb2ed662ef28b3e3e39297f16a))
+* **vector-stores:** show how each file was split ([a936534](https://github.com/fhswf/openai-ui/commit/a936534af66b958bf0a314c4fb6d00a4131fdea1))
+* **vector-stores:** store collection metadata ([360a359](https://github.com/fhswf/openai-ui/commit/360a359ccd99338c81691f9000551bc5101707d5))
+* **vector-stores:** validate custom chunk size ([39faa54](https://github.com/fhswf/openai-ui/commit/39faa54bff6c647c1eb2009adc3c02441af55181))
+
+
+### Bug Fixes
+
+* **i18n:** add German translations for search results and additional information ([9f91472](https://github.com/fhswf/openai-ui/commit/9f914722db793dbbfbbf74b1d5832c646e5b7962))
+* **i18n:** add i18n translation completeness check and new test cases ([403464d](https://github.com/fhswf/openai-ui/commit/403464d3f9eb8451e95465df8a1f0ea7baf803aa))
+* **manifest:** correct description and add mobile screenshots ([8e93861](https://github.com/fhswf/openai-ui/commit/8e93861b359e4940074e9fa7ac0eea57b214cb59))
+* **mcp-auth:** implement encrypted authorization transport with JWE s… ([1b2dfeb](https://github.com/fhswf/openai-ui/commit/1b2dfeb0d149f0080d41f8ecfe1b70669bb45804))
+* **mcp-auth:** implement encrypted authorization transport with JWE support ([19edbf1](https://github.com/fhswf/openai-ui/commit/19edbf165f4528a5e72be2453214fc125fa0b25b))
+* **mcp-auth:** update key algorithm to RSA-OAEP and add MCP server integration tests ([47584e7](https://github.com/fhswf/openai-ui/commit/47584e79a29b0b52075bf3ff8a4ebd53c128182f))
+* Refactor setOptions function to improve logging and ensure prope… ([f9f7b5e](https://github.com/fhswf/openai-ui/commit/f9f7b5e7345f8b0d8f28d4b2b258a94c173cd172))
+* Refactor setOptions function to improve logging and ensure proper payload handling in reducer ([93c6a5e](https://github.com/fhswf/openai-ui/commit/93c6a5e3cc4dfbba8303d20c6c27fa15c196d529))
+* Remove redundant user information visibility checks in authentication tests ([19cd3d7](https://github.com/fhswf/openai-ui/commit/19cd3d7145bf1d965240e3f1e5f3a733c575d3bf))
+
 ## [0.59.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.58.0...openai-ui-v0.59.0) (2026-10-25)
 
 
