@@ -1241,6 +1241,9 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           reasoning_title: "Reasoning Schritte",
           Code: "Code",
           Outputs: "Ausgaben",
+          "Search Results:": "Suchergebnisse:",
+          "No additional information available.":
+            "Keine weiteren Informationen verfügbar.",
           "MCP Services": "MCP-Dienste",
           "Edit MCP Services": "MCP-Dienste bearbeiten",
           "Add/Save Service": "Dienst hinzufügen/speichern",
