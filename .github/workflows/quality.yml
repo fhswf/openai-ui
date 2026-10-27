@@ -68,6 +68,8 @@ jobs:
         --reporter=default
         --reporter=json
         --outputFile=unit-test-results.json
+    - name: Check i18n translation completeness
+      run: yarn test:i18n
     - uses: actions/upload-artifact@v7
       if: ${{ always() }}
       with:
