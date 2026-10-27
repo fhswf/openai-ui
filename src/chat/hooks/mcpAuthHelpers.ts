@@ -19,7 +19,13 @@ interface OpenIdConfigurationResponse {
 
 interface PublicKeyResult {
   error?: EndpointInvalidError | EndpointUnavailableError;
+  keyId?: string;
   publicKey?: CryptoKey;
+}
+
+interface ResolvedPublicKey {
+  key: CryptoKey;
+  keyId?: string;
 }
 
 export interface McpDiscoveryMetadata {
@@ -106,9 +112,12 @@ function getPublicKeyErrorMessage(error: unknown): string {
   return "unknown error";
 }
 
-export function resolvePublicKey(result: PublicKeyResult): CryptoKey {
+export function resolvePublicKey(result: PublicKeyResult): ResolvedPublicKey {
   if (result.publicKey) {
-    return result.publicKey;
+    return {
+      key: result.publicKey,
+      ...(result.keyId ? { keyId: result.keyId } : {}),
+    };
   }
 
   throw (
@@ -218,6 +227,7 @@ export async function fetchMcpPublicKey(
             key,
             MCP_AUTH_KEY_ALGORITHM
           )) as CryptoKey,
+          ...(typeof key.kid === "string" && key.kid ? { keyId: key.kid } : {}),
         };
       } catch (error) {
         console.warn("Ignoring invalid JWKS key: %o", error);
