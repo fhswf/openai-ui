@@ -14,6 +14,7 @@
     "preview": "vite preview",
     "test": "npx playwright test",
     "test:unit": "vitest run",
+    "test:i18n": "vitest run src/i18n/__tests__/translations.test.ts",
     "test:unit:watch": "vitest",
     "test:e2e:ci": "npx playwright test",
     "test:e2e:prod": "npx playwright test",

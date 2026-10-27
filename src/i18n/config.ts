@@ -623,6 +623,9 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "K!mpuls ist der datenschutzfreundliche Zugang der Fachhochschule Südwestfalen zu den Sprachmodellen von OpenAI.",
           system_welcome:
             "Hallo, ich bin K!mpuls, Dein FH-Chatbot. Wie kann ich Dir helfen?",
+          error: "Fehler",
+          loading: "Wird geladen …",
+          "Start Chat": "Chat starten",
           copy: "Kopieren",
           "Enter something....": "Gib Deine Frage ein …",
           "Edit Message": "Nachricht bearbeiten",
@@ -1189,6 +1192,9 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Hier finden Sie eine Übersicht über die Nutzung des Chatbots.",
           scope_breakdown_title: "Aufschlüsselung der Zugriffe nach Bereichen",
           role_breakdown_title: "Aufschlüsselung der Zugriffe nach Rollen",
+          "Student*in": "Student*in",
+          "Professor*in": "Professor*in",
+          "Mitarbeiter*in": "Mitarbeiter*in",
           user_breakdown_title: "Aufrufe pro Nutzer*in",
           user_count_label: "Nutzer*innen",
           unique_users_count: "Anzahl der Nutzer*innen: {{count}}",
@@ -1207,6 +1213,8 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Hier können Sie Ihre Konfiguration importieren. Bitte beachten Sie, dass alle bestehenden Einstellungen überschrieben werden.",
           import_settings_error:
             "Beim Importieren der Einstellungen ist ein Fehler aufgetreten. Bitte überprüfen Sie die Datei und versuchen Sie es erneut.",
+          import_settings_error_desc:
+            "Beim Importieren der Einstellungen ist ein Fehler aufgetreten.",
           import_settings_success: "Einstellungen importiert",
           import_settings_success_desc:
             "Die Einstellungen wurden erfolgreich importiert.",
@@ -1273,12 +1281,22 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Origin Private File System (OPFS) wird von Ihrem Browser nicht unterstützt.",
           opfs_not_supported_desc:
             "OPFS wird von Ihrem Browser nicht unterstützt, Bilder können nicht gespeichert werden. Bitte aktualisieren Sie Ihren Browser, um diese Funktion zu nutzen.",
+          opfs_not_supported_description:
+            "OPFS wird von Ihrem Browser nicht unterstützt. Bilder können nicht gespeichert werden. Bitte aktualisieren Sie Ihren Browser, um diese Funktion zu nutzen.",
           upload_file: "Datei hochladen",
           upload_file_desc: "Datei hochladen",
           function_call: "Funktionsaufruf",
           function_call_description: "Ein Funktionsaufruf wurde ausgeführt.",
           function_call_title: "Funktionsaufruf",
           "Tool Usage Details": "Details zur Werkzeugnutzung",
+          "No description available.": "Keine Beschreibung verfügbar.",
+          "No arguments provided.": "Keine Argumente angegeben.",
+          "Reasoning Step": "Reasoning-Schritt",
+          "Code Interpreter Step": "Code-Interpreter-Schritt",
+          Server: "Server",
+          Tool: "Werkzeug",
+          Parameters: "Parameter",
+          Message: "Nachricht",
           authorization: "Autorisierung",
           none: "Keine",
           static_token: "Statisches Token",
@@ -1314,6 +1332,7 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
           mcp_user_data_consent:
             "Ich stimme der Übertragung der ermittelten Benutzerdaten-Scopes zu.",
           mcp_encryption_failed: "Verschlüsselung fehlgeschlagen",
+          mcp_authorization_failed: "MCP-Autorisierung fehlgeschlagen",
           mcp_authorization_could_not_be_created:
             "Autorisierung konnte nicht erstellt werden",
           mcp_authorization_required_before_save:
@@ -1323,12 +1342,20 @@ Die vollständigen Datenschutzhinweise finden Sie im Info-Menü (?) der Anwendun
           mcp_blocked_missing_consent:
             "blockiert: Zustimmung zum Senden von Benutzerdaten erforderlich",
           mcp_unauthorized_error: "MCP-Server: Nicht autorisiert",
+          login_required: "Anmeldung erforderlich",
+          login_required_description:
+            "Bitte melden Sie sich an, um fortzufahren.",
           mcp_consent_prompt_info:
             "Sie wurden hierher weitergeleitet, weil dieser MCP-Server Ihre Benutzerdaten für bestimmte Funktionen verwenden kann. Sie können unten Ihre Zustimmung erteilen oder diesen Dialog einfach schließen. Der Server ist bereits aktiviert und funktioniert, aber Funktionen die eine Autorisierung benötigen stehen ohne Zustimmung nicht zur Verfügung.",
           mcp_save_without_consent_info:
             "Sie können diesen Server ohne Datenübertragung speichern und verwenden, aber einige Funktionen des MCP-Servers stehen dann nicht zur Verfügung.",
           please_fill_in_all_required_fields:
             "Bitte füllen Sie alle Pflichtfelder aus",
+          "Please fill in all required fields":
+            "Bitte füllen Sie alle Pflichtfelder aus",
+          "Storage Limit Reached": "Speicherlimit erreicht",
+          "Automatically removing oldest chats to save space.":
+            "Die ältesten Chats werden automatisch entfernt, um Speicherplatz freizugeben.",
           understood: "Verstanden",
         },
       },
