@@ -1,11 +1,14 @@
 import type {
+  FileChunkingStrategyParam,
   VectorStore,
   VectorStoreDeleted,
   VectorStoreSearchResponse,
 } from "openai/resources/vector-stores/vector-stores.mjs";
 import type { VectorStoreFile } from "openai/resources/vector-stores/files.mjs";
+import type { Metadata } from "openai/resources/shared";
 import { Options } from "../context/types";
 import { defaultVectorStoreBaseUrl } from "../context/initState";
+import type { SemanticChunkingStrategy } from "../utils/chunking";
 import { createClient } from "./openai";
 
 /*
@@ -77,6 +80,25 @@ export async function renameVectorStore(
   );
 }
 
+/**
+ * Replaces the store's metadata. The service neither merges it with the
+ * stored metadata nor returns it, so pass the complete object and reload the
+ * stores afterwards.
+ */
+export async function updateVectorStoreMetadata(
+  options: Options,
+  vectorStoreId: string,
+  metadata: Metadata
+) {
+  const client = createVectorStoreClient(options);
+  return client.post<VectorStore>(
+    legacyVectorStoreUrl(options, vectorStoreId),
+    {
+      body: { metadata },
+    }
+  );
+}
+
 export async function deleteVectorStore(
   options: Options,
   vectorStoreId: string
@@ -121,14 +143,25 @@ export async function listVectorStoreFiles(
 /**
  * Uploads a file and attaches it to the vector store. Resolves once the
  * service has finished parsing and embedding (status completed or failed).
+ * Without a chunking strategy the service uses its default.
  */
 export async function uploadFileToVectorStore(
   options: Options,
   vectorStoreId: string,
-  file: File
+  file: File,
+  chunkingStrategy?: SemanticChunkingStrategy
 ) {
   const client = createVectorStoreClient(options);
-  return client.vectorStores.files.uploadAndPoll(vectorStoreId, file);
+  // Same requests as `uploadAndPoll`, which cannot pass a chunking strategy.
+  const uploaded = await client.files.create({ file, purpose: "assistants" });
+  return client.vectorStores.files.createAndPoll(vectorStoreId, {
+    file_id: uploaded.id,
+    // litellm-pgvector accepts "semantic", which the SDK types do not know.
+    ...(chunkingStrategy && {
+      chunking_strategy:
+        chunkingStrategy as unknown as FileChunkingStrategyParam,
+    }),
+  });
 }
 
 /** Removes the attachment but keeps the uploaded file. */
