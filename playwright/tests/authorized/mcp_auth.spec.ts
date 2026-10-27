@@ -1,4 +1,5 @@
 import { test, expect } from "../baseFixtures";
+import { exportJWK, generateKeyPair, jwtDecrypt } from "jose";
 import type { Locator, Page } from "@playwright/test";
 import {
   APP_READY_TIMEOUT,
@@ -442,6 +443,126 @@ test.describe("MCP Auth", () => {
       await expect(getModeInput(page, "user-data")).toBeEnabled();
       await expect(getModeInput(page, "none")).toBeDisabled();
       await expect(getModeInput(page, "static")).toBeDisabled();
+    });
+  });
+
+  test.describe("Encrypted authorization transport", () => {
+    test("sends a decryptable JWE with the discovered key ID", async ({
+      page,
+    }) => {
+      const { publicKey, privateKey } = await generateKeyPair("RSA-OAEP-256", {
+        modulusLength: 2048,
+      });
+      const publicJwk = await exportJWK(publicKey);
+      const keyId = "mcp-integration-test-key";
+      const serverUrl = "https://userdata.example.com";
+      const label = "Encrypted User Data";
+
+      await page.route(`${serverUrl}/.well-known/jwks.json`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            keys: [
+              {
+                ...publicJwk,
+                alg: "RSA-OAEP",
+                kid: keyId,
+                use: "enc",
+              },
+            ],
+          }),
+        });
+      });
+      await seedSession(page, {
+        options: {
+          account: baseAccountOptions,
+          general: baseGeneralOptions,
+          openai: {
+            ...baseOpenAiOptions,
+            tools: {
+              dataType: "Map",
+              value: [
+                [
+                  label,
+                  {
+                    type: "mcp",
+                    server_label: label,
+                    server_url: serverUrl,
+                    require_approval: "never",
+                  },
+                ],
+              ],
+            },
+            toolsEnabled: { dataType: "Set", value: [label] },
+            mcpAuthConfigs: {
+              dataType: "Map",
+              value: [
+                [
+                  label,
+                  {
+                    mode: "user-data",
+                    userData: {
+                      scopes: [...discoveredScopes.scopes_supported],
+                      consentGranted: true,
+                    },
+                  },
+                ],
+              ],
+            },
+          },
+        },
+      });
+
+      let responseAuthorization: string | undefined;
+      await page.route("**/v1/responses", async (route) => {
+        const requestBody = route.request().postDataJSON();
+        const mcpTool = requestBody.tools.find(
+          (tool: { type: string; server_label?: string }) =>
+            tool.type === "mcp" && tool.server_label === label
+        );
+        responseAuthorization = mcpTool?.authorization;
+
+        const responseBody = [
+          { type: "response.created", response: { id: "resp_mcp_auth_test" } },
+          {
+            type: "response.completed",
+            response: {
+              usage: { total_tokens: 2, input_tokens: 1, output_tokens: 1 },
+            },
+          },
+        ];
+        await route.fulfill({
+          status: 200,
+          contentType: "text/event-stream",
+          body: responseBody
+            .map((event) => `data: ${JSON.stringify(event)}\n\n`)
+            .join(""),
+        });
+      });
+
+      await reloadAuthorizedPage(page);
+      await page.getByTestId("ChatTextArea").fill("Test encrypted MCP auth");
+      await page.getByTestId("SendMessageBtn").click();
+
+      await expect.poll(() => responseAuthorization).toBeTruthy();
+      if (!responseAuthorization) {
+        throw new Error("Responses request did not include MCP authorization");
+      }
+
+      const { payload, protectedHeader } = await jwtDecrypt(
+        responseAuthorization,
+        privateKey
+      );
+      expect(protectedHeader).toMatchObject({
+        alg: "RSA-OAEP-256",
+        enc: "A256GCM",
+        kid: keyId,
+      });
+      expect(payload.data).toEqual({
+        email: mockUser.email,
+        name: mockUser.name,
+      });
     });
   });
 
