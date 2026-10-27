@@ -2,7 +2,7 @@
   "name": "K!mpuls Chatbot",
   "short_name": "K!mpuls",
   "description": "Use the K!mpuls Chatbot to access OpenAI models securely.",
-  "version": "0.59.0",
+  "version": "0.60.0",
   "id": "/",
   "display": "standalone",
   "scope": "/",
