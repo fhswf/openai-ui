@@ -3,7 +3,7 @@ import { McpScopeDefinition, McpUserDataDiscovery } from "../context/types";
 
 const BLOCKED_FIELDS = new Set(["__proto__", "constructor", "prototype"]);
 const OPENID_CONFIGURATION_PATH = "/.well-known/openid-configuration";
-export const MCP_AUTH_KEY_ALGORITHM = "RSA-OAEP-256" as const;
+export const MCP_AUTH_KEY_ALGORITHM = "RSA-OAEP" as const;
 
 export const DEFAULT_MCP_USER_DATA: McpUserDataDiscovery = {
   scopes: [],
