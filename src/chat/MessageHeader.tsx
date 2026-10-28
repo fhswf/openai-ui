@@ -19,14 +19,8 @@ import {
   Menu,
   Popover,
   Heading,
-  Portal,
-  Dialog,
-  CloseButton,
-  Checkbox,
-  Link,
-  List,
 } from "@chakra-ui/react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { IoLogoMarkdown } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
 import {
@@ -37,7 +31,7 @@ import {
   LuSettings,
   LuSlidersHorizontal,
 } from "react-icons/lu";
-import { MdGavel, MdVpnKey } from "react-icons/md";
+import { MdVpnKey } from "react-icons/md";
 import { useGlobal } from "./context";
 import { useApps } from "./apps/context";
 import { useMessage } from "./hooks";
@@ -53,12 +47,12 @@ import {
 import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { VectorStoresDialog } from "./VectorStoresDialog";
+import { AiHubTermsDialog } from "./AiHubTermsDialog";
 import {
   AiHubError,
   AiHubBudget,
   aiHubApiBaseUrl,
   aiHubBaseUrl,
-  aiHubTermsUrl,
   fetchAiHubBudget,
   fetchAiHubModels,
   generateUniqueAiHubKey,
@@ -587,135 +581,6 @@ function DownloadThreadMenu({ downloadThread }: DownloadThreadMenuProps) {
         </Menu.Item>
       </Menu.Content>
     </Menu.Root>
-  );
-}
-
-interface AiHubTermsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onAccept: () => void;
-}
-
-function AiHubTermsDialog({
-  open,
-  onOpenChange,
-  onAccept,
-}: AiHubTermsDialogProps) {
-  const { t } = useTranslation();
-  const [accepted, setAccepted] = useState(false);
-
-  return (
-    <Dialog.Root
-      lazyMount
-      size="lg"
-      open={open}
-      onOpenChange={(event) => {
-        setAccepted(false);
-        onOpenChange(event.open);
-      }}
-    >
-      <Portal>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content data-testid="AiHubTermsDialog">
-            <Dialog.Header borderBottomWidth="1px">
-              <HStack gap={2}>
-                <MdGavel size={22} color="var(--chakra-colors-blue-600)" />
-                <Dialog.Title>{t("ai_hub_terms_title")}</Dialog.Title>
-              </HStack>
-            </Dialog.Header>
-            <Dialog.Body paddingBlock={6}>
-              <Stack gap={4} fontSize="sm">
-                <Heading size="xl">{t("ai_hub_terms_title")}</Heading>
-                <Text>
-                  <Trans
-                    t={t}
-                    i18nKey="ai_hub_terms_intro"
-                    components={{ bold: <strong /> }}
-                  />
-                </Text>
-                <Text>{t("ai_hub_terms_pdf_intro")}</Text>
-                <Link
-                  href={aiHubTermsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="blue.600"
-                  textDecoration="underline"
-                >
-                  {t("ai_hub_terms_pdf")}
-                </Link>
-                <Text>
-                  <Trans
-                    t={t}
-                    i18nKey="ai_hub_terms_sensitive_data"
-                    components={{ bold: <strong /> }}
-                  />
-                </Text>
-                <Heading size="md" marginTop={4}>
-                  {t("ai_hub_terms_more_info")}
-                </Heading>
-                <List.Root paddingInlineStart={5}>
-                  <List.Item>
-                    <Link
-                      href="https://openai.com/de-DE/policies/terms-of-use/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      color="blue.600"
-                      textDecoration="underline"
-                    >
-                      {t("ai_hub_terms_openai_terms")}
-                    </Link>
-                  </List.Item>
-                  <List.Item>
-                    <Link
-                      href="https://openai.com/de-DE/enterprise-privacy/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      color="blue.600"
-                      textDecoration="underline"
-                    >
-                      {t("ai_hub_terms_openai_privacy")}
-                    </Link>
-                  </List.Item>
-                </List.Root>
-              </Stack>
-            </Dialog.Body>
-            <Dialog.Footer
-              borderTopWidth="1px"
-              justifyContent="space-between"
-              gap={4}
-            >
-              <Checkbox.Root
-                checked={accepted}
-                onCheckedChange={(event) => {
-                  setAccepted(event.checked === true);
-                }}
-                data-testid="AiHubTermsCheckbox"
-              >
-                <Checkbox.HiddenInput />
-                <Checkbox.Control />
-                <Checkbox.Label>{t("ai_hub_terms_confirm")}</Checkbox.Label>
-              </Checkbox.Root>
-              <Button
-                variant="subtle"
-                flexShrink={0}
-                disabled={!accepted}
-                onClick={() => {
-                  setAccepted(false);
-                  onAccept();
-                }}
-                data-testid="AiHubTermsAcceptBtn"
-              >
-                {t("ai_hub_terms_accept")}
-              </Button>
-            </Dialog.Footer>
-            <Dialog.CloseTrigger asChild>
-              <CloseButton size="sm" />
-            </Dialog.CloseTrigger>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>
-    </Dialog.Root>
   );
 }
 
