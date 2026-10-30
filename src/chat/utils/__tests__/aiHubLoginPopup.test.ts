@@ -19,7 +19,7 @@ describe("openAiHubLoginPopup", () => {
     vi.restoreAllMocks();
   });
 
-  it("opens an empty named popup without access to the chat window", () => {
+  it("opens an empty named popup", () => {
     const popup = createPopup();
     const openSpy = vi.spyOn(window, "open").mockReturnValue(popup);
 
@@ -29,7 +29,6 @@ describe("openAiHubLoginPopup", () => {
       "ai-hub-login",
       expect.stringContaining("popup")
     );
-    expect(popup.opener).toBeNull();
   });
 
   it("returns null when the browser blocks the popup", () => {

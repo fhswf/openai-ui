@@ -7,14 +7,12 @@ const popupFeatures = "popup,width=520,height=720";
  * Opens an empty popup for the AI-Hub login. Browsers only allow popups
  * shortly after a user click, so call this before awaiting anything else.
  * Returns null when the browser blocked the popup.
+ *
+ * The opener link is kept on purpose: once the popup shows the cross-origin
+ * Keycloak page, browsers only let its opener close it again.
  */
 export function openAiHubLoginPopup(): Window | null {
-  const popup = window.open("", popupName, popupFeatures);
-  if (popup) {
-    // The login pages do not need access to the chat window.
-    popup.opener = null;
-  }
-  return popup;
+  return window.open("", popupName, popupFeatures);
 }
 
 /**
