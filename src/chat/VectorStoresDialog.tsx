@@ -17,7 +17,11 @@ import {
   useFileSearchRegistry,
 } from "./hooks/useFileSearchRegistry";
 import { listVectorStores } from "./service/vectorStores";
-import { showVectorStoreError } from "./vectorStoreDialogUtils";
+import {
+  isMissingApiKeyError,
+  showVectorStoreError,
+} from "./vectorStoreDialogUtils";
+import { AiHubRequiredCard } from "./AiHubRequiredCard";
 import { CreateVectorStoreForm } from "./CreateVectorStoreForm";
 import { VectorStoreRow } from "./VectorStoreRow";
 import { registerVectorStore } from "./utils/fileSearch";
@@ -25,12 +29,19 @@ import { registerVectorStore } from "./utils/fileSearch";
 function useVectorStores(options: Options, open: boolean) {
   const { t } = useTranslation();
   const [stores, setStores] = useState<VectorStore[] | null>(null);
+  // A 401 means the current key cannot use the vector store service yet.
+  const [needsAiHub, setNeedsAiHub] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
       setStores(await listVectorStores(options));
+      setNeedsAiHub(false);
     } catch (error) {
-      showVectorStoreError(t("vector_store_load_error"), error);
+      if (isMissingApiKeyError(error)) {
+        setNeedsAiHub(true);
+      } else {
+        showVectorStoreError(t("vector_store_load_error"), error);
+      }
       setStores([]);
     }
   }, [options, t]);
@@ -39,7 +50,7 @@ function useVectorStores(options: Options, open: boolean) {
     if (open) void refresh();
   }, [open, refresh]);
 
-  return { stores, refresh };
+  return { needsAiHub, stores, refresh };
 }
 
 interface VectorStoresListProps {
@@ -73,6 +84,41 @@ function VectorStoresList({
   );
 }
 
+interface VectorStoresSectionProps extends VectorStoresListProps {
+  needsAiHub: boolean;
+}
+
+function VectorStoresSection({
+  isInChat,
+  needsAiHub,
+  onChanged,
+  onRegistryChange,
+  options,
+  stores,
+}: VectorStoresSectionProps) {
+  const { t } = useTranslation();
+
+  if (needsAiHub) {
+    return <AiHubRequiredCard />;
+  }
+
+  return (
+    <>
+      {stores === null && <Spinner />}
+      {stores?.length === 0 && (
+        <Text color="fg.muted">{t("vector_store_none")}</Text>
+      )}
+      <VectorStoresList
+        stores={stores}
+        options={options}
+        onChanged={onChanged}
+        isInChat={isInChat}
+        onRegistryChange={onRegistryChange}
+      />
+    </>
+  );
+}
+
 function VectorStoresDialogBody({ open }: { open: boolean }) {
   const { t } = useTranslation();
   const { options: globalOptions } = useGlobal();
@@ -83,7 +129,7 @@ function VectorStoresDialogBody({ open }: { open: boolean }) {
     () => globalOptions,
     [apiKey, organizationId, vectorStoreBaseUrl]
   );
-  const { stores, refresh } = useVectorStores(options, open);
+  const { needsAiHub, stores, refresh } = useVectorStores(options, open);
   const handleChanged = useCallback(() => void refresh(), [refresh]);
   const handleCreated = useCallback(
     (store: { id: string; name: string }) => {
@@ -99,16 +145,17 @@ function VectorStoresDialogBody({ open }: { open: boolean }) {
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => event.preventDefault()}
     >
-      <CreateVectorStoreForm options={options} onCreated={handleCreated} />
+      <CreateVectorStoreForm
+        options={options}
+        onCreated={handleCreated}
+        disabled={needsAiHub}
+      />
       <Separator marginBlock={4} />
       <Text fontWeight="bold" marginBlockEnd={2}>
         {t("vector_stores")}
       </Text>
-      {stores === null && <Spinner />}
-      {stores?.length === 0 && (
-        <Text color="fg.muted">{t("vector_store_none")}</Text>
-      )}
-      <VectorStoresList
+      <VectorStoresSection
+        needsAiHub={needsAiHub}
         stores={stores}
         options={options}
         onChanged={handleChanged}

@@ -399,6 +399,10 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           vector_store_file_status_failed: "failed",
           vector_store_file_status_cancelled: "cancelled",
           vector_store_load_error: "Could not load document collections",
+          vector_store_ai_hub_required_title: "AI Hub sign-in required",
+          vector_store_ai_hub_required_desc:
+            "Document collections are only available with an AI Hub login. After signing in you can upload scripts and slides and let the chat search them.",
+          vector_store_ai_hub_required_button: "Sign in to the AI Hub",
           vector_store_create_error: "Could not create collection",
           vector_store_rename_error: "Could not rename collection",
           vector_store_delete_error: "Could not delete collection",
@@ -497,8 +501,12 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "The AI-Hub response did not contain an API key.",
           ai_hub_model_list_failed_desc:
             "The AI-Hub models could not be loaded. Status: {{status}}.",
-          ai_hub_session_invalid_desc:
-            "You are not signed in to the AI-Hub. Please sign in at {{url}} and try again.",
+          ai_hub_login_hint:
+            "Please sign in to the <link>AI-Hub</link> first and try again.",
+          ai_hub_login_waiting:
+            "Please sign in to the AI-Hub in the window that just opened. The budget is enabled automatically afterwards.",
+          ai_hub_login_waiting_button: "Waiting for sign-in …",
+          ai_hub_login_open_popup: "Open sign-in window",
           ai_hub_terms_title: "Terms of Use",
           ai_hub_terms_intro:
             "Use of this application is subject to the <bold>FH SWF terms of use for the OpenAI proxy (KImpuls-Chat)</bold>.",
@@ -1020,6 +1028,10 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           vector_store_file_status_failed: "fehlgeschlagen",
           vector_store_file_status_cancelled: "abgebrochen",
           vector_store_load_error: "Dokumentensammlungen konnten nicht geladen werden",
+          vector_store_ai_hub_required_title: "Anmeldung im AI Hub erforderlich",
+          vector_store_ai_hub_required_desc:
+            "Dokumentensammlungen sind nur mit AI-Hub-Login verfügbar. Nach der Anmeldung können Sie Skripte und Folien hochladen und im Chat durchsuchen lassen.",
+          vector_store_ai_hub_required_button: "Im AI Hub anmelden",
           vector_store_create_error: "Sammlung konnte nicht angelegt werden",
           vector_store_rename_error: "Sammlung konnte nicht umbenannt werden",
           vector_store_delete_error: "Sammlung konnte nicht gelöscht werden",
@@ -1096,8 +1108,12 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Die AI-Hub-Antwort enthielt keinen API-Schlüssel.",
           ai_hub_model_list_failed_desc:
             "Die AI-Hub-Modelle konnten nicht geladen werden. Status: {{status}}.",
-          ai_hub_session_invalid_desc:
-            "Sie sind nicht im AI-Hub angemeldet. Bitte melden Sie sich unter {{url}} an und versuchen Sie es erneut.",
+          ai_hub_login_hint:
+            "Bitte melden Sie sich zuerst im <link>AI-Hub</link> an und versuchen Sie es erneut.",
+          ai_hub_login_waiting:
+            "Bitte melden Sie sich im geöffneten Fenster im AI-Hub an. Danach wird das Budget automatisch aktiviert.",
+          ai_hub_login_waiting_button: "Warte auf Anmeldung …",
+          ai_hub_login_open_popup: "Anmeldefenster öffnen",
           ai_hub_terms_title: "Nutzungsbedingungen",
           ai_hub_terms_intro:
             "Die Nutzung dieser Anwendung unterliegt der <bold>Nutzungsordnung der Fachhochschule Südwestfalen für den OpenAI-Proxy (KImpuls-Chat)</bold>.",

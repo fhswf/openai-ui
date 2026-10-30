@@ -6,7 +6,6 @@ import {
   McpAuthConfig,
   OpenAIOptions,
   GlobalActions,
-  OptionActionType,
 } from "./context/types";
 import {
   Avatar,
@@ -19,14 +18,8 @@ import {
   Menu,
   Popover,
   Heading,
-  Portal,
-  Dialog,
-  CloseButton,
-  Checkbox,
-  Link,
-  List,
 } from "@chakra-ui/react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { IoLogoMarkdown } from "react-icons/io5";
 import { BiSolidFileJson } from "react-icons/bi";
 import {
@@ -37,7 +30,7 @@ import {
   LuSettings,
   LuSlidersHorizontal,
 } from "react-icons/lu";
-import { MdGavel, MdVpnKey } from "react-icons/md";
+import { MdVpnKey } from "react-icons/md";
 import { useGlobal } from "./context";
 import { useApps } from "./apps/context";
 import { useMessage } from "./hooks";
@@ -53,19 +46,12 @@ import {
 import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { VectorStoresDialog } from "./VectorStoresDialog";
-import {
-  AiHubError,
-  AiHubBudget,
-  aiHubApiBaseUrl,
-  aiHubBaseUrl,
-  aiHubTermsUrl,
-  fetchAiHubBudget,
-  fetchAiHubModels,
-  generateUniqueAiHubKey,
-} from "./service/aiHub";
-import { defaultOpenAIBaseUrl, defaultOpenAIModel } from "./context/initState";
-import { toaster } from "../components/ui/toaster";
+import { AiHubTermsDialog } from "./AiHubTermsDialog";
+import { AiHubLoginStatus } from "./AiHubLoginHint";
+import type { AiHubBudget } from "./service/aiHub";
 import { isMcpAuthorizationIncomplete, useMcpAuth } from "./hooks/useMcpAuth";
+import { useAiHubActivation } from "./hooks/useAiHubActivation";
+import { useAiHubBudget } from "./hooks/useAiHubBudget";
 import {
   ApprovalOptions,
   buildMcpTools,
@@ -590,132 +576,137 @@ function DownloadThreadMenu({ downloadThread }: DownloadThreadMenuProps) {
   );
 }
 
-interface AiHubTermsDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onAccept: () => void;
+interface AiHubBudgetUsageProps {
+  budget: AiHubBudget | null;
+  hasError: boolean;
+  isLoading: boolean;
 }
 
-function AiHubTermsDialog({
-  open,
-  onOpenChange,
-  onAccept,
-}: AiHubTermsDialogProps) {
+function formatAiHubCurrency(value: number) {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
+
+function getAiHubBudgetUsagePercentage(budget: AiHubBudget) {
+  if (budget.max_budget_in_team <= 0) {
+    return 0;
+  }
+  const percentage = (budget.spend / budget.max_budget_in_team) * 100;
+  return Math.min(100, Math.max(0, percentage));
+}
+
+function AiHubBudgetUsage({
+  budget,
+  hasError,
+  isLoading,
+}: AiHubBudgetUsageProps) {
   const { t } = useTranslation();
-  const [accepted, setAccepted] = useState(false);
+
+  if (isLoading) {
+    return <Text fontSize="sm">{t("ai_hub_budget_loading")}</Text>;
+  }
+  if (hasError) {
+    return (
+      <Text fontSize="sm" color="red.600">
+        {t("ai_hub_budget_unavailable")}
+      </Text>
+    );
+  }
+  if (!budget) {
+    return null;
+  }
 
   return (
-    <Dialog.Root
-      lazyMount
-      size="lg"
-      open={open}
-      onOpenChange={(event) => {
-        setAccepted(false);
-        onOpenChange(event.open);
-      }}
+    <>
+      <Text fontSize="sm">
+        {t("ai_hub_budget_spent", {
+          spend: formatAiHubCurrency(budget.spend),
+          budget: formatAiHubCurrency(budget.max_budget_in_team),
+        })}
+      </Text>
+      <Progress.Root
+        size="sm"
+        value={getAiHubBudgetUsagePercentage(budget)}
+        colorPalette="blue"
+        aria-label={t("ai_hub_budget_usage")}
+      >
+        <Progress.Track>
+          <Progress.Range />
+        </Progress.Track>
+      </Progress.Root>
+      <Text fontSize="sm">
+        {t("ai_hub_budget_remaining", {
+          available: formatAiHubCurrency(budget.available),
+        })}
+      </Text>
+    </>
+  );
+}
+
+function AiHubBudgetSection({
+  budget,
+  hasError,
+  isLoading,
+}: AiHubBudgetUsageProps) {
+  const { t } = useTranslation();
+
+  return (
+    <Stack
+      gap={1}
+      borderTopWidth="1px"
+      borderTopColor="gray.200"
+      paddingTop={2}
+      data-testid="AiHubBudget"
     >
-      <Portal>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content data-testid="AiHubTermsDialog">
-            <Dialog.Header borderBottomWidth="1px">
-              <HStack gap={2}>
-                <MdGavel size={22} color="var(--chakra-colors-blue-600)" />
-                <Dialog.Title>{t("ai_hub_terms_title")}</Dialog.Title>
-              </HStack>
-            </Dialog.Header>
-            <Dialog.Body paddingBlock={6}>
-              <Stack gap={4} fontSize="sm">
-                <Heading size="xl">{t("ai_hub_terms_title")}</Heading>
-                <Text>
-                  <Trans
-                    t={t}
-                    i18nKey="ai_hub_terms_intro"
-                    components={{ bold: <strong /> }}
-                  />
-                </Text>
-                <Text>{t("ai_hub_terms_pdf_intro")}</Text>
-                <Link
-                  href={aiHubTermsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="blue.600"
-                  textDecoration="underline"
-                >
-                  {t("ai_hub_terms_pdf")}
-                </Link>
-                <Text>
-                  <Trans
-                    t={t}
-                    i18nKey="ai_hub_terms_sensitive_data"
-                    components={{ bold: <strong /> }}
-                  />
-                </Text>
-                <Heading size="md" marginTop={4}>
-                  {t("ai_hub_terms_more_info")}
-                </Heading>
-                <List.Root paddingInlineStart={5}>
-                  <List.Item>
-                    <Link
-                      href="https://openai.com/de-DE/policies/terms-of-use/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      color="blue.600"
-                      textDecoration="underline"
-                    >
-                      {t("ai_hub_terms_openai_terms")}
-                    </Link>
-                  </List.Item>
-                  <List.Item>
-                    <Link
-                      href="https://openai.com/de-DE/enterprise-privacy/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      color="blue.600"
-                      textDecoration="underline"
-                    >
-                      {t("ai_hub_terms_openai_privacy")}
-                    </Link>
-                  </List.Item>
-                </List.Root>
-              </Stack>
-            </Dialog.Body>
-            <Dialog.Footer
-              borderTopWidth="1px"
-              justifyContent="space-between"
-              gap={4}
-            >
-              <Checkbox.Root
-                checked={accepted}
-                onCheckedChange={(event) => {
-                  setAccepted(event.checked === true);
-                }}
-                data-testid="AiHubTermsCheckbox"
-              >
-                <Checkbox.HiddenInput />
-                <Checkbox.Control />
-                <Checkbox.Label>{t("ai_hub_terms_confirm")}</Checkbox.Label>
-              </Checkbox.Root>
-              <Button
-                variant="subtle"
-                flexShrink={0}
-                disabled={!accepted}
-                onClick={() => {
-                  setAccepted(false);
-                  onAccept();
-                }}
-                data-testid="AiHubTermsAcceptBtn"
-              >
-                {t("ai_hub_terms_accept")}
-              </Button>
-            </Dialog.Footer>
-            <Dialog.CloseTrigger asChild>
-              <CloseButton size="sm" />
-            </Dialog.CloseTrigger>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>
-    </Dialog.Root>
+      <Text fontSize="sm" color="green.600">
+        {t("ai_hub_budget_active")}
+      </Text>
+      <Text fontSize="sm" fontWeight="semibold">
+        {t("ai_hub_budget_usage")}
+      </Text>
+      <AiHubBudgetUsage
+        budget={budget}
+        hasError={hasError}
+        isLoading={isLoading}
+      />
+    </Stack>
+  );
+}
+
+function AiHubBudgetButton({
+  aiHub,
+}: {
+  aiHub: ReturnType<typeof useAiHubActivation>;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <>
+      <Button
+        colorPalette="green"
+        onClick={aiHub.isUsingAiHubBudget ? aiHub.stop : aiHub.start}
+        loading={aiHub.isActivating || aiHub.isWaitingForHubLogin}
+        loadingText={
+          aiHub.isWaitingForHubLogin
+            ? t("ai_hub_login_waiting_button")
+            : undefined
+        }
+        data-testid="UseAiHubBudgetBtn"
+      >
+        <MdVpnKey />{" "}
+        {aiHub.isUsingAiHubBudget
+          ? t("stop_using_ai_hub_budget")
+          : t("use_ai_hub_budget")}
+      </Button>
+      <AiHubLoginStatus
+        cancelHubLogin={aiHub.cancelHubLogin}
+        isWaitingForHubLogin={aiHub.isWaitingForHubLogin}
+        needsHubLogin={aiHub.needsHubLogin}
+        openLoginPopup={aiHub.openLoginPopup}
+      />
+    </>
   );
 }
 
@@ -731,200 +722,17 @@ function UserInformationPopover({
   user,
 }: UserInformationPopoverProps) {
   const { t } = useTranslation();
-  const [isGeneratingHubKey, setIsGeneratingHubKey] = useState(false);
-  const [aiHubBudget, setAiHubBudget] = useState<AiHubBudget | null>(null);
-  const [isLoadingAiHubBudget, setIsLoadingAiHubBudget] = useState(false);
-  const [aiHubBudgetError, setAiHubBudgetError] = useState(false);
-  const [aiHubTermsDialogOpen, setAiHubTermsDialogOpen] = useState(false);
-  const normalizedOpenAiBaseUrl = openai.baseUrl.replace(/\/$/, "");
-  const normalizedAiHubApiBaseUrl = aiHubApiBaseUrl.replace(/\/$/, "");
-  const isUsingAiHubBudget =
-    openai.aiHubEnabled || normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl;
-  const aiHubKeyAlias = user?.email
-    ? `KImpuls-${user.email.trim().toLowerCase()}`
-    : "";
-
-  async function loadAiHubBudget() {
-    setIsLoadingAiHubBudget(true);
-    setAiHubBudgetError(false);
-
-    try {
-      setAiHubBudget(await fetchAiHubBudget());
-    } catch (error) {
-      console.warn("Unable to load AI-Hub budget:", error);
-      setAiHubBudgetError(true);
-    } finally {
-      setIsLoadingAiHubBudget(false);
-    }
-  }
-
-  function formatAiHubCurrency(value: number) {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: "USD",
-    }).format(value);
-  }
-
-  const aiHubBudgetUsagePercentage =
-    aiHubBudget && aiHubBudget.max_budget_in_team > 0
-      ? Math.min(
-          100,
-          Math.max(
-            0,
-            (aiHubBudget.spend / aiHubBudget.max_budget_in_team) * 100
-          )
-        )
-      : 0;
-
-  function getAiHubErrorDescription(error: unknown) {
-    if (!(error instanceof AiHubError)) {
-      return t("ai_hub_budget_error_desc");
-    }
-
-    switch (error.code) {
-      case "key_generation_failed":
-        if (error.status === 401) {
-          return t("ai_hub_session_invalid_desc", { url: aiHubBaseUrl });
-        }
-        return t("ai_hub_key_generation_failed_desc", {
-          status: error.status,
-        });
-      case "key_generation_missing_key":
-        return t("ai_hub_key_generation_missing_key_desc");
-      case "model_list_failed":
-        return t("ai_hub_model_list_failed_desc", {
-          status: error.status,
-        });
-      default:
-        return t("ai_hub_budget_error_desc");
-    }
-  }
-
-  function stopUsingAiHubBudget() {
-    const aiHubModels = openai.aiHubModels ?? [];
-    const restoredModel =
-      openai.aiHubPreviousModel ||
-      (aiHubModels.includes(openai.model) ? defaultOpenAIModel : openai.model);
-
-    setOptions({
-      type: OptionActionType.OPENAI,
-      data: {
-        apiKey: openai.aiHubPreviousApiKey || "unused",
-        baseUrl: openai.aiHubPreviousBaseUrl || defaultOpenAIBaseUrl,
-        aiHubEnabled: false,
-        aiHubApiKey:
-          openai.aiHubApiKey ||
-          (normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl
-            ? openai.apiKey
-            : ""),
-        aiHubModels: [],
-        model: restoredModel,
-      },
-    });
-
-    toaster.create({
-      title: t("ai_hub_budget_disabled"),
-      description: t("ai_hub_budget_disabled_desc"),
-      duration: 5000,
-      type: "success",
-    });
-  }
-
-  const existingAiHubKey =
-    openai.aiHubApiKey ||
-    (normalizedOpenAiBaseUrl === normalizedAiHubApiBaseUrl
-      ? openai.apiKey
-      : "");
-
-  function useAiHubBudget() {
-    if (isUsingAiHubBudget) {
-      stopUsingAiHubBudget();
-      return;
-    }
-
-    // Fuer einen neuen Key muss der Nutzer zuerst die Nutzungsbedingungen bestaetigen.
-    if (existingAiHubKey) {
-      void activateAiHubBudget(false);
-    } else {
-      setAiHubTermsDialogOpen(true);
-    }
-  }
-
-  async function resolveAiHubKey(acceptedTerms: boolean) {
-    if (!aiHubKeyAlias) {
-      throw new Error("AI-Hub key alias requires a user email address.");
-    }
-
-    if (existingAiHubKey) {
-      return {
-        key: existingAiHubKey,
-        key_alias: aiHubKeyAlias,
-        key_name: openai.aiHubKeyName,
-      };
-    }
-
-    return generateUniqueAiHubKey(aiHubKeyAlias, { acceptedTerms });
-  }
-
-  async function activateAiHubBudget(acceptedTerms: boolean) {
-    setIsGeneratingHubKey(true);
-
-    try {
-      const key = await resolveAiHubKey(acceptedTerms);
-      const models = await fetchAiHubModels(key.key);
-      const selectedModel = models.includes(openai.model)
-        ? openai.model
-        : models[0] ?? openai.model;
-
-      setOptions({
-        type: OptionActionType.OPENAI,
-        data: {
-          apiKey: key.key,
-          baseUrl: aiHubApiBaseUrl,
-          aiHubEnabled: true,
-          aiHubApiKey: key.key,
-          aiHubKeyAlias: key.key_alias || aiHubKeyAlias,
-          aiHubKeyName: key.key_name,
-          aiHubModels: models,
-          aiHubPreviousApiKey: openai.apiKey,
-          aiHubPreviousBaseUrl: openai.baseUrl,
-          aiHubPreviousModel: openai.model,
-          model: selectedModel,
-        },
-      });
-
-      toaster.create({
-        title: t("ai_hub_budget_enabled"),
-        description: t("ai_hub_budget_enabled_desc", {
-          count: models.length,
-        }),
-        duration: 5000,
-        type: "success",
-      });
-      void loadAiHubBudget();
-    } catch (error) {
-      console.error("Unable to activate AI-Hub budget:", error);
-      toaster.create({
-        title: t("ai_hub_budget_error"),
-        description: getAiHubErrorDescription(error),
-        duration: 5000,
-        type: "error",
-      });
-    } finally {
-      setIsGeneratingHubKey(false);
-    }
-  }
+  const { load: loadAiHubBudget, ...aiHubBudget } = useAiHubBudget();
+  const aiHub = useAiHubActivation({
+    openai,
+    setOptions,
+    user,
+    onActivated: () => void loadAiHubBudget(),
+  });
 
   return (
     <>
-      <AiHubTermsDialog
-        open={aiHubTermsDialogOpen}
-        onOpenChange={setAiHubTermsDialogOpen}
-        onAccept={() => {
-          setAiHubTermsDialogOpen(false);
-          void activateAiHubBudget(true);
-        }}
-      />
+      <AiHubTermsDialog {...aiHub.termsDialogProps} />
       <Popover.Root
         lazyMount
         onOpenChange={(event) => {
@@ -953,68 +761,10 @@ function UserInformationPopover({
               <Stack gap={2}>
                 <Text>{user?.name}</Text>
                 <Text>{user?.email}</Text>
-                {isUsingAiHubBudget && (
-                  <Stack
-                    gap={1}
-                    borderTopWidth="1px"
-                    borderTopColor="gray.200"
-                    paddingTop={2}
-                    data-testid="AiHubBudget"
-                  >
-                    <Text fontSize="sm" color="green.600">
-                      {t("ai_hub_budget_active")}
-                    </Text>
-                    <Text fontSize="sm" fontWeight="semibold">
-                      {t("ai_hub_budget_usage")}
-                    </Text>
-                    {isLoadingAiHubBudget ? (
-                      <Text fontSize="sm">{t("ai_hub_budget_loading")}</Text>
-                    ) : aiHubBudgetError ? (
-                      <Text fontSize="sm" color="red.600">
-                        {t("ai_hub_budget_unavailable")}
-                      </Text>
-                    ) : aiHubBudget ? (
-                      <>
-                        <Text fontSize="sm">
-                          {t("ai_hub_budget_spent", {
-                            spend: formatAiHubCurrency(aiHubBudget.spend),
-                            budget: formatAiHubCurrency(
-                              aiHubBudget.max_budget_in_team
-                            ),
-                          })}
-                        </Text>
-                        <Progress.Root
-                          size="sm"
-                          value={aiHubBudgetUsagePercentage}
-                          colorPalette="blue"
-                          aria-label={t("ai_hub_budget_usage")}
-                        >
-                          <Progress.Track>
-                            <Progress.Range />
-                          </Progress.Track>
-                        </Progress.Root>
-                        <Text fontSize="sm">
-                          {t("ai_hub_budget_remaining", {
-                            available: formatAiHubCurrency(
-                              aiHubBudget.available
-                            ),
-                          })}
-                        </Text>
-                      </>
-                    ) : null}
-                  </Stack>
+                {aiHub.isUsingAiHubBudget && (
+                  <AiHubBudgetSection {...aiHubBudget} />
                 )}
-                <Button
-                  colorPalette="green"
-                  onClick={useAiHubBudget}
-                  loading={isGeneratingHubKey}
-                  data-testid="UseAiHubBudgetBtn"
-                >
-                  <MdVpnKey />{" "}
-                  {isUsingAiHubBudget
-                    ? t("stop_using_ai_hub_budget")
-                    : t("use_ai_hub_budget")}
-                </Button>
+                <AiHubBudgetButton aiHub={aiHub} />
                 <Button colorPalette="blue" onClick={logout}>
                   {t("logout")}
                 </Button>
