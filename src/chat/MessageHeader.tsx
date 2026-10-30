@@ -47,7 +47,7 @@ import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { VectorStoresDialog } from "./VectorStoresDialog";
 import { AiHubTermsDialog } from "./AiHubTermsDialog";
-import { AiHubLoginHint } from "./AiHubLoginHint";
+import { AiHubLoginStatus } from "./AiHubLoginHint";
 import type { AiHubBudget } from "./service/aiHub";
 import { isMcpAuthorizationIncomplete, useMcpAuth } from "./hooks/useMcpAuth";
 import { useAiHubActivation } from "./hooks/useAiHubActivation";
@@ -675,6 +675,41 @@ function AiHubBudgetSection({
   );
 }
 
+function AiHubBudgetButton({
+  aiHub,
+}: {
+  aiHub: ReturnType<typeof useAiHubActivation>;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <>
+      <Button
+        colorPalette="green"
+        onClick={aiHub.isUsingAiHubBudget ? aiHub.stop : aiHub.start}
+        loading={aiHub.isActivating || aiHub.isWaitingForHubLogin}
+        loadingText={
+          aiHub.isWaitingForHubLogin
+            ? t("ai_hub_login_waiting_button")
+            : undefined
+        }
+        data-testid="UseAiHubBudgetBtn"
+      >
+        <MdVpnKey />{" "}
+        {aiHub.isUsingAiHubBudget
+          ? t("stop_using_ai_hub_budget")
+          : t("use_ai_hub_budget")}
+      </Button>
+      <AiHubLoginStatus
+        cancelHubLogin={aiHub.cancelHubLogin}
+        isWaitingForHubLogin={aiHub.isWaitingForHubLogin}
+        needsHubLogin={aiHub.needsHubLogin}
+        openLoginPopup={aiHub.openLoginPopup}
+      />
+    </>
+  );
+}
+
 interface UserInformationPopoverProps {
   openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
@@ -729,18 +764,7 @@ function UserInformationPopover({
                 {aiHub.isUsingAiHubBudget && (
                   <AiHubBudgetSection {...aiHubBudget} />
                 )}
-                <Button
-                  colorPalette="green"
-                  onClick={aiHub.isUsingAiHubBudget ? aiHub.stop : aiHub.start}
-                  loading={aiHub.isActivating}
-                  data-testid="UseAiHubBudgetBtn"
-                >
-                  <MdVpnKey />{" "}
-                  {aiHub.isUsingAiHubBudget
-                    ? t("stop_using_ai_hub_budget")
-                    : t("use_ai_hub_budget")}
-                </Button>
-                {aiHub.needsHubLogin && <AiHubLoginHint />}
+                <AiHubBudgetButton aiHub={aiHub} />
                 <Button colorPalette="blue" onClick={logout}>
                   {t("logout")}
                 </Button>

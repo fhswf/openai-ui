@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { toaster } from "../../components/ui/toaster";
@@ -14,6 +14,11 @@ import {
   fetchAiHubModels,
   generateUniqueAiHubKey,
 } from "../service/aiHub";
+import {
+  navigateAiHubLoginPopup,
+  openAiHubLoginPopup,
+} from "../utils/aiHubLoginPopup";
+import { useAiHubLoginWatcher } from "./useAiHubLoginWatcher";
 
 type AiHubUser = { email?: string } | null | undefined;
 
@@ -120,6 +125,47 @@ async function loadActivatedOptions(
   };
 }
 
+function showActivatedToast(t: TFunction, data: Partial<OpenAIOptions>) {
+  toaster.create({
+    title: t("ai_hub_budget_enabled"),
+    description: t("ai_hub_budget_enabled_desc", {
+      count: data.aiHubModels?.length ?? 0,
+    }),
+    duration: 5000,
+    type: "success",
+  });
+}
+
+function showActivationErrorToast(t: TFunction, error: unknown) {
+  toaster.create({
+    title: t("ai_hub_budget_error"),
+    description: getAiHubErrorDescription(error, t),
+    duration: 5000,
+    type: "error",
+  });
+}
+
+type ActivationResult = "activated" | "login_required" | "failed" | "busy";
+
+function useAiHubLoginPopup() {
+  const popupRef = useRef<Window | null>(null);
+
+  const openLoginPopup = useCallback(() => {
+    const popup = openAiHubLoginPopup();
+    popupRef.current = popup;
+    if (popup) {
+      void navigateAiHubLoginPopup(popup);
+    }
+  }, []);
+
+  const closeLoginPopup = useCallback(() => {
+    popupRef.current?.close();
+    popupRef.current = null;
+  }, []);
+
+  return { openLoginPopup, closeLoginPopup };
+}
+
 interface UseAiHubActivationProps {
   onActivated?: () => void;
   openai: OpenAIOptions;
@@ -130,7 +176,8 @@ interface UseAiHubActivationProps {
 /**
  * Turns the AI-Hub budget on and off. Before a new key is created the user
  * has to accept the terms of use, so the hook also returns the props for the
- * `AiHubTermsDialog`.
+ * `AiHubTermsDialog`. Without a hub session it opens a login popup and
+ * finishes the activation as soon as the user has signed in.
  */
 export function useAiHubActivation({
   onActivated,
@@ -142,10 +189,15 @@ export function useAiHubActivation({
   const [isActivating, setIsActivating] = useState(false);
   const [termsDialogOpen, setTermsDialogOpen] = useState(false);
   const [needsHubLogin, setNeedsHubLogin] = useState(false);
+  const activationInFlight = useRef(false);
+  const { openLoginPopup, closeLoginPopup } = useAiHubLoginPopup();
   const isUsingAiHubBudget =
     Boolean(openai.aiHubEnabled) || isAiHubBaseUrl(openai);
 
-  async function activate(acceptedTerms: boolean) {
+  async function activate(acceptedTerms: boolean): Promise<ActivationResult> {
+    // Never run two activations at once, otherwise two keys could be created.
+    if (activationInFlight.current) return "busy";
+    activationInFlight.current = true;
     setIsActivating(true);
     try {
       const data = await loadActivatedOptions(
@@ -154,30 +206,45 @@ export function useAiHubActivation({
         acceptedTerms
       );
       setOptions({ type: OptionActionType.OPENAI, data });
-      toaster.create({
-        title: t("ai_hub_budget_enabled"),
-        description: t("ai_hub_budget_enabled_desc", {
-          count: data.aiHubModels?.length ?? 0,
-        }),
-        duration: 5000,
-        type: "success",
-      });
+      showActivatedToast(t, data);
       onActivated?.();
+      return "activated";
     } catch (error) {
-      if (isHubLoginRequired(error)) {
-        setNeedsHubLogin(true);
-        return;
-      }
+      if (isHubLoginRequired(error)) return "login_required";
       console.error("Unable to activate AI-Hub budget:", error);
-      toaster.create({
-        title: t("ai_hub_budget_error"),
-        description: getAiHubErrorDescription(error, t),
-        duration: 5000,
-        type: "error",
-      });
+      showActivationErrorToast(t, error);
+      return "failed";
     } finally {
+      activationInFlight.current = false;
       setIsActivating(false);
     }
+  }
+
+  const loginWatcher = useAiHubLoginWatcher({
+    retry: async () => {
+      const result = await activate(true);
+      // Only keep waiting while the hub still asks for a login.
+      const done = result === "activated" || result === "failed";
+      if (done) closeLoginPopup();
+      return done;
+    },
+    onTimeout: () => {
+      closeLoginPopup();
+      setNeedsHubLogin(true);
+    },
+  });
+
+  async function activateAfterTerms() {
+    if ((await activate(true)) === "login_required") {
+      // Still close to the click on "Accept", so the browser allows the popup.
+      openLoginPopup();
+      loginWatcher.startWaiting();
+    }
+  }
+
+  function cancelHubLogin() {
+    loginWatcher.stopWaiting();
+    closeLoginPopup();
   }
 
   function start() {
@@ -207,14 +274,17 @@ export function useAiHubActivation({
     onOpenChange: setTermsDialogOpen,
     onAccept: () => {
       setTermsDialogOpen(false);
-      void activate(true);
+      void activateAfterTerms();
     },
   };
 
   return {
+    cancelHubLogin,
     isActivating,
     isUsingAiHubBudget,
+    isWaitingForHubLogin: loginWatcher.isWaiting,
     needsHubLogin,
+    openLoginPopup,
     start,
     stop,
     termsDialogProps,

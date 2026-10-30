@@ -499,6 +499,10 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
             "The AI-Hub models could not be loaded. Status: {{status}}.",
           ai_hub_login_hint:
             "Please sign in to the <link>AI-Hub</link> first and try again.",
+          ai_hub_login_waiting:
+            "Please sign in to the AI-Hub in the window that just opened. The budget is enabled automatically afterwards.",
+          ai_hub_login_waiting_button: "Waiting for sign-in …",
+          ai_hub_login_open_popup: "Open sign-in window",
           ai_hub_terms_title: "Terms of Use",
           ai_hub_terms_intro:
             "Use of this application is subject to the <bold>FH SWF terms of use for the OpenAI proxy (KImpuls-Chat)</bold>.",
@@ -1098,6 +1102,10 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
             "Die AI-Hub-Modelle konnten nicht geladen werden. Status: {{status}}.",
           ai_hub_login_hint:
             "Bitte melden Sie sich zuerst im <link>AI-Hub</link> an und versuchen Sie es erneut.",
+          ai_hub_login_waiting:
+            "Bitte melden Sie sich im geöffneten Fenster im AI-Hub an. Danach wird das Budget automatisch aktiviert.",
+          ai_hub_login_waiting_button: "Warte auf Anmeldung …",
+          ai_hub_login_open_popup: "Anmeldefenster öffnen",
           ai_hub_terms_title: "Nutzungsbedingungen",
           ai_hub_terms_intro:
             "Die Nutzung dieser Anwendung unterliegt der <bold>Nutzungsordnung der Fachhochschule Südwestfalen für den OpenAI-Proxy (KImpuls-Chat)</bold>.",
