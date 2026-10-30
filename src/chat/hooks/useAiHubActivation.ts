@@ -11,7 +11,6 @@ import {
 import {
   AiHubError,
   aiHubApiBaseUrl,
-  aiHubBaseUrl,
   fetchAiHubModels,
   generateUniqueAiHubKey,
 } from "../service/aiHub";
@@ -31,6 +30,16 @@ function getAiHubKeyAlias(user: AiHubUser) {
   return user?.email ? `KImpuls-${user.email.trim().toLowerCase()}` : "";
 }
 
+// The hub answers with 401 when the browser has no hub session. That is not
+// an error but a hint for the user to sign in first.
+function isHubLoginRequired(error: unknown) {
+  return (
+    error instanceof AiHubError &&
+    error.code === "key_generation_failed" &&
+    error.status === 401
+  );
+}
+
 function getAiHubErrorDescription(error: unknown, t: TFunction) {
   if (!(error instanceof AiHubError)) {
     return t("ai_hub_budget_error_desc");
@@ -38,9 +47,6 @@ function getAiHubErrorDescription(error: unknown, t: TFunction) {
 
   switch (error.code) {
     case "key_generation_failed":
-      if (error.status === 401) {
-        return t("ai_hub_session_invalid_desc", { url: aiHubBaseUrl });
-      }
       return t("ai_hub_key_generation_failed_desc", { status: error.status });
     case "key_generation_missing_key":
       return t("ai_hub_key_generation_missing_key_desc");
@@ -122,9 +128,9 @@ interface UseAiHubActivationProps {
 }
 
 /**
- * Schaltet das AI-Hub-Budget ein und aus. Fuer einen neuen Key muss der
- * Nutzer zuerst die Nutzungsbedingungen bestaetigen; dafuer liefert der Hook
- * die Props fuer den `AiHubTermsDialog`.
+ * Turns the AI-Hub budget on and off. Before a new key is created the user
+ * has to accept the terms of use, so the hook also returns the props for the
+ * `AiHubTermsDialog`.
  */
 export function useAiHubActivation({
   onActivated,
@@ -135,6 +141,7 @@ export function useAiHubActivation({
   const { t } = useTranslation();
   const [isActivating, setIsActivating] = useState(false);
   const [termsDialogOpen, setTermsDialogOpen] = useState(false);
+  const [needsHubLogin, setNeedsHubLogin] = useState(false);
   const isUsingAiHubBudget =
     Boolean(openai.aiHubEnabled) || isAiHubBaseUrl(openai);
 
@@ -157,6 +164,10 @@ export function useAiHubActivation({
       });
       onActivated?.();
     } catch (error) {
+      if (isHubLoginRequired(error)) {
+        setNeedsHubLogin(true);
+        return;
+      }
       console.error("Unable to activate AI-Hub budget:", error);
       toaster.create({
         title: t("ai_hub_budget_error"),
@@ -170,6 +181,7 @@ export function useAiHubActivation({
   }
 
   function start() {
+    setNeedsHubLogin(false);
     if (getExistingAiHubKey(openai)) {
       void activate(false);
     } else {
@@ -199,5 +211,12 @@ export function useAiHubActivation({
     },
   };
 
-  return { isActivating, isUsingAiHubBudget, start, stop, termsDialogProps };
+  return {
+    isActivating,
+    isUsingAiHubBudget,
+    needsHubLogin,
+    start,
+    stop,
+    termsDialogProps,
+  };
 }

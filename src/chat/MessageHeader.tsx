@@ -47,6 +47,7 @@ import { GitHubMenu } from "./GitHubMenu";
 import { UsageInformationDialog } from "./UsageInformationDialog";
 import { VectorStoresDialog } from "./VectorStoresDialog";
 import { AiHubTermsDialog } from "./AiHubTermsDialog";
+import { AiHubLoginHint } from "./AiHubLoginHint";
 import type { AiHubBudget } from "./service/aiHub";
 import { isMcpAuthorizationIncomplete, useMcpAuth } from "./hooks/useMcpAuth";
 import { useAiHubActivation } from "./hooks/useAiHubActivation";
@@ -739,6 +740,7 @@ function UserInformationPopover({
                     ? t("stop_using_ai_hub_budget")
                     : t("use_ai_hub_budget")}
                 </Button>
+                {aiHub.needsHubLogin && <AiHubLoginHint />}
                 <Button colorPalette="blue" onClick={logout}>
                   {t("logout")}
                 </Button>
