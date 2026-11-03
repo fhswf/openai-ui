@@ -25,6 +25,7 @@ import type {
 } from "./utils/mcpServices";
 import { updateFormField } from "./utils/mcpServices";
 import styles from "./style/menu.module.less";
+import { useFeatureTour } from "./tours/FeatureTourContext";
 
 interface McpServiceRowProps {
   checked: boolean;
@@ -99,6 +100,7 @@ function McpServicesList({
       padding={2}
       gap={2}
       as="form"
+      data-tour="mcp-configured-services"
       onSubmit={(event) => event.preventDefault()}
     >
       <Text fontWeight="bold">{t("MCP Services")}</Text>
@@ -178,6 +180,7 @@ function McpServicesDialogBody(props: McpServicesDialogBodyProps) {
         )}
         <Button
           data-testid="mcp-add-service-btn"
+          data-tour="mcp-service-save"
           onClick={props.onSave}
           colorPalette="blue"
         >
@@ -200,10 +203,18 @@ function McpServicesDialogBody(props: McpServicesDialogBodyProps) {
 
 export function McpServicesDialog(props: McpServicesDialogProps) {
   const { t } = useTranslation();
+  const { activeGuide } = useFeatureTour();
+  const isMcpTourActive = activeGuide?.id === "mcp-services";
 
   return (
     <Dialog.Root
       data-testid="mcp-services-dialog"
+      modal={!isMcpTourActive}
+      initialFocusEl={
+        isMcpTourActive
+          ? () => document.getElementById("feature-tour-next-button")
+          : undefined
+      }
       open={props.open}
       onOpenChange={(event) => props.onOpenChange(event.open)}
       lazyMount
@@ -219,7 +230,10 @@ export function McpServicesDialog(props: McpServicesDialogProps) {
             <McpServicesDialogBody {...props} />
             <Dialog.Footer />
             <Dialog.CloseTrigger asChild>
-              <CloseButton size="sm" />
+              <CloseButton
+                size="sm"
+                data-tour="mcp-services-dialog-close"
+              />
             </Dialog.CloseTrigger>
           </Dialog.Content>
         </Dialog.Positioner>

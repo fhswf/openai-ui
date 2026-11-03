@@ -38,6 +38,8 @@ import { logger, SeverityNumber } from "./utils/instrumentation";
 import { ErrorFallback } from "./ErrorFallback";
 import { ShareTargetHandler } from "./ShareTargetHandler";
 import { ZkChatShareHandler } from "./ZkChatShareHandler";
+import { FeatureTourMenu } from "./tours/FeatureTourMenu";
+import { FeatureTourOverlay } from "./tours/FeatureTourOverlay";
 
 export default function Chat() {
   const { is, user } = useGlobal();
@@ -121,6 +123,8 @@ export default function Chat() {
         className={classnames(styles.chat, styles["chat-layout"], chatStyle)}
       >
         <Toaster />
+        <FeatureTourMenu />
+        <FeatureTourOverlay />
         <ShareTargetHandler />
         <ZkChatShareHandler />
 

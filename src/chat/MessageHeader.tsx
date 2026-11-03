@@ -71,6 +71,7 @@ import {
 } from "./utils/mcpServices";
 import { DocumentsMenu } from "./DocumentsMenu";
 import { ChatShareDialog } from "./ChatShareDialog";
+import { toaster } from "../components/ui/toaster";
 
 import "../assets/icon/style.css";
 
@@ -105,6 +106,7 @@ function ToolbarToggleButton({
       aria-expanded={navigationOpen}
       aria-controls="mobile-chat-navigation"
       title={label}
+      data-tour="mobile-navigation-trigger"
       className={chatStyles["mobile-nav-toggle"]}
       onClick={onOpenNavigation}
     >
@@ -278,6 +280,7 @@ function ChatOptionsMenuContent({
           variant="ghost"
           title={t("chat_options")}
           data-testid="chat-options-btn"
+          data-tour="chat-options-trigger"
         >
           <LuSlidersHorizontal aria-label={t("chat_options")} />
         </IconButton>
@@ -710,6 +713,11 @@ function AiHubBudgetButton({
   );
 }
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
 interface UserInformationPopoverProps {
   openai: OpenAIOptions;
   setOptions: GlobalActions["setOptions"];
@@ -722,6 +730,8 @@ function UserInformationPopover({
   user,
 }: UserInformationPopoverProps) {
   const { t } = useTranslation();
+  const [installPrompt, setInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const { load: loadAiHubBudget, ...aiHubBudget } = useAiHubBudget();
   const aiHub = useAiHubActivation({
     openai,
@@ -729,6 +739,42 @@ function UserInformationPopover({
     user,
     onActivated: () => void loadAiHubBudget(),
   });
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+    const handleAppInstalled = () => setInstallPrompt(null);
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  async function installApp() {
+    if (!installPrompt) return;
+
+    const prompt = installPrompt;
+    setInstallPrompt(null);
+    try {
+      await prompt.prompt();
+      await prompt.userChoice;
+    } catch (error) {
+      console.error("Could not prompt to install the K!mpuls app:", error);
+      toaster.create({
+        title: t("install_app_error"),
+        duration: 5000,
+        type: "error",
+      });
+    }
+  }
 
   return (
     <>
@@ -765,6 +811,15 @@ function UserInformationPopover({
                   <AiHubBudgetSection {...aiHubBudget} />
                 )}
                 <AiHubBudgetButton aiHub={aiHub} />
+                {installPrompt && (
+                  <Button
+                    colorPalette="blue"
+                    onClick={() => void installApp()}
+                    data-testid="InstallAppBtn"
+                  >
+                    <LuDownload /> {t("install_app")}
+                  </Button>
+                )}
                 <Button colorPalette="blue" onClick={logout}>
                   {t("logout")}
                 </Button>
@@ -905,6 +960,7 @@ function MobileHeaderActions(props: MobileHeaderActionsProps) {
         aria-expanded={open}
         aria-controls="mobile-chat-header-actions"
         title={t("more_actions")}
+        data-tour="mobile-header-actions-trigger"
         onClick={() => setOpen((wasOpen) => !wasOpen)}
       >
         <LuEllipsis />

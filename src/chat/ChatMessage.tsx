@@ -108,7 +108,13 @@ function ToolUse(props) {
     <HStack wrap="wrap">
       {groupedTools.map(([key, tools]) => (
         <Tooltip content={t(key + "_description")} key={key.toString()}>
-          <Tag.Root size={"md"} onClick={() => setIsOpen(true)} cursor="pointer" data-testid={`tool-usage-badge-${key}`}>
+          <Tag.Root
+            size={"md"}
+            onClick={() => setIsOpen(true)}
+            cursor="pointer"
+            data-testid={`tool-usage-badge-${key}`}
+            data-tour="tool-usage-badge"
+          >
             <Tag.Label>{t(key.toString())}</Tag.Label>
             <Tag.EndElement alignSelf={"baseline"}>
               <Badge colorPalette="green" size={"xs"}>

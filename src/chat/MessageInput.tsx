@@ -282,7 +282,11 @@ export function MessageInput() {
   };
 
   return (
-    <div className={styles.bar} data-testid="MessageInputBar">
+    <div
+      className={styles.bar}
+      data-testid="MessageInputBar"
+      data-tour="chat-message-input"
+    >
       <div
         className={styles.dropzone}
         ref={dropRef}
@@ -484,6 +488,7 @@ export function MessageInput() {
               fileInputRef.current?.click();
             }}
             data-testid="UploadFileBtn"
+            data-tour="chat-file-upload-button"
           >
             <MdOutlineFileUpload />
           </IconButton>

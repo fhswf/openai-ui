@@ -677,7 +677,7 @@ export function ZeroKnowledgeStorageSetting() {
   };
 
   return (
-    <Field.Root mt="4">
+    <Field.Root mt="4" data-tour="encrypted-storage-setting">
       <Switch
         id="zk-storage"
         checked={enabled}
