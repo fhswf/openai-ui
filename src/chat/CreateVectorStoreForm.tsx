@@ -6,11 +6,13 @@ import { createVectorStore } from "./service/vectorStores";
 import { showVectorStoreError } from "./vectorStoreDialogUtils";
 
 interface CreateVectorStoreFormProps {
+  disabled?: boolean;
   onCreated: (store: { id: string; name: string }) => void;
   options: Options;
 }
 
 export function CreateVectorStoreForm({
+  disabled = false,
   onCreated,
   options,
 }: CreateVectorStoreFormProps) {
@@ -48,6 +50,7 @@ export function CreateVectorStoreForm({
           <Input
             data-testid="vector-store-name-input"
             value={name}
+            disabled={disabled}
             placeholder={t("vector_store_name_placeholder")}
             onChange={(event) => setName(event.target.value)}
           />
@@ -55,7 +58,7 @@ export function CreateVectorStoreForm({
             type="submit"
             colorPalette="blue"
             loading={saving}
-            disabled={!name.trim()}
+            disabled={disabled || !name.trim()}
             data-testid="vector-store-create-btn"
           >
             {t("vector_store_create")}

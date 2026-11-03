@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AiHubError, generateUniqueAiHubKey } from "../aiHub";
+import {
+  AiHubError,
+  fetchAiHubLoginUrl,
+  generateUniqueAiHubKey,
+} from "../aiHub";
 
 function jsonResponse(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {
@@ -138,5 +142,60 @@ describe("generateUniqueAiHubKey", () => {
     await expect(promise).rejects.toBeInstanceOf(AiHubError);
     await expect(promise).rejects.toMatchObject({ status: 500 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("fetchAiHubLoginUrl", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns the login url from the hub", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ login_url: "https://keycloak.example/auth" })
+    );
+
+    await expect(fetchAiHubLoginUrl()).resolves.toBe(
+      "https://keycloak.example/auth"
+    );
+  });
+
+  it("requests /api/login with the hub cookies", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ login_url: "https://keycloak.example/auth" })
+    );
+
+    await fetchAiHubLoginUrl();
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/login$/);
+    expect(init.credentials).toBe("include");
+  });
+
+  it("throws login_url_failed when the hub answers with an error", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({}, { status: 500 }));
+
+    const promise = fetchAiHubLoginUrl();
+
+    await expect(promise).rejects.toBeInstanceOf(AiHubError);
+    await expect(promise).rejects.toMatchObject({
+      code: "login_url_failed",
+      status: 500,
+    });
+  });
+
+  it("throws login_url_failed when the response has no login url", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({}));
+
+    await expect(fetchAiHubLoginUrl()).rejects.toMatchObject({
+      code: "login_url_failed",
+    });
   });
 });

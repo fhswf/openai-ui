@@ -17,6 +17,10 @@ interface ModelListResponse {
   data?: Array<{ id?: string; name?: string } | string>;
 }
 
+interface AiHubLoginUrlResponse {
+  login_url?: string;
+}
+
 export interface AiHubBudget {
   max_budget_in_team: number;
   spend: number;
@@ -29,7 +33,8 @@ export type AiHubErrorCode =
   | "key_generation_failed"
   | "key_generation_missing_key"
   | "model_list_failed"
-  | "budget_fetch_failed";
+  | "budget_fetch_failed"
+  | "login_url_failed";
 
 export class AiHubError extends Error {
   code: AiHubErrorCode;
@@ -56,20 +61,17 @@ export async function generateAiHubKey(
   keyAlias = "kimpuls",
   acceptedTerms = false
 ) {
-  const response = await fetch(
-    `${normalizedAiHubBaseUrl}/api/key/generate`,
-    {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        key_alias: keyAlias,
-        accepted_terms: acceptedTerms,
-      }),
-    }
-  );
+  const response = await fetch(`${normalizedAiHubBaseUrl}/api/key/generate`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      key_alias: keyAlias,
+      accepted_terms: acceptedTerms,
+    }),
+  });
 
   assertOk(response, "key_generation_failed");
 
@@ -167,4 +169,20 @@ export async function fetchAiHubBudget() {
   assertOk(response, "budget_fetch_failed");
 
   return (await response.json()) as AiHubBudget;
+}
+
+export async function fetchAiHubLoginUrl(): Promise<string> {
+  const response = await fetch(`${normalizedAiHubBaseUrl}/api/login`, {
+    credentials: "include",
+  });
+
+  assertOk(response, "login_url_failed");
+
+  const payload = (await response.json()) as AiHubLoginUrlResponse;
+
+  if (!payload.login_url) {
+    throw new AiHubError("login_url_failed");
+  }
+
+  return payload.login_url;
 }

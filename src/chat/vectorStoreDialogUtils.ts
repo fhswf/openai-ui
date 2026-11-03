@@ -1,3 +1,4 @@
+import { APIError } from "openai";
 import { toaster } from "../components/ui/toaster";
 import { getInputFileMimeType } from "./utils/attachments";
 
@@ -9,6 +10,10 @@ export function showVectorStoreError(title: string, error: unknown) {
     type: "error",
     duration: 5000,
   });
+}
+
+export function isMissingApiKeyError(error: unknown): boolean {
+  return error instanceof APIError && error.status === 401;
 }
 
 /*
