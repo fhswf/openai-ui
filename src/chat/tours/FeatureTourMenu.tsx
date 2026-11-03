@@ -154,8 +154,7 @@ export function FeatureTourButton({
 
 export function FeatureTourMenu() {
   const { t } = useTranslation();
-  const { menuOpen, setMenuOpen, unseenGuides, startGuide } =
-    useFeatureTour();
+  const { menuOpen, setMenuOpen } = useFeatureTour();
 
   return (
     <Dialog.Root
@@ -185,67 +184,6 @@ export function FeatureTourMenu() {
             </Dialog.CloseTrigger>
           </Dialog.Header>
           <FeatureTourMenuBody />
-          <Dialog.Body overflowY="auto">
-            <Stack gap="4">
-              <Text color="fg.muted">{t("tour_menu_description")}</Text>
-              {unseenGuides.length > 0 && (
-                <Box
-                  borderWidth="1px"
-                  borderColor="blue.300"
-                  borderRadius="md"
-                  padding="3"
-                  bg="blue.subtle"
-                >
-                  <Heading size="sm" marginBlockEnd="1">
-                    {t("tour_new_section", { number: unseenGuides.length })}
-                  </Heading>
-                  <Text fontSize="sm">{t("tour_new_section_description")}</Text>
-                </Box>
-              )}
-
-              <Stack gap="3">
-                {featureGuides.map((guide) => {
-                  const isNew = unseenGuides.some(
-                    (unseenGuide) => unseenGuide.id === guide.id
-                  );
-
-                  return (
-                    <Box
-                      key={guide.id}
-                      borderWidth="1px"
-                      borderColor="border"
-                      borderRadius="md"
-                      padding="3"
-                    >
-                      <HStack justifyContent="space-between" alignItems="start">
-                        <Heading size="sm">{t(guide.titleKey)}</Heading>
-                        {isNew ? (
-                          <Badge colorPalette="blue">{t("tour_new")}</Badge>
-                        ) : (
-                          <Text fontSize="xs" color="fg.muted">
-                            {t("tour_seen")}
-                          </Text>
-                        )}
-                      </HStack>
-                      <Text color="fg.muted" fontSize="sm" marginBlock="2">
-                        {t(guide.descriptionKey)}
-                      </Text>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => startGuide(guide.id)}
-                      >
-                        {t("tour_start")}
-                      </Button>
-                    </Box>
-                  );
-                })}
-              </Stack>
-              <Text fontSize="xs" color="fg.muted">
-                {t("tour_progress_local")}
-              </Text>
-            </Stack>
-          </Dialog.Body>
           <Dialog.Footer>
             <Button variant="ghost" onClick={() => setMenuOpen(false)}>
               {t("close")}
