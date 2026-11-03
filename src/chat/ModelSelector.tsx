@@ -68,7 +68,7 @@ export function ModelSelector({
     return (
       <>
         <Separator />
-        <Stack px="4" py="3" gap="2">
+        <Stack px="4" py="3" gap="2" data-tour="chat-reasoning-effort">
           <Slider.Root
             colorPalette="blue"
             size="sm"
@@ -117,6 +117,7 @@ export function ModelSelector({
           aria-label={t("model_options") + ": " + openai.model}
           data-newer-model-available={newerModelAvailable || undefined}
           data-testid="ModelSelectorTrigger"
+          data-tour="chat-model-selector"
         >
           <Text
             maxW="28vw"
@@ -130,7 +131,10 @@ export function ModelSelector({
         </Button>
       </Menu.Trigger>
       <Menu.Positioner>
-        <Menu.Content minW={{ base: "calc(100vw - 2rem)", sm: "24rem" }}>
+        <Menu.Content
+          minW={{ base: "calc(100vw - 2rem)", sm: "24rem" }}
+          data-tour="chat-model-options"
+        >
           {groups.length <= 1 ? (
             <Menu.RadioItemGroup
               value={openai.model}

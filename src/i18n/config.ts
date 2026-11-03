@@ -564,6 +564,18 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           tour_history_step2_title: "Search conversations",
           tour_history_step2_body:
             "Search titles and message text to find the conversation you need. Select a result to continue it.",
+          tour_chat_model_title: "Configure the chat model",
+          tour_chat_model_description:
+            "Choose the model used for replies and adjust reasoning effort when supported.",
+          tour_chat_model_step1_title: "Choose a model",
+          tour_chat_model_step1_body:
+            "The selected model appears here. Open this menu to choose which language model generates your replies.",
+          tour_chat_model_step2_title: "Browse available models",
+          tour_chat_model_step2_body:
+            "The menu lists the models available in your setup. Select one to use it for replies; AI Hub models appear here when configured.",
+          tour_chat_model_step3_title: "Adjust reasoning effort",
+          tour_chat_model_step3_body:
+            "For models that support reasoning effort, this slider controls how much reasoning they apply before answering. A higher setting may help with complex questions but can take longer.",
           tour_documents_title: "Search your document collections",
           tour_documents_description:
             "Prerequisites: API access, a reachable document collection service endpoint, and a collection with uploaded files that have finished processing. Enable the collection in each chat where you want to search it.",
@@ -1302,6 +1314,18 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           tour_history_step2_title: "Unterhaltungen durchsuchen",
           tour_history_step2_body:
             "Durchsuche Titel und Nachrichtentexte, um einen Chat wiederzufinden. Wähle einen Treffer aus, um ihn fortzusetzen.",
+          tour_chat_model_title: "Chat-Modell konfigurieren",
+          tour_chat_model_description:
+            "Wähle das Modell für Antworten und passe bei unterstützten Modellen den Reasoning-Aufwand an.",
+          tour_chat_model_step1_title: "Modell auswählen",
+          tour_chat_model_step1_body:
+            "Hier wird das ausgewählte Modell angezeigt. Öffne das Menü, um das Sprachmodell für deine Antworten auszuwählen.",
+          tour_chat_model_step2_title: "Verfügbare Modelle ansehen",
+          tour_chat_model_step2_body:
+            "Das Menü listet die Modelle auf, die in deiner Einrichtung verfügbar sind. Mit der Auswahl legst du fest, welches Modell Antworten erzeugt. Konfigurierte AI-Hub-Modelle erscheinen ebenfalls hier.",
+          tour_chat_model_step3_title: "Reasoning-Aufwand anpassen",
+          tour_chat_model_step3_body:
+            "Bei Modellen, die Reasoning-Aufwand unterstützen, legst du mit diesem Regler fest, wie intensiv das Modell vor einer Antwort nachdenkt. Ein höherer Wert kann bei komplexen Fragen helfen, aber länger dauern.",
           tour_documents_title: "Dokumentensammlungen durchsuchen",
           tour_documents_description:
             "Voraussetzungen: API-Zugang, ein erreichbarer Endpunkt für Dokumentensammlungen und eine Sammlung mit vollständig verarbeiteten Dateien. Aktiviere die Sammlung in jedem Chat, in dem du sie durchsuchen möchtest.",
