@@ -119,6 +119,7 @@ function ToolbarToggleButton({
       aria-expanded={navigationOpen}
       aria-controls="mobile-chat-navigation"
       title={label}
+      data-tour="mobile-navigation-trigger"
       className={chatStyles["mobile-nav-toggle"]}
       onClick={onOpenNavigation}
     >
@@ -292,6 +293,7 @@ function ChatOptionsMenuContent({
           variant="ghost"
           title={t("chat_options")}
           data-testid="chat-options-btn"
+          data-tour="chat-options-trigger"
         >
           <LuSlidersHorizontal aria-label={t("chat_options")} />
         </IconButton>
@@ -1206,6 +1208,7 @@ function MobileHeaderActions(props: MobileHeaderActionsProps) {
         aria-expanded={open}
         aria-controls="mobile-chat-header-actions"
         title={t("more_actions")}
+        data-tour="mobile-header-actions-trigger"
         onClick={() => setOpen((wasOpen) => !wasOpen)}
       >
         <LuEllipsis />

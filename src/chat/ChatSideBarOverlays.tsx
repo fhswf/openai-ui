@@ -15,6 +15,8 @@ import smartypants from "remark-smartypants";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import { IoInformationCircleOutline } from "react-icons/io5";
+import { FeatureTourButton } from "./tours/FeatureTourMenu";
+import { useFeatureTour } from "./tours/FeatureTourContext";
 import { Tooltip } from "../components/ui/tooltip";
 import { classnames } from "../components/utils";
 import { PrimarySidebarOptions } from "./ChatSideBarOptions";
@@ -196,14 +198,17 @@ function DesktopChatSideBar({
         />
       }
       about={
-        <SidebarAboutDialog
-          open={aboutOpen}
-          acceptedTerms={acceptedTerms}
-          metadata={metadata}
-          termsText={termsText}
-          onOpenChange={onAboutOpenChange}
-          onAcceptTerms={onAcceptTerms}
-        />
+        <VStack align="center" gap="1">
+          <FeatureTourButton />
+          <SidebarAboutDialog
+            open={aboutOpen}
+            acceptedTerms={acceptedTerms}
+            metadata={metadata}
+            termsText={termsText}
+            onOpenChange={onAboutOpenChange}
+            onAcceptTerms={onAcceptTerms}
+          />
+        </VStack>
       }
     />
   );
@@ -279,6 +284,10 @@ export function MobileSidebarDrawer({
   onOpenAbout,
 }: MobileSidebarDrawerProps) {
   const { t } = useTranslation();
+  const { activeGuide } = useFeatureTour();
+  const tourIsShowingSettings =
+    activeGuide?.id === "custom-gpt-profiles" ||
+    activeGuide?.id === "encrypted-chat-storage";
 
   return (
     <DrawerRoot
@@ -286,6 +295,7 @@ export function MobileSidebarDrawer({
       onOpenChange={(event) => onMobileOpenChange(event.open)}
       placement="start"
       size="xs"
+      modal={!tourIsShowingSettings}
     >
       <Portal>
         <DrawerBackdrop />
@@ -296,11 +306,18 @@ export function MobileSidebarDrawer({
       >
         <DrawerHeader>
           <DrawerTitle>{t("chatbot_title")}</DrawerTitle>
-          <DrawerCloseTrigger aria-label={t("close")} />
+          <DrawerCloseTrigger
+            aria-label={t("close")}
+            data-tour="mobile-navigation-close"
+          />
         </DrawerHeader>
         <DrawerBody>
           <VStack align="stretch" gap="2" className={styles["drawer-controls"]}>
             {actions}
+            <FeatureTourButton
+              expanded
+              onBeforeOpen={() => onMobileOpenChange(false)}
+            />
             <Button
               width="100%"
               justifyContent="flex-start"

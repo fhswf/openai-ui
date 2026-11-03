@@ -55,7 +55,10 @@ export function DocumentsMenu({ onManage }: DocumentsMenuProps) {
         if (event.open) void loadStores();
       }}
     >
-      <Menu.TriggerItem data-testid="documents-menu-trigger">
+      <Menu.TriggerItem
+        data-testid="documents-menu-trigger"
+        data-tour="documents-menu-trigger"
+      >
         {t("documents_menu")} <LuChevronRight />
       </Menu.TriggerItem>
       <Portal>
