@@ -119,6 +119,16 @@ export function FeatureTourProvider({ children }: React.PropsWithChildren) {
         case "open-model-selector":
           await openMenuTrigger("chat-model-selector");
           break;
+        case "open-tool-usage-details": {
+          const badge = await waitForVisibleElement("tool-usage-badge");
+          if (!badge) break;
+
+          cleanupActions.current.push(() => {
+            findVisibleTourTarget("tool-usage-details-close")?.click();
+          });
+          badge.click();
+          break;
+        }
         case "open-mobile-header-actions": {
           if (findVisibleTourTarget(step.target)) break;
           await openMenuTrigger("mobile-header-actions-trigger");

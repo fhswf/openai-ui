@@ -15,6 +15,7 @@ import {
 import { Tool } from "../context/types";
 import { useTranslation } from "react-i18next";
 import { LazyRenderer } from "../MessageRender";
+import { useFeatureTour } from "../tours/FeatureTourContext";
 
 type ToolUsagePopupProps = {
     isOpen: boolean;
@@ -40,6 +41,8 @@ function groupToolsByType(toolsUsed: Tool[]): [string, Tool[]][] {
 
 export function ToolUsagePopup({ isOpen, onClose, toolsUsed }: ToolUsagePopupProps) {
     const { t } = useTranslation();
+    const { activeGuide } = useFeatureTour();
+    const isToolInfoTourActive = activeGuide?.id === "chat-tool-information";
 
     if (!toolsUsed || toolsUsed.length === 0) {
         return null;
@@ -48,16 +51,34 @@ export function ToolUsagePopup({ isOpen, onClose, toolsUsed }: ToolUsagePopupPro
     const groupedTools = groupToolsByType(toolsUsed);
 
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="xl" scrollBehavior="inside">
+        <Dialog.Root
+            open={isOpen}
+            onOpenChange={(e) => !e.open && onClose()}
+            modal={!isToolInfoTourActive}
+            initialFocusEl={
+                isToolInfoTourActive
+                    ? () => document.getElementById("feature-tour-next-button")
+                    : undefined
+            }
+            size="xl"
+            scrollBehavior="inside"
+        >
             <Portal>
                 <Dialog.Backdrop />
                 <Dialog.Positioner>
-                    <Dialog.Content data-testid="tool-usage-popup-content">
+                    <Dialog.Content
+                        data-testid="tool-usage-popup-content"
+                        data-tour="tool-usage-details"
+                    >
                         <Dialog.Header>
                             <Dialog.Title>{t("Tool Usage Details")}</Dialog.Title>
                         </Dialog.Header>
                         <Dialog.CloseTrigger asChild>
-                            <CloseButton size="sm" onClick={onClose} />
+                            <CloseButton
+                                size="sm"
+                                onClick={onClose}
+                                data-tour="tool-usage-details-close"
+                            />
                         </Dialog.CloseTrigger>
                         <Dialog.Body>
                             <Stack gap={4}>
