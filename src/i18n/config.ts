@@ -525,6 +525,88 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           delete_chat: "Delete Chat",
           open_issue: "Open Issue",
           release_notes: "Release Notes",
+          tour_menu_title: "Feature tours",
+          tour_menu_description:
+            "Choose a short guide to explore a feature. You can open any guide again at any time.",
+          tour_unseen_count: "{{number}} feature guides not viewed",
+          tour_new_section: "New feature guides ({{number}})",
+          tour_new_section_description:
+            "New and updated guides are highlighted here after an app update.",
+          tour_progress_local: "Your progress is saved in this browser.",
+          tour_update_title: "New feature guides available",
+          tour_update_description:
+            "{{number}} new or updated feature guides are ready to explore.",
+          tour_open: "Explore",
+          tour_new: "New",
+          tour_seen: "Viewed",
+          tour_start: "Start guide",
+          tour_next: "Next",
+          tour_previous: "Back",
+          tour_finish: "Finish",
+          tour_exit: "Exit tour",
+          tour_step_count: "Step {{current}} of {{total}}",
+          tour_target_unavailable:
+            "This part of the interface is not available right now. You can continue or end the guide.",
+          tour_history_title: "Find chats in your history",
+          tour_history_description:
+            "Search saved conversations and return to an earlier chat.",
+          tour_history_step1_title: "Open chat history",
+          tour_history_step1_body:
+            "Use this button to browse your saved conversations.",
+          tour_history_step2_title: "Search conversations",
+          tour_history_step2_body:
+            "Search titles and message text to find the conversation you need. Select a result to continue it.",
+          tour_documents_title: "Search your document collections",
+          tour_documents_description:
+            "Prerequisites: API access, a reachable document collection service endpoint, and a collection with uploaded files that have finished processing. Enable the collection in each chat where you want to search it.",
+          tour_documents_step1_title: "Open chat tools",
+          tour_documents_step1_body:
+            "Before using document search, check that your API key and document collection service endpoint are configured and reachable in settings. Open chat tools here to choose collections for this conversation.",
+          tour_documents_step2_title: "Open Documents",
+          tour_documents_step2_body:
+            "Choose a collection with processed files to enable it for this conversation. If none exist, use Manage Collections to create one and upload files. Only enabled collections are searched.",
+          tour_custom_gpt_title: "Create a custom GPT profile",
+          tour_custom_gpt_description:
+            "Save a personal assistant profile with its own instructions and sharing behavior.",
+          tour_custom_gpt_step1_title: "Open settings",
+          tour_custom_gpt_step1_body:
+            "Custom GPT profiles are managed in the application settings.",
+          tour_custom_gpt_step2_title: "Configure custom GPTs",
+          tour_custom_gpt_step2_body:
+            "Create a profile, set its instructions, and define how it responds when you share a page or document with K!mpuls.",
+          tour_mcp_title: "Connect MCP services",
+          tour_mcp_description:
+            "Learn where services are configured and where to review tool permissions.",
+          tour_mcp_step1_title: "Open chat tools",
+          tour_mcp_step1_body:
+            "Service settings are available alongside the tools for the current chat.",
+          tour_mcp_step2_title: "Manage MCP services",
+          tour_mcp_step2_body:
+            "This submenu lists tools from connected services. Choose Add/Remove MCP Services to open the connection and permission settings.",
+          tour_mcp_step3_title: "Identify the service",
+          tour_mcp_step3_body:
+            "Enter a display name, a server label, and the service URL. The tour opens this form without saving anything.",
+          tour_mcp_step4_title: "Choose tool access",
+          tour_mcp_step4_body:
+            "Require Approval controls when a tool needs your approval. Allowed Tools can restrict which tools from the service are available; leave it empty to allow all tools.",
+          tour_mcp_step5_title: "Review authorization",
+          tour_mcp_step5_body:
+            "Choose no authorization, a static token, or encrypted user data. User data is only sent after you review the displayed scopes and give consent. This tour does not change these settings.",
+          tour_mcp_step6_title: "Save only when ready",
+          tour_mcp_step6_body:
+            "Add/Save Service validates and stores the configuration. The tour will not press this button or send your configuration.",
+          tour_mcp_step7_title: "Manage configured services",
+          tour_mcp_step7_body:
+            "Existing services appear here. You can enable or disable them, edit their settings, or remove them.",
+          tour_encrypted_storage_title: "Set up encrypted chat storage",
+          tour_encrypted_storage_description:
+            "Learn how to sync chats and settings across devices using a passkey.",
+          tour_encrypted_storage_step1_title: "Open settings",
+          tour_encrypted_storage_step1_body:
+            "Encrypted cross-device storage is configured in the general settings.",
+          tour_encrypted_storage_step2_title: "Encrypted storage setting",
+          tour_encrypted_storage_step2_body:
+            "This optional feature encrypts chats in the browser before syncing. A passkey with WebAuthn PRF support is required; this guide does not enable it.",
           Theme: "Theme",
           Config: "Config",
           Minimize: "Minimize",
@@ -1173,6 +1255,88 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           tool_options: "Werkzeug-Optionen",
           model_options: "Modell",
           release_notes: "Versionshinweise",
+          tour_menu_title: "Touren & Funktionen",
+          tour_menu_description:
+            "Wähle eine kurze Anleitung aus, um eine Funktion kennenzulernen. Du kannst jede Anleitung jederzeit erneut öffnen.",
+          tour_unseen_count: "{{number}} ungesehene Feature-Anleitungen",
+          tour_new_section: "Neue Feature-Anleitungen ({{number}})",
+          tour_new_section_description:
+            "Nach einem Update werden neue und aktualisierte Anleitungen hier hervorgehoben.",
+          tour_progress_local: "Dein Fortschritt wird in diesem Browser gespeichert.",
+          tour_update_title: "Neue Feature-Anleitungen verfügbar",
+          tour_update_description:
+            "{{number}} neue oder aktualisierte Anleitungen warten darauf, entdeckt zu werden.",
+          tour_open: "Ansehen",
+          tour_new: "Neu",
+          tour_seen: "Angesehen",
+          tour_start: "Anleitung starten",
+          tour_next: "Weiter",
+          tour_previous: "Zurück",
+          tour_finish: "Abschließen",
+          tour_exit: "Tour beenden",
+          tour_step_count: "Schritt {{current}} von {{total}}",
+          tour_target_unavailable:
+            "Dieser Teil der Oberfläche ist gerade nicht verfügbar. Du kannst fortfahren oder die Anleitung beenden.",
+          tour_history_title: "Chats im Verlauf wiederfinden",
+          tour_history_description:
+            "Durchsuche gespeicherte Unterhaltungen und kehre zu einem früheren Chat zurück.",
+          tour_history_step1_title: "Chat-Verlauf öffnen",
+          tour_history_step1_body:
+            "Über diese Schaltfläche kannst du deine gespeicherten Unterhaltungen durchsuchen.",
+          tour_history_step2_title: "Unterhaltungen durchsuchen",
+          tour_history_step2_body:
+            "Durchsuche Titel und Nachrichtentexte, um einen Chat wiederzufinden. Wähle einen Treffer aus, um ihn fortzusetzen.",
+          tour_documents_title: "Dokumentensammlungen durchsuchen",
+          tour_documents_description:
+            "Voraussetzungen: API-Zugang, ein erreichbarer Endpunkt für Dokumentensammlungen und eine Sammlung mit vollständig verarbeiteten Dateien. Aktiviere die Sammlung in jedem Chat, in dem du sie durchsuchen möchtest.",
+          tour_documents_step1_title: "Chat-Werkzeuge öffnen",
+          tour_documents_step1_body:
+            "Prüfe vor der Suche in den Einstellungen, ob dein API-Schlüssel und der Endpunkt des Dokumentensammlungsdienstes eingerichtet und erreichbar sind. Öffne hier die Chat-Werkzeuge, um Sammlungen für diese Unterhaltung auszuwählen.",
+          tour_documents_step2_title: "Dokumente öffnen",
+          tour_documents_step2_body:
+            "Wähle eine Sammlung mit verarbeiteten Dateien aus, um sie für diese Unterhaltung zu aktivieren. Falls noch keine vorhanden ist, kannst du unter „Sammlungen verwalten“ eine Sammlung erstellen und Dateien hochladen. Durchsucht werden nur aktivierte Sammlungen.",
+          tour_custom_gpt_title: "Eigenes GPT-Profil erstellen",
+          tour_custom_gpt_description:
+            "Speichere ein persönliches Assistentenprofil mit eigenen Anweisungen und Teilen-Aktionen.",
+          tour_custom_gpt_step1_title: "Einstellungen öffnen",
+          tour_custom_gpt_step1_body:
+            "Benutzerdefinierte GPT-Profile werden in den Anwendungseinstellungen verwaltet.",
+          tour_custom_gpt_step2_title: "GPT-Profile konfigurieren",
+          tour_custom_gpt_step2_body:
+            "Erstelle ein Profil, lege seine Anweisungen fest und bestimme, wie es auf geteilte Webseiten oder Dokumente reagiert.",
+          tour_mcp_title: "MCP-Dienste verbinden",
+          tour_mcp_description:
+            "Hier findest du die Konfiguration der Dienste und die Einstellungen für Werkzeugfreigaben.",
+          tour_mcp_step1_title: "Chat-Werkzeuge öffnen",
+          tour_mcp_step1_body:
+            "Einstellungen für Dienste findest du neben den Werkzeugen der aktuellen Unterhaltung.",
+          tour_mcp_step2_title: "MCP-Dienste verwalten",
+          tour_mcp_step2_body:
+            "Dieses Untermenü listet Werkzeuge verbundener Dienste. Mit „MCP-Dienste hinzufügen/entfernen“ öffnest du die Verbindungseinstellungen und Berechtigungen.",
+          tour_mcp_step3_title: "Dienst festlegen",
+          tour_mcp_step3_body:
+            "Trage einen Anzeigenamen, ein Server-Label und die Dienst-URL ein. Die Tour öffnet das Formular, ohne etwas zu speichern.",
+          tour_mcp_step4_title: "Werkzeugzugriff festlegen",
+          tour_mcp_step4_body:
+            "„Genehmigung erforderlich“ legt fest, wann du einen Werkzeugaufruf bestätigen musst. Mit „Erlaubte Werkzeuge“ kannst du die verfügbaren Werkzeuge einschränken; ein leeres Feld erlaubt alle Werkzeuge.",
+          tour_mcp_step5_title: "Autorisierung prüfen",
+          tour_mcp_step5_body:
+            "Wähle keine Autorisierung, ein statisches Token oder verschlüsselte Benutzerdaten. Benutzerdaten werden erst nach Prüfung der angezeigten Datenfelder und deiner Zustimmung übertragen. Diese Tour ändert die Einstellungen nicht.",
+          tour_mcp_step6_title: "Nur bei Bedarf speichern",
+          tour_mcp_step6_body:
+            "„Dienst hinzufügen/speichern“ prüft und speichert die Konfiguration. Die Tour drückt diesen Knopf nicht und übermittelt keine Konfiguration.",
+          tour_mcp_step7_title: "Konfigurierte Dienste verwalten",
+          tour_mcp_step7_body:
+            "Hier werden vorhandene Dienste angezeigt. Du kannst sie aktivieren oder deaktivieren, bearbeiten oder entfernen.",
+          tour_encrypted_storage_title: "Verschlüsselte Chatspeicherung einrichten",
+          tour_encrypted_storage_description:
+            "So synchronisierst du Chats und Einstellungen per Passkey zwischen Geräten.",
+          tour_encrypted_storage_step1_title: "Einstellungen öffnen",
+          tour_encrypted_storage_step1_body:
+            "Die verschlüsselte Speicherung auf mehreren Geräten wird in den allgemeinen Einstellungen eingerichtet.",
+          tour_encrypted_storage_step2_title: "Einstellung für verschlüsselte Speicherung",
+          tour_encrypted_storage_step2_body:
+            "Diese optionale Funktion verschlüsselt Chats im Browser, bevor sie synchronisiert werden. Erforderlich ist ein Passkey mit WebAuthn-PRF-Unterstützung. Diese Anleitung aktiviert die Funktion nicht.",
           thinking: "Denke nach...",
           web_search_call: "Web-Suche",
           web_search: "Web-Suche",

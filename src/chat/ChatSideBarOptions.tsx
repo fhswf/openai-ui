@@ -29,6 +29,7 @@ const ICONS = {
 interface OptionProps {
   ariaLabel?: string;
   dataTestId?: string;
+  dataTour?: string;
   expanded?: boolean;
   onClick: VoidFunction;
   tooltip: string;
@@ -38,6 +39,7 @@ interface OptionProps {
 function Option({
   ariaLabel,
   dataTestId,
+  dataTour,
   expanded = false,
   onClick,
   tooltip,
@@ -49,6 +51,7 @@ function Option({
     return null;
   }
   const testId = dataTestId ? { "data-testid": dataTestId } : {};
+  const tourTarget = dataTour ? { "data-tour": dataTour } : {};
   const control = expanded ? (
     <Button
       width="100%"
@@ -57,6 +60,7 @@ function Option({
       onClick={onClick}
       aria-label={ariaLabel ?? tooltip}
       {...testId}
+      {...tourTarget}
     >
       <Icon />
       <span>{tooltip}</span>
@@ -67,6 +71,7 @@ function Option({
       variant="ghost"
       onClick={onClick}
       {...testId}
+      {...tourTarget}
     >
       <Icon />
     </IconButton>
@@ -115,6 +120,7 @@ export function PrimarySidebarOptions({
       />
       <Option
         dataTestId="OpenConfigBtn"
+        dataTour="settings-trigger"
         type="config"
         onClick={onToggleConfig}
         tooltip={t("Config")}

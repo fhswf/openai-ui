@@ -112,7 +112,7 @@ function McpServiceIdentityFields({
   ];
 
   return (
-    <>
+    <Stack gap={4} data-tour="mcp-service-identity-fields">
       {fields.map((definition) => (
         <McpTextField
           key={definition.field}
@@ -121,7 +121,7 @@ function McpServiceIdentityFields({
           setForm={setForm}
         />
       ))}
-    </>
+    </Stack>
   );
 }
 
@@ -201,13 +201,15 @@ export function McpServiceFormFields({
   return (
     <Stack gap={4}>
       <McpServiceIdentityFields form={form} setForm={setForm} />
-      <McpApprovalField
-        approvalOptions={approvalOptions}
-        contentRef={contentRef}
-        form={form}
-        setForm={setForm}
-      />
-      <McpAllowedToolsField form={form} setForm={setForm} />
+      <Stack gap={4} data-tour="mcp-tool-access-settings">
+        <McpApprovalField
+          approvalOptions={approvalOptions}
+          contentRef={contentRef}
+          form={form}
+          setForm={setForm}
+        />
+        <McpAllowedToolsField form={form} setForm={setForm} />
+      </Stack>
     </Stack>
   );
 }

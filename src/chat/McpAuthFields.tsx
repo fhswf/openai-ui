@@ -349,7 +349,7 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
 
   return (
     <>
-      <Fieldset.Root size="sm">
+      <Fieldset.Root size="sm" data-tour="mcp-auth-settings">
         <Fieldset.Legend fontSize="sm" fontWeight="semibold">
           {t("authorization")}
         </Fieldset.Legend>
