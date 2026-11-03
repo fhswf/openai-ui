@@ -725,17 +725,41 @@ interface UserInformationPopoverProps {
   user: { avatar?: string | null; email?: string; name?: string } | null;
 }
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
 function UserInformationPopover({
   openai,
   setOptions,
   user,
 }: UserInformationPopoverProps) {
   const { t } = useTranslation();
+  const [installPrompt, setInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [isGeneratingHubKey, setIsGeneratingHubKey] = useState(false);
   const [aiHubBudget, setAiHubBudget] = useState<AiHubBudget | null>(null);
   const [isLoadingAiHubBudget, setIsLoadingAiHubBudget] = useState(false);
   const [aiHubBudgetError, setAiHubBudgetError] = useState(false);
   const [aiHubTermsDialogOpen, setAiHubTermsDialogOpen] = useState(false);
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+    const handleAppInstalled = () => setInstallPrompt(null);
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
   const normalizedOpenAiBaseUrl = openai.baseUrl.replace(/\/$/, "");
   const normalizedAiHubApiBaseUrl = aiHubApiBaseUrl.replace(/\/$/, "");
   const isUsingAiHubBudget =
@@ -743,6 +767,24 @@ function UserInformationPopover({
   const aiHubKeyAlias = user?.email
     ? `KImpuls-${user.email.trim().toLowerCase()}`
     : "";
+
+  async function installApp() {
+    if (!installPrompt) return;
+
+    const prompt = installPrompt;
+    setInstallPrompt(null);
+    try {
+      await prompt.prompt();
+      await prompt.userChoice;
+    } catch (error) {
+      console.error("Could not prompt to install the K!mpuls app:", error);
+      toaster.create({
+        title: t("install_app_error"),
+        duration: 5000,
+        type: "error",
+      });
+    }
+  }
 
   async function loadAiHubBudget() {
     setIsLoadingAiHubBudget(true);
@@ -1015,6 +1057,15 @@ function UserInformationPopover({
                     ? t("stop_using_ai_hub_budget")
                     : t("use_ai_hub_budget")}
                 </Button>
+                {installPrompt && (
+                  <Button
+                    colorPalette="blue"
+                    onClick={() => void installApp()}
+                    data-testid="InstallAppBtn"
+                  >
+                    <LuDownload /> {t("install_app")}
+                  </Button>
+                )}
                 <Button colorPalette="blue" onClick={logout}>
                   {t("logout")}
                 </Button>

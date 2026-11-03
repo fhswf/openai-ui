@@ -54,6 +54,33 @@ test.describe("User Interface", () => {
     await aboutBtn.click();
     await expect(page.getByTestId("InformationWindow")).toBeVisible();
   });
+
+  test("Install app from user information", async ({ page }) => {
+    await page.evaluate(() => {
+      const event = new Event("beforeinstallprompt", { cancelable: true });
+      Object.defineProperties(event, {
+        prompt: {
+          value: async () => {
+            document.documentElement.dataset.installPromptCalled = "true";
+          },
+        },
+        userChoice: {
+          value: Promise.resolve({ outcome: "accepted", platform: "web" }),
+        },
+      });
+      window.dispatchEvent(event);
+    });
+
+    await page.getByTestId("UserInformationBtn").click();
+    const installButton = page.getByTestId("InstallAppBtn");
+    await expect(installButton).toBeVisible();
+    await installButton.click();
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-install-prompt-called",
+      "true"
+    );
+    await expect(installButton).not.toBeVisible();
+  });
 });
 
 test.describe("Dark Mode", () => {
