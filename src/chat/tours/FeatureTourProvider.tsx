@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import semver from "semver";
 import { useTranslation } from "react-i18next";
 import { toaster } from "../../components/ui/toaster";
@@ -11,7 +6,6 @@ import { useGlobal } from "../context";
 import {
   featureGuides,
   getFeatureGuide,
-  type FeatureGuide,
   type FeatureTourStep,
 } from "./guideRegistry";
 import { FeatureTourContext } from "./FeatureTourContext";
@@ -67,7 +61,136 @@ function waitForVisibleElement(name: string, timeoutMs = 1800) {
   });
 }
 
-export function FeatureTourProvider({ children }: React.PropsWithChildren) {
+type TourPreparationContext = {
+  cleanupActions: { current: Array<VoidFunction> };
+  openMenuTrigger: (name: string) => Promise<void>;
+  globalRef: { current: ReturnType<typeof useGlobal> };
+};
+
+async function prepareToolUsageDetails({
+  cleanupActions,
+}: TourPreparationContext) {
+  const badge = await waitForVisibleElement("tool-usage-badge");
+  if (!badge) return;
+
+  cleanupActions.current.push(() => {
+    findVisibleTourTarget("tool-usage-details-close")?.click();
+  });
+  badge.click();
+}
+
+async function prepareMobileHeaderActions(
+  step: FeatureTourStep,
+  { openMenuTrigger }: TourPreparationContext
+) {
+  if (!findVisibleTourTarget(step.target)) {
+    await openMenuTrigger("mobile-header-actions-trigger");
+  }
+}
+
+function prepareSettingsNavigation(
+  step: FeatureTourStep,
+  { cleanupActions }: TourPreparationContext
+) {
+  if (findVisibleTourTarget(step.target)) return;
+
+  const trigger = findVisibleTourTarget("mobile-navigation-trigger");
+  if (!trigger || isExpanded(trigger)) return;
+
+  trigger.click();
+  cleanupActions.current.push(() => {
+    const currentTrigger = findVisibleTourTarget("mobile-navigation-trigger");
+    if (isExpanded(currentTrigger)) {
+      findVisibleTourTarget("mobile-navigation-close")?.click();
+    }
+  });
+}
+
+function prepareHistory(
+  step: FeatureTourStep,
+  { cleanupActions }: TourPreparationContext
+) {
+  if (findVisibleTourTarget(step.target)) return;
+
+  findVisibleTourTarget("chat-history-trigger")?.click();
+  cleanupActions.current.push(() => {
+    findVisibleTourTarget("chat-history-close")?.click();
+  });
+}
+
+async function prepareMcpServicesDialog(
+  step: FeatureTourStep,
+  context: TourPreparationContext
+) {
+  if (findVisibleTourTarget(step.target)) return;
+
+  await context.openMenuTrigger("chat-options-trigger");
+  await context.openMenuTrigger("mcp-services-menu-trigger");
+  const addRemoveTrigger = await waitForVisibleElement(
+    "mcp-add-remove-services"
+  );
+  if (!addRemoveTrigger) return;
+
+  context.cleanupActions.current.push(() => {
+    findVisibleTourTarget("mcp-services-dialog-close")?.click();
+  });
+  addRemoveTrigger.click();
+}
+
+function prepareSettings({
+  cleanupActions,
+  globalRef,
+}: TourPreparationContext) {
+  const mobileNavigation = findVisibleTourTarget("mobile-navigation-trigger");
+  if (isExpanded(mobileNavigation)) {
+    findVisibleTourTarget("mobile-navigation-close")?.click();
+  }
+
+  const app = globalRef.current;
+  if (app.is?.config) return;
+
+  app.setState({ is: { ...app.is, config: true } });
+  cleanupActions.current.push(() => {
+    const current = globalRef.current;
+    current.setState({ is: { ...current.is, config: false } });
+  });
+}
+
+type TourPreparationName = NonNullable<FeatureTourStep["prepare"]>;
+type TourPreparationAction = (
+  step: FeatureTourStep,
+  context: TourPreparationContext
+) => Promise<void>;
+
+const tourPreparationActions: Record<
+  TourPreparationName,
+  TourPreparationAction
+> = {
+  "open-model-selector": (_step, { openMenuTrigger }) =>
+    openMenuTrigger("chat-model-selector"),
+  "open-tool-usage-details": (_step, context) =>
+    prepareToolUsageDetails(context),
+  "open-mobile-header-actions": (step, context) =>
+    prepareMobileHeaderActions(step, context),
+  "open-settings-navigation": async (step, context) =>
+    prepareSettingsNavigation(step, context),
+  "open-history": async (step, context) => prepareHistory(step, context),
+  "open-chat-options": (_step, { openMenuTrigger }) =>
+    openMenuTrigger("chat-options-trigger"),
+  "open-mcp-services-dialog": (step, context) =>
+    prepareMcpServicesDialog(step, context),
+  "open-settings": async (_step, context) => prepareSettings(context),
+};
+
+async function prepareTourStep(
+  step: FeatureTourStep,
+  context: TourPreparationContext
+) {
+  if (!step.prepare) return;
+  await tourPreparationActions[step.prepare](step, context);
+}
+
+function useFeatureTourController() {
   const { t } = useTranslation();
   const global = useGlobal();
   const globalRef = useRef(global);
@@ -112,93 +235,8 @@ export function FeatureTourProvider({ children }: React.PropsWithChildren) {
   }, []);
 
   const prepareStep = useCallback(
-    async (step: FeatureTourStep) => {
-      if (!step.prepare) return;
-
-      switch (step.prepare) {
-        case "open-model-selector":
-          await openMenuTrigger("chat-model-selector");
-          break;
-        case "open-tool-usage-details": {
-          const badge = await waitForVisibleElement("tool-usage-badge");
-          if (!badge) break;
-
-          cleanupActions.current.push(() => {
-            findVisibleTourTarget("tool-usage-details-close")?.click();
-          });
-          badge.click();
-          break;
-        }
-        case "open-mobile-header-actions": {
-          if (findVisibleTourTarget(step.target)) break;
-          await openMenuTrigger("mobile-header-actions-trigger");
-          break;
-        }
-        case "open-settings-navigation": {
-          if (findVisibleTourTarget(step.target)) break;
-          const trigger = findVisibleTourTarget("mobile-navigation-trigger");
-          if (trigger && !isExpanded(trigger)) {
-            trigger.click();
-            cleanupActions.current.push(() => {
-              const currentTrigger = findVisibleTourTarget(
-                "mobile-navigation-trigger"
-              );
-              if (isExpanded(currentTrigger)) {
-                findVisibleTourTarget("mobile-navigation-close")?.click();
-              }
-            });
-          }
-          break;
-        }
-        case "open-history": {
-          if (!findVisibleTourTarget(step.target)) {
-            const trigger = findVisibleTourTarget("chat-history-trigger");
-            trigger?.click();
-            cleanupActions.current.push(() => {
-              findVisibleTourTarget("chat-history-close")?.click();
-            });
-          }
-          break;
-        }
-        case "open-chat-options":
-          await openMenuTrigger("chat-options-trigger");
-          break;
-        case "open-mcp-services-dialog": {
-          if (findVisibleTourTarget(step.target)) break;
-
-          await openMenuTrigger("chat-options-trigger");
-          await openMenuTrigger("mcp-services-menu-trigger");
-          const addRemoveTrigger = await waitForVisibleElement(
-            "mcp-add-remove-services"
-          );
-          if (!addRemoveTrigger) break;
-
-          cleanupActions.current.push(() => {
-            findVisibleTourTarget("mcp-services-dialog-close")?.click();
-          });
-          addRemoveTrigger.click();
-          break;
-        }
-        case "open-settings": {
-          const mobileNavigation = findVisibleTourTarget(
-            "mobile-navigation-trigger"
-          );
-          if (isExpanded(mobileNavigation)) {
-            findVisibleTourTarget("mobile-navigation-close")?.click();
-          }
-
-          const app = globalRef.current;
-          if (!app.is?.config) {
-            app.setState({ is: { ...app.is, config: true } });
-            cleanupActions.current.push(() => {
-              const current = globalRef.current;
-              current.setState({ is: { ...current.is, config: false } });
-            });
-          }
-          break;
-        }
-      }
-    },
+    (step: FeatureTourStep) =>
+      prepareTourStep(step, { cleanupActions, openMenuTrigger, globalRef }),
     [openMenuTrigger]
   );
 
@@ -327,23 +365,26 @@ export function FeatureTourProvider({ children }: React.PropsWithChildren) {
     (guide) => !hasSeenFeatureGuide(progress, guide.id, guide.revision)
   );
 
+  return {
+    activeGuide,
+    activeStepIndex,
+    menuOpen,
+    progress,
+    unseenGuides,
+    openMenu,
+    setMenuOpen,
+    startGuide,
+    cancelTour,
+    previousStep,
+    nextStep,
+    prepareStep,
+  };
+}
+
+export function FeatureTourProvider({ children }: React.PropsWithChildren) {
+  const value = useFeatureTourController();
   return (
-    <FeatureTourContext.Provider
-      value={{
-        activeGuide,
-        activeStepIndex,
-        menuOpen,
-        progress,
-        unseenGuides,
-        openMenu,
-        setMenuOpen,
-        startGuide,
-        cancelTour,
-        previousStep,
-        nextStep,
-        prepareStep,
-      }}
-    >
+    <FeatureTourContext.Provider value={value}>
       {children}
     </FeatureTourContext.Provider>
   );
