@@ -116,6 +116,9 @@ export function FeatureTourProvider({ children }: React.PropsWithChildren) {
       if (!step.prepare) return;
 
       switch (step.prepare) {
+        case "open-model-selector":
+          await openMenuTrigger("chat-model-selector");
+          break;
         case "open-mobile-header-actions": {
           if (findVisibleTourTarget(step.target)) break;
           await openMenuTrigger("mobile-header-actions-trigger");
