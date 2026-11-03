@@ -1,4 +1,5 @@
 export type TourPreparation =
+  | "open-model-selector"
   | "open-mobile-header-actions"
   | "open-settings-navigation"
   | "open-history"
@@ -25,6 +26,32 @@ export interface FeatureGuide {
 // Keep IDs stable. Increase a guide's revision and update announceIn when its
 // instructions change enough that people should see the guide again.
 export const featureGuides: FeatureGuide[] = [
+  {
+    id: "chat-model-configuration",
+    revision: 1,
+    announceIn: "0.60.0",
+    titleKey: "tour_chat_model_title",
+    descriptionKey: "tour_chat_model_description",
+    steps: [
+      {
+        target: "chat-model-selector",
+        titleKey: "tour_chat_model_step1_title",
+        bodyKey: "tour_chat_model_step1_body",
+      },
+      {
+        target: "chat-model-options",
+        titleKey: "tour_chat_model_step2_title",
+        bodyKey: "tour_chat_model_step2_body",
+        prepare: "open-model-selector",
+      },
+      {
+        target: "chat-reasoning-effort",
+        titleKey: "tour_chat_model_step3_title",
+        bodyKey: "tour_chat_model_step3_body",
+        prepare: "open-model-selector",
+      },
+    ],
+  },
   {
     id: "chat-history-search",
     revision: 1,
