@@ -564,6 +564,18 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           tour_history_step2_title: "Search conversations",
           tour_history_step2_body:
             "Search titles and message text to find the conversation you need. Select a result to continue it.",
+          tour_tool_info_title: "Inspect tool information in chat responses",
+          tour_tool_info_description:
+            "Learn how to spot tool use in an answer and inspect the details.",
+          tour_tool_info_step1_title: "Prepare a tool-using response",
+          tour_tool_info_step1_body:
+            "Details appear after an answer uses an enabled tool. If this chat already has such an answer, continue. Otherwise, enable a tool in Chat options, ask a question that uses it, and wait for the answer before continuing.",
+          tour_tool_info_step2_title: "Recognize a tool badge",
+          tour_tool_info_step2_body:
+            "A badge names a tool type used in this answer and shows how many times it ran. Hover for a short description or click the badge to inspect the calls.",
+          tour_tool_info_step3_title: "Explore the call details",
+          tour_tool_info_step3_body:
+            "The dialog groups calls by tool. Expand an entry to inspect information such as search sources, parameters, or results. The available details depend on the tool.",
           tour_chat_model_title: "Configure the chat model",
           tour_chat_model_description:
             "Choose the model used for replies and adjust reasoning effort when supported.",
@@ -1314,6 +1326,18 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           tour_history_step2_title: "Unterhaltungen durchsuchen",
           tour_history_step2_body:
             "Durchsuche Titel und Nachrichtentexte, um einen Chat wiederzufinden. Wähle einen Treffer aus, um ihn fortzusetzen.",
+          tour_tool_info_title: "Werkzeuginformationen in Chat-Antworten ansehen",
+          tour_tool_info_description:
+            "Erkenne Werkzeugaufrufe in Antworten und sieh dir ihre Details an.",
+          tour_tool_info_step1_title: "Werkzeugaufruf vorbereiten",
+          tour_tool_info_step1_body:
+            "Details erscheinen erst, nachdem eine Antwort ein aktiviertes Werkzeug verwendet hat. Gibt es schon eine solche Antwort, fahre fort. Andernfalls aktiviere ein Werkzeug in den Chat-Optionen, stelle eine passende Frage und warte auf die Antwort, bevor du weitergehst.",
+          tour_tool_info_step2_title: "Werkzeug-Abzeichen erkennen",
+          tour_tool_info_step2_body:
+            "Das Abzeichen nennt den in dieser Antwort verwendeten Werkzeugtyp und zeigt, wie oft er aufgerufen wurde. Mit dem Mauszeiger erscheint eine Kurzbeschreibung; ein Klick öffnet die Aufrufe.",
+          tour_tool_info_step3_title: "Aufrufdetails ansehen",
+          tour_tool_info_step3_body:
+            "Der Dialog gruppiert die Aufrufe nach Werkzeug. Klappe einen Eintrag auf, um verfügbare Angaben wie Suchquellen, Parameter oder Ergebnisse anzusehen. Welche Details erscheinen, hängt vom Werkzeug ab.",
           tour_chat_model_title: "Chat-Modell konfigurieren",
           tour_chat_model_description:
             "Wähle das Modell für Antworten und passe bei unterstützten Modellen den Reasoning-Aufwand an.",

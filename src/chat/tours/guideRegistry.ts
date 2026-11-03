@@ -1,5 +1,6 @@
 export type TourPreparation =
   | "open-model-selector"
+  | "open-tool-usage-details"
   | "open-mobile-header-actions"
   | "open-settings-navigation"
   | "open-history"
@@ -70,6 +71,31 @@ export const featureGuides: FeatureGuide[] = [
         titleKey: "tour_history_step2_title",
         bodyKey: "tour_history_step2_body",
         prepare: "open-history",
+      },
+    ],
+  },
+  {
+    id: "chat-tool-information",
+    revision: 1,
+    announceIn: "0.60.0",
+    titleKey: "tour_tool_info_title",
+    descriptionKey: "tour_tool_info_description",
+    steps: [
+      {
+        target: "chat-message-input",
+        titleKey: "tour_tool_info_step1_title",
+        bodyKey: "tour_tool_info_step1_body",
+      },
+      {
+        target: "tool-usage-badge",
+        titleKey: "tour_tool_info_step2_title",
+        bodyKey: "tour_tool_info_step2_body",
+      },
+      {
+        target: "tool-usage-details",
+        titleKey: "tour_tool_info_step3_title",
+        bodyKey: "tour_tool_info_step3_body",
+        prepare: "open-tool-usage-details",
       },
     ],
   },
