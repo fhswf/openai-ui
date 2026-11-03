@@ -282,7 +282,11 @@ export function MessageInput() {
   };
 
   return (
-    <div className={styles.bar} data-testid="MessageInputBar">
+    <div
+      className={styles.bar}
+      data-testid="MessageInputBar"
+      data-tour="chat-message-input"
+    >
       <div
         className={styles.dropzone}
         ref={dropRef}
