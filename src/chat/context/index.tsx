@@ -160,6 +160,7 @@ export const ChatProvider = ({ children }) => {
   const latestActions = useRef(actionList);
   const [vaultReady, setVaultReady] = useState(false);
   const [vaultUnlockRevision, setVaultUnlockRevision] = useState(0);
+  const [authenticatedUserReady, setAuthenticatedUserReady] = useState(false);
   const vaultCache = useRef<VaultSyncCache>(createVaultSyncCache());
   const vaultCredentials = useRef<{
     privateKey: CryptoKey;
@@ -231,6 +232,7 @@ export const ChatProvider = ({ children }) => {
       () => latestState.current.options,
       (optionAction) => latestActions.current.setOptions(optionAction),
       () => {
+        setAuthenticatedUserReady(true);
         // Resume the request that triggered the login redirect now that the
         // session is valid again. Use the latest actions so the retry sees the
         // hydrated chat state instead of the initial render's snapshot.
@@ -244,7 +246,8 @@ export const ChatProvider = ({ children }) => {
 
   const zkStorageEnabled = state.options.general.zkStorage ?? false;
   const lazyHistory = state.options.general.zkLazyHistory ?? false;
-  const vaultIdentity = state.user?.affiliations?.["fh-swf.de"]
+  const vaultIdentity =
+    authenticatedUserReady && state.user?.affiliations?.["fh-swf.de"]
     ? state.user?.sub ?? state.user?.id ?? state.user?.email ?? null
     : null;
 

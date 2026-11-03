@@ -475,6 +475,8 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           download_thread: "Download Thread",
           download_json: "Download JSON",
           download_markdown: "Download Markdown",
+          install_app: "Install app",
+          install_app_error: "Could not open the app installation prompt.",
           usage_information: "Usage Information",
           "User information": "User Information",
           logout: "Logout",
@@ -1083,6 +1085,9 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
 
           About: "Über die Anwendung",
           "User information": "Benutzerinformationen",
+          install_app: "App installieren",
+          install_app_error:
+            "Der Dialog zur App-Installation konnte nicht geöffnet werden.",
           logout: "Abmelden",
           use_ai_hub_budget: "AI-Hub-Budget nutzen",
           stop_using_ai_hub_budget: "AI-Hub-Budget nicht mehr nutzen",
