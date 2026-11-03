@@ -100,6 +100,25 @@ export const featureGuides: FeatureGuide[] = [
     ],
   },
   {
+    id: "chat-file-attachments",
+    revision: 1,
+    announceIn: "0.60.0",
+    titleKey: "tour_files_title",
+    descriptionKey: "tour_files_description",
+    steps: [
+      {
+        target: "chat-message-input",
+        titleKey: "tour_files_step1_title",
+        bodyKey: "tour_files_step1_body",
+      },
+      {
+        target: "chat-file-upload-button",
+        titleKey: "tour_files_step2_title",
+        bodyKey: "tour_files_step2_body",
+      },
+    ],
+  },
+  {
     id: "document-search",
     revision: 2,
     announceIn: "0.60.0",

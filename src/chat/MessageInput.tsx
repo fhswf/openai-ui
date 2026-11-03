@@ -488,6 +488,7 @@ export function MessageInput() {
               fileInputRef.current?.click();
             }}
             data-testid="UploadFileBtn"
+            data-tour="chat-file-upload-button"
           >
             <MdOutlineFileUpload />
           </IconButton>

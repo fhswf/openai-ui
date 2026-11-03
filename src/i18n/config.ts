@@ -568,6 +568,15 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           tour_tool_info_step3_title: "Explore the call details",
           tour_tool_info_step3_body:
             "The dialog groups calls by tool. Expand an entry to inspect information such as search sources, parameters, or results. The available details depend on the tool.",
+          tour_files_title: "Attach files with drag and drop",
+          tour_files_description:
+            "Add supported files to a message by dropping them into the chat or choosing them from your device.",
+          tour_files_step1_title: "Drop files into the message area",
+          tour_files_step1_body:
+            "Drag supported files from your device onto the message area. They are added to your draft and sent when you send the message.",
+          tour_files_step2_title: "Choose files to attach",
+          tour_files_step2_body:
+            "Use this button to select one or more files instead. Selected files appear as previews above the message area; remove any with the × before sending.",
           tour_chat_model_title: "Configure the chat model",
           tour_chat_model_description:
             "Choose the model used for replies and adjust reasoning effort when supported.",
@@ -1322,6 +1331,15 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           tour_tool_info_step3_title: "Aufrufdetails ansehen",
           tour_tool_info_step3_body:
             "Der Dialog gruppiert die Aufrufe nach Werkzeug. Klappe einen Eintrag auf, um verfügbare Angaben wie Suchquellen, Parameter oder Ergebnisse anzusehen. Welche Details erscheinen, hängt vom Werkzeug ab.",
+          tour_files_title: "Dateien per Drag-and-drop anhängen",
+          tour_files_description:
+            "Füge unterstützte Dateien zu einer Nachricht hinzu, indem du sie in den Chat ziehst oder auf deinem Gerät auswählst.",
+          tour_files_step1_title: "Dateien auf das Nachrichtenfeld ziehen",
+          tour_files_step1_body:
+            "Ziehe unterstützte Dateien von deinem Gerät auf das Nachrichtenfeld. Sie werden zunächst dem Entwurf hinzugefügt und mit der Nachricht gesendet.",
+          tour_files_step2_title: "Dateien zum Anhängen auswählen",
+          tour_files_step2_body:
+            "Über diesen Knopf kannst du stattdessen eine oder mehrere Dateien auswählen. Sie erscheinen als Vorschau über dem Nachrichtenfeld. Mit × kannst du eine Datei vor dem Senden entfernen.",
           tour_chat_model_title: "Chat-Modell konfigurieren",
           tour_chat_model_description:
             "Wähle das Modell für Antworten und passe bei unterstützten Modellen den Reasoning-Aufwand an.",
