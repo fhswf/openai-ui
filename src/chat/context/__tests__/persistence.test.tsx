@@ -8,6 +8,9 @@ import {
   type GlobalState,
   type Tool,
 } from "../types";
+import { initState } from "../initState";
+import { chatVault } from "../../service/chatVault";
+import { fetchAndGetUser } from "../../utils";
 import { saveState } from "../../utils/settings";
 import { updateToolSelection } from "../../utils/mcpServiceHelpers";
 
@@ -184,6 +187,45 @@ describe("ChatProvider draft persistence", () => {
         .mocked(saveState)
         .mock.lastCall?.[0].options.openai.toolsEnabled.has(key)
     ).toBe(true);
+  });
+
+  it("waits for live authentication before starting encrypted vault restore", () => {
+    act(() => {
+      root.unmount();
+    });
+    root = createRoot(container);
+
+    localStorage.setItem(
+      "SESSIONS",
+      JSON.stringify({
+        ...initState,
+        options: {
+          ...initState.options,
+          general: { ...initState.options.general, zkStorage: true },
+        },
+        user: { sub: "cached-user", affiliations: { "fh-swf.de": [] } },
+      })
+    );
+    const getMyKey = vi
+      .spyOn(chatVault, "getMyKey")
+      .mockImplementation(() => new Promise(() => {}));
+
+    act(() => {
+      root.render(
+        <ChatProvider>
+          <Probe />
+        </ChatProvider>
+      );
+    });
+
+    expect(getMyKey).not.toHaveBeenCalled();
+    const onAuthenticated = vi.mocked(fetchAndGetUser).mock.calls.at(-1)?.[3];
+    expect(onAuthenticated).toBeDefined();
+    act(() => {
+      onAuthenticated?.();
+    });
+    expect(getMyKey).toHaveBeenCalledTimes(1);
+    getMyKey.mockRestore();
   });
 
   it("saves immediately when typing and another action share a render", () => {
