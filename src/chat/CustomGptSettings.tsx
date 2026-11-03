@@ -199,7 +199,7 @@ export function CustomGptSettings() {
   };
 
   return (
-    <Stack gap="3" paddingBlockStart="2em">
+    <Stack gap="3" paddingBlockStart="2em" data-tour="custom-gpt-settings">
       <Heading size="md">{t("custom_gpts")}</Heading>
       <Text>{t("custom_gpts_help")}</Text>
 

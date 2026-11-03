@@ -27,6 +27,7 @@ import { LuHistory, LuMessageSquarePlus } from "react-icons/lu";
 import { Chat, Message } from "./context/types";
 import { Toaster, toaster } from "../components/ui/toaster";
 import { matchesChatQuery } from "./utils/chatSearch";
+import { useFeatureTour } from "./tours/FeatureTourContext";
 
 export function MessageMenu() {
   const {
@@ -46,6 +47,7 @@ export function MessageMenu() {
   } = useGlobal();
   const { apps, category } = useApps();
   const { t } = useTranslation();
+  const { activeGuide } = useFeatureTour();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -168,12 +170,17 @@ export function MessageMenu() {
   }
 
   return (
-    <Dialog.Root open={menuOpen} size="full">
+    <Dialog.Root
+      open={menuOpen}
+      size="full"
+      modal={activeGuide?.id !== "chat-history-search"}
+    >
       <Dialog.Trigger asChild>
         <IconButton
           variant="ghost"
           title={t("chat_history")}
           onClick={() => setMenuOpen(true)}
+          data-tour="chat-history-trigger"
         >
           <LuHistory aria-label={t("chat_history")} />
         </IconButton>
@@ -186,6 +193,7 @@ export function MessageMenu() {
               variant="ghost"
               title={t("close")}
               onClick={() => setMenuOpen(false)}
+              data-tour="chat-history-close"
             >
               <IoCloseOutline />
             </IconButton>
@@ -204,6 +212,7 @@ export function MessageMenu() {
                 placeholder={t("Search...")}
                 aria-label={t("Search...")}
                 data-testid="ChatHistorySearchInput"
+                data-tour="chat-history-search"
               />
               {searching && <Spinner size="sm" />}
               {query && (

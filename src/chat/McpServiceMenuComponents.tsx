@@ -58,7 +58,10 @@ export function McpServicesMenu({
 
   return (
     <Menu.Root positioning={{ placement: "right-start", gutter: 2 }}>
-      <Menu.TriggerItem data-testid="mcp-services-menu-trigger">
+      <Menu.TriggerItem
+        data-testid="mcp-services-menu-trigger"
+        data-tour="mcp-services-menu-trigger"
+      >
         {t("MCP Services")} <LuChevronRight />
       </Menu.TriggerItem>
       <Portal>
@@ -84,6 +87,7 @@ export function McpServicesMenu({
               value="edit_mcp_services"
               onClick={onEditMcp}
               data-testid="mcp-add-remove-services"
+              data-tour="mcp-add-remove-services"
             >
               {t("Add/Remove MCP Services")}
             </Menu.Item>

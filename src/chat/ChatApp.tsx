@@ -3,6 +3,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { ErrorFallback } from "./ErrorFallback";
 import { ChatProvider } from "./context";
 import { AppsProvider } from "./apps/context";
+import { FeatureTourProvider } from "./tours/FeatureTourProvider";
 import { ProgressCircle } from "@chakra-ui/react";
 import { ZeroKnowledgeSyncPrompt } from "./ZeroKnowledgeSyncPrompt";
 
@@ -17,7 +18,9 @@ export default function ChatApp() {
         <ChatProvider>
           <ZeroKnowledgeSyncPrompt />
           <AppsProvider>
-            <Chat />
+            <FeatureTourProvider>
+              <Chat />
+            </FeatureTourProvider>
           </AppsProvider>
         </ChatProvider>
       </ErrorBoundary>
