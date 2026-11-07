@@ -91,9 +91,9 @@ const PROVIDER_PATTERNS: readonly { group: string; pattern: RegExp }[] = [
 ];
 
 const PROVIDER_ORDER: Map<string, number> = new Map([
-  ["OpenAI",  0],
-  ["Anthropic",  1],
-  ["Google",  2],
+  ["OpenAI", 0],
+  ["Anthropic", 1],
+  ["Google", 2],
 ]);
 
 function providerGroupOf(model: string): string {
@@ -307,6 +307,11 @@ export function getModelOptions(openai?: Pick<OpenAIOptions, "aiHubModels" | "mo
   return sorted;
 }
 
+const imageGenerationTool = {
+  type: "image_generation" as const,
+  model: "gpt-image-2.6-sunburst",
+};
+
 export const toolOptions: Map<string, Tool> = new Map([
   [
     "Web Search",
@@ -316,10 +321,7 @@ export const toolOptions: Map<string, Tool> = new Map([
   ],
   [
     "Image Generation",
-    {
-      type: "image_generation",
-      model: "gpt-image-2.5-sunburst"
-    },
+    imageGenerationTool,
   ],
   [
     "Code Interpreter",
