@@ -1,89 +1,91 @@
-import { test as setup, expect } from '../baseFixtures';
-import path from 'node:path';
+import { test as setup, expect } from "../baseFixtures";
+import path from "node:path";
 
-const authFile = path.join('playwright/.auth/user.json');
+const authFile = path.join("playwright/.auth/user.json");
 
-const testHomeURL = (url: URL) => {
-    return url.pathname === '/';
-};
+setup("Prepare authenticated UI test state", async ({ page, context }) => {
+  // CI serves the static frontend, so it has no deployment SSO gateway.
+  // Visit a same-origin static asset and seed the state used by authorized UI tests.
+  await page.goto("/favicon.png");
+  await page.evaluate(() => {
+    localStorage.setItem(
+      "SESSIONS",
+      JSON.stringify({
+        user: {
+          name: "Playwright",
+          email: "playwright@fh-swf.de",
+          sub: "playwright",
+          preferred_username: "playwright",
+          affiliations: { "fh-swf.de": ["member"] },
+        },
+        options: {
+          account: { name: "Playwright", avatar: "", terms: true },
+          general: {
+            language: "de",
+            theme: "light",
+            sendCommand: "COMMAND_ENTER",
+            size: "normal",
+            codeEditor: false,
+            gravatar: false,
+            zkStorage: false,
+            zkLazyHistory: false,
+            customGpts: [],
+          },
+          openai: {
+            baseUrl: `${window.location.origin}/api/v1`,
+            organizationId: "",
+            temperature: 1,
+            top_p: 1,
+            mode: "chat",
+            model: "gpt-6-luna",
+            reasoningEffort: "medium",
+            assistant: "",
+            apiKey: "unused",
+            max_tokens: 2048,
+            n: 1,
+            stream: true,
+            tools: {
+              dataType: "Map",
+              value: [
+                ["Web Search", { type: "web_search_preview" }],
+                [
+                  "Image Generation",
+                  {
+                    type: "image_generation",
+                    model: "gpt-image-2.6-sunburst",
+                    complexity: "high",
+                  },
+                ],
+                [
+                  "Code Interpreter",
+                  { type: "code_interpreter", container: { type: "auto" } },
+                ],
+              ],
+            },
+            toolsEnabled: { dataType: "Set", value: [] },
+            vectorStoreBaseUrl: "https://pgvector.fh-swf.cloud/v1",
+            mcpAuthConfigs: { dataType: "Map", value: [] },
+            aiHubEnabled: false,
+            aiHubApiKey: "",
+            aiHubKeyAlias: "KImpuls",
+            aiHubModels: [],
+            aiHubPreviousApiKey: "",
+            aiHubPreviousBaseUrl: "",
+            aiHubPreviousModel: "",
+          },
+        },
+      })
+    );
+  });
 
-setup('Cluster Login Test', async ({ page }, testInfo) => {
-    // Triple the default timeout to handle slow environment
-    setup.slow();
+  const sessionIsSeeded = await page.evaluate(() => {
+    const session = JSON.parse(localStorage.getItem("SESSIONS") || "{}");
+    return (
+      session?.options?.account?.terms === true &&
+      session?.user?.affiliations?.["fh-swf.de"]?.includes("member")
+    );
+  });
+  expect(sessionIsSeeded).toBe(true);
 
-    await page.goto('');
-    console.log('Initial navigation to localhost complete. Current URL:', page.url());
-
-    // Wait for potential redirect
-    try {
-        await expect(page.locator('.sso-login')).toBeVisible({ timeout: 10000 });
-        console.log('SSO Login visible on:', page.url());
-    } catch (e) {
-        console.log('Timed out waiting for SSO Login. Current URL:', page.url());
-        // Log the HTML content for debugging if it fails
-        // console.log(await page.content()); 
-        throw e;
-    }
-    await expect(page.locator('.cluster-login')).toBeVisible();
-
-    await page.locator('.cluster-login').click();
-    await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).click();
-    await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).fill('playwright');
-    await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Cluster Kennwort:' }).fill('test');
-    await page.getByRole('button', { name: 'Login Cluster' }).click();
-    await page.waitForURL(testHomeURL);
-
-    const termsButton = page.getByTestId('accept-terms-btn');
-    const chatTextArea = page.getByTestId('ChatTextArea');
-    
-    // Terms are guaranteed to show up because localStorage is empty on a fresh setup run
-    await expect(termsButton).toBeVisible({ timeout: 30000 });
-    await expect(page.getByRole('heading', { name: 'Datenschutzhinweise' })).toBeVisible();
-    await termsButton.click();
-    
-    // Wait for terms status to be saved in localStorage SESSIONS
-    await expect(async () => {
-        const terms = await page.evaluate(() => {
-            const raw = localStorage.getItem("SESSIONS");
-            if (!raw) return false;
-            try {
-                const session = JSON.parse(raw);
-                return !!session?.options?.account?.terms;
-            } catch {
-                return false;
-            }
-        });
-        expect(terms).toBe(true);
-    }).toPass({ timeout: 10000 });
-
-    await expect(chatTextArea).toBeVisible();
-
-    // Navigate back to localhost to write terms: true to the localhost origin as well
-    await page.goto('');
-    await page.evaluate(() => {
-        const raw = localStorage.getItem("SESSIONS");
-        if (raw) {
-            try {
-                const session = JSON.parse(raw);
-                if (session.options) {
-                    if (!session.options.account) session.options.account = {};
-                    session.options.account.terms = true;
-                    localStorage.setItem("SESSIONS", JSON.stringify(session));
-                }
-            } catch (e) {
-                // Ignore
-            }
-        } else {
-            localStorage.setItem("SESSIONS", JSON.stringify({
-                options: {
-                    account: {
-                        terms: true
-                    }
-                }
-            }));
-        }
-    });
-
-    await page.context().storageState({ path: authFile });
+  await context.storageState({ path: authFile });
 });

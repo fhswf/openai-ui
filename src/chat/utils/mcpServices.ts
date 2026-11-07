@@ -41,6 +41,13 @@ import type {
   ToolChangeRequest,
 } from "./mcpServiceTypes";
 import { toolOptions } from "./options";
+
+type ImageGenerationToolWithComplexity = Extract<
+  Tool,
+  { type: "image_generation" }
+> & {
+  complexity?: "low" | "medium" | "high";
+};
 export type {
   ApprovalOptions,
   CheckedChange,
@@ -87,9 +94,54 @@ export function getNormalizedTools(
     return tools;
   }
 
+  let migratedToolSettings = false;
   for (const [key, value] of toolOptions) {
     if (!openai.tools.has(key)) {
       openai.tools.set(key, value);
+      migratedToolSettings = true;
+    }
+  }
+
+  const imageGenerationKey = "Image Generation";
+  const imageGenerationTool = openai.tools.get(
+    imageGenerationKey
+  ) as ImageGenerationToolWithComplexity | undefined;
+  const defaultImageGenerationTool = toolOptions.get(
+    imageGenerationKey
+  ) as ImageGenerationToolWithComplexity | undefined;
+  if (
+    imageGenerationTool?.type === "image_generation" &&
+    defaultImageGenerationTool?.type === "image_generation"
+  ) {
+    const updateModel =
+      imageGenerationTool.model === undefined ||
+      imageGenerationTool.model === "gpt-image-2.5-sunburst";
+    const updateComplexity =
+      imageGenerationTool.complexity === undefined ||
+      imageGenerationTool.complexity === "medium";
+    const removeIncorrectQualitySetting = imageGenerationTool.quality === "high";
+    const updatedImageGenerationTool = {
+      ...imageGenerationTool,
+      ...(updateModel
+        ? { model: defaultImageGenerationTool.model }
+        : {}),
+      ...(updateComplexity
+        ? { complexity: defaultImageGenerationTool.complexity }
+        : {}),
+    };
+    if (
+      updateModel ||
+      updateComplexity ||
+      removeIncorrectQualitySetting
+    ) {
+      const normalizedImageGenerationTool = {
+        ...updatedImageGenerationTool,
+      } as ImageGenerationToolWithComplexity;
+      if (removeIncorrectQualitySetting) {
+        delete normalizedImageGenerationTool.quality;
+      }
+      openai.tools.set(imageGenerationKey, normalizedImageGenerationTool);
+      migratedToolSettings = true;
     }
   }
 
@@ -121,7 +173,7 @@ export function getNormalizedTools(
     migratedLegacyMcpKey = true;
   }
 
-  if (migratedLegacyMcpKey) {
+  if (migratedLegacyMcpKey || migratedToolSettings) {
     setOptions({ type: OptionActionType.OPENAI, data: { ...openai } });
   }
 
