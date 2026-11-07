@@ -1,89 +1,72 @@
-import { test as setup, expect } from '../baseFixtures';
-import path from 'node:path';
+import { test as setup, expect } from "../baseFixtures";
+import { Buffer } from "node:buffer";
+import path from "node:path";
 
-const authFile = path.join('playwright/.auth/user.json');
+const authFile = path.join("playwright/.auth/user.json");
+const appOrigin = new URL(
+  process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:5173"
+).origin;
+const username = process.env.PLAYWRIGHT_USERNAME || "playwright";
+const password = process.env.PLAYWRIGHT_PASSWORD || "test";
 
-const testHomeURL = (url: URL) => {
-    return url.pathname === '/';
-};
+setup("Authenticate browser and save UI state", async ({ page, context }) => {
+  setup.slow();
 
-setup('Cluster Login Test', async ({ page }, testInfo) => {
-    // Triple the default timeout to handle slow environment
-    setup.slow();
+  // The proxy completes OIDC login on the frontend origin and sets its
+  // HttpOnly `token` cookie there. Saving storage state preserves that cookie
+  // for the sharded browser jobs.
+  await page.goto("/");
+  await expect(page.locator(".sso-login")).toBeVisible({ timeout: 30000 });
+  await expect(page.locator(".cluster-login")).toBeVisible();
+  await page.locator(".cluster-login").click();
+  await page
+    .getByRole("textbox", { name: "Cluster Benutzername:" })
+    .fill(username);
+  await page
+    .getByRole("textbox", { name: "Cluster Kennwort:" })
+    .fill(password);
+  await page.getByRole("button", { name: "Login Cluster" }).click();
 
-    await page.goto('');
-    console.log('Initial navigation to localhost complete. Current URL:', page.url());
+  await page.waitForURL(
+    (url) => url.origin === appOrigin && url.pathname === "/",
+    { timeout: 60000 }
+  );
 
-    // Wait for potential redirect
-    try {
-        await expect(page.locator('.sso-login')).toBeVisible({ timeout: 10000 });
-        console.log('SSO Login visible on:', page.url());
-    } catch (e) {
-        console.log('Timed out waiting for SSO Login. Current URL:', page.url());
-        // Log the HTML content for debugging if it fails
-        // console.log(await page.content()); 
-        throw e;
-    }
-    await expect(page.locator('.cluster-login')).toBeVisible();
-
-    await page.locator('.cluster-login').click();
-    await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).click();
-    await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).fill('playwright');
-    await page.getByRole('textbox', { name: 'Cluster Benutzername:' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Cluster Kennwort:' }).fill('test');
-    await page.getByRole('button', { name: 'Login Cluster' }).click();
-    await page.waitForURL(testHomeURL);
-
-    const termsButton = page.getByTestId('accept-terms-btn');
-    const chatTextArea = page.getByTestId('ChatTextArea');
-    
-    // Terms are guaranteed to show up because localStorage is empty on a fresh setup run
-    await expect(termsButton).toBeVisible({ timeout: 30000 });
-    await expect(page.getByRole('heading', { name: 'Datenschutzhinweise' })).toBeVisible();
-    await termsButton.click();
-    
-    // Wait for terms status to be saved in localStorage SESSIONS
-    await expect(async () => {
-        const terms = await page.evaluate(() => {
-            const raw = localStorage.getItem("SESSIONS");
-            if (!raw) return false;
-            try {
-                const session = JSON.parse(raw);
-                return !!session?.options?.account?.terms;
-            } catch {
-                return false;
-            }
-        });
-        expect(terms).toBe(true);
-    }).toPass({ timeout: 10000 });
-
-    await expect(chatTextArea).toBeVisible();
-
-    // Navigate back to localhost to write terms: true to the localhost origin as well
-    await page.goto('');
-    await page.evaluate(() => {
-        const raw = localStorage.getItem("SESSIONS");
-        if (raw) {
-            try {
-                const session = JSON.parse(raw);
-                if (session.options) {
-                    if (!session.options.account) session.options.account = {};
-                    session.options.account.terms = true;
-                    localStorage.setItem("SESSIONS", JSON.stringify(session));
-                }
-            } catch (e) {
-                // Ignore
-            }
-        } else {
-            localStorage.setItem("SESSIONS", JSON.stringify({
-                options: {
-                    account: {
-                        terms: true
-                    }
-                }
-            }));
-        }
+  const termsButton = page.getByTestId("accept-terms-btn");
+  await expect(termsButton).toBeVisible({ timeout: 30000 });
+  await termsButton.click();
+  await expect(async () => {
+    const termsAccepted = await page.evaluate(() => {
+      try {
+        const session = JSON.parse(localStorage.getItem("SESSIONS") || "{}");
+        return session?.options?.account?.terms === true;
+      } catch {
+        return false;
+      }
     });
+    expect(termsAccepted).toBe(true);
+  }).toPass({ timeout: 10000 });
+  await expect(page.getByTestId("ChatTextArea")).toBeVisible();
 
-    await page.context().storageState({ path: authFile });
+  const tokenCookie = (await context.cookies(appOrigin)).find(
+    (cookie) => cookie.name === "token"
+  );
+  expect(tokenCookie, "OIDC proxy token cookie was not set").toBeDefined();
+  expect(tokenCookie?.httpOnly).toBe(true);
+  const jwtParts = tokenCookie!.value.split(".");
+  expect(jwtParts).toHaveLength(3);
+  expect(jwtParts.every((part) => part.length > 0)).toBe(true);
+  const jwtClaims = JSON.parse(
+    Buffer.from(jwtParts[1], "base64url").toString("utf8")
+  );
+  expect(jwtClaims.sub).toBeTruthy();
+  expect(jwtClaims.exp * 1000).toBeGreaterThan(Date.now());
+
+  const storageState = await context.storageState({ path: authFile });
+  expect(
+    storageState.cookies.some(
+      (cookie) => cookie.name === "token" && cookie.value === tokenCookie!.value
+    ),
+    "JWT cookie was not saved to the shared Playwright state"
+  ).toBe(true);
 });
