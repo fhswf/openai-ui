@@ -11,23 +11,6 @@ export function generateUUID(): string {
 
 export const test = baseTest.extend({
     context: async ({ context }, use) => {
-        // Authorized UI tests run against the static preview without the SSO
-        // cookie used by the deployed app. Keep the default user lookup local
-        // for every page in this context; tests that exercise auth failures
-        // can override it with a page-level route.
-        await context.route(/\/(?:api\/)?user\/?(?:\?.*)?$/, async (route) => {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({
-                    name: 'Playwright User',
-                    email: 'playwright@fh-swf.de',
-                    sub: 'playwright',
-                    preferred_username: 'playwright',
-                    affiliations: { 'fh-swf.de': ['member'] },
-                }),
-            });
-        });
         await context.addInitScript(() =>
             window.addEventListener('beforeunload', () =>
                 (window as any).collectIstanbulCoverage(JSON.stringify((window as any).__coverage__))

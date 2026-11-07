@@ -1,91 +1,72 @@
 import { test as setup, expect } from "../baseFixtures";
+import { Buffer } from "node:buffer";
 import path from "node:path";
 
 const authFile = path.join("playwright/.auth/user.json");
+const appOrigin = new URL(
+  process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:5173"
+).origin;
+const username = process.env.PLAYWRIGHT_USERNAME || "playwright";
+const password = process.env.PLAYWRIGHT_PASSWORD || "test";
 
-setup("Prepare authenticated UI test state", async ({ page, context }) => {
-  // CI serves the static frontend, so it has no deployment SSO gateway.
-  // Visit a same-origin static asset and seed the state used by authorized UI tests.
-  await page.goto("/favicon.png");
-  await page.evaluate(() => {
-    localStorage.setItem(
-      "SESSIONS",
-      JSON.stringify({
-        user: {
-          name: "Playwright",
-          email: "playwright@fh-swf.de",
-          sub: "playwright",
-          preferred_username: "playwright",
-          affiliations: { "fh-swf.de": ["member"] },
-        },
-        options: {
-          account: { name: "Playwright", avatar: "", terms: true },
-          general: {
-            language: "de",
-            theme: "light",
-            sendCommand: "COMMAND_ENTER",
-            size: "normal",
-            codeEditor: false,
-            gravatar: false,
-            zkStorage: false,
-            zkLazyHistory: false,
-            customGpts: [],
-          },
-          openai: {
-            baseUrl: `${window.location.origin}/api/v1`,
-            organizationId: "",
-            temperature: 1,
-            top_p: 1,
-            mode: "chat",
-            model: "gpt-6-luna",
-            reasoningEffort: "medium",
-            assistant: "",
-            apiKey: "unused",
-            max_tokens: 2048,
-            n: 1,
-            stream: true,
-            tools: {
-              dataType: "Map",
-              value: [
-                ["Web Search", { type: "web_search_preview" }],
-                [
-                  "Image Generation",
-                  {
-                    type: "image_generation",
-                    model: "gpt-image-2.6-sunburst",
-                    complexity: "high",
-                  },
-                ],
-                [
-                  "Code Interpreter",
-                  { type: "code_interpreter", container: { type: "auto" } },
-                ],
-              ],
-            },
-            toolsEnabled: { dataType: "Set", value: [] },
-            vectorStoreBaseUrl: "https://pgvector.fh-swf.cloud/v1",
-            mcpAuthConfigs: { dataType: "Map", value: [] },
-            aiHubEnabled: false,
-            aiHubApiKey: "",
-            aiHubKeyAlias: "KImpuls",
-            aiHubModels: [],
-            aiHubPreviousApiKey: "",
-            aiHubPreviousBaseUrl: "",
-            aiHubPreviousModel: "",
-          },
-        },
-      })
-    );
-  });
+setup("Authenticate browser and save UI state", async ({ page, context }) => {
+  setup.slow();
 
-  const sessionIsSeeded = await page.evaluate(() => {
-    const session = JSON.parse(localStorage.getItem("SESSIONS") || "{}");
-    return (
-      session?.options?.account?.terms === true &&
-      session?.user?.affiliations?.["fh-swf.de"]?.includes("member")
-    );
-  });
-  expect(sessionIsSeeded).toBe(true);
+  // The proxy completes OIDC login on the frontend origin and sets its
+  // HttpOnly `token` cookie there. Saving storage state preserves that cookie
+  // for the sharded browser jobs.
+  await page.goto("/");
+  await expect(page.locator(".sso-login")).toBeVisible({ timeout: 30000 });
+  await expect(page.locator(".cluster-login")).toBeVisible();
+  await page.locator(".cluster-login").click();
+  await page
+    .getByRole("textbox", { name: "Cluster Benutzername:" })
+    .fill(username);
+  await page
+    .getByRole("textbox", { name: "Cluster Kennwort:" })
+    .fill(password);
+  await page.getByRole("button", { name: "Login Cluster" }).click();
 
-  await context.storageState({ path: authFile });
+  await page.waitForURL(
+    (url) => url.origin === appOrigin && url.pathname === "/",
+    { timeout: 60000 }
+  );
+
+  const termsButton = page.getByTestId("accept-terms-btn");
+  await expect(termsButton).toBeVisible({ timeout: 30000 });
+  await termsButton.click();
+  await expect(async () => {
+    const termsAccepted = await page.evaluate(() => {
+      try {
+        const session = JSON.parse(localStorage.getItem("SESSIONS") || "{}");
+        return session?.options?.account?.terms === true;
+      } catch {
+        return false;
+      }
+    });
+    expect(termsAccepted).toBe(true);
+  }).toPass({ timeout: 10000 });
+  await expect(page.getByTestId("ChatTextArea")).toBeVisible();
+
+  const tokenCookie = (await context.cookies(appOrigin)).find(
+    (cookie) => cookie.name === "token"
+  );
+  expect(tokenCookie, "OIDC proxy token cookie was not set").toBeDefined();
+  expect(tokenCookie?.httpOnly).toBe(true);
+  const jwtParts = tokenCookie!.value.split(".");
+  expect(jwtParts).toHaveLength(3);
+  expect(jwtParts.every((part) => part.length > 0)).toBe(true);
+  const jwtClaims = JSON.parse(
+    Buffer.from(jwtParts[1], "base64url").toString("utf8")
+  );
+  expect(jwtClaims.sub).toBeTruthy();
+  expect(jwtClaims.exp * 1000).toBeGreaterThan(Date.now());
+
+  const storageState = await context.storageState({ path: authFile });
+  expect(
+    storageState.cookies.some(
+      (cookie) => cookie.name === "token" && cookie.value === tokenCookie!.value
+    ),
+    "JWT cookie was not saved to the shared Playwright state"
+  ).toBe(true);
 });

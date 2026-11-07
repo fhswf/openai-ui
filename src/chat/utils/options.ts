@@ -310,6 +310,8 @@ export function getModelOptions(openai?: Pick<OpenAIOptions, "aiHubModels" | "mo
 const imageGenerationTool = {
   type: "image_generation" as const,
   model: "gpt-image-2.6-sunburst",
+  // Override the response's medium reasoning effort, which this image model rejects.
+  complexity: "high" as const,
 };
 
 export const toolOptions: Map<string, Tool> = new Map([

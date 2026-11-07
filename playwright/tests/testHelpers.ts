@@ -14,10 +14,8 @@ export const DEFAULT_MOCK_USER = {
 };
 
 /**
- * Serve `/api/user` from a local mock so a spec exercises the locally built
- * bundle. On CI the auth cookie is scoped to the deployed host, so the proxied
- * `/api/user` returns 401 on localhost and the app redirects to the login page,
- * where none of the chat controls render.
+ * Override `/api/user` for specs that need a controlled user identity without
+ * depending on the identity returned by the authenticated backend session.
  */
 export async function mockUserEndpoint(
   page: Page,
