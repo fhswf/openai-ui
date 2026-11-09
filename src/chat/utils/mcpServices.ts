@@ -47,6 +47,7 @@ type ImageGenerationToolWithComplexity = Extract<
   { type: "image_generation" }
 > & {
   complexity?: "low" | "medium" | "high";
+  partial_images?: number;
 };
 export type {
   ApprovalOptions,
@@ -119,6 +120,7 @@ export function getNormalizedTools(
     const updateComplexity =
       imageGenerationTool.complexity === undefined ||
       imageGenerationTool.complexity === "medium";
+    const updatePartialImages = imageGenerationTool.partial_images === undefined;
     const removeIncorrectQualitySetting = imageGenerationTool.quality === "high";
     const updatedImageGenerationTool = {
       ...imageGenerationTool,
@@ -128,10 +130,14 @@ export function getNormalizedTools(
       ...(updateComplexity
         ? { complexity: defaultImageGenerationTool.complexity }
         : {}),
+      ...(updatePartialImages
+        ? { partial_images: defaultImageGenerationTool.partial_images }
+        : {}),
     };
     if (
       updateModel ||
       updateComplexity ||
+      updatePartialImages ||
       removeIncorrectQualitySetting
     ) {
       const normalizedImageGenerationTool = {
