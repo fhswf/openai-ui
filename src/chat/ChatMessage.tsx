@@ -230,19 +230,11 @@ export function MessageItem(props) {
         </LazyRenderer>
         {images &&
           Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
-            const storedImageUrl = image.url?.startsWith("opfs://")
-              ? image.url
-              : image.name
-                ? `opfs://${image.name}`
-                : undefined;
-            if (
-              storedImageUrl &&
-              (image.url?.startsWith("opfs://") || image.file_id || image.id)
-            ) {
+            if (image.url?.startsWith("opfs://")) {
               return (
                 <OPFSImage
                   key={fileName}
-                  src={storedImageUrl}
+                  src={image.url}
                   alt={image.name || fileName}
                   chatId={props.chatId}
                   attachmentId={image.id || image.file_id}
@@ -252,7 +244,9 @@ export function MessageItem(props) {
                 />
               );
             } else if (image.src) {
-              // If image has a src, use it directly
+              // Generated images have a blob preview while their OPFS file is
+              // being written. Keep showing that preview until the persisted
+              // OPFS URL is available.
               return (
                 <img
                   key={fileName}
@@ -262,12 +256,20 @@ export function MessageItem(props) {
                   data-testid={`generated-image-${fileName}`}
                 />
               );
-            } else if (image.url?.startsWith("opfs://")) {
+            } else if (
+              !image.url &&
+              image.name &&
+              (image.file_id || image.id)
+            ) {
+              // Older stored images may have a filename and attachment ID but
+              // no explicit OPFS URL.
               return (
                 <OPFSImage
                   key={fileName}
-                  src={image.url}
-                  alt={fileName}
+                  src={`opfs://${image.name}`}
+                  alt={image.name || fileName}
+                  chatId={props.chatId}
+                  attachmentId={image.id || image.file_id}
                   className={styles.generated_image}
                   data-testid={`generated-image-${fileName}`}
                 />

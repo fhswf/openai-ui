@@ -515,7 +515,6 @@ class EventProcessor {
 
     setMessageImage(message, file_id, {
       src: url,
-      url: `opfs://${file_id}.png`,
       name: `${file_id}.png`,
       size: blob.size,
       lastModified: Date.now(),
@@ -736,7 +735,7 @@ class EventProcessor {
         console.log(event.call);
         const image_base64 = event.image_b64;
         if (image_base64) {
-          this.appendImageToMessage(image_base64, message, event.item_id);
+          await this.appendImageToMessage(image_base64, message, event.item_id);
           // Clear the base64 data to avoid storing it in the state if event is stored somewhere
           event.image_b64 = "";
         }
