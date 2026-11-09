@@ -19,6 +19,48 @@ interface ImageGenerationSettingsDialogProps {
 
 const PARTIAL_IMAGE_COUNTS = [0, 1, 2, 3];
 
+interface PartialImageCountFieldProps {
+  value: number;
+  onChange: (value: number) => void;
+}
+
+function PartialImageCountField({
+  value,
+  onChange,
+}: PartialImageCountFieldProps) {
+  const { t } = useTranslation();
+
+  return (
+    <Field.Root>
+      <Field.Label>{t("image_generation_partial_images")}</Field.Label>
+      <Field.HelperText>
+        {t("image_generation_partial_images_help")}
+      </Field.HelperText>
+      <RadioGroup.Root
+        aria-label={t("image_generation_partial_images")}
+        value={String(value)}
+        onValueChange={(event) => {
+          if (event.value !== "") onChange(Number(event.value));
+        }}
+      >
+        <HStack gap={4} flexWrap="wrap">
+          {PARTIAL_IMAGE_COUNTS.map((count) => (
+            <RadioGroup.Item key={count} value={String(count)}>
+              <RadioGroup.ItemHiddenInput />
+              <RadioGroup.ItemIndicator />
+              <RadioGroup.ItemText>
+                {count === 0
+                  ? t("image_generation_partial_images_off")
+                  : t("image_generation_partial_images_count", { count })}
+              </RadioGroup.ItemText>
+            </RadioGroup.Item>
+          ))}
+        </HStack>
+      </RadioGroup.Root>
+    </Field.Root>
+  );
+}
+
 export function ImageGenerationSettingsDialog({
   open,
   onOpenChange,
@@ -44,39 +86,10 @@ export function ImageGenerationSettingsDialog({
             </Dialog.Header>
             <Dialog.Body>
               <Stack gap={4}>
-                <Field.Root>
-                  <Field.Label>
-                    {t("image_generation_partial_images")}
-                  </Field.Label>
-                  <Field.HelperText>
-                    {t("image_generation_partial_images_help")}
-                  </Field.HelperText>
-                  <RadioGroup.Root
-                    aria-label={t("image_generation_partial_images")}
-                    value={String(partialImages)}
-                    onValueChange={(event) => {
-                      if (event.value !== "") {
-                        onPartialImagesChange(Number(event.value));
-                      }
-                    }}
-                  >
-                    <HStack gap={4} flexWrap="wrap">
-                      {PARTIAL_IMAGE_COUNTS.map((count) => (
-                        <RadioGroup.Item key={count} value={String(count)}>
-                          <RadioGroup.ItemHiddenInput />
-                          <RadioGroup.ItemIndicator />
-                          <RadioGroup.ItemText>
-                            {count === 0
-                              ? t("image_generation_partial_images_off")
-                              : t("image_generation_partial_images_count", {
-                                  count,
-                                })}
-                          </RadioGroup.ItemText>
-                        </RadioGroup.Item>
-                      ))}
-                    </HStack>
-                  </RadioGroup.Root>
-                </Field.Root>
+                <PartialImageCountField
+                  value={partialImages}
+                  onChange={onPartialImagesChange}
+                />
               </Stack>
             </Dialog.Body>
             <Dialog.Footer>
