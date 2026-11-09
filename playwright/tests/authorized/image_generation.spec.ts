@@ -140,7 +140,9 @@ test('Image Generation stores streamed images in OPFS', async ({ page, browserNa
 
     const generatedImage = page.getByTestId('generated-image-ig_streamed_image');
     await expect(generatedImage).toBeVisible({ timeout: 10000 });
-    await generatedImage.scrollIntoViewIfNeeded();
+    await page.locator('#chat_list').evaluate((scrollView: HTMLDivElement) => {
+        scrollView.scrollTop = scrollView.scrollHeight;
+    });
     await expect.poll(
         () => generatedImage.evaluate((image: HTMLImageElement) => image.naturalWidth),
         { timeout: 10000 },
@@ -169,7 +171,9 @@ test('Image Generation stores streamed images in OPFS', async ({ page, browserNa
 
     const restoredImage = page.getByTestId('generated-image-ig_streamed_image');
     await expect(restoredImage).toBeVisible({ timeout: 10000 });
-    await restoredImage.scrollIntoViewIfNeeded();
+    await page.locator('#chat_list').evaluate((scrollView: HTMLDivElement) => {
+        scrollView.scrollTop = scrollView.scrollHeight;
+    });
     await expect.poll(
         () => restoredImage.evaluate((image: HTMLImageElement) => image.naturalWidth),
         { timeout: 10000 },
