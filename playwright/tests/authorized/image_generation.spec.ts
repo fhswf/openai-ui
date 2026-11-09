@@ -45,7 +45,9 @@ test('Image Generation', async ({ page, browserName }) => {
         ];
 
         // Simulate SSE stream
-        const stream = responseBody.map(event => `data: ${JSON.stringify(event)}\n\n`).join('');
+        const stream = responseBody
+            .map(event => `data: ${JSON.stringify(event)}\n\n`)
+            .join('');
 
         await route.fulfill({
             status: 200,
@@ -78,4 +80,98 @@ test('Image Generation', async ({ page, browserName }) => {
     // Verify the image is displayed
     // The key in message.images is the item id
     await expect(page.getByTestId('generated-image-item_mock_123')).toBeVisible({ timeout: 10000 });
+});
+
+test('Image Generation stores streamed images in OPFS', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', "Skipping Webkit due to issues with OPFS");
+
+    await mockUserEndpoint(page);
+
+    const generatedImageBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    await page.route('**/v1/responses', async route => {
+        const responseBody = [
+            {
+                type: 'response.created',
+                response: { id: 'resp_streamed_image' },
+            },
+            {
+                type: 'response.output_item.added',
+                item: {
+                    type: 'image_generation_call',
+                    id: 'ig_streamed_image',
+                    output_format: 'png',
+                },
+            },
+            {
+                type: 'response.image_generation_call.partial_image',
+                item_id: 'ig_streamed_image',
+                output_index: 0,
+                partial_image_index: 0,
+                partial_image_b64: generatedImageBase64,
+            },
+            {
+                type: 'response.image_generation_call.completed',
+                item_id: 'ig_streamed_image',
+                output_index: 0,
+                image_b64: generatedImageBase64,
+            },
+            {
+                type: 'response.completed',
+                response: {
+                    usage: { total_tokens: 10, input_tokens: 5, output_tokens: 5 },
+                },
+            },
+        ];
+        const stream = responseBody.map(event => `data: ${JSON.stringify(event)}\n\n`).join('');
+
+        await route.fulfill({
+            status: 200,
+            contentType: 'text/event-stream',
+            body: stream,
+        });
+    });
+
+    await page.goto("");
+    await acceptTermsIfVisible(page);
+    await expect(page.getByTestId('ChatTextArea')).toBeVisible();
+
+    await page.getByTestId('ChatTextArea').fill('Generate a streamed image');
+    await page.getByTestId('SendMessageBtn').click();
+
+    const generatedImage = page.getByTestId('generated-image-ig_streamed_image');
+    await expect(generatedImage).toBeVisible({ timeout: 10000 });
+    await generatedImage.scrollIntoViewIfNeeded();
+    await expect.poll(
+        () => generatedImage.evaluate((image: HTMLImageElement) => image.naturalWidth),
+        { timeout: 10000 },
+    ).toBeGreaterThan(0);
+
+    await expect.poll(
+        () => page.evaluate(async () => {
+            try {
+                const root = await navigator.storage.getDirectory();
+                const handle = await root.getFileHandle('ig_streamed_image.png');
+                return (await handle.getFile()).size;
+            } catch {
+                return 0;
+            }
+        }),
+        { timeout: 10000 },
+    ).toBeGreaterThan(0);
+    await expect.poll(
+        () => page.evaluate(() => localStorage.getItem('CHAT_HISTORY') || ''),
+        { timeout: 10000 },
+    ).toContain('opfs://ig_streamed_image.png');
+
+    await page.reload();
+    await acceptTermsIfVisible(page);
+    await expect(page.getByTestId('ChatTextArea')).toBeVisible();
+
+    const restoredImage = page.getByTestId('generated-image-ig_streamed_image');
+    await expect(restoredImage).toBeVisible({ timeout: 10000 });
+    await restoredImage.scrollIntoViewIfNeeded();
+    await expect.poll(
+        () => restoredImage.evaluate((image: HTMLImageElement) => image.naturalWidth),
+        { timeout: 10000 },
+    ).toBeGreaterThan(0);
 });
