@@ -213,6 +213,7 @@ jobs:
     - name: Run Chromium shard
       run: npx playwright test --no-deps --project=chromium --shard=${{ matrix.shard }}/${{ matrix.total_shards }}
       env:
+        MCP_SERVER_URL: ${{ vars.MCP_SERVER_URL }}
         PLAYWRIGHT_JSON_OUTPUT: playwright-report/results-chromium-${{ matrix.shard }}.json
     - name: Collect Playwright JSON
       if: ${{ !cancelled() }}
