@@ -54,6 +54,26 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.61.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.60.0...openai-ui-v0.61.0) (2026-11-10)
+
+
+### Features
+
+* add image generation settings dialog and integrate with tool op… ([4fdcb60](https://github.com/fhswf/openai-ui/commit/4fdcb60fd899be7d5480b8de736a82f61b282129))
+* add image generation settings dialog and integrate with tool options ([6f38b59](https://github.com/fhswf/openai-ui/commit/6f38b59a74911a2b0c958b3bce535a175d9c933c))
+* update authentication setup for UI tests with enhanced session management ([0f05f96](https://github.com/fhswf/openai-ui/commit/0f05f96587293d6eed85b28c6ba0edd57227fc73))
+* update image generation tool settings and normalization logic ([0e7d445](https://github.com/fhswf/openai-ui/commit/0e7d445e2d0469af979b12cbce04f9ce40a10963))
+* update image generation tool settings and normalization logic ([989ffd2](https://github.com/fhswf/openai-ui/commit/989ffd245cb85e26ec62ec7e192f18427cd76072))
+
+
+### Bug Fixes
+
+* **test:** enhance authentication setup for UI tests and update image generation tool settings ([8abe90f](https://github.com/fhswf/openai-ui/commit/8abe90f04efb5133949fc4161a92b27278f734dc))
+* **test:** enhance context setup for UI tests with user route handling ([4eb2c37](https://github.com/fhswf/openai-ui/commit/4eb2c37a3c0bf6aab2e5b2a3fad0a67b27a62bc6))
+* **test:** update scrolling logic for generated images in OPFS tests ([dc9b5c2](https://github.com/fhswf/openai-ui/commit/dc9b5c26bc9f49c1a321b6dd284063b66a3c94ed))
+* update image handling logic to improve OPFS URL usage and ensure generated images are displayed correctly ([a687f41](https://github.com/fhswf/openai-ui/commit/a687f411401347e0a4fab544b5c6fb9c19a279db))
+* update image handling logic to improve OPFS URL usage and ensure… ([6ae3c33](https://github.com/fhswf/openai-ui/commit/6ae3c33841d6a85443271ef270012501b9a7d81f))
+
 ## [0.60.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.59.0...openai-ui-v0.60.0) (2026-11-03)
 
 
