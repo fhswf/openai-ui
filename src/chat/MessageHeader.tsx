@@ -6,6 +6,7 @@ import {
   McpAuthConfig,
   OpenAIOptions,
   GlobalActions,
+  OptionActionType,
 } from "./context/types";
 import {
   Avatar,
@@ -38,6 +39,7 @@ import { classnames } from "../components/utils";
 import styles from "./style/menu.module.less";
 import chatStyles from "./style/chat.module.less";
 import { MessageMenu } from "./MessageMenu";
+import { ImageGenerationSettingsDialog } from "./ImageGenerationSettingsDialog";
 import {
   McpServicesDialog,
   McpServicesMenu,
@@ -252,6 +254,7 @@ interface ChatOptionsMenuStateBuilderArgs {
 
 interface ChatOptionsMenuContentProps {
   mcpTools: McpToolMap;
+  onConfigureImageGeneration: VoidFunction;
   onEditMcp: VoidFunction;
   onManageVectorStores: VoidFunction;
   onToolChange: React.Dispatch<ToolChangeRequest>;
@@ -263,6 +266,7 @@ interface ChatOptionsMenuContentProps {
 
 function ChatOptionsMenuContent({
   mcpTools,
+  onConfigureImageGeneration,
   onEditMcp,
   onManageVectorStores,
   onToolChange,
@@ -291,6 +295,7 @@ function ChatOptionsMenuContent({
             tools={tools}
             toolsEnabled={toolsEnabled}
             onToolChange={onToolChange}
+            onConfigureImageGeneration={onConfigureImageGeneration}
           />
           <McpServicesMenu
             mcpTools={mcpTools}
@@ -427,11 +432,30 @@ function ChatOptionsMenu({ openai, setOptions, user }: ChatOptionsMenuProps) {
   const { t } = useTranslation();
   const menuState = useChatOptionsMenuState({ openai, setOptions, t, user });
   const [vectorStoresOpen, setVectorStoresOpen] = useState(false);
+  const [imageGenerationSettingsOpen, setImageGenerationSettingsOpen] =
+    useState(false);
+  const imageGenerationTool = menuState.tools.get("Image Generation");
+  const partialImages =
+    imageGenerationTool?.type === "image_generation"
+      ? imageGenerationTool.partial_images ?? 2
+      : 2;
+  const updatePartialImages = (value: number) => {
+    if (imageGenerationTool?.type !== "image_generation") return;
+    const tools = new Map(menuState.tools);
+    tools.set("Image Generation", {
+      ...imageGenerationTool,
+      partial_images: value,
+    });
+    setOptions({ type: OptionActionType.OPENAI, data: { tools } });
+  };
 
   return (
     <>
       <ChatOptionsMenuContent
         mcpTools={menuState.mcpTools}
+        onConfigureImageGeneration={() =>
+          setImageGenerationSettingsOpen(true)
+        }
         onEditMcp={menuState.handleOpenMcp}
         onManageVectorStores={() => setVectorStoresOpen(true)}
         onToolChange={menuState.handleToolChange}
@@ -462,6 +486,13 @@ function ChatOptionsMenu({ openai, setOptions, user }: ChatOptionsMenuProps) {
       <VectorStoresDialog
         open={vectorStoresOpen}
         onOpenChange={setVectorStoresOpen}
+      />
+
+      <ImageGenerationSettingsDialog
+        open={imageGenerationSettingsOpen}
+        onOpenChange={setImageGenerationSettingsOpen}
+        partialImages={partialImages}
+        onPartialImagesChange={updatePartialImages}
       />
     </>
   );
