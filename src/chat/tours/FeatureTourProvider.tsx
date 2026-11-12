@@ -70,6 +70,17 @@ type TourPreparationContext = {
 async function prepareToolUsageDetails({
   cleanupActions,
 }: TourPreparationContext) {
+  const disclosure = await waitForVisibleElement("tool-usage-disclosure");
+  const details = disclosure?.closest("details");
+  if (!disclosure || !(details instanceof HTMLDetailsElement)) return;
+
+  if (!details.open) {
+    disclosure.click();
+    cleanupActions.current.push(() => {
+      if (details.open) disclosure.click();
+    });
+  }
+
   const badge = await waitForVisibleElement("tool-usage-badge");
   if (!badge) return;
 

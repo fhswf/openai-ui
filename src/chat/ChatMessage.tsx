@@ -1,25 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { Tool } from "openai/resources/responses/responses.mjs";
+import type { Tool } from "openai/resources/responses/responses.mjs";
 
 import {
   Avatar,
   Badge,
+  Button,
   Card,
   HStack,
   IconButton,
+  Progress,
   Skeleton,
   Spacer,
   Stack,
-  Tag,
+  Switch as ChakraSwitch,
   Text,
 } from "@chakra-ui/react";
 import { Tooltip } from "../components/ui/tooltip";
 import { AiOutlineDelete } from "react-icons/ai";
 import {
+  MdOutlineCancel,
   MdOutlineInput,
   MdOutlineOutput,
-  MdEdit
+  MdEdit,
 } from "react-icons/md";
+import { IoTimerOutline } from "react-icons/io5";
 import { classnames } from "../components/utils";
 
 import { useGlobal } from "./context";
@@ -33,7 +37,7 @@ import avatar_white from "../assets/images/OpenAI-white-monoblossom.svg";
 import styles from "./style/message.module.less";
 import { useTranslation } from "react-i18next";
 import { processLaTeX } from "./utils/latex";
-import { IoTimerOutline } from "react-icons/io5";
+import { LuChevronDown } from "react-icons/lu";
 
 type UsageProps = {
   usage?: {
@@ -46,30 +50,41 @@ type UsageProps = {
 
 function Usage(props: UsageProps) {
   const { usage, startTime, endTime } = props;
+  const { t } = useTranslation();
   const formatter = new Intl.NumberFormat();
+  const elapsed =
+    startTime !== undefined && endTime !== undefined
+      ? endTime - startTime
+      : undefined;
 
-  if (!usage) {
+  if (!usage && elapsed === undefined) {
     return null;
   }
-  const elapsed =
-    props.startTime && props.endTime ? props.endTime - props.startTime : null;
 
   return (
     <HStack wrap="wrap">
-      {elapsed !== null && (
+      {elapsed !== undefined && (
         <HStack gap="0.2ex">
           <IoTimerOutline />
-          <Text>{formatter.format(elapsed)}ms</Text>
+          <Text>
+            {t("elapsed_time_short", {
+              count: Math.max(1, Math.round(elapsed / 1000)),
+            })}
+          </Text>
         </HStack>
       )}
-      <HStack gap="0.2ex">
-        <MdOutlineInput />
-        <Text>{formatter.format(usage.input_tokens)}t</Text>
-      </HStack>
-      <HStack gap="0.2ex">
-        <MdOutlineOutput />
-        <Text>{formatter.format(usage.output_tokens)}t</Text>
-      </HStack>
+      {usage && (
+        <>
+          <HStack gap="0.2ex">
+            <MdOutlineInput />
+            <Text>{formatter.format(usage.input_tokens)}t</Text>
+          </HStack>
+          <HStack gap="0.2ex">
+            <MdOutlineOutput />
+            <Text>{formatter.format(usage.output_tokens)}t</Text>
+          </HStack>
+        </>
+      )}
     </HStack>
   );
 }
@@ -90,45 +105,175 @@ function groupToolsByType(toolsUsed: Tool[]) {
   return Array.from(grouped.entries());
 }
 
+const bubbleActivityTypes = new Set([
+  "mcp_call",
+  "mcp_approval_request",
+  "function_call",
+  "custom_tool_call",
+  "reasoning",
+  "web_search_call",
+  "image_generation_call",
+  "code_interpreter_call",
+]);
 
+function getBubbleActivities(toolsUsed?: Tool[]) {
+  return (toolsUsed || []).filter((tool) => {
+    const activity = tool as any;
+    if (!bubbleActivityTypes.has(activity.type)) return false;
+    if (activity.type !== "reasoning") return true;
 
-function ToolUse(props) {
-  const { toolsUsed } = props;
+    return (
+      (typeof activity.title === "string" && activity.title.trim().length > 0) ||
+      (Array.isArray(activity.summary) &&
+        activity.summary.some(
+          (item: any) =>
+            typeof item?.text === "string" && item.text.trim().length > 0
+        ))
+    );
+  });
+}
+
+function ActivityBubbles({ toolsUsed }: { toolsUsed: Tool[] }) {
+  const { t } = useTranslation();
+
+  return (
+    <div
+      className={styles["activity-bubbles"]}
+      role="group"
+      aria-label={t("response_activity")}
+    >
+      {toolsUsed.map((tool, index) => {
+        const activity = tool as any;
+        const type = activity.type as string;
+        const summary = type === "reasoning" && Array.isArray(activity.summary)
+          ? activity.summary
+              .map((item: any) => item?.text)
+              .filter((text: unknown): text is string => typeof text === "string")
+              .join("\n")
+          : "";
+        const title =
+          activity.title ||
+          activity.name ||
+          activity.action?.query ||
+          activity.prompt ||
+          activity.server_label ||
+          (type === "reasoning" ? t("Reasoning Step") : t(type));
+
+        return (
+          <div
+            className={styles["activity-bubble"]}
+            key={activity.id || `${type}-${index}`}
+            data-testid="response-activity-bubble"
+          >
+            <span className={styles["activity-bubble-type"]}>{t(type)}</span>
+            <span className={styles["activity-bubble-title"]}>{title}</span>
+            {summary && (
+              <div className={styles["activity-bubble-summary"]}>
+                <LazyRenderer isVisible={true}>{summary}</LazyRenderer>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ToolUse({ toolsUsed }: { toolsUsed?: Tool[] }) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!toolsUsed) {
+  if (!toolsUsed?.length) {
     return null;
   }
 
   const groupedTools = groupToolsByType(toolsUsed);
-  console.log("Grouped tools:", groupedTools);
+  const toolCount = toolsUsed.filter((tool) => (tool as any).type !== "reasoning").length;
 
   return (
-    <HStack wrap="wrap">
-      {groupedTools.map(([key, tools]) => (
-        <Tooltip content={t(key + "_description")} key={key.toString()}>
-          <Tag.Root
-            size={"md"}
-            onClick={() => setIsOpen(true)}
-            cursor="pointer"
-            data-testid={`tool-usage-badge-${key}`}
-            data-tour="tool-usage-badge"
-          >
-            <Tag.Label>{t(key.toString())}</Tag.Label>
-            <Tag.EndElement alignSelf={"baseline"}>
-              <Badge colorPalette="green" size={"xs"}>
-                {tools.length}
-              </Badge>
-            </Tag.EndElement>
-          </Tag.Root>
-        </Tooltip>
-      ))}
-      <ToolUsagePopup
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        toolsUsed={toolsUsed}
-      />
+    <details
+      className={styles["response-activity"]}
+      data-testid="tool-usage-disclosure"
+    >
+      <summary
+        className={styles["response-activity-summary"]}
+        data-tour="tool-usage-disclosure"
+      >
+        <span className={styles["response-activity-meta"]}>
+          {toolCount > 0 && (
+            <span>{t("tools_used_count", { count: toolCount })}</span>
+          )}
+        </span>
+        <LuChevronDown
+          aria-hidden="true"
+          className={styles["response-activity-chevron"]}
+        />
+      </summary>
+      <div className={styles["response-activity-details"]}>
+        <HStack wrap="wrap" gap="2">
+          {groupedTools.map(([key, tools]) => (
+            <Tooltip content={t(key + "_description")} key={key.toString()}>
+              <Button
+                size="sm"
+                variant="outline"
+                className={styles["tool-usage-button"]}
+                onClick={() => setIsOpen(true)}
+                data-testid={`tool-usage-badge-${key}`}
+                data-tour="tool-usage-badge"
+              >
+                {t(key.toString())}
+                <Badge colorPalette="green" size="xs">
+                  {tools.length}
+                </Badge>
+              </Button>
+            </Tooltip>
+          ))}
+        </HStack>
+        <ToolUsagePopup
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          toolsUsed={toolsUsed}
+        />
+      </div>
+    </details>
+  );
+}
+
+function ResponseStatus() {
+  const { is, eventProcessor } = useGlobal();
+  const { t } = useTranslation();
+
+  if (!is.thinking) return null;
+
+  return (
+    <HStack
+      role="status"
+      aria-live="polite"
+      className={styles["response-status"]}
+      data-testid="ResponseStatus"
+    >
+      <Progress.Root
+        size="xs"
+        value={null}
+        className={styles["response-status-progress"]}
+      >
+        <Progress.Label>
+          {is.tool ? t(is.tool) : t("thinking")}
+        </Progress.Label>
+        <Progress.Track>
+          <Progress.Range />
+        </Progress.Track>
+      </Progress.Root>
+      <Button
+        size="sm"
+        variant="ghost"
+        className={styles["response-status-cancel"]}
+        title={t("cancel")}
+        aria-label={t("cancel")}
+        onClick={() => eventProcessor?.stop()}
+      >
+        {t("cancel")} <MdOutlineCancel />
+      </Button>
     </HStack>
   );
 }
@@ -170,9 +315,11 @@ export function MessageItem(props) {
     endTime,
     toolsUsed,
   } = props;
-  const { removeMessage, editMessage, user, options, is } = useGlobal();
+  const { removeMessage, editMessage, user, options } = useGlobal();
   const { t } = useTranslation();
+  const [showActivityBubbles, setShowActivityBubbles] = useState(false);
   const avatar = options.general.theme === "dark" ? avatar_white : avatar_black;
+  const bubbleActivities = getBubbleActivities(toolsUsed);
 
   //console.log("MessageItem props:", props);
 
@@ -215,19 +362,57 @@ export function MessageItem(props) {
         className={styles["message-header"]}
         justifyContent={role === "user" ? "flex-end" : "flex-start"}
       >
-        <HStack wrap="wrap">
+        <HStack
+          wrap="wrap"
+          className={classnames(
+            styles["message-header-content"],
+            role === "assistant"
+              ? styles["message-header-content-assistant"]
+              : styles["message-header-content-user"]
+          )}
+        >
           <Avatar.Root size="sm">
-            <Avatar.Fallback name={user?.name} />
+            <Avatar.Fallback
+              name={role === "user" ? user?.name : "K!mpuls"}
+            />
             <Avatar.Image src={role === "user" ? user?.avatar : avatar} alt="" />
           </Avatar.Root>
-          <Text>{dateFormat(sentTime)}</Text>
-          <ToolUse toolsUsed={toolsUsed} />
+          <Text className={styles["message-author"]}>
+            {role === "user" ? user?.name || t("you") : "K!mpuls"}
+          </Text>
+          <Text as="time" className={styles["message-timestamp"]}>
+            {dateFormat(sentTime)}
+          </Text>
+          {role === "assistant" && <Spacer />}
+          {role === "assistant" && <ToolUse toolsUsed={toolsUsed} />}
+          {role === "assistant" && bubbleActivities.length > 0 && (
+            <Tooltip content={t("response_activity_bubbles_label")}>
+              <ChakraSwitch.Root
+                size="sm"
+                checked={showActivityBubbles}
+                onCheckedChange={(event) =>
+                  setShowActivityBubbles(event.checked)
+                }
+                data-testid="response-activity-bubbles-toggle"
+              >
+                <ChakraSwitch.HiddenInput
+                  aria-label={t("response_activity_bubbles_label")}
+                />
+                <ChakraSwitch.Control>
+                  <ChakraSwitch.Thumb />
+                </ChakraSwitch.Control>
+              </ChakraSwitch.Root>
+            </Tooltip>
+          )}
         </HStack>
       </Card.Header>
       <Card.Body className={styles["message-body"]}>
         <LazyRenderer isVisible={true} toolsUsed={toolsUsed}>
           {message}
         </LazyRenderer>
+        {showActivityBubbles && bubbleActivities.length > 0 && (
+          <ActivityBubbles toolsUsed={bubbleActivities} />
+        )}
         {images &&
           Object.entries(images)?.map(([fileName, image]: [string, any], index) => {
             if (image.url?.startsWith("opfs://")) {
@@ -353,7 +538,7 @@ export function MessageItem(props) {
 }
 
 export function MessageContainer() {
-  const { options, chat, currentChat } = useGlobal();
+  const { chat, currentChat, is } = useGlobal();
   const { message } = useMessage();
   const { messages = [] } = message || {};
 
@@ -408,6 +593,7 @@ export function MessageContainer() {
                 dataTestId={`ChatMessage-${index}`}
               />
             ))}
+          {is.thinking && <ResponseStatus />}
         </Stack>
       }
     </React.Fragment>

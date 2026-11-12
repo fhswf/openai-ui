@@ -9,7 +9,6 @@ import {
   HStack,
   IconButton,
   Kbd,
-  Progress,
   Stack,
   Textarea,
 } from "@chakra-ui/react";
@@ -17,11 +16,11 @@ import { Switch } from "../components/ui/switch";
 import styles from "./style/message.module.less";
 import CodeEditor from "@uiw/react-textarea-code-editor";
 import {
-  MdOutlineBackspace,
   MdOutlineCancel,
   MdOutlineFileUpload,
   MdSend,
 } from "react-icons/md";
+import { LuEraser } from "react-icons/lu";
 import { CiMicrophoneOff, CiMicrophoneOn } from "react-icons/ci";
 import { toaster } from "../components/ui/toaster";
 import classNames from "classnames";
@@ -86,10 +85,6 @@ export function MessageInput() {
       setRecognitionActive(false);
     };
   }, []);
-
-  const stopResponse = () => {
-    eventProcessor?.stop();
-  };
 
   const voiceClasses = classNames(styles.voice, {
     [styles.active]: recognitionActive,
@@ -326,25 +321,6 @@ export function MessageInput() {
         onDragOver={dragHandler}
         onDragEnter={dragHandler}
       >
-        {is.thinking && (
-          <HStack
-            justify={"flex-end"}
-            className={styles["thinking-controls"]}
-            gridArea="thinking"
-          >
-            <Progress.Root size="xs" width="20em" value={null}>
-              <Progress.Label>
-                {is.tool ? t(is.tool) : t("thinking")}
-              </Progress.Label>
-              <Progress.Track>
-                <Progress.Range />
-              </Progress.Track>
-            </Progress.Root>
-            <Button variant="ghost" title={t("cancel")} onClick={stopResponse}>
-              {t("cancel")} <MdOutlineCancel />
-            </Button>
-          </HStack>
-        )}
         {options.general.codeEditor ? (
           <CodeEditor
             className={styles["code-editor"]}
@@ -480,83 +456,85 @@ export function MessageInput() {
               {t("Code Editor")}
             </Switch>
           </div>
-          <IconButton
-            variant="outline"
-            aria-label={t("upload_file") || "Upload file"}
-            className={styles["upload-button"]}
-            onClick={() => {
-              fileInputRef.current?.click();
-            }}
-            data-testid="UploadFileBtn"
-            data-tour="chat-file-upload-button"
-          >
-            <MdOutlineFileUpload />
-          </IconButton>
-          <Button
-            variant="outline"
-            className={styles["clear-button"]}
-            aria-label={t("clear")}
-            title={t("clear")}
-            onClick={() => {
-              typeingMessage.content = "";
-              clearTypeing();
-            }}
-            data-testid="ClearMessageBtn"
-          >
-            <MdOutlineBackspace aria-hidden="true" />
-            <span className={styles["clear-label"]}>{t("clear")}</span>
-          </Button>
-          {recognition ? (
+          <HStack className={styles["input-action-buttons"]}>
             <IconButton
               variant="outline"
-              className={classNames(voiceClasses, styles["voice-button"])}
-              aria-label={
-                recognitionActive ? t("stop_voice_input") : t("voice_input")
-              }
-              title={
-                recognitionActive ? t("stop_voice_input") : t("voice_input")
-              }
+              aria-label={t("upload_file") || "Upload file"}
+              className={styles["upload-button"]}
               onClick={() => {
-                if (recognitionActive) {
-                  recognition.stop();
-                  setRecognitionActive(false);
-                } else {
-                  recognition.start();
-                  recognition.onresult = (event) => {
-                    if (event.results.length > 0) {
-                      const result = event.results[0][0];
-                      typeingMessage.content =
-                        (typeingMessage.content || "") + result.transcript;
-                      setMessage(typeingMessage.content);
-                    }
-                  };
-                  setRecognitionActive(true);
-                }
+                fileInputRef.current?.click();
               }}
-              data-testid="VoiceMessageBtn"
+              data-testid="UploadFileBtn"
+              data-tour="chat-file-upload-button"
             >
-              {recognitionActive ? <CiMicrophoneOff /> : <CiMicrophoneOn />}
+              <MdOutlineFileUpload />
             </IconButton>
-          ) : null}
-          <Button
-            colorPalette={is.thinking ? "gray" : "blue"}
-            type="submit"
-            className={styles["send-button"]}
-            aria-label={t("send")}
-            disabled={is.thinking || !typeingMessage?.content}
-            onClick={() => {
-              void sendMessage();
-            }}
-            data-testid="SendMessageBtn"
-          >
-            <MdSend className={styles["send-icon"]} aria-hidden="true" />
-            <span className={styles["send-label"]}>{t("send")}</span>
-            {options.general.codeEditor || (
-              <Kbd className={styles["send-shortcut"]} size="sm">
-                {t(options.general.sendCommand)}
-              </Kbd>
-            )}
-          </Button>
+            <IconButton
+              variant="ghost"
+              className={styles["clear-button"]}
+              aria-label={t("clear")}
+              title={t("clear")}
+              onClick={() => {
+                typeingMessage.content = "";
+                clearTypeing();
+              }}
+              data-testid="ClearMessageBtn"
+            >
+              <LuEraser aria-hidden="true" />
+            </IconButton>
+            {recognition ? (
+              <IconButton
+                variant="outline"
+                className={classNames(voiceClasses, styles["voice-button"])}
+                aria-label={
+                  recognitionActive ? t("stop_voice_input") : t("voice_input")
+                }
+                title={
+                  recognitionActive ? t("stop_voice_input") : t("voice_input")
+                }
+                onClick={() => {
+                  if (recognitionActive) {
+                    recognition.stop();
+                    setRecognitionActive(false);
+                  } else {
+                    recognition.start();
+                    recognition.onresult = (event) => {
+                      if (event.results.length > 0) {
+                        const result = event.results[0][0];
+                        typeingMessage.content =
+                          (typeingMessage.content || "") + result.transcript;
+                        setMessage(typeingMessage.content);
+                      }
+                    };
+                    setRecognitionActive(true);
+                  }
+                }}
+                data-testid="VoiceMessageBtn"
+              >
+                {recognitionActive ? <CiMicrophoneOff /> : <CiMicrophoneOn />}
+              </IconButton>
+            ) : null}
+            <Button
+              colorPalette={is.thinking ? "gray" : "blue"}
+              variant="solid"
+              type="submit"
+              className={styles["send-button"]}
+              aria-label={t("send")}
+              disabled={is.thinking || !typeingMessage?.content}
+              onClick={() => {
+                void sendMessage();
+              }}
+              data-testid="SendMessageBtn"
+            >
+              <MdSend className={styles["send-icon"]} aria-hidden="true" />
+              <span className={styles["send-label"]}>{t("send")}</span>
+              {options.general.codeEditor || (
+                <Kbd className={styles["send-shortcut"]} size="sm">
+                  {t(options.general.sendCommand)}
+                </Kbd>
+              )}
+            </Button>
+          </HStack>
         </HStack>
       </Stack>
     </div>
