@@ -5,6 +5,7 @@ import {
   Checkbox,
   CloseButton,
   Dialog,
+  Field,
   Fieldset,
   HStack,
   Icon,
@@ -22,6 +23,7 @@ import { LuLock, LuShieldCheck } from "react-icons/lu";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
+  DEFAULT_MCP_AUTH_HEADER_NAME,
   getFallbackMcpUserScopes,
   useMcpAuthDiscovery,
 } from "./hooks/useMcpAuth";
@@ -125,22 +127,45 @@ function AuthModeOption({
 }
 
 interface StaticTokenFieldProps {
+  headerName: string;
+  onHeaderNameChange: React.ChangeEventHandler<HTMLInputElement>;
   onChange: React.ChangeEventHandler<HTMLInputElement>;
   value: string;
 }
 
-function StaticTokenField({ onChange, value }: StaticTokenFieldProps) {
+function StaticTokenField({
+  headerName,
+  onHeaderNameChange,
+  onChange,
+  value,
+}: StaticTokenFieldProps) {
   const { t } = useTranslation();
 
   return (
     <Box pl={6}>
-      <Input
-        data-testid="mcp-auth-static-token-input"
-        value={value}
-        onChange={onChange}
-        placeholder={t("enter_token")}
-        size="sm"
-      />
+      <Stack gap={2}>
+        <Field.Root>
+          <Field.Label>{t("mcp_auth_header_name")}</Field.Label>
+          <Input
+            data-testid="mcp-auth-header-name-input"
+            value={headerName}
+            onChange={onHeaderNameChange}
+            placeholder={DEFAULT_MCP_AUTH_HEADER_NAME}
+            size="sm"
+          />
+          <Field.HelperText>{t("mcp_auth_header_name_info")}</Field.HelperText>
+        </Field.Root>
+        <Field.Root>
+          <Field.Label>{t("static_token")}</Field.Label>
+          <Input
+            data-testid="mcp-auth-static-token-input"
+            value={value}
+            onChange={onChange}
+            placeholder={t("enter_token")}
+            size="sm"
+          />
+        </Field.Root>
+      </Stack>
     </Box>
   );
 }
@@ -278,6 +303,10 @@ function buildAuthConfigForMode(
       return {
         mode: "static",
         staticToken: config.mode === "static" ? config.staticToken : "",
+        headerName:
+          config.mode === "static"
+            ? config.headerName || DEFAULT_MCP_AUTH_HEADER_NAME
+            : DEFAULT_MCP_AUTH_HEADER_NAME,
       };
     case "user-data":
       return {
@@ -333,6 +362,19 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
     onChange({
       mode: "static",
       staticToken: e.target.value,
+      headerName:
+        normalizedConfig.mode === "static"
+          ? normalizedConfig.headerName
+          : DEFAULT_MCP_AUTH_HEADER_NAME,
+    });
+  };
+
+  const handleHeaderNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      mode: "static",
+      staticToken:
+        normalizedConfig.mode === "static" ? normalizedConfig.staticToken : "",
+      headerName: e.target.value,
     });
   };
 
@@ -378,6 +420,10 @@ export const McpAuthFields: React.FC<McpAuthFieldsProps> = ({
 
               {normalizedConfig.mode === "static" && (
                 <StaticTokenField
+                  headerName={
+                    normalizedConfig.headerName || DEFAULT_MCP_AUTH_HEADER_NAME
+                  }
+                  onHeaderNameChange={handleHeaderNameChange}
                   value={normalizedConfig.staticToken || ""}
                   onChange={handleTokenChange}
                 />

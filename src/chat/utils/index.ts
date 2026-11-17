@@ -20,6 +20,7 @@ import {
   normalizeMcpAuthConfig,
 } from "../hooks/useMcpAuth";
 import { redirectToLogin } from "./loginRetry";
+import { applyMcpAuthorization } from "./mcpServiceHelpers";
 
 export * from "./options";
 export * from "./attachments";
@@ -93,13 +94,7 @@ async function refreshMcpAuthorizations(
           tool.server_url || "",
           user
         );
-        const nextTool = { ...tool } as Tool.Mcp;
-        if (authorization) {
-          nextTool.authorization = authorization;
-        } else {
-          delete nextTool.authorization;
-        }
-        tools.set(key, nextTool);
+        tools.set(key, applyMcpAuthorization(tool, config, authorization));
       } catch (error) {
         console.warn(
           "Unable to refresh MCP authorization for %s: %o",

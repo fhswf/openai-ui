@@ -16,6 +16,7 @@ import {
 } from "./mcpAuthHelpers";
 
 const MCP_AUTH_TOKEN_LIFETIME_SECONDS = 6 * 60 * 60;
+export const DEFAULT_MCP_AUTH_HEADER_NAME = "Authorization";
 
 export const DEFAULT_MCP_AUTH_CONFIG: McpAuthConfig = {
   mode: "none",
@@ -55,6 +56,10 @@ export function normalizeMcpAuthConfig(config: unknown): McpAuthConfig {
       mode: "static",
       staticToken:
         typeof config.staticToken === "string" ? config.staticToken : "",
+      headerName:
+        typeof config.headerName === "string"
+          ? config.headerName
+          : DEFAULT_MCP_AUTH_HEADER_NAME,
     };
   }
 
@@ -99,7 +104,8 @@ export function areMcpAuthConfigsEqual(
     case "static": {
       return (
         normalizedB.mode === "static" &&
-        normalizedA.staticToken === normalizedB.staticToken
+        normalizedA.staticToken === normalizedB.staticToken &&
+        normalizedA.headerName === normalizedB.headerName
       );
     }
     case "user-data": {

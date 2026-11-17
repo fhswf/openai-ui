@@ -281,7 +281,7 @@ export interface McpUserDataDiscovery {
 
 export type McpAuthConfig =
   | { mode: "none" }
-  | { mode: "static"; staticToken: string }
+  | { mode: "static"; staticToken: string; headerName?: string }
   | { mode: "user-data"; userData: McpUserDataDiscovery };
 
 export type McpAuthMode = McpAuthConfig["mode"];

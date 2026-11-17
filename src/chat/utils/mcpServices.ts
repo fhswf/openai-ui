@@ -229,6 +229,18 @@ export function validateMcpToolForm(
     return false;
   }
 
+  if (form.authConfig.mode === "static") {
+    const headerName = form.authConfig.headerName?.trim();
+    if (!headerName) {
+      alert(t("mcp_auth_header_required"));
+      return false;
+    }
+    if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(headerName)) {
+      alert(t("mcp_invalid_auth_header_name"));
+      return false;
+    }
+  }
+
   return true;
 }
 
