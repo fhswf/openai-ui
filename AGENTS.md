@@ -8,4 +8,4 @@ We use the following commit types:
 - `docs`: Documentation changes
 - `style`: Code style changes (formatting, missing semi-colons, etc.)
 - `refactor`: Code changes that neither fix a bug nor add a feature
-- `test`: Adding or updating tests
+- `test`: Adding or updating tests. You recognize test files by the `*.test.ts` or `*.spec.ts` suffix.
