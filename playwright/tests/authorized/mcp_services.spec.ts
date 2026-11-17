@@ -275,6 +275,60 @@ test.describe("MCP Services", () => {
     await expect(consentControl).not.toBeChecked();
   });
 
+  test("should save a static token under a custom header name", async ({
+    page,
+  }) => {
+    const serviceLabel = "Custom Header Service";
+    const tokenHeader = "X-Mcp-Token";
+    const token = "custom-header-token";
+
+    await openMcpDialog(page);
+    await fillServiceBase(page, {
+      label: serviceLabel,
+      url: "https://custom-header.example.com",
+    });
+    await setAuthMode(page, "static");
+
+    const headerNameInput = page.getByTestId("mcp-auth-header-name-input");
+    await expect(headerNameInput).toHaveValue("Authorization");
+    await focusAndFill(headerNameInput, tokenHeader);
+    await focusAndFill(page.getByTestId("mcp-auth-static-token-input"), token);
+    await page.getByTestId("mcp-add-service-btn").click();
+    await expect(page.getByText(serviceLabel, { exact: true })).toBeVisible();
+
+    await expect
+      .poll(() =>
+        page.evaluate((label) => {
+          const raw = localStorage.getItem("SESSIONS");
+          if (!raw) return null;
+
+          const session = JSON.parse(raw);
+          const getEntry = (collection: any) =>
+            collection?.dataType === "Map"
+              ? collection.value.find(([key]: [string]) => key === label)?.[1]
+              : undefined;
+          const tool = getEntry(session?.options?.openai?.tools);
+          const authConfig = getEntry(session?.options?.openai?.mcpAuthConfigs);
+
+          return {
+            authorization: tool?.authorization ?? null,
+            headerToken: tool?.headers?.["X-Mcp-Token"] ?? null,
+            configuredHeader: authConfig?.headerName ?? null,
+            configuredToken: authConfig?.staticToken ?? null,
+          };
+        }, serviceLabel)
+      )
+      .toEqual({
+        authorization: null,
+        headerToken: token,
+        configuredHeader: tokenHeader,
+        configuredToken: token,
+      });
+
+    await page.getByTestId(`mcp-edit-${serviceLabel}`).click();
+    await expect(headerNameInput).toHaveValue(tokenHeader);
+  });
+
   test("should validate required fields before adding service", async ({
     page,
   }) => {
