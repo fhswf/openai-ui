@@ -564,6 +564,113 @@ test.describe("MCP Auth", () => {
         name: mockUser.name,
       });
     });
+
+    test("sends a static MCP token with its configured custom header", async ({
+      page,
+    }) => {
+      const label = "Static Custom Header";
+      const serverUrl = "https://custom-header.example.com/mcp";
+      const headerName = "X-Mcp-Token";
+      const staticToken = "custom-mcp-token";
+
+      await routeDiscoveryForServer(page, serverUrl, {
+        status: 404,
+        contentType: "text/plain",
+        body: "missing",
+      });
+      await seedSession(page, {
+        options: {
+          account: baseAccountOptions,
+          general: baseGeneralOptions,
+          openai: {
+            ...baseOpenAiOptions,
+            tools: {
+              dataType: "Map",
+              value: [
+                [
+                  label,
+                  {
+                    type: "mcp",
+                    server_label: label,
+                    server_url: serverUrl,
+                    require_approval: "never",
+                  },
+                ],
+              ],
+            },
+            toolsEnabled: { dataType: "Set", value: [label] },
+            mcpAuthConfigs: {
+              dataType: "Map",
+              value: [[label, { mode: "static", staticToken, headerName }]],
+            },
+          },
+        },
+      });
+
+      let responseTool:
+        | {
+            authorization?: string;
+            headers?: Record<string, string>;
+          }
+        | undefined;
+      await page.route("**/v1/responses", async (route) => {
+        const requestBody = route.request().postDataJSON();
+        responseTool = requestBody.tools.find(
+          (tool: { type: string; server_label?: string }) =>
+            tool.type === "mcp" && tool.server_label === label
+        );
+
+        const responseBody = [
+          {
+            type: "response.created",
+            response: { id: "resp_custom_mcp_auth" },
+          },
+          {
+            type: "response.completed",
+            response: {
+              usage: { total_tokens: 2, input_tokens: 1, output_tokens: 1 },
+            },
+          },
+        ];
+        await route.fulfill({
+          status: 200,
+          contentType: "text/event-stream",
+          body: responseBody
+            .map((event) => `data: ${JSON.stringify(event)}\n\n`)
+            .join(""),
+        });
+      });
+
+      await reloadAuthorizedPage(page);
+      await expect
+        .poll(() =>
+          page.evaluate(
+            ({ serviceLabel, configuredHeader }) => {
+              const raw = localStorage.getItem("SESSIONS");
+              if (!raw) return null;
+              const session = JSON.parse(raw);
+              const tools = session?.options?.openai?.tools;
+              const tool =
+                tools?.dataType === "Map"
+                  ? tools.value.find(
+                      ([key]: [string]) => key === serviceLabel
+                    )?.[1]
+                  : undefined;
+              return tool?.headers?.[configuredHeader] ?? null;
+            },
+            { serviceLabel: label, configuredHeader: headerName }
+          )
+        )
+        .toBe(staticToken);
+
+      await page.getByTestId("ChatTextArea").fill("Use the MCP tool");
+      await page.getByTestId("SendMessageBtn").click();
+
+      await expect
+        .poll(() => responseTool?.headers?.[headerName])
+        .toBe(staticToken);
+      expect(responseTool?.authorization).toBeUndefined();
+    });
   });
 
   test.describe("Mode transitions", () => {
