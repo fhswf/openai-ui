@@ -8,6 +8,7 @@ import {
   Tool,
 } from "../context/types";
 import {
+  DEFAULT_MCP_AUTH_HEADER_NAME,
   hasBeenConsentPrompted,
   isMcpAuthorizationIncomplete,
   normalizeMcpAuthConfig,
@@ -154,14 +155,60 @@ function createMcpToolDefinition(
 ): Tool.Mcp {
   const allowedTools = getAllowedTools(form.allowed_tools_input);
 
-  return {
-    type: "mcp",
-    server_label: form.server_label,
-    server_url: form.server_url,
-    require_approval: form.require_approval,
-    ...(authorization ? { authorization } : {}),
-    ...(allowedTools.length > 0 ? { allowed_tools: allowedTools } : {}),
-  };
+  return applyMcpAuthorization(
+    {
+      type: "mcp",
+      server_label: form.server_label,
+      server_url: form.server_url,
+      require_approval: form.require_approval,
+      ...(allowedTools.length > 0 ? { allowed_tools: allowedTools } : {}),
+    },
+    normalizeMcpAuthConfig(form.authConfig),
+    authorization
+  );
+}
+
+export function applyMcpAuthorization(
+  tool: Tool.Mcp,
+  authConfig: McpAuthConfig,
+  authorization?: string
+): Tool.Mcp {
+  const nextTool = { ...tool };
+  const headers = { ...(tool.headers ?? {}) };
+  const headerName =
+    authConfig.mode === "static"
+      ? authConfig.headerName?.trim() || DEFAULT_MCP_AUTH_HEADER_NAME
+      : DEFAULT_MCP_AUTH_HEADER_NAME;
+  const normalizedHeaderName = headerName.toLowerCase();
+
+  // The Responses API has a dedicated authorization field; custom names use
+  // the MCP tool's generic headers map.
+  for (const existingHeaderName of Object.keys(headers)) {
+    if (existingHeaderName.toLowerCase() === normalizedHeaderName) {
+      delete headers[existingHeaderName];
+    }
+  }
+
+  if (normalizedHeaderName === "authorization") {
+    if (authorization) {
+      nextTool.authorization = authorization;
+    } else {
+      delete nextTool.authorization;
+    }
+  } else {
+    delete nextTool.authorization;
+    if (authorization) {
+      headers[headerName] = authorization;
+    }
+  }
+
+  if (Object.keys(headers).length > 0) {
+    nextTool.headers = headers;
+  } else {
+    delete nextTool.headers;
+  }
+
+  return nextTool;
 }
 
 export function getAllowedToolsInput(tool: Tool.Mcp): string {
@@ -189,6 +236,10 @@ export function getAuthorizationResult(args: {
 
 export function persistMcpService(args: PersistMcpServiceArgs): void {
   const nextAuthConfig = normalizeMcpAuthConfig(args.form.authConfig);
+  if (nextAuthConfig.mode === "static") {
+    nextAuthConfig.headerName =
+      nextAuthConfig.headerName?.trim() || DEFAULT_MCP_AUTH_HEADER_NAME;
+  }
   const collections = {
     mcpAuthConfigs: new Map(args.collections.mcpAuthConfigs),
     tools: new Map(args.collections.tools),

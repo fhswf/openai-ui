@@ -680,6 +680,12 @@ Access to the chat is only available to members of FH SWF. If you are a member, 
           none: "None",
           static_token: "Static Token",
           enter_token: "Enter token...",
+          mcp_auth_header_name: "Token Header Name",
+          mcp_auth_header_name_info:
+            "The Responses API sends the token using this HTTP header.",
+          mcp_auth_header_required: "Enter a header name for the token.",
+          mcp_invalid_auth_header_name:
+            "The token header name is not a valid HTTP header name.",
           user_data: "User Data",
           mcp_scope_name: "First and last name",
           mcp_scope_email: "Email address",
@@ -1570,6 +1576,13 @@ Wenn du ein Mitglied bist, melde dich bitte mit Deiner **Hochschulkennung** an.
           none: "Keine",
           static_token: "Statisches Token",
           enter_token: "Token eingeben...",
+          mcp_auth_header_name: "Headername für Token",
+          mcp_auth_header_name_info:
+            "Die Responses API sendet das Token mit diesem HTTP-Header.",
+          mcp_auth_header_required:
+            "Geben Sie einen Headernamen für das Token ein.",
+          mcp_invalid_auth_header_name:
+            "Der Token-Headername ist kein gültiger HTTP-Headername.",
           user_data: "Benutzerdaten",
           mcp_scope_name: "Vor- und Nachname",
           mcp_scope_email: "E-Mail-Adresse",
