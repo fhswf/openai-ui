@@ -38,6 +38,32 @@ async function readJsonRpcResponse(response: APIResponse, id: number) {
   return message;
 }
 
+async function expectMcpRequestToBeAvailable(
+  response: APIResponse,
+  operation: string
+) {
+  const body = await response.text();
+  const headers = response.headers();
+  const isCloudflareChallenge =
+    response.status() === 403 &&
+    (headers["cf-mitigated"]?.toLowerCase() === "challenge" ||
+      /<title>Just a moment\.\.\.<\/title>|cf_chl_|Enable JavaScript and cookies to continue/i.test(
+        body
+      ));
+
+  if (isCloudflareChallenge) {
+    test.skip(
+      true,
+      `The MCP ${operation} request was intercepted by Cloudflare's browser challenge; this runner cannot complete it. Configure the test endpoint to allow the CI runner or use an unchallenged integration endpoint.`
+    );
+  }
+
+  expect(
+    response.ok(),
+    `MCP ${operation} failed (${response.status()}): ${body}`
+  ).toBe(true);
+}
+
 test("accepts the UI-generated token on a direct tools/list request", async ({
   request,
 }) => {
@@ -87,10 +113,7 @@ test("accepts the UI-generated token on a direct tools/list request", async ({
     },
   });
 
-  expect(
-    initializeResponse.ok(),
-    `MCP initialize failed (${initializeResponse.status()}): ${await initializeResponse.text()}`
-  ).toBe(true);
+  await expectMcpRequestToBeAvailable(initializeResponse, "initialize");
   const initializeMessage = await readJsonRpcResponse(initializeResponse, 1);
   expect(initializeMessage.result).toBeDefined();
   const negotiatedProtocolVersion = initializeMessage.result?.protocolVersion;
@@ -116,10 +139,7 @@ test("accepts the UI-generated token on a direct tools/list request", async ({
     },
   });
 
-  expect(
-    toolsResponse.ok(),
-    `MCP tools/list failed (${toolsResponse.status()}): ${await toolsResponse.text()}`
-  ).toBe(true);
+  await expectMcpRequestToBeAvailable(toolsResponse, "tools/list");
   const toolsMessage = await readJsonRpcResponse(toolsResponse, 2);
   const tools = toolsMessage.result?.tools;
   expect(Array.isArray(tools)).toBe(true);
