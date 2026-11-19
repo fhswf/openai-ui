@@ -8,9 +8,52 @@ on:
     types:
       - closed
   workflow_dispatch:
+    inputs:
+      dependabot_pr:
+        description: Dependabot PR URL to wait for before checking releases
+        required: false
+        type: string
 
 jobs:
+  wait-for-dependabot-merge:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.dependabot_pr != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    permissions:
+      pull-requests: read
+    outputs:
+      merged: ${{ steps.wait.outputs.merged }}
+    steps:
+      - name: Wait for the Dependabot PR to merge
+        id: wait
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ inputs.dependabot_pr }}
+        run: |
+          for attempt in $(seq 1 120); do
+            state=$(gh pr view "$PR_URL" --json state,mergedAt --jq 'if .mergedAt != null then "merged" elif .state == "CLOSED" then "closed" else "open" end')
+            if [[ "$state" == "merged" ]]; then
+              echo "merged=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [[ "$state" == "closed" ]]; then
+              echo "merged=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "Timed out waiting for Dependabot PR $PR_URL to merge" >&2
+          exit 1
+
   release:
+    needs: wait-for-dependabot-merge
+    if: >-
+      ${{ always() && (needs.wait-for-dependabot-merge.result == 'skipped' ||
+      (needs.wait-for-dependabot-merge.result == 'success' &&
+      needs.wait-for-dependabot-merge.outputs.merged == 'true')) }}
+    concurrency:
+      group: release-please-main
+      cancel-in-progress: false
     name: Release
     runs-on: ubuntu-26.04
     permissions:

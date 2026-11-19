@@ -1,7 +1,10 @@
 name: Dependabot auto-merge
-on: pull_request
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -21,6 +24,18 @@ jobs:
       - name: Auto-Merge aktivieren
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      # Auto-merges use GITHUB_TOKEN, which may suppress the push event that
+      # normally starts Release Please. Dispatch it separately and wait until
+      # this PR has merged before checking for releases.
+      - name: Trigger Release Please after auto-merge
+        if: >-
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh workflow run main.yml --ref main --field dependabot_pr="$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
