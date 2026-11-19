@@ -532,7 +532,29 @@ jobs:
           } else {
             await github.rest.issues.createComment(commentOptions);
           }
+    - name: Check SonarQube credentials
+      id: sonar-credentials
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        GITHUB_ACTOR: ${{ github.actor }}
+        GITHUB_EVENT_NAME: ${{ github.event_name }}
+        PULL_REQUEST_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+        BASE_REPOSITORY: ${{ github.repository }}
+      run: |
+        if [[ -n "$SONAR_TOKEN" ]]; then
+          echo "available=true" >> "$GITHUB_OUTPUT"
+        elif [[ "$GITHUB_ACTOR" == "dependabot[bot]" ]]; then
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          echo "::warning title=SonarQube skipped::GitHub withholds repository secrets from Dependabot-triggered workflows. SonarQube will run on a trusted workflow where SONAR_TOKEN is available."
+        elif [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$PULL_REQUEST_REPOSITORY" != "$BASE_REPOSITORY" ]]; then
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          echo "::warning title=SonarQube skipped::GitHub withholds repository secrets from pull requests originating in forks. SonarQube will run on a trusted workflow where SONAR_TOKEN is available."
+        else
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          echo "::warning title=SonarQube skipped::SONAR_TOKEN was not provided to this workflow run. Check the secret scope and workflow environment."
+        fi
     - name: SonarQube
+      if: steps.sonar-credentials.outputs.available == 'true'
       uses: sonarsource/sonarqube-scan-action@v8
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
