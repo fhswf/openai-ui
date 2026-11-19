@@ -11,6 +11,7 @@ permissions:
 jobs:
   dependabot:
     runs-on: ubuntu-latest
+    timeout-minutes: 130
     # Nur ausführen, wenn der PR wirklich von Dependabot kommt
     if: github.actor == 'dependabot[bot]'
     steps:
@@ -20,12 +21,57 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
+      - name: Wait for Quality Gate on the current PR commit
+        id: quality
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GH_REPO: ${{github.repository}}
+          PR_URL: ${{github.event.pull_request.html_url}}
+        run: |
+          pr_sha=$(gh pr view "$PR_URL" --json headRefOid --jq '.headRefOid')
+          deadline=$((SECONDS + 7200))
+
+          echo "Waiting for Quality Gate to pass for $pr_sha"
+          while (( SECONDS < deadline )); do
+            run=$(gh api "repos/${GH_REPO}/actions/workflows/quality.yml/runs?head_sha=${pr_sha}&event=pull_request&per_page=100" \
+              --jq '.workflow_runs | sort_by(.created_at) | last // empty')
+
+            if [[ -n "$run" ]]; then
+              status=$(jq -r '.status' <<< "$run")
+              conclusion=$(jq -r '.conclusion // empty' <<< "$run")
+              run_sha=$(jq -r '.head_sha' <<< "$run")
+
+              if [[ "$run_sha" != "$pr_sha" ]]; then
+                echo "Quality Gate run was for unexpected commit $run_sha" >&2
+                exit 1
+              fi
+
+              if [[ "$status" == "completed" ]]; then
+                if [[ "$conclusion" == "success" ]]; then
+                  echo "Quality Gate passed for $pr_sha"
+                  echo "tested_sha=$pr_sha" >> "$GITHUB_OUTPUT"
+                  exit 0
+                fi
+
+                echo "Quality Gate completed with conclusion '$conclusion' for $pr_sha" >&2
+                exit 1
+              fi
+            fi
+
+            sleep 30
+          done
+
+          echo "Timed out waiting for Quality Gate on $pr_sha" >&2
+          exit 1
+
       # Optional: Nur Patch- und Minor-Updates automatisch mergen (kein Major!)
       - name: Auto-Merge aktivieren
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
-        run: gh pr merge --auto --squash "$PR_URL"
+        run: gh pr merge --auto --squash --match-head-commit "$TESTED_SHA" "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
+          TESTED_SHA: ${{steps.quality.outputs.tested_sha}}
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
       # Auto-merges use GITHUB_TOKEN, which may suppress the push event that
