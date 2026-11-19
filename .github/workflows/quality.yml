@@ -24,7 +24,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
@@ -50,7 +50,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - run: corepack enable && corepack prepare yarn@stable --activate
     - uses: actions/setup-node@v5
       with:
@@ -85,7 +85,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
@@ -116,7 +116,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
@@ -177,7 +177,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
@@ -250,7 +250,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
@@ -324,7 +324,7 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
@@ -363,7 +363,7 @@ jobs:
         name: unit-test-results
         path: unit-test-results/
     - name: Comment Test Report on PR
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       if: github.event_name == 'pull_request'
       env:
         UNIT_TEST_STATUS: ${{ needs.unit-tests.result }}

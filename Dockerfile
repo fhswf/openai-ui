@@ -1,4 +1,4 @@
-FROM node:20-alpine as build
+FROM node:26-alpine as build
 
 ARG VERSION=0.0.0
 ARG BUILD_SHA=unknown
