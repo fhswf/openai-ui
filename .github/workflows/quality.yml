@@ -28,7 +28,7 @@ jobs:
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
         cache: 'yarn'
@@ -52,7 +52,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - run: corepack enable && corepack prepare yarn@stable --activate
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
         cache: 'yarn'
@@ -89,7 +89,7 @@ jobs:
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
         cache: 'yarn'
@@ -120,7 +120,7 @@ jobs:
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
         cache: 'yarn'
@@ -181,7 +181,7 @@ jobs:
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
         cache: 'yarn'
@@ -254,7 +254,7 @@ jobs:
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
         cache: 'yarn'
@@ -328,7 +328,7 @@ jobs:
       with:
         fetch-depth: 0
     - run: corepack enable && corepack prepare yarn@stable --activate
-    - uses: actions/setup-node@v5
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
         cache: 'yarn'
