@@ -119,7 +119,7 @@
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-loader": "^7.2.3",
     "postcss-preset-env": "^8.3.2",
-    "prettier": "^2.8.6",
+    "prettier": "^3.10.1",
     "prop-types": "^15.8.1",
     "storybook": "^10.6.2",
     "style-loader": "^4.0.0",
