@@ -112,7 +112,7 @@
     "globals": "^16.5.0",
     "html-webpack-plugin": "^5.5.0",
     "jsdom": "^30.0.1",
-    "less": "^4.2.2",
+    "less": "^4.9.1",
     "less-loader": "^11.1.0",
     "mini-css-extract-plugin": "^2.7.5",
     "pa11y": "^8.0.0",
