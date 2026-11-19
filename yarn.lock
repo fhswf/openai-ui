@@ -8523,9 +8523,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"less@npm:^4.2.2":
-  version: 4.8.1
-  resolution: "less@npm:4.8.1"
+"less@npm:^4.9.1":
+  version: 4.9.1
+  resolution: "less@npm:4.9.1"
   dependencies:
     copy-anything: "npm:^3.0.5"
     errno: "npm:^0.1.1"
@@ -8553,7 +8553,7 @@ __metadata:
       optional: true
   bin:
     lessc: bin/lessc
-  checksum: 10c0/41fbad950e9d5110bd86c94726a57eb771e2dfc6eb82aa687dd153f9f463c8707cb3b4e89144d1617bbf026ff7dc57cea7e7a33dfbe959565c9cc35a9d480808
+  checksum: 10c0/6f4e9efb3356cfb7ed7458f3eda436de470e2058dc0d2d99f2555a2fa4c22f594ff2c78ad6acd4d843545f03ccbacfaeb685710d5e25da48218e5c1d99292441
   languageName: node
   linkType: hard
 
@@ -9845,7 +9845,7 @@ __metadata:
     jose: "npm:^6.1.3"
     jsdom: "npm:^30.0.1"
     katex: "npm:^0.19.1"
-    less: "npm:^4.2.2"
+    less: "npm:^4.9.1"
     less-loader: "npm:^11.1.0"
     mini-css-extract-plugin: "npm:^2.7.5"
     next-themes: "npm:^0.4.4"
