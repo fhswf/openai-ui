@@ -6307,16 +6307,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-storybook@npm:^10.1.0":
-  version: 10.5.6
-  resolution: "eslint-plugin-storybook@npm:10.5.6"
+"eslint-plugin-storybook@npm:^10.6.7":
+  version: 10.6.7
+  resolution: "eslint-plugin-storybook@npm:10.6.7"
   dependencies:
     "@typescript-eslint/types": "npm:^8.60.0"
     "@typescript-eslint/utils": "npm:^8.60.0"
   peerDependencies:
     eslint: ">=8"
-    storybook: ^10.5.6
-  checksum: 10c0/2d14ecd5bb7d480a1160392fe3868cb78f485fada33eef66ef7d24c90cc34b4941aadc5b0e6ab5fa3559ade9c679a3ce86c2d02dcaf2cc6828d602aec32d8c01
+  checksum: 10c0/617b70983c2b9dca5a4542ff2303b1343850ada889bb632f4761495ecf0c3d75debee9380652d1785e9a1733d448ad366c9484417e8055248e873d9b5b30bd65
   languageName: node
   linkType: hard
 
@@ -9707,7 +9706,7 @@ __metadata:
     eslint-config-prettier: "npm:^10.1.8"
     eslint-plugin-prettier: "npm:^5.5.4"
     eslint-plugin-react: "npm:^7.37.2"
-    eslint-plugin-storybook: "npm:^10.1.0"
+    eslint-plugin-storybook: "npm:^10.6.7"
     eventsource-parser: "npm:^1.0.0"
     fake-indexeddb: "npm:^6.2.5"
     file-loader: "npm:^6.2.0"
