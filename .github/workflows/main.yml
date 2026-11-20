@@ -60,10 +60,20 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Create GitHub App token
+        id: release-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Release Please
         id: release
         uses: googleapis/release-please-action@v5
         with:
+          token: ${{ steps.release-token.outputs.token }}
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
 
