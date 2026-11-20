@@ -11,6 +11,8 @@ import { MockVectorStoreService } from "./vectorStoresMock";
 const wcagTags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
 async function expectNoWcagViolations(page: Page) {
+  await page.mouse.move(0, 0);
+  await expect(page.getByRole("tooltip")).toBeHidden();
   await page.addScriptTag({ content: axe.source });
 
   const violations = await page.evaluate(async (tags) => {
