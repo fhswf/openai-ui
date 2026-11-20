@@ -54,6 +54,75 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.62.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.61.0...openai-ui-v0.62.0) (2026-11-20)
+
+
+### Features
+
+* add Dependabot auto-merge workflow ([11f18cc](https://github.com/fhswf/openai-ui/commit/11f18cc3967def9b92d387e6a7140c4605a12c69))
+* add support for custom token header name in MCP authentication ([34bc484](https://github.com/fhswf/openai-ui/commit/34bc4848e49f1f7ee50401f0b790636dfb762b7b))
+* add support for custom token header name in MCP authentication ([04c71e3](https://github.com/fhswf/openai-ui/commit/04c71e3e041bac18b2f4bff2f19d33df34ad85d3))
+* enhance chat interface with improved message hierarchy, activity feedback, and composer organization ([c3daf64](https://github.com/fhswf/openai-ui/commit/c3daf64f64d52e70d26c7d745e834fa53520e93f))
+* enhance chat interface with improved message hierarchy, activity feedback, and composer organization ([28e4c40](https://github.com/fhswf/openai-ui/commit/28e4c4011bba6a362623e1f12604a61447efddec))
+
+
+### Bug Fixes
+
+* **ci:** add SonarQube credentials check for workflow ([840c9ee](https://github.com/fhswf/openai-ui/commit/840c9ee02590f3eeed3b4544695e5f745fe701ee))
+* **ci:** set repository for release dispatch ([941fdd7](https://github.com/fhswf/openai-ui/commit/941fdd7fcbbb02c02c28dc78d2b97d954f764e51))
+* **ci:** set repository for release dispatch ([c2a644c](https://github.com/fhswf/openai-ui/commit/c2a644c2b1bd4257dbad1673a68b3ac3620464eb))
+* **ci:** wait for quality checks before Dependabot merge ([161cbfb](https://github.com/fhswf/openai-ui/commit/161cbfbdfc9d7b01bcc0a8a226710cd36ffa2bc4))
+* **css:** fix coding style issues ([45ad3e2](https://github.com/fhswf/openai-ui/commit/45ad3e26def1af7392a0a1b7ba14ceded0b74d5f))
+* **deps:** update react-dom to version 19.3.1 ([997e3a0](https://github.com/fhswf/openai-ui/commit/997e3a0be5a5fbbf7be5e9570af1a77a1d4862da))
+* styling issues ([7758fa7](https://github.com/fhswf/openai-ui/commit/7758fa7324669165198735a42ffc0c5089302476))
+
+
+### Miscellaneous Chores
+
+* add Dependabot configuration for automatic dependency updates ([bc0e955](https://github.com/fhswf/openai-ui/commit/bc0e9558a696930a25743785862cf201853aa456))
+* add test for saving static token under custom header name in MCP authentication ([034cdd4](https://github.com/fhswf/openai-ui/commit/034cdd480384893e9418e9a4c1d41171985f91fc))
+* **deps-dev:** bump @playwright/test from 1.62.1 to 1.65.1 ([#258](https://github.com/fhswf/openai-ui/issues/258)) ([3ec8829](https://github.com/fhswf/openai-ui/commit/3ec88299d2a413f3109df64125a2eceb671a236a))
+* **deps-dev:** bump @types/node from 24.13.3 to 26.6.6 ([42d383a](https://github.com/fhswf/openai-ui/commit/42d383a67df447678fdb4bd72b4e4fd822426ab3))
+* **deps-dev:** bump @types/node from 24.13.3 to 26.6.6 ([f287586](https://github.com/fhswf/openai-ui/commit/f2875862533d2819af77c6b5c1fa17e61853afc7))
+* **deps-dev:** bump @vitest/ui from 4.1.10 to 5.1.0 ([74a1e9a](https://github.com/fhswf/openai-ui/commit/74a1e9a452ceff172a4323e796ee7d8e59bcc551))
+* **deps-dev:** bump @vitest/ui from 4.1.10 to 5.1.0 ([81ee992](https://github.com/fhswf/openai-ui/commit/81ee9924091512761ca4512e0c15b3905871890d))
+* **deps-dev:** bump eslint-plugin-storybook from 10.5.6 to 10.6.7 ([#257](https://github.com/fhswf/openai-ui/issues/257)) ([0027673](https://github.com/fhswf/openai-ui/commit/0027673e68da9a4fbc67ffab5d936fbcd8f0a921))
+* **deps-dev:** bump globals from 16.5.0 to 17.14.0 ([9850426](https://github.com/fhswf/openai-ui/commit/9850426e008479c21a30c3c1ae38f96c44b27c5a))
+* **deps-dev:** bump globals from 16.5.0 to 17.14.0 ([87c17b4](https://github.com/fhswf/openai-ui/commit/87c17b4fc12d9de287eadf3647d03df5a70e9a09))
+* **deps-dev:** bump jsdom from 30.0.1 to 31.0.1 ([0f46564](https://github.com/fhswf/openai-ui/commit/0f4656413434f2308a4ddcabaebd6ed47f0ee831))
+* **deps-dev:** bump jsdom from 30.0.1 to 31.0.1 ([ca63159](https://github.com/fhswf/openai-ui/commit/ca63159ecf4c326fb1cb6ef01083ef426eac2074))
+* **deps-dev:** bump less from 4.8.1 to 4.9.1 ([#266](https://github.com/fhswf/openai-ui/issues/266)) ([73410bb](https://github.com/fhswf/openai-ui/commit/73410bbc92ee34658821d62a159bd7249f889178))
+* **deps-dev:** bump pa11y from 8.0.0 to 10.0.0 ([1546599](https://github.com/fhswf/openai-ui/commit/15465993caf239f8644833fcffcc5cdaa318bf7f))
+* **deps-dev:** bump pa11y from 8.0.0 to 10.0.0 ([5177492](https://github.com/fhswf/openai-ui/commit/5177492f611819c2b503d834270f14f93fca49c5))
+* **deps-dev:** bump prettier from 2.8.8 to 3.10.1 ([d938026](https://github.com/fhswf/openai-ui/commit/d938026658f209f2d4d989f42d15da4f03fdad0d))
+* **deps-dev:** bump prettier from 2.8.8 to 3.10.1 ([ceab47e](https://github.com/fhswf/openai-ui/commit/ceab47e44b08b56faa32ffbfc4f08319e04ebe6e))
+* **deps-dev:** bump typescript-eslint from 8.66.0 to 8.72.2 ([#264](https://github.com/fhswf/openai-ui/issues/264)) ([20685a1](https://github.com/fhswf/openai-ui/commit/20685a1367584950ccb928b079a0c3c4ddfe50a8))
+* **deps:** bump @opentelemetry/api from 1.9.1 to 1.10.0 ([#267](https://github.com/fhswf/openai-ui/issues/267)) ([3809fa5](https://github.com/fhswf/openai-ui/commit/3809fa54cb633fb4f287f648b2f1e2cc465146e9))
+* **deps:** bump @opentelemetry/exporter-metrics-otlp-proto ([2827eb2](https://github.com/fhswf/openai-ui/commit/2827eb2dd494924cca938a979bbdf2168294e565))
+* **deps:** bump @opentelemetry/exporter-metrics-otlp-proto from 0.200.0 to 0.301.2 ([ac7b381](https://github.com/fhswf/openai-ui/commit/ac7b3819508dc251308f5bb70cd6b840c238df7a))
+* **deps:** bump @opentelemetry/instrumentation-document-load ([#262](https://github.com/fhswf/openai-ui/issues/262)) ([9d04953](https://github.com/fhswf/openai-ui/commit/9d04953a1b36d1957aeb29c68e0928e794a525fd))
+* **deps:** bump @opentelemetry/sdk-trace-web from 2.10.0 to 2.12.0 ([e6ccacc](https://github.com/fhswf/openai-ui/commit/e6ccacca9987f5f3aea2293fd4ba8c500cec83ea))
+* **deps:** bump @opentelemetry/sdk-trace-web from 2.10.0 to 2.12.0 ([1e4199f](https://github.com/fhswf/openai-ui/commit/1e4199fc210418a440db083a7b546ddf7149d014))
+* **deps:** bump @sentry/react from 10.69.0 to 11.12.0 ([f8bcf37](https://github.com/fhswf/openai-ui/commit/f8bcf37906bf66d4cbd2b87c1b888f5d4cbc4c23))
+* **deps:** bump @sentry/react from 10.69.0 to 11.12.0 ([5c8d8ff](https://github.com/fhswf/openai-ui/commit/5c8d8ff2b3b4f8c031ca2ff19ad08ddaccf1fe02))
+* **deps:** bump actions/checkout from 5 to 7 ([6fa9f44](https://github.com/fhswf/openai-ui/commit/6fa9f4494b7b62c17cddb7e3548901e6d96183e3))
+* **deps:** bump actions/checkout from 5 to 7 ([dcd09ef](https://github.com/fhswf/openai-ui/commit/dcd09ef2bafbf1fd0156fcd0ad4382c6b46365e0))
+* **deps:** bump actions/github-script from 7 to 9 ([0435bb6](https://github.com/fhswf/openai-ui/commit/0435bb67f27f9b6056ca9c4e5f5b1c320b4231c6))
+* **deps:** bump actions/github-script from 7 to 9 ([edc4fd4](https://github.com/fhswf/openai-ui/commit/edc4fd434f5858caee7c97fc504faa19e1f69aa9))
+* **deps:** bump actions/setup-node from 5 to 7 ([ca02e76](https://github.com/fhswf/openai-ui/commit/ca02e76b7b8b72befc5bb629ecdc6604cd57f886))
+* **deps:** bump actions/setup-node from 5 to 7 ([1038a98](https://github.com/fhswf/openai-ui/commit/1038a98f736e4012f45cbd89c382569f679281bc))
+* **deps:** bump dependabot/fetch-metadata from 2 to 3 ([4622a49](https://github.com/fhswf/openai-ui/commit/4622a49b256db618e76cc96aefa0e30e076cc7f7))
+* **deps:** bump dependabot/fetch-metadata from 2 to 3 ([1b52c06](https://github.com/fhswf/openai-ui/commit/1b52c0641cd3e59bf9248461cccb203451e2bc24))
+* **deps:** bump katex from 0.18.6 to 0.19.1 ([#260](https://github.com/fhswf/openai-ui/issues/260)) ([55e2bf5](https://github.com/fhswf/openai-ui/commit/55e2bf5c6df21220c9952ebfd4e46c9ac1d2458e))
+* **deps:** bump node from 20-alpine to 26-alpine ([78a6450](https://github.com/fhswf/openai-ui/commit/78a64500419098929289aa1b46f731c766554690))
+* **deps:** bump node from 20-alpine to 26-alpine ([4a7fbd5](https://github.com/fhswf/openai-ui/commit/4a7fbd57ffdf797f3bcc06cfa0b9a3449f1f157c))
+* **deps:** bump react and @types/react ([#263](https://github.com/fhswf/openai-ui/issues/263)) ([66547af](https://github.com/fhswf/openai-ui/commit/66547afb6246cb561be73bd697609a23a96c7ee0))
+* **deps:** bump react-error-boundary from 6.1.2 to 6.1.6 ([#273](https://github.com/fhswf/openai-ui/issues/273)) ([f7416ee](https://github.com/fhswf/openai-ui/commit/f7416ee1a52c078be694c6e77d15ddb92dc32c00))
+* update kustomize images [skip ci] ([ef60057](https://github.com/fhswf/openai-ui/commit/ef600572f46910851869175cf6b16230ea46d07d))
+* update kustomize images [skip ci] ([984b847](https://github.com/fhswf/openai-ui/commit/984b847d90f3441aa53447c8edbf89bee2349602))
+* update kustomize images [skip ci] ([a2db58d](https://github.com/fhswf/openai-ui/commit/a2db58d0935af981b8879b738907fd67420123ad))
+* update yarn.lock ([9a69f37](https://github.com/fhswf/openai-ui/commit/9a69f377486a698feecbd1de676ed010e325dfac))
+
 ## [0.61.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.60.0...openai-ui-v0.61.0) (2026-11-10)
 
 
