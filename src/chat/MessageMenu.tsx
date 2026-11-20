@@ -375,7 +375,9 @@ export function MessageMenu() {
               </Button>
               <Spacer />
               <Button
-                type={"primary" as any}
+                className={styles["history-close-button"]}
+                colorPalette="blue"
+                variant="solid"
                 onClick={() => setMenuOpen(false)}
               >
                 {t("close")}

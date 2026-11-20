@@ -57,6 +57,7 @@ function Option({
       width="100%"
       justifyContent="flex-start"
       variant="ghost"
+      className={styles["sidebar-option"]}
       onClick={onClick}
       aria-label={ariaLabel ?? tooltip}
       {...testId}
@@ -69,6 +70,7 @@ function Option({
     <IconButton
       aria-label={ariaLabel ?? tooltip}
       variant="ghost"
+      className={styles["sidebar-option"]}
       onClick={onClick}
       {...testId}
       {...tourTarget}

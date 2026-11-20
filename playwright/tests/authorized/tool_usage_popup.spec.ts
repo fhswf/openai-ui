@@ -92,6 +92,10 @@ test('Tool Usage Popup', async ({ page }) => {
     // Wait for the message to appear
     await expect(page.getByTestId('ChatMessage-1')).toBeVisible();
 
+    const activityDisclosure = page.getByTestId('tool-usage-disclosure');
+    await expect(activityDisclosure).toBeVisible();
+    await activityDisclosure.locator('summary').click();
+
     // Check for the tool badge
     const toolBadge = page.getByTestId('tool-usage-badge-function_call');
     await expect(toolBadge).toBeVisible();

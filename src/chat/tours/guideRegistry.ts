@@ -87,7 +87,7 @@ export const featureGuides: FeatureGuide[] = [
         bodyKey: "tour_tool_info_step1_body",
       },
       {
-        target: "tool-usage-badge",
+        target: "tool-usage-disclosure",
         titleKey: "tour_tool_info_step2_title",
         bodyKey: "tour_tool_info_step2_body",
       },

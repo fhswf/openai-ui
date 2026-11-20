@@ -152,10 +152,12 @@ export function DesktopSidebar({ actions, about }: DesktopSidebarProps) {
       className={classnames(styles.sider, "flex-c-sb flex-column")}
       data-testid="LeftSideBar"
     >
-      {actions}
+      <div className={styles["sidebar-primary-group"]}>{actions}</div>
       <Spacer />
-      <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
-        {about}
+      <div className={styles["sidebar-utility-group"]}>
+        <div className={classnames(styles.tool, "flex-c-sb flex-column")}>
+          {about}
+        </div>
       </div>
     </VStack>
   );

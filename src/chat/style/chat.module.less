@@ -175,9 +175,10 @@ header {
 .header-action-menu {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   position: relative;
   flex: 0 0 auto;
+  color: var(--text-color);
 }
 
 .header-user-info {
@@ -203,7 +204,25 @@ header {
 .header-action-items {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+  padding-inline: 4px 10px;
+  border-inline-end: 1px solid var(--border-color);
+  color: var(--text-color);
+
+  button {
+    min-width: 44px;
+    min-height: 44px;
+    color: inherit;
+
+    &:hover:not(:disabled) {
+      background-color: var(--background-color-gray);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--chat-accent);
+      outline-offset: 2px;
+    }
+  }
 }
 
 .header-action-item {
