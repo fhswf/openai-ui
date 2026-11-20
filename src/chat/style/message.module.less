@@ -522,11 +522,14 @@
 
 .send-button {
   min-height: 40px;
-  background-color: var(--chat-accent) !important;
-  color: var(--chat-accent-foreground) !important;
+}
+
+.input-action-buttons .send-button {
+  background-color: var(--chat-accent);
+  color: var(--chat-accent-foreground);
 
   &:hover:not(:disabled) {
-    background-color: var(--chat-accent-hover) !important;
+    background-color: var(--chat-accent-hover);
   }
 
   &:focus-visible {
@@ -634,7 +637,7 @@
 
   .input-controls {
     grid-area: toolbar;
-    display: flex !important;
+    display: flex;
     justify-content: space-between;
     padding: 8px 0 4px;
   }
