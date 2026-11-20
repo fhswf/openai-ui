@@ -362,6 +362,10 @@ test.describe("Document collections (vector stores)", () => {
     await page.getByTestId("SendMessageBtn").click();
 
     await expect(page.getByText("Am 12. Februar.")).toBeVisible();
+    const activityDisclosure = page.getByTestId("tool-usage-disclosure");
+    await expect(activityDisclosure).toBeVisible();
+    await activityDisclosure.locator("summary").click();
+
     expect(service.requests).toContain(
       `POST /v1/vector_stores/${store.id}/search`
     );
@@ -391,6 +395,7 @@ test.describe("Document collections (vector stores)", () => {
 
     // The search shows up as tool usage below the answer.
     const badge = page.getByTestId("tool-usage-badge-file_search_call");
+    await expect(badge).toBeVisible();
     await expect(badge).toContainText("Dokumente");
     await badge.click();
     const popup = page.getByTestId("tool-usage-popup-content");
