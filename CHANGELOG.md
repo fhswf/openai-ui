@@ -54,6 +54,18 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.62.2](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.62.1...openai-ui-v0.62.2) (2026-11-21)
+
+
+### Bug Fixes
+
+* **Dockerfile:** update corepack installation command for compatibility ([a45ada3](https://github.com/fhswf/openai-ui/commit/a45ada35f2ed78ab7f0647db03805625bcc905a2))
+
+
+### Miscellaneous Chores
+
+* **ci:** add support for manual release tag validation in workflow ([9251d62](https://github.com/fhswf/openai-ui/commit/9251d624cf7f31f1cc249e8c7969e87be082d10c))
+
 ## [0.62.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.62.0...openai-ui-v0.62.1) (2026-11-21)
 
 
