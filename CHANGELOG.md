@@ -54,6 +54,13 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.62.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.62.0...openai-ui-v0.62.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **ci:** add GitHub App token creation for release process ([3637d18](https://github.com/fhswf/openai-ui/commit/3637d18b52ec6a5b7f31e6f509732313f45669c5))
+
 ## [0.62.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.61.0...openai-ui-v0.62.0) (2026-11-20)
 
 
