@@ -1,4 +1,4 @@
-FROM node:26-alpine as build
+FROM node:26-alpine AS build
 
 ARG VERSION=0.0.0
 ARG BUILD_SHA=unknown
@@ -9,7 +9,10 @@ COPY package.json /app
 COPY yarn.lock /app
 COPY . /app
 
-RUN corepack enable && YARN_ENABLE_SCRIPTS=false yarn install --frozen-lockfile 
+# Node 25+ images no longer bundle Corepack.
+RUN npm install --global corepack@0.36.0 \
+    && corepack enable \
+    && YARN_ENABLE_SCRIPTS=false yarn install --immutable
 ENV NODE_ENV=production
 ENV VITE_API_URL=/api/v1/chat/completions
 ENV VITE_API_BASE_URL=/api/v1
