@@ -13,6 +13,10 @@ on:
         description: Dependabot PR URL to wait for before checking releases
         required: false
         type: string
+      release_tag:
+        description: Existing Release Please tag to rebuild, for example openai-ui-v0.62.1
+        required: false
+        type: string
 
 jobs:
   wait-for-dependabot-merge:
@@ -48,7 +52,7 @@ jobs:
   release:
     needs: wait-for-dependabot-merge
     if: >-
-      ${{ always() && (needs.wait-for-dependabot-merge.result == 'skipped' ||
+      ${{ always() && inputs.release_tag == '' && (needs.wait-for-dependabot-merge.result == 'skipped' ||
       (needs.wait-for-dependabot-merge.result == 'success' &&
       needs.wait-for-dependabot-merge.outputs.merged == 'true')) }}
     concurrency:
@@ -83,6 +87,9 @@ jobs:
       
   build:
     needs: release
+    if: >-
+      ${{ !cancelled() && (needs.release.result == 'success' ||
+      (inputs.release_tag != '' && needs.release.result == 'skipped')) }}
     runs-on: ubuntu-26.04
     permissions:
       contents: write
@@ -101,6 +108,22 @@ jobs:
           fetch-depth: 0
           token: ${{ steps.cicd.outputs.token }}
 
+      - name: Validate manual release tag
+        id: manual-release
+        if: inputs.release_tag != ''
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^openai-ui-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::release_tag must be an existing tag such as openai-ui-v0.62.1"
+            exit 1
+          fi
+          if ! git rev-parse -q --verify "refs/tags/$RELEASE_TAG" >/dev/null; then
+            echo "::error::Release tag $RELEASE_TAG was not found in the repository"
+            exit 1
+          fi
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
 
       - name: Docker meta
         id: meta
@@ -117,6 +140,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.tag_name }},enable=${{ needs.release.outputs.release_created == 'true' }}
             type=semver,pattern={{major}},value=${{ needs.release.outputs.tag_name }},enable=${{ needs.release.outputs.release_created == 'true' }}
             type=raw,value=${{ needs.release.outputs.tag_name }},enable=${{ needs.release.outputs.release_created == 'true' }}
+            type=raw,value=${{ steps.manual-release.outputs.tag }},enable=${{ steps.manual-release.outputs.tag != '' }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -137,7 +161,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VERSION=${{ needs.release.outputs.release_created == 'true' && needs.release.outputs.tag_name || github.sha }}
+            VERSION=${{ steps.manual-release.outputs.tag || (needs.release.outputs.release_created == 'true' && needs.release.outputs.tag_name) || github.sha }}
 
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v3
@@ -148,10 +172,12 @@ jobs:
           kustomize edit set image ghcr.io/fhswf/openai-ui=ghcr.io/fhswf/openai-ui:sha-$(echo ${{ github.sha }} | cut -c1-7)
 
       - name: Update Prod Kustomize Image
-        if: needs.release.outputs.release_created == 'true'
+        if: ${{ needs.release.outputs.release_created == 'true' || steps.manual-release.outputs.tag != '' }}
+        env:
+          RELEASE_TAG: ${{ steps.manual-release.outputs.tag || needs.release.outputs.tag_name }}
         run: |
           cd k8s/overlays/prod
-          kustomize edit set image ghcr.io/fhswf/openai-ui=ghcr.io/fhswf/openai-ui:${{ needs.release.outputs.tag_name }}
+          kustomize edit set image ghcr.io/fhswf/openai-ui=ghcr.io/fhswf/openai-ui:"$RELEASE_TAG"
 
       - name: Commit Kustomize Updates
         uses: stefanzweifel/git-auto-commit-action@v7
