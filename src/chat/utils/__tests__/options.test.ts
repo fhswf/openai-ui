@@ -22,8 +22,6 @@ describe("modelOptions", () => {
       "gpt-5.6-luna",
       "gpt-5.4-mini",
       "gpt-5.4-nano",
-      "gpt-5-mini",
-      "gpt-5-nano",
       "gpt-4.1-mini",
       "gpt-4.1-nano",
       "gpt-4o-mini",
@@ -50,8 +48,6 @@ describe("getModelOptions", () => {
       "gpt-5.6-luna",
       "gpt-5.4-mini",
       "gpt-5.4-nano",
-      "gpt-5-mini",
-      "gpt-5-nano",
       "gpt-4.1-mini",
       "gpt-4.1-nano",
       "gpt-4-turbo",
@@ -107,6 +103,12 @@ describe("getReplacementForRetiredModel", () => {
     const offered = modelOptions.map((opt) => opt.value);
     for (const retired of ["gpt-5-mini", "gpt-5-nano"]) {
       expect(offered).toContain(getReplacementForRetiredModel(retired));
+    }
+  });
+
+  it("never offers a retired model in the fixed list", () => {
+    for (const option of modelOptions) {
+      expect(getReplacementForRetiredModel(option.value)).toBeUndefined();
     }
   });
 
