@@ -23,11 +23,7 @@ describe("modelOptions", () => {
       "gpt-5.4-mini",
       "gpt-5.4-nano",
       "gpt-4.1-mini",
-      "gpt-4.1-nano",
       "gpt-4o-mini",
-      "gpt-4-turbo",
-      "gpt-4",
-      "gpt-3.5-turbo",
     ];
 
     const modelValues = modelOptions.map((opt) => opt.value);
@@ -49,11 +45,7 @@ describe("getModelOptions", () => {
       "gpt-5.4-mini",
       "gpt-5.4-nano",
       "gpt-4.1-mini",
-      "gpt-4.1-nano",
-      "gpt-4-turbo",
       "gpt-4o-mini",
-      "gpt-4",
-      "gpt-3.5-turbo",
     ]);
     expect(options.every((opt) => opt.group === undefined)).toBe(true);
   });
@@ -99,9 +91,20 @@ describe("getReplacementForRetiredModel", () => {
     expect(getReplacementForRetiredModel("gpt-5-nano")).toBe("gpt-6-luna");
   });
 
+  it("uses the official replacement when we offer it", () => {
+    expect(getReplacementForRetiredModel("gpt-4.1-nano")).toBe("gpt-5.6-luna");
+  });
+
   it("only replaces with models we offer", () => {
     const offered = modelOptions.map((opt) => opt.value);
-    for (const retired of ["gpt-5-mini", "gpt-5-nano"]) {
+    for (const retired of [
+      "gpt-5-mini",
+      "gpt-5-nano",
+      "gpt-4.1-nano",
+      "gpt-4-turbo",
+      "gpt-4",
+      "gpt-3.5-turbo",
+    ]) {
       expect(offered).toContain(getReplacementForRetiredModel(retired));
     }
   });
