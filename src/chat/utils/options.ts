@@ -59,24 +59,28 @@ export const modelOptions = [
   { label: "gpt-5.6-luna", value: "gpt-5.6-luna" },
   { label: "gpt-5.4-mini", value: "gpt-5.4-mini" },
   { label: "gpt-5.4-nano", value: "gpt-5.4-nano" },
-  { label: "gpt-5-mini", value: "gpt-5-mini" },
-  { label: "gpt-5-nano", value: "gpt-5-nano" },
   { label: "gpt-4.1-mini", value: "gpt-4.1-mini" },
-  { label: "gpt-4.1-nano", value: "gpt-4.1-nano" },
   { label: "gpt-4o-mini", value: "gpt-4o-mini" },
-  {
-    label: "gpt-4-turbo",
-    value: "gpt-4-turbo",
-  },
-  {
-    label: "gpt-4",
-    value: "gpt-4",
-  },
-  {
-    label: "gpt-3.5-turbo",
-    value: "gpt-3.5-turbo",
-  },
 ];
+
+// Models OpenAI has shut down, mapped to a replacement from modelOptions.
+// Official replacements: https://developers.openai.com/api/docs/deprecations
+const retiredModelReplacements: ReadonlyMap<string, string> = new Map([
+  ["gpt-5-mini", "gpt-6-luna"], // official: gpt-6.1-terra (not in modelOptions)
+  ["gpt-5-mini-2025-08-07", "gpt-6-luna"],
+  ["gpt-5-nano", "gpt-6-luna"],
+  ["gpt-5-nano-2025-08-07", "gpt-6-luna"],
+  ["gpt-4.1-nano", "gpt-5.6-luna"],
+  ["gpt-4-turbo", "gpt-6-luna"], // official: gpt-5.6-sol (not in modelOptions)
+  ["gpt-4", "gpt-6-luna"], // official: gpt-5.6-sol (not in modelOptions)
+  ["gpt-3.5-turbo", "gpt-6-luna"], // official: gpt-5.6-terra (not in modelOptions)
+]);
+
+export function getReplacementForRetiredModel(
+  model: string,
+): string | undefined {
+  return retiredModelReplacements.get(model);
+}
 
 export interface ModelOption {
   label: string;
