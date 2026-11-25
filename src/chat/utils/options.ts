@@ -78,6 +78,21 @@ export const modelOptions = [
   },
 ];
 
+// Models OpenAI has shut down, mapped to a replacement from modelOptions.
+// Official replacements: https://developers.openai.com/api/docs/deprecations
+const retiredModelReplacements: ReadonlyMap<string, string> = new Map([
+  ["gpt-5-mini", "gpt-6-luna"], // official: gpt-6.1-terra (not in modelOptions)
+  ["gpt-5-mini-2025-08-07", "gpt-6-luna"],
+  ["gpt-5-nano", "gpt-6-luna"],
+  ["gpt-5-nano-2025-08-07", "gpt-6-luna"],
+]);
+
+export function getReplacementForRetiredModel(
+  model: string,
+): string | undefined {
+  return retiredModelReplacements.get(model);
+}
+
 export interface ModelOption {
   label: string;
   value: string;

@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { getModelOptions, modelOptions } from "../options";
+import {
+  getModelOptions,
+  getReplacementForRetiredModel,
+  modelOptions,
+} from "../options";
 
 describe("modelOptions", () => {
   it("should include gpt-5.6-luna model", () => {
@@ -86,5 +90,31 @@ describe("getModelOptions", () => {
       aiHubModels: ["openai/gpt-4.1-mini"],
     });
     expect(options.every((opt) => opt.group === undefined)).toBe(true);
+  });
+});
+
+describe("getReplacementForRetiredModel", () => {
+  it("returns undefined for models that are not retired", () => {
+    expect(getReplacementForRetiredModel("gpt-6-luna")).toBeUndefined();
+  });
+
+  it("replaces gpt-5-mini and gpt-5-nano with gpt-6-luna", () => {
+    expect(getReplacementForRetiredModel("gpt-5-mini")).toBe("gpt-6-luna");
+    expect(getReplacementForRetiredModel("gpt-5-nano")).toBe("gpt-6-luna");
+  });
+
+  it("only replaces with models we offer", () => {
+    const offered = modelOptions.map((opt) => opt.value);
+    for (const retired of ["gpt-5-mini", "gpt-5-nano"]) {
+      expect(offered).toContain(getReplacementForRetiredModel(retired));
+    }
+  });
+
+  it("leaves AI Hub model ids untouched", () => {
+    expect(getReplacementForRetiredModel("openai/gpt-5-mini")).toBeUndefined();
+  });
+
+  it("ignores inherited object keys", () => {
+    expect(getReplacementForRetiredModel("constructor")).toBeUndefined();
   });
 });
