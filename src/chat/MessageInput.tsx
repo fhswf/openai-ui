@@ -26,6 +26,7 @@ import { toaster } from "../components/ui/toaster";
 import classNames from "classnames";
 import { FilePreview, OPFSImage } from "./component";
 import { ModelSelector } from "./ModelSelector";
+import { getReplacementForRetiredModel } from "./utils/options";
 import {
   ACCEPTED_FILE_TYPES,
   ensureFileName,
@@ -61,6 +62,13 @@ export function MessageInput() {
   useEffect(() => {
     console.log("MessageBar: eventProcessor: %o", eventProcessor);
   }, [eventProcessor]);
+
+  useEffect(() => {
+    const replacement = getReplacementForRetiredModel(options.openai.model);
+    if (replacement) {
+      setModel({ model: replacement });
+    }
+  }, [options.openai.model]);
 
   useEffect(() => {
     const SpeechRecognition =
