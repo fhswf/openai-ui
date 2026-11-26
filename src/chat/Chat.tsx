@@ -27,6 +27,7 @@ import remarkGfm from "remark-gfm";
 import smartypants from "remark-smartypants";
 import { useTranslation } from "react-i18next";
 import { t } from "i18next";
+import { useColorMode } from "../components/ui/color-mode";
 import { MessageInput } from "./MessageInput";
 import {
   ATTR_ERROR_TYPE,
@@ -42,10 +43,15 @@ import { FeatureTourMenu } from "./tours/FeatureTourMenu";
 import { FeatureTourOverlay } from "./tours/FeatureTourOverlay";
 
 export default function Chat() {
-  const { is, user } = useGlobal();
+  const { is, options, user } = useGlobal();
   const { t } = useTranslation();
+  const { setColorMode } = useColorMode();
   const [mobileNavigationOpen, setMobileNavigationOpen] = React.useState(false);
   const chatStyle = is?.fullScreen ? styles.full : styles.normal;
+
+  React.useEffect(() => {
+    setColorMode(options.general.theme === "dark" ? "dark" : "light");
+  }, [options.general.theme, setColorMode]);
 
   React.useEffect(() => {
     const originalOnError = globalThis.onerror;

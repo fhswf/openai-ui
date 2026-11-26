@@ -94,6 +94,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@playwright/test": "^1.65.1",
+    "@storybook/react": "^10.6.8",
+    "@storybook/react-vite": "^10.6.2",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/uuid": "^10.0.0",
@@ -121,7 +123,7 @@
     "postcss-preset-env": "^8.3.2",
     "prettier": "^3.10.1",
     "prop-types": "^15.8.1",
-    "storybook": "^10.6.2",
+    "storybook": "^10.6.8",
     "style-loader": "^4.0.0",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.72.2",
