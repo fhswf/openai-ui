@@ -1479,23 +1479,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/context-zone-peer-dep@npm:2.10.0":
-  version: 2.10.0
-  resolution: "@opentelemetry/context-zone-peer-dep@npm:2.10.0"
+"@opentelemetry/context-zone-peer-dep@npm:3.1.1":
+  version: 3.1.1
+  resolution: "@opentelemetry/context-zone-peer-dep@npm:3.1.1"
   peerDependencies:
-    "@opentelemetry/api": ">=1.0.0 <1.10.0"
+    "@opentelemetry/api": ">=1.0.0 <1.11.0"
     zone.js: ^0.10.2 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^0.14.0 || ^0.15.0 || ^0.16.0
-  checksum: 10c0/2561974df5537370d6ddd3208093d2a56bfc943650bc53313b5e435df336b1f00dc213f261ec5430d53e9aa957dac6511b26c3cab1f7f9e49aabd5f4d32d2d13
+  checksum: 10c0/ae2450b5c925a5cc51d9abbe45fb02015a8826d5b6a9f78a60c6ef18b7c1f8d5e02dc1c5fdc61d0d345bd268607910bd02e63b4814c3e5d022f94aa8010c2454
   languageName: node
   linkType: hard
 
-"@opentelemetry/context-zone@npm:^2.0.0":
-  version: 2.10.0
-  resolution: "@opentelemetry/context-zone@npm:2.10.0"
+"@opentelemetry/context-zone@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "@opentelemetry/context-zone@npm:3.1.1"
   dependencies:
-    "@opentelemetry/context-zone-peer-dep": "npm:2.10.0"
+    "@opentelemetry/context-zone-peer-dep": "npm:3.1.1"
     zone.js: "npm:^0.11.0 || ^0.12.0 || ^0.13.0 || ^0.14.0 || ^0.15.0 || ^0.16.0"
-  checksum: 10c0/6a0f6eba3686c87f44c1cd576a325b64890fad43f2f8cf104dcccb63ef5ac88c77bc7eeb7e521f26e02688ff86f820789bf2653933c217fb91a9d94504173aff
+  peerDependencies:
+    "@opentelemetry/api": ">=1.0.0 <1.11.0"
+  checksum: 10c0/af07da16a7108dfb2202387aeb3543858900de6cf0a0bc7da62ab1908d1bc0ce803358aa2e73073d90cde507a3a0a15960f52f76a6e0e44b3660911c9d44aa3d
   languageName: node
   linkType: hard
 
@@ -9657,7 +9659,7 @@ __metadata:
     "@emotion/react": "npm:^11.14.0"
     "@eslint/eslintrc": "npm:^3.3.1"
     "@opentelemetry/api": "npm:^1.10.0"
-    "@opentelemetry/context-zone": "npm:^2.0.0"
+    "@opentelemetry/context-zone": "npm:^3.1.1"
     "@opentelemetry/exporter-logs-otlp-http": "npm:^0.301.2"
     "@opentelemetry/exporter-metrics-otlp-proto": "npm:^0.301.2"
     "@opentelemetry/exporter-trace-otlp-proto": "npm:^0.200.0"
