@@ -24,9 +24,9 @@
 }
 
 :root {
-  --primary: #08f;
-  --red: #ff0000;
-  --yellow: #ffc00b;
+  --primary: var(--chakra-colors-blue-solid);
+  --red: var(--chakra-colors-fg-error);
+  --yellow: var(--chakra-colors-yellow-solid);
   --white: #ffffff;
   --border-radius: 3px;
   --font-size-base: 12px;
@@ -35,24 +35,19 @@
   --font-size-large: 16px;
   --font-size-big: 18px;
 
-  --background-color: #ffffff;
-  --background-color-gray: #f4f4f4;
-  --border-color: #e7e7e7;
+  --background-color: var(--chakra-colors-bg-panel);
+  --background-color-gray: var(--chakra-colors-bg-muted);
+  --border-color: var(--chakra-colors-border);
 
-  --text-color: #444444;
-  --text-color-gray: #666666;
-
-  --green-dark: #0a7d00;
-  --red-dark: #d10000;
-  --yellow-dark: #d0a21f;
-  --primary-dark: #20159c;
+  --text-color: var(--chakra-colors-fg);
+  --text-color-gray: var(--chakra-colors-fg-muted);
 
   --spacing: 10px;
   --spacing-large: 15px;
   --spacing-min: 5px;
 
-  --error-border-color: #ffe7e7;
-  --error-background-color: #fff0f0;
+  --error-border-color: var(--chakra-colors-border-error);
+  --error-background-color: var(--chakra-colors-bg-error);
 
   --font-size-h1: 24px;
   --font-size-h2: 20px;
@@ -78,17 +73,8 @@
   --tag-color-14: #6fdbb8;
 }
 
-[data-theme="dark"] {
-  --background-color: #2e323a;
-  --background-color-gray: #282c34;
-  --border-color: #181a21;
-  --text-color: #dfe2eb;
-  --text-color-gray: #a7acbb;
-}
-
-// Keep portalled Chakra dialog links above the WCAG text contrast threshold.
-[data-theme="dark"] [role="dialog"] a {
-  color: #80c5ff !important;
+[role="dialog"] a {
+  color: var(--chakra-colors-blue-fg);
 }
 
 [data-size="small"] {
