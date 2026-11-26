@@ -54,6 +54,49 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.63.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.62.2...openai-ui-v0.63.0) (2026-11-26)
+
+
+### Features
+
+* implement theme synchronization and enhance chat share dialog ([f2f34be](https://github.com/fhswf/openai-ui/commit/f2f34be0776aa6d99007b99ddd18bb168d2bf8bc))
+* implement theme synchronization and enhance chat share dialog ([866d302](https://github.com/fhswf/openai-ui/commit/866d302c9e19fb774cc40f4e2b3211d52c96779c))
+* implement theme synchronization and enhance chat share dialog ([6bab2f8](https://github.com/fhswf/openai-ui/commit/6bab2f807aec2c9578cf2b3ed07aac6c4100b384))
+* **models:** map retired models to their replacements ([3c47771](https://github.com/fhswf/openai-ui/commit/3c47771fdf7faa3430aa635a8051c5a31099e5cd))
+
+
+### Bug Fixes
+
+* **models:** Abgeschaltete OpenAI-Modelle entfernen und gespeicherte Auswahl umstellen ([2bf0df9](https://github.com/fhswf/openai-ui/commit/2bf0df95258b7a4382df3e45bd1aafa4362c82ab))
+* **models:** remove gpt-5-mini and gpt-5-nano before their shutdown ([afd67c6](https://github.com/fhswf/openai-ui/commit/afd67c6b0e22ed47e8121cd1e5e146ac80bc7103))
+* **models:** remove models OpenAI has already shut down ([7b785d3](https://github.com/fhswf/openai-ui/commit/7b785d367f53dc86b7ecc514bdd1ddbd9c88f923))
+* **models:** switch stored retired models to their replacement ([ea9f59a](https://github.com/fhswf/openai-ui/commit/ea9f59a1df7e84ae998149c183450f91fddc3918))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump css-loader from 6.11.0 to 7.1.5 ([8ed75de](https://github.com/fhswf/openai-ui/commit/8ed75de38724a7f2d12e90d1995518f9ff09c49f))
+* **deps-dev:** bump css-loader from 6.11.0 to 7.1.5 ([c126785](https://github.com/fhswf/openai-ui/commit/c1267859678159858125c1875e07e177e468e366))
+* **deps-dev:** bump eslint from 9.39.5 to 10.15.0 ([9145fa9](https://github.com/fhswf/openai-ui/commit/9145fa98bb0eff9f6dadc7b838eb001a4a1e86c2))
+* **deps-dev:** bump eslint from 9.39.5 to 10.15.0 ([8fbe23d](https://github.com/fhswf/openai-ui/commit/8fbe23db55b392723b552f9a19511bb9a356bf59))
+* **deps:** bump @opentelemetry/context-zone from 2.10.0 to 3.1.1 ([12cb0f6](https://github.com/fhswf/openai-ui/commit/12cb0f60233e03ad514700c17b432c8d11962ff4))
+* **deps:** bump @opentelemetry/context-zone from 2.10.0 to 3.1.1 ([4330120](https://github.com/fhswf/openai-ui/commit/43301201e3c677c421bb6038de7d259c4686cf54))
+* **deps:** bump @opentelemetry/exporter-logs-otlp-http ([#283](https://github.com/fhswf/openai-ui/issues/283)) ([2d120da](https://github.com/fhswf/openai-ui/commit/2d120dae5ae21035c0de59c235b5e06219ac182b))
+* **deps:** bump @opentelemetry/resources from 2.10.0 to 3.1.1 ([e5b7f14](https://github.com/fhswf/openai-ui/commit/e5b7f143d84a683e7acb9a46bfb9fa3feb205369))
+* **deps:** bump @opentelemetry/resources from 2.10.0 to 3.1.1 ([38171d7](https://github.com/fhswf/openai-ui/commit/38171d73f4d619b29720f19f1ab57ce2d3596258))
+* **deps:** bump i18next ([baa2feb](https://github.com/fhswf/openai-ui/commit/baa2feb3e9862c3e9da013665f8ab305c7327390))
+* **deps:** bump i18next from 24.2.3 to 26.3.4 in the npm_and_yarn group across 1 directory ([f32165c](https://github.com/fhswf/openai-ui/commit/f32165cb2b4b9906a77f2c7e3c16d3993e0d39b7))
+* **deps:** bump i18next from 26.3.4 to 27.2.4 ([ca89035](https://github.com/fhswf/openai-ui/commit/ca89035d263ad44fb7093a133fc9804c9218397f))
+* **deps:** bump i18next from 26.3.4 to 27.2.4 ([39984c8](https://github.com/fhswf/openai-ui/commit/39984c8ccce829ec20e39352d452f5ec309f170c))
+* **deps:** bump i18next-http-backend from 4.0.4 to 4.1.0 ([#285](https://github.com/fhswf/openai-ui/issues/285)) ([d868513](https://github.com/fhswf/openai-ui/commit/d868513c61db0a15099ec6aa896491886a2a81b3))
+* **deps:** bump openai from 7.12.1 to 7.62.0 ([#293](https://github.com/fhswf/openai-ui/issues/293)) ([41fb221](https://github.com/fhswf/openai-ui/commit/41fb2213625dfa642eb6d39f73cafb558654df3c))
+* update kustomize images [skip ci] ([78986bc](https://github.com/fhswf/openai-ui/commit/78986bcee37ee5b6b78ff74ffb948fba02ef0ffe))
+* update kustomize images [skip ci] ([fed9a32](https://github.com/fhswf/openai-ui/commit/fed9a325b92ea51195bb31e811eeeaf77b3322ec))
+* update kustomize images [skip ci] ([62304c7](https://github.com/fhswf/openai-ui/commit/62304c7f7123b36b73cf8e8aba0496ca013e8aba))
+* update kustomize images [skip ci] ([e85f623](https://github.com/fhswf/openai-ui/commit/e85f623ed458c988291a8a4b60295d8e15667d9e))
+* update kustomize images [skip ci] ([aba3e57](https://github.com/fhswf/openai-ui/commit/aba3e57631810b21cecdfe99f2b09835cf4ccdc1))
+* update kustomize images [skip ci] ([a5fc960](https://github.com/fhswf/openai-ui/commit/a5fc960134d90411ade29cc77bf107f5a08d8643))
+
 ## [0.62.2](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.62.1...openai-ui-v0.62.2) (2026-11-21)
 
 
