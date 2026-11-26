@@ -119,10 +119,18 @@ export default defineConfig({
     },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: previewCommand,
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-  },
+  /* Run the app preview and Storybook fixture before tests */
+  webServer: [
+    {
+      command: previewCommand,
+      url: baseURL,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: "yarn storybook dev --host 127.0.0.1 --port 6006 --no-open",
+      url: "http://127.0.0.1:6006",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+    },
+  ],
 });

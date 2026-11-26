@@ -22,8 +22,7 @@ export function useChatSideBarState(
   };
 
   const toggleTheme = () => {
-    const currentTheme =
-      document.documentElement.dataset.theme ?? options.general.theme;
+    const currentTheme = options.general.theme ?? "light";
     setGeneral({ theme: currentTheme === "light" ? "dark" : "light" });
     onMobileOpenChange(false);
   };
