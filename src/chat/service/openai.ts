@@ -32,6 +32,7 @@ import {
   searchDocuments,
   splitFileSearchTools,
 } from "../utils/fileSearch";
+import { resolveCustomGptRequest } from "../utils/customGptSettings";
 import * as Sentry from "@sentry/react";
 
 export const apiBaseUrl =
@@ -90,7 +91,18 @@ export async function createResponse(
   parent,
   explicitInput?: ResponseInput
 ) {
-  const { options, chat, currentChat, setState, setIs, setOptions } = global;
+  const {
+    options: globalOptions,
+    chat,
+    currentChat,
+    setState,
+    setIs,
+    setOptions,
+  } = global;
+  const { options, messages } = resolveCustomGptRequest(
+    globalOptions,
+    chat[currentChat],
+  );
   const client = createClient(options);
 
   console.log("messages: %o", chat[currentChat].messages);
@@ -102,7 +114,7 @@ export async function createResponse(
     input = explicitInput;
   } else {
     input = await Promise.all(
-      chat[currentChat].messages.map(async (item) => {
+      messages.map(async (item) => {
         console.log("input item: %o", item);
         const { role, content, ...rest } = item;
 
