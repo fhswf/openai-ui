@@ -54,6 +54,14 @@
 * **workflow:** update runner version to ubuntu-26.04 for consistency ([dd534ba](https://github.com/fhswf/openai-ui/commit/dd534baef964e65e37d26f221339bdc893df798c))
 * **workflow:** update runner version to ubuntu-latest for consistency ([d6e9db0](https://github.com/fhswf/openai-ui/commit/d6e9db0d3e750fad5084970e44076a8e20f12df5))
 
+## [0.63.1](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.63.0...openai-ui-v0.63.1) (2026-11-27)
+
+
+### Miscellaneous Chores
+
+* **deps:** bump @opentelemetry/exporter-trace-otlp-proto ([#302](https://github.com/fhswf/openai-ui/issues/302)) ([8f38de1](https://github.com/fhswf/openai-ui/commit/8f38de12f23a5080b57a86829fc5a5789a004cb1))
+* update kustomize images [skip ci] ([644d32c](https://github.com/fhswf/openai-ui/commit/644d32cb0cf61cee92cfa197a7985eed51e326ba))
+
 ## [0.63.0](https://github.com/fhswf/openai-ui/compare/openai-ui-v0.62.2...openai-ui-v0.63.0) (2026-11-26)
 
 
