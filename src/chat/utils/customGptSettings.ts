@@ -16,6 +16,22 @@ export function findCustomGptForChat(
   return customGpts.find((customGpt) => customGpt.id === chat.app);
 }
 
+function applyCustomGptPrompt(
+  messages: Messages,
+  customGpt: CustomGpt,
+): Messages {
+  const currentPrompt = customGpt.systemPrompt.trim();
+  if (!currentPrompt) {
+    return messages;
+  }
+  const systemIndex = messages.findIndex(
+    (message) => message.role === "system",
+  );
+  return messages.map((message, index) =>
+    index === systemIndex ? { ...message, content: currentPrompt } : message,
+  );
+}
+
 export function resolveCustomGptRequest(
   options: Options,
   chat: Chat,
@@ -24,15 +40,9 @@ export function resolveCustomGptRequest(
   if (!customGpt) {
     return { options, messages: chat.messages };
   }
-  const currentPrompt = customGpt.systemPrompt.trim();
-  if (!currentPrompt) {
-    return { options, messages: chat.messages, customGpt };
-  }
-  const systemIndex = chat.messages.findIndex(
-    (message) => message.role === "system",
-  );
-  const messages = chat.messages.map((message, index) =>
-    index === systemIndex ? { ...message, content: currentPrompt } : message,
-  );
-  return { options, messages, customGpt };
+  return {
+    options,
+    messages: applyCustomGptPrompt(chat.messages, customGpt),
+    customGpt,
+  };
 }
