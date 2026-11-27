@@ -115,7 +115,7 @@
     "html-webpack-plugin": "^5.5.0",
     "jsdom": "^31.0.1",
     "less": "^4.9.1",
-    "less-loader": "^11.1.0",
+    "less-loader": "^13.1.1",
     "mini-css-extract-plugin": "^2.7.5",
     "pa11y": "^10.0.0",
     "postcss-flexbugs-fixes": "^5.0.2",
