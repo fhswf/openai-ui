@@ -2914,6 +2914,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/less@npm:^3.0.8":
+  version: 3.0.8
+  resolution: "@types/less@npm:3.0.8"
+  checksum: 10c0/79ed1014ccecaa060b8b2ccc8ea8cd28a62463a69e21184c13eaa08bd200ffe5149b4ecc380792a3204d8f629a328b504f2ef25a6a5974f8c512f15514e78426
+  languageName: node
+  linkType: hard
+
 "@types/mdast@npm:^4.0.0":
   version: 4.0.4
   resolution: "@types/mdast@npm:4.0.4"
@@ -8362,13 +8369,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"less-loader@npm:^11.1.0":
-  version: 11.1.4
-  resolution: "less-loader@npm:11.1.4"
+"less-loader@npm:^13.1.1":
+  version: 13.1.1
+  resolution: "less-loader@npm:13.1.1"
+  dependencies:
+    "@types/less": "npm:^3.0.8"
   peerDependencies:
+    "@rspack/core": 0.x || ^1.0.0 || ^2.0.0-0
     less: ^3.5.0 || ^4.0.0
     webpack: ^5.0.0
-  checksum: 10c0/28fd9f91734b2b8638645489c23fc2048e3d0817d55bba742604e45e9a9240cbbdf5712ee092b7163ab0923d3a051947c743d6062fc7628980bdd89b30000679
+  peerDependenciesMeta:
+    "@rspack/core":
+      optional: true
+    webpack:
+      optional: true
+  checksum: 10c0/7c7b1a4c4e6d6a5d97f95d33c9c1f290dd6c4b0d5d2d0218398041dd9832fe404a9c427faa4031284ff28d0befe372f130e70119661dc713118b6ee6b29ae101
   languageName: node
   linkType: hard
 
@@ -9710,7 +9725,7 @@ __metadata:
     jsdom: "npm:^31.0.1"
     katex: "npm:^0.19.1"
     less: "npm:^4.9.1"
-    less-loader: "npm:^11.1.0"
+    less-loader: "npm:^13.1.1"
     mini-css-extract-plugin: "npm:^2.7.5"
     next-themes: "npm:^0.4.4"
     openai: "npm:^7.62.0"
