@@ -43,6 +43,10 @@ export type CustomGpt = {
   /** Label shown on the share action and used in the resulting chat title. */
   shareTitle?: string;
   botStarts?: boolean;
+  /** Model for chats with this GPT. Undefined uses the global model. */
+  model?: string;
+  /** Reasoning effort for chats with this GPT. Undefined uses the global effort. */
+  reasoningEffort?: OpenAIOptions["reasoningEffort"];
 };
 
 export type SharedTargetContent = {

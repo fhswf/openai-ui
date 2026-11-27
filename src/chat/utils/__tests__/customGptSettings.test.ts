@@ -10,7 +10,7 @@ const customGpt = {
 function buildOptions(customGpts: unknown[] = [customGpt]) {
   return {
     general: { customGpts },
-    openai: {},
+    openai: { model: "gpt-5.4-mini", reasoningEffort: "medium" },
     account: {},
   } as any;
 }
@@ -75,5 +75,53 @@ describe("resolveCustomGptRequest", () => {
 
     expect(result.customGpt?.id).toBe("gpt-1");
     expect(result.messages).toBe(chat.messages);
+  });
+});
+
+describe("resolveCustomGptRequest options", () => {
+  it("keeps the global options when the GPT sets no model", () => {
+    const options = buildOptions();
+
+    const result = resolveCustomGptRequest(options, buildChat("gpt-1"));
+
+    expect(result.options).toBe(options);
+  });
+
+  it("uses the GPT model and reasoning effort", () => {
+    const options = buildOptions([
+      { ...customGpt, model: "gpt-6-luna", reasoningEffort: "high" },
+    ]);
+
+    const result = resolveCustomGptRequest(options, buildChat("gpt-1"));
+
+    expect(result.options.openai.model).toBe("gpt-6-luna");
+    expect(result.options.openai.reasoningEffort).toBe("high");
+  });
+
+  it("keeps the global model when the GPT sets only the effort", () => {
+    const options = buildOptions([{ ...customGpt, reasoningEffort: "low" }]);
+
+    const result = resolveCustomGptRequest(options, buildChat("gpt-1"));
+
+    expect(result.options.openai.model).toBe("gpt-5.4-mini");
+    expect(result.options.openai.reasoningEffort).toBe("low");
+  });
+
+  it("does not change the global options", () => {
+    const options = buildOptions([{ ...customGpt, model: "gpt-6-luna" }]);
+
+    resolveCustomGptRequest(options, buildChat("gpt-1"));
+
+    expect(options.openai.model).toBe("gpt-5.4-mini");
+  });
+
+  it("applies the model even when the GPT prompt is empty", () => {
+    const options = buildOptions([
+      { ...customGpt, systemPrompt: "", model: "gpt-6-luna" },
+    ]);
+
+    const result = resolveCustomGptRequest(options, buildChat("gpt-1"));
+
+    expect(result.options.openai.model).toBe("gpt-6-luna");
   });
 });

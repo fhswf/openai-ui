@@ -32,6 +32,24 @@ function applyCustomGptPrompt(
   );
 }
 
+function applyCustomGptOptions(
+  options: Options,
+  customGpt: CustomGpt,
+): Options {
+  if (!customGpt.model && !customGpt.reasoningEffort) {
+    return options;
+  }
+  return {
+    ...options,
+    openai: {
+      ...options.openai,
+      model: customGpt.model || options.openai.model,
+      reasoningEffort:
+        customGpt.reasoningEffort || options.openai.reasoningEffort,
+    },
+  };
+}
+
 export function resolveCustomGptRequest(
   options: Options,
   chat: Chat,
@@ -41,7 +59,7 @@ export function resolveCustomGptRequest(
     return { options, messages: chat.messages };
   }
   return {
-    options,
+    options: applyCustomGptOptions(options, customGpt),
     messages: applyCustomGptPrompt(chat.messages, customGpt),
     customGpt,
   };
