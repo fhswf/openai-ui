@@ -5,6 +5,7 @@ import {
   Field,
   Heading,
   Input,
+  NativeSelect,
   Stack,
   Text,
   Textarea,
@@ -16,6 +17,11 @@ import { Switch } from "../components/ui/switch";
 import { useGlobal } from "./context";
 import { useOptions } from "./hooks";
 import type { CustomGpt } from "./context/types";
+import {
+  getModelOptions,
+  reasoningEfforts,
+  supportsReasoningEffort,
+} from "./utils/options";
 
 type CustomGptCardProps = {
   customGpt: CustomGpt;
@@ -65,6 +71,81 @@ function CustomGptPromptField({
         }
       />
       <Field.HelperText>{t("custom_gpt_system_prompt_help")}</Field.HelperText>
+    </Field.Root>
+  );
+}
+
+function CustomGptModelField({
+  customGpt,
+  updateCustomGpt,
+}: CustomGptFieldProps) {
+  const { t } = useTranslation();
+  const { options } = useGlobal();
+  return (
+    <Field.Root>
+      <Field.Label>{t("custom_gpt_model")}</Field.Label>
+      <NativeSelect.Root>
+        <NativeSelect.Field
+          value={customGpt.model ?? ""}
+          onChange={(event) =>
+            updateCustomGpt(customGpt.id, {
+              model: event.target.value || undefined,
+            })
+          }
+        >
+          <option value="">
+            {t("custom_gpt_use_global", { value: options.openai.model })}
+          </option>
+          {getModelOptions(options.openai).map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </NativeSelect.Field>
+        <NativeSelect.Indicator />
+      </NativeSelect.Root>
+      <Field.HelperText>{t("custom_gpt_model_help")}</Field.HelperText>
+    </Field.Root>
+  );
+}
+
+function CustomGptReasoningField({
+  customGpt,
+  updateCustomGpt,
+}: CustomGptFieldProps) {
+  const { t } = useTranslation();
+  const { options } = useGlobal();
+  const model = customGpt.model || options.openai.model;
+  if (!supportsReasoningEffort(model)) {
+    return null;
+  }
+  return (
+    <Field.Root>
+      <Field.Label>{t("custom_gpt_reasoning_effort")}</Field.Label>
+      <NativeSelect.Root>
+        <NativeSelect.Field
+          value={customGpt.reasoningEffort ?? ""}
+          onChange={(event) =>
+            updateCustomGpt(customGpt.id, {
+              reasoningEffort: (event.target.value || undefined) as
+                | CustomGpt["reasoningEffort"]
+                | undefined,
+            })
+          }
+        >
+          <option value="">
+            {t("custom_gpt_use_global", {
+              value: t("reasoning_effort_" + options.openai.reasoningEffort),
+            })}
+          </option>
+          {reasoningEfforts.map((effort) => (
+            <option key={effort} value={effort}>
+              {t("reasoning_effort_" + effort)}
+            </option>
+          ))}
+        </NativeSelect.Field>
+        <NativeSelect.Indicator />
+      </NativeSelect.Root>
     </Field.Root>
   );
 }
@@ -144,6 +225,8 @@ function CustomGptCard({
         <Stack gap="4">
           <CustomGptNameField {...{ customGpt, updateCustomGpt }} />
           <CustomGptPromptField {...{ customGpt, updateCustomGpt }} />
+          <CustomGptModelField {...{ customGpt, updateCustomGpt }} />
+          <CustomGptReasoningField {...{ customGpt, updateCustomGpt }} />
           <CustomGptSharePurposeField {...{ customGpt, updateCustomGpt }} />
           <CustomGptShareTitleField {...{ customGpt, updateCustomGpt }} />
           <CustomGptBotStartsField {...{ customGpt, updateCustomGpt }} />
