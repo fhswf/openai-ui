@@ -161,6 +161,16 @@ function gptVersionOf(model: string): number[] | undefined {
   return version.length > 0 ? version : undefined;
 }
 
+export const reasoningEfforts: OpenAIOptions["reasoningEffort"][] = [
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+];
+
 export function supportsReasoningEffort(model: string): boolean {
   const gptVersion = gptVersionOf(model);
   return (

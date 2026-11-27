@@ -13,6 +13,7 @@ import {
   getModelOptions,
   getNewerModelIds,
   groupModelOptions,
+  reasoningEfforts,
   supportsReasoningEffort,
 } from "./utils/options";
 import type { ModelOption } from "./utils/options";
@@ -26,16 +27,6 @@ interface ModelSelectorProps {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   onEffortChange: (_effort: OpenAIOptions["reasoningEffort"]) => void;
 }
-
-const reasoningEfforts: OpenAIOptions["reasoningEffort"][] = [
-  "none",
-  "minimal",
-  "low",
-  "medium",
-  "high",
-  "xhigh",
-  "max",
-];
 
 export function ModelSelector({
   openai,
